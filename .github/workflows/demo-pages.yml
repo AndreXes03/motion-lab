@@ -46,6 +46,7 @@ jobs:
           cp showcase/site.css showcase/site.js _site/
           cp examples/procedural-field.html examples/procedural-live.js _site/examples/
           cp demo/*.mp4 demo/*.gif demo/*.jpg demo/*.png _site/demo/
+          cp demo/render-manifest.json _site/demo/
       - uses: actions/upload-pages-artifact@v4
         with:
           path: _site

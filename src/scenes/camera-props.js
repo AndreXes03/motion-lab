@@ -1,3 +1,4 @@
+import {addCameraHardware} from './camera-hardware-detail.js';
 import {glossStudio} from './gloss-studio.js';
 import {organicSurface} from './organic-surface.js';
 import {finishMap} from './refined-finishes.js';
@@ -42,14 +43,24 @@ const reflectionEnv=glossStudio(renderer);
  const add=(g,m,p)=>{const o=new T.Mesh(g,m);o.castShadow=o.receiveShadow=true;p.add(o);return o;};
  const box=(w,h,d,r,m,p)=>add(new RoundedBoxGeometry(w,h,d,5,r),m,p);
  function label(text,w,h,size=70){const c=document.createElement('canvas');c.width=w;c.height=h;const x=c.getContext('2d');x.clearRect(0,0,w,h);x.fillStyle='#eee9e1';x.textAlign='center';x.font=`600 ${size}px Arial`;x.fillText(text,w/2,h*.66);const tx=new T.CanvasTexture(c);tx.colorSpace=T.SRGBColorSpace;return new T.MeshBasicMaterial({map:tx,transparent:true,depthWrite:false});}
- const housing=new T.Group();scene.add(housing);box(11,6.3,4.7,1.3,shell,housing).position.z=-.6;box(10.45,5.8,.3,.9,orange,housing).position.z=1.8;box(9.9,5.25,.32,.77,black,housing).position.z=1.98;
+ const housing=new T.Group();scene.add(housing);box(11,6.3,4.7,1.3,shell,housing).position.z=-.6;box(10.45,5.8,.3,.9,orange,housing).position.z=1.8;box(9.9,5.25,.32,.77,shell,housing).position.z=1.98;
  for(const o of housing.children){const p=o.geometry.attributes.position;for(let i=0;i<p.count;i++){const x=p.getX(i);p.setZ(i,p.getZ(i)-.024*x*x);}o.geometry.computeVertexNormals();}
  // Real concentric glass optic, machined barrel, engraved concentric rings.
  for(const [r,d,z,mat]of [[2.3,.7,2.05,anodized],[2.18,.14,2.48,chrome],[2.03,.3,2.56,black],[1.82,.12,2.75,orange],[1.66,.28,2.81,black]]){const ringShape=new T.Shape();ringShape.absarc(0,0,r,0,Math.PI*2,false);const inner=new T.Path();inner.absarc(0,0,r===2.3?1.58:r-.15,0,Math.PI*2,true);ringShape.holes.push(inner);const o=add(new T.ExtrudeGeometry(ringShape,{depth:d,curveSegments:128,bevelEnabled:true,bevelThickness:.02,bevelSize:.018,bevelSegments:3}),mat,housing);o.position.z=z-d/2;}
  for(let i=0;i<12;i++){const ring=add(new T.TorusGeometry(1.94-i*.006,.016,8,128),i%3?black:chrome,housing);ring.position.z=2.6+i*.015;}
- const lens=add(new T.SphereGeometry(1.6,96,64,0,Math.PI*2,0,Math.PI),glass,housing);lens.scale.z=.18;lens.position.z=2.98;lens.layers.set(1);
- for(let i=0;i<7;i++){const iris=add(new T.CircleGeometry(1.48-i*.14,96),new T.MeshPhysicalMaterial({color:i%2?'#142c32':'#080e14',metalness:.15,roughness:.12,envMap:opticsEnv.texture,envMapIntensity:.55,transparent:false}),housing);iris.position.z=2.98+i*.017;iris.layers.set(1);iris.material.onBeforeCompile=coatLighting;}
- for(const [r,y]of [[1.05,.16],[.78,-.12],[.55,.1]]){const ring=add(new T.TorusGeometry(r,.019,10,96),new T.MeshPhysicalMaterial({color:'#62758e',metalness:.4,roughness:.24,envMap:env,envMapIntensity:.2}),housing);ring.position.set(0,y,2.99);}
+ // A recessed optical cell, not stacked opaque disks in front of the glass.
+ const opticalCell=new T.Group();opticalCell.name='camera.recessed-optical-cell';housing.add(opticalCell);
+ const baffleMat=new T.MeshPhysicalMaterial({color:'#101515',metalness:.12,roughness:.48,envMap:opticsEnv.texture,envMapIntensity:.28,side:T.BackSide});
+ const innerWall=add(new T.CylinderGeometry(1.66,1.15,.67,96,1,true),baffleMat,opticalCell);innerWall.rotation.x=Math.PI/2;innerWall.position.z=2.53;
+ const apertureMat=new T.MeshPhysicalMaterial({color:'#111b20',metalness:.28,roughness:.29,envMap:opticsEnv.texture,envMapIntensity:.5});
+ for(let i=0;i<8;i++){const leafShape=new T.Shape();leafShape.moveTo(.31,.06);leafShape.lineTo(1.12,-.14);leafShape.quadraticCurveTo(1.33,.43,.74,.98);leafShape.lineTo(.16,.48);leafShape.closePath();const leaf=add(new T.ExtrudeGeometry(leafShape,{depth:.008,bevelEnabled:true,bevelSize:.006,bevelThickness:.003,bevelSegments:2}),apertureMat,opticalCell);leaf.rotation.z=i*Math.PI/4;leaf.position.z=2.195+i*.016;}
+ const opticalVoid=add(new T.CircleGeometry(.62,64),new T.MeshBasicMaterial({color:'#020507'}),opticalCell);opticalVoid.position.z=2.185;
+ for(const [radius,z]of [[1.49,2.80],[1.38,2.62],[1.24,2.43]]){const retaining=add(new T.TorusGeometry(radius,.028,10,96),anodized,opticalCell);retaining.position.z=z;}
+ const rearCoating=new T.MeshPhysicalMaterial({color:'#466b73',metalness:0,roughness:.06,transmission:.85,thickness:.14,ior:1.48,iridescence:.13,envMap:opticsEnv.texture,envMapIntensity:.55});
+ const rearGlass=add(new T.SphereGeometry(1.15,72,40),rearCoating,opticalCell);rearGlass.scale.z=.075;rearGlass.position.z=2.43;rearGlass.layers.set(1);rearGlass.castShadow=false;
+ const profile=[],opticalRadius=1.545;for(let i=0;i<=48;i++){const r=opticalRadius*i/48;profile.push(new T.Vector2(r,2.685+.085*(1-(r/opticalRadius)**2)));}for(let i=48;i>=0;i--){const r=opticalRadius*i/48;profile.push(new T.Vector2(r,2.755+.305*(1-(r/opticalRadius)**2)));}
+ const lens=add(new T.LatheGeometry(profile,128),glass,opticalCell);lens.rotation.x=Math.PI/2;lens.layers.set(1);lens.name='camera.curved-coated-front-element';lens.castShadow=false;glass.onBeforeCompile=coatLighting;rearCoating.onBeforeCompile=coatLighting;
+ glass.color.set('#405d68');glass.transmission=.82;glass.thickness=.30;glass.roughness=.045;glass.attenuationColor.set('#72948f');glass.envMapIntensity=.9;
  const mark=add(new T.PlaneGeometry(3,.55),label('MOTION / 35',512,128,48),housing);mark.position.set(0,-2.21,2.19);
  // The physical curved nameplate shares the casing crown and keeps typography on its surface.
  const nameplate=new T.Group();housing.add(nameplate);const plateCurve=x=>2.5-.033*x*x;
@@ -81,6 +92,7 @@ const reflectionEnv=glossStudio(renderer);
  for(const x of [-3.7,0,3.7]){const l=box(.065,2.9,.03,.007,etch,clapper);l.position.set(x,-2,.77);}
  for(const o of clapper.children){if(!o.isMesh||o===fixed)continue;const p=o.geometry.attributes.position;for(let i=0;i<p.count;i++){const x=p.getX(i)+o.position.x;p.setZ(i,p.getZ(i)-.055*x*x);}o.geometry.computeVertexNormals();}
  const hingePlate=box(.7,.58,.19,.09,chrome,clapper);hingePlate.position.set(-4.75,1.37,.42);const pin=add(new T.CylinderGeometry(.17,.17,.2,48),black,clapper);pin.rotation.x=Math.PI/2;pin.position.set(-4.75,1.37,.62);const pinCap=add(new T.CylinderGeometry(.09,.09,.015,32),chrome,clapper);pinCap.rotation.x=Math.PI/2;pinCap.position.set(-4.75,1.37,.73);
+ const hardwareDetail=addCameraHardware({housing,nameplate,wings,clapper,hinge,materials:{black,grip,anodized,chrome,white,orange}});
  const table=new T.Group();scene.add(table);box(39,.45,29,1.4,black,table).position.y=-1.4;
  const machinedFinish=createMachinedFinish();let cityExtension;
  // Optional real retaining hardware, choreographed by the camera owner outside the optical center.
@@ -89,5 +101,5 @@ const reflectionEnv=glossStudio(renderer);
  const ring=add(new T.TorusGeometry(1.05,.085,12,96),retainer,opticParallax);ring.position.set(-7.8,2.5,-.4);ring.rotation.set(.2,.4,-.2);
  const washer=add(new T.TorusGeometry(.68,.065,10,64),chrome,opticParallax);washer.position.set(7.1,-2.2,1.1);washer.rotation.set(-.2,-.35,.3);
  const pinBody=add(new T.CylinderGeometry(.11,.11,.72,20),retainer,opticParallax);pinBody.position.set(6.6,2.8,.2);pinBody.rotation.z=.6;
- return{materialFinishes,housing,nameplate,wings,film,filmCurves,clapper,hinge,table,black,orange,chrome,opticParallax,machinedFinish,attachCity(parent){cityExtension??=buildCityExtension(parent,env);return cityExtension;},setFilmFrames(frames){for(const {mat,index}of filmPrints){mat.map.dispose();mat.map=frames[index];mat.needsUpdate=true;}},dispose(){materialFinishes.dispose();cityExtension?.dispose();machinedFinish.dispose();shell.dispose();anodized.dispose();grip.dispose();opticsEnv.dispose();opticsStudio.traverse(o=>{if(o.isMesh){o.geometry.dispose();o.material.dispose();}});}};
+ return{materialFinishes,housing,nameplate,wings,film,filmCurves,clapper,hinge,table,black,orange,chrome,opticParallax,machinedFinish,attachCity(parent){cityExtension??=buildCityExtension(parent,env);return cityExtension;},setFilmFrames(frames){for(const {mat,index}of filmPrints){mat.map.dispose();mat.map=frames[index];mat.needsUpdate=true;}},dispose(){opticalCell.traverse(o=>{if(o.geometry)o.geometry.dispose();});for(const m of [baffleMat,apertureMat,rearCoating,glass,opticalVoid.material])m.dispose();hardwareDetail.dispose();materialFinishes.dispose();cityExtension?.dispose();machinedFinish.dispose();shell.dispose();anodized.dispose();grip.dispose();opticsEnv.dispose();opticsStudio.traverse(o=>{if(o.isMesh){o.geometry.dispose();o.material.dispose();}});}};
 }

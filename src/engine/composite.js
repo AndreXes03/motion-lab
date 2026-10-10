@@ -16,6 +16,8 @@ const LOOK = Object.freeze({
   grain: 0.002,
   vignette: 0.12,
   lensDistortion: 0,
+  fisheye: 0,
+  edgeSoftness: 0,
   aoIntensity: 0.4
 });
 
@@ -25,7 +27,9 @@ const FinishShader = {
     resolution: { value: new Vector2(1920, 1080) },
     aberrationPx: { value: LOOK.aberrationPx },
     vignette: { value: LOOK.vignette },
-    lensDistortion: { value: 0 }
+    lensDistortion: { value: 0 },
+    fisheye: { value: 0 },
+    edgeSoftness: { value: 0 }
   },
   vertexShader: /* glsl */`
     varying vec2 vUv;
@@ -40,6 +44,8 @@ const FinishShader = {
     uniform float aberrationPx;
     uniform float vignette;
     uniform float lensDistortion;
+    uniform float fisheye;
+    uniform float edgeSoftness;
     varying vec2 vUv;
 
     void main() {
@@ -54,10 +60,33 @@ const FinishShader = {
       vec2 p = centered * 2.0;
       float r2 = dot(p,p);
       vec2 lensUV = 0.5 + 0.5 * p * (1.0 + lensDistortion*r2)/(1.0+2.0*lensDistortion);
+      // Aspect-correct equidistant lens approximation; bounded inverse mapping
+      // keeps the full frame covered without mirroring or clamping black corners.
+      if (fisheye > 0.0) {
+        float aspect = resolution.x / resolution.y;
+        vec2 optical = p * vec2(aspect, 1.0);
+        float radialLength = length(optical);
+        float diagonal = length(vec2(aspect, 1.0));
+        float theta = clamp(fisheye, 0.0, 1.0) * 1.32;
+        float normalizedRadius = radialLength / diagonal;
+        float magnification = normalizedRadius > 0.0001
+          ? tan(normalizedRadius * theta) / (normalizedRadius * tan(theta))
+          : theta / tan(theta);
+        lensUV = .5 + .5 * optical * magnification / vec2(aspect, 1.0);
+      }
       vec3 color;
       color.r = texture2D(tDiffuse, clamp(lensUV + offset,vec2(.001),vec2(.999))).r;
       color.g = texture2D(tDiffuse, lensUV).g;
       color.b = texture2D(tDiffuse, clamp(lensUV - offset,vec2(.001),vec2(.999))).b;
+      if (edgeSoftness > 0.0) {
+        // Off-axis loss of definition, with a small tangential component.
+        // The optical center stays sharp; no uniform full-frame blur.
+        vec2 soft = (radial + .45 * vec2(-radial.y, radial.x))
+          * edge * edge * edgeSoftness / (vec2(resolution.x/resolution.y,1.0)*1080.0);
+        vec3 wings = texture2D(tDiffuse, clamp(lensUV+soft,vec2(.001),vec2(.999))).rgb
+          + texture2D(tDiffuse, clamp(lensUV-soft*.65,vec2(.001),vec2(.999))).rgb;
+        color = color*.6 + wings*.2;
+      }
 
       float falloff = smoothstep(0.28, 1.0, edge);
       color *= 1.0 - vignette * falloff;
@@ -76,7 +105,7 @@ export function createComposite(renderer, scene, camera, config) {
     type: HalfFloatType,
     depthBuffer: true,
     stencilBuffer: false,
-    samples: 4
+    samples: Math.min(8, renderer.capabilities.maxSamples)
   });
   target.texture.name = 'Signal.Composite.LinearMSAA';
 
@@ -92,8 +121,9 @@ export function createComposite(renderer, scene, camera, config) {
   const finishPass = new ShaderPass(FinishShader);
   finishPass.material.toneMapped = false;
   finishPass.uniforms.resolution.value.set(width, height);
-  finishPass.uniforms.aberrationPx.value = look.aberrationPx;
-  finishPass.uniforms.vignette.value = look.vignette;
+  for (const key of ['aberrationPx', 'vignette', 'lensDistortion', 'fisheye', 'edgeSoftness']) {
+    finishPass.uniforms[key].value = look[key];
+  }
 
   composer.addPass(renderPass);
   const aoPass = new GTAOPass(scene,camera,width,height,undefined,{radius:.22,thickness:1,distanceExponent:2,scale:1},{radius:4});
@@ -128,7 +158,7 @@ export function createComposite(renderer, scene, camera, config) {
       aaPass.enabled=next.antialias!==false;
       bloomPass.strength=next.bloomStrength;bloomPass.threshold=next.bloomThreshold;bloomPass.radius=next.bloomRadius;
       aoPass.blendIntensity=next.aoIntensity??.4;aoPass.enabled=aoPass.blendIntensity>0;
-      for(const key of ['aberrationPx','vignette','lensDistortion'])finishPass.uniforms[key].value=next[key]??LOOK[key];
+      for(const key of ['aberrationPx','vignette','lensDistortion','fisheye','edgeSoftness'])finishPass.uniforms[key].value=next[key]??LOOK[key];
     },
     setReview(mode) {
       const clean=mode&&mode!=='beauty';bloomPass.enabled=!clean;finishPass.enabled=!clean;highlights.enabled=!clean;if(clean){aoPass.enabled=false;dofPass.enabled=false;}

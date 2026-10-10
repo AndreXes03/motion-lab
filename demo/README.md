@@ -6,12 +6,12 @@
 
 | Film | Type | Duration | Watch / download |
 | --- | --- | --- | --- |
-| [![CAMERA](camera-poster.jpg)](https://andrexes03.github.io/motion-lab/#camera) | 3D | 15.4 s | [Watch](https://andrexes03.github.io/motion-lab/#camera) · [1080p MP4](camera-1080.mp4) |
 | [![PULSE](pulse-poster.jpg)](https://andrexes03.github.io/motion-lab/#pulse) | 3D | 13.9 s | [Watch](https://andrexes03.github.io/motion-lab/#pulse) · [1080p MP4](pulse-1080.mp4) |
+| [![CAMERA](camera-poster.jpg)](https://andrexes03.github.io/motion-lab/#camera) | 3D | 15.4 s | [Watch](https://andrexes03.github.io/motion-lab/#camera) · [1080p MP4](camera-1080.mp4) |
 | [![DOT](dot-poster.jpg)](https://andrexes03.github.io/motion-lab/#dot) | Hybrid | 16 s | [Watch](https://andrexes03.github.io/motion-lab/#dot) · [1080p MP4](dot-1080.mp4) |
 | [![REPLAY](replay-poster.jpg)](https://andrexes03.github.io/motion-lab/#replay) | Hybrid | 15 s | [Watch](https://andrexes03.github.io/motion-lab/#replay) · [1080p MP4](replay-1080.mp4) |
 
-**1920 × 1080 · 30 fps · original audio.** Hybrid combines 3D objects with 2D graphics and typography. All scenes remain editable in free, open-source Motion Lab and render locally from code.
+**1920 × 1080 · 30 fps · sound design.** Hybrid combines 3D objects with 2D graphics and typography. PULSE/CAMERA use separately licensed music ([credits](../THIRD_PARTY.md)). All scenes remain editable in free, open-source Motion Lab and render locally from code.
 
 ## Earlier studies
 

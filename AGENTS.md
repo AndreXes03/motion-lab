@@ -12,3 +12,5 @@ Before delivering a changed product film:
 Stable configuration: project/look.json, project/motion.json, src/config.js.
 Inspection parameters: {"inspect":{"object":"device.root","yaw":20},"review":"clean"}. Modes: beauty, clean, clay, normals.
 Do not alter shared files while another agent is rendering a quality gate; coordinate component ownership and announce when a file is stable.
+
+For product-film modeling, impact animation, lens choreography and final delivery, use the repository skill at `.agents/skills/motion-lab-product-film/SKILL.md`. It documents the working renderer and efficient checks without replacing the user's current creative or publication instructions.

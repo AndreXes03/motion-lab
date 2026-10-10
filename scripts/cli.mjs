@@ -1,5 +1,6 @@
 #!/usr/bin/env node
 import {applyRenderQuality} from '../src/engine/render-quality.js';
+import {openFrameCache,sourceFingerprint} from './render-cache.mjs';
 import {sceneConfig,sceneIds} from '../src/scene-registry.js';
 import { createServer } from 'vite';
 import {planSound,renderSound,encodeWav,normalizeSound} from '../src/engine/sound-design.js';
@@ -10,7 +11,7 @@ import sharp from 'sharp';
 import ffprobe from 'ffprobe-static';
 import { spawn } from 'node:child_process';
 import { createHash } from 'node:crypto';
-import { mkdtemp, mkdir, rm, writeFile, readFile, rename } from 'node:fs/promises';
+import { mkdir, writeFile, readFile, rename } from 'node:fs/promises';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
@@ -42,7 +43,7 @@ function parseArgs(argv) {
 
 }
 function help() {
-  output('help', { scene: '--scene '+sceneIds.join('|')+' (all commands)', audio:'--sound on|off (3D and procedural 2D; subtle default mix, saved with the recipe)', quality:'--quality preview|lookdev|final (explicit dimensions and sample counts override the preset)', settings:'--fps 24|25|30|50|60 --format mp4|webm|prores --bitrate-mbps 2..200 --temporal-samples 1..64 (24 recommended)', commands: {
+  output('help', { scene: '--scene '+sceneIds.join('|')+' (all commands)', audio:'--sound on|off (3D and procedural 2D; subtle default mix, saved with the recipe)', quality:'--quality preview|lookdev|final|premium|supersampled (explicit dimensions and sample counts override the preset)', resume:'--resume on|off --keep-frames on|off (matching source/settings only; premium enables resume)', settings:'--fps 24|25|30|50|60 --format mp4|webm|prores --bitrate-mbps 2..200 --temporal-samples 1..64 (24 recommended)', commands: {
     viewer: 'viewer [--width 1920 --height 1080] (opens local preview on :4173)',
     frame: 'frame --out frame.png [--time 0 --width 1920 --height 1080]',
     contact: 'contact --out contact.png [--samples 6 --width 1920 --height 1080]',
@@ -106,8 +107,8 @@ function outPath(value) { if (!value) throw new Error('This command requires --o
 async function writeImage(png, target) { await mkdir(path.dirname(target), { recursive: true }); await writeFile(target, png); }
 async function encodeFrames(frameDir, target, width, height, fps, format, bitrateMbps, audioPath=null) {
   await mkdir(path.dirname(target), { recursive: true });
-  const codec=format==='webm'?['-c:v','libvpx-vp9','-b:v',`${bitrateMbps}M`,'-pix_fmt','yuv420p']:format==='prores'?['-c:v','prores_ks','-profile:v','3','-pix_fmt','yuv422p10le']:['-c:v','libx264','-preset','medium','-b:v',`${bitrateMbps}M`,'-pix_fmt','yuv420p','-movflags','+faststart'];
-  const args = ['-hide_banner','-loglevel','error','-y','-framerate',String(fps),'-i',path.join(frameDir,'frame-%06d.png'),...(audioPath?['-i',audioPath,'-map','0:v:0','-map','1:a:0','-c:a',format==='webm'?'libopus':format==='prores'?'pcm_s16le':'aac','-shortest']:[]),...codec,'-f',format==='prores'?'mov':format,target];
+  const codec=format==='webm'?['-c:v','libvpx-vp9','-b:v',`${bitrateMbps}M`,'-pix_fmt','yuv420p']:format==='prores'?['-c:v','prores_ks','-profile:v','3','-pix_fmt','yuv422p10le','-movflags','+write_colr']:['-c:v','libx264','-preset','medium','-b:v',`${bitrateMbps}M`,'-pix_fmt','yuv420p','-movflags','+faststart'];
+  const args = ['-hide_banner','-loglevel','error','-y','-framerate',String(fps),'-i',path.join(frameDir,'frame-%06d.png'),...(audioPath?['-i',audioPath,'-map','0:v:0','-map','1:a:0','-c:a',format==='webm'?'libopus':format==='prores'?'pcm_s16le':'aac','-shortest']:[]),...codec,'-vf','scale=out_color_matrix=bt709:out_range=tv','-color_primaries','bt709','-color_trc','bt709','-colorspace','bt709','-color_range','tv','-f',format==='prores'?'mov':format,target];
   await run(ffmpegPath, args);
 }
 async function writeProgressJpeg(page, png, target) {
@@ -124,22 +125,25 @@ function run(bin, args) {
     child.on('close', code => code === 0 ? resolve() : reject(new Error(`${path.basename(bin)} exited ${code}: ${err.trim()}`)));
   });
 }
-async function exportVideo(page, target, width, height, parameters, start, end, temporalSamples, fps, format, bitrateMbps) {
-  const frameDir = await mkdtemp(path.join(ROOT, '.motion-frames-'));
+async function exportVideo(page, target, width, height, parameters, start, end, temporalSamples, fps, format, bitrateMbps, cacheOptions) {
+  const cache = await openFrameCache(ROOT, {source:cacheOptions.resume?await sourceFingerprint(ROOT):null,
+    width,height,parameters,start,end,temporalSamples,fps,browser:page.context().browser().version()},cacheOptions);
+  const frameDir = cache.directory;
   const total = Math.round((end - start) * fps);
   const previewPath = `${target}.progress.jpg`;
-  let lastPreviewAt = 0, previewFrame = 0;
+  let lastPreviewAt = 0, previewFrame = 0, success = false, reused = 0;
   try {
     for (let i = 0; i < total; i++) {
-      const png = await renderPng(page, start + i / fps, width, height, parameters, temporalSamples, fps);
-      await writeFile(path.join(frameDir, `frame-${String(i + 1).padStart(6, '0')}.png`), png);
+      let png = await cache.read(i);
+      if (png) reused++;
+      else { png = await renderPng(page, start + i / fps, width, height, parameters, temporalSamples, fps); await cache.write(i,png); }
       const now = Date.now();
       if (now - lastPreviewAt >= 1000 || i === total - 1) {
         await writeProgressJpeg(page, png, previewPath);
         lastPreviewAt = Date.now();
         previewFrame = i + 1;
       }
-      output('progress', { phase: 'rendering', frames: i + 1, total, previewFrame, percent: Math.min(98, Math.round((i + 1) / total * 98)) });
+      output('progress', { phase: 'rendering', frames: i + 1, total, reused, previewFrame, percent: Math.min(98, Math.round((i + 1) / total * 98)) });
     }
     output('progress', { phase: 'encoding', frames: total, total, percent: 99 });
     let audioPath=null;
@@ -150,7 +154,8 @@ async function exportVideo(page, target, width, height, parameters, start, end, 
       audioPath=path.join(frameDir,'sound.wav');await writeFile(audioPath,encodeWav(channels,result.sampleRate));
     }
     await encodeFrames(frameDir, target, width, height, fps, format, bitrateMbps,audioPath);
-  } finally { await rm(frameDir, { recursive: true, force: true }); }
+    success = true;
+  } finally { await cache.close(success); }
 }
 async function contactSheet(page, target, samples, width, height, parameters, fps) {
   const cellW = Math.min(640, width); const cellH = Math.round(cellW * height / width);
@@ -193,6 +198,8 @@ async function main() {
   const { command, opts, parameters: explicitParameters } = parseArgs(process.argv.slice(2));
   if (opts.help || command === 'help' || !command) return help();
   if (!['viewer', 'frame', 'contact', 'preview', 'export', 'verify'].includes(command)) throw new Error(`Unknown command: ${command}`);
+  for (const key of ['resume','keep-frames']) if (opts[key] !== undefined && !['on','off'].includes(opts[key])) throw Error('--'+key+' must be on or off');
+  if (opts['keep-frames'] === 'on' && opts.resume !== 'on') throw Error('--keep-frames on requires --resume on');
   const target = ['frame', 'contact', 'preview', 'export'].includes(command) ? outPath(opts.out) : opts.out ? outPath(opts.out) : undefined;
   // CLI arguments win over an explicit snapshot; an explicit snapshot wins over the video's sidecar.
   const sidecar=command==='verify'&&target?await readSnapshot(target+'.project.json',true):{};
@@ -250,7 +257,7 @@ async function main() {
       const frames = Math.round((end - start) * fps);
       const w = width;
       const h = height;
-      await exportVideo(page, target, w, h, parameters, start, end, temporalSamples, fps, format, bitrateMbps); output('complete', { path: target, width: w, height: h, fps, format, bitrateMbps, duration: end - start, frames, start, end, temporalSamples });
+      await exportVideo(page, target, w, h, parameters, start, end, temporalSamples, fps, format, bitrateMbps,{resume:opts.resume==='on',keepFrames:opts['keep-frames']==='on'}); output('complete', { path: target, width: w, height: h, fps, format, bitrateMbps, duration: end - start, frames, start, end, temporalSamples });
     } else if (command === 'verify') {
       const interveningTimes = [DEFAULT.duration*.85, DEFAULT.duration*.05, DEFAULT.duration*.55].filter(t => t <= DEFAULT.duration && t !== time);
       for (const seekTime of interveningTimes) await renderPng(page, seekTime, width, height, parameters, temporalSamples, fps);

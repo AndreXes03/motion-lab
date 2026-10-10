@@ -27,3 +27,46 @@ The crisp procedural update preserves decoded audio exactly. Order/Chaos exporte
 ## Dark studio and public browser preview
 
 Checked October 10, 2026: English interface, live scene backdrop, contextual controls, expandable recipe/source panel, deterministic relative object edits and parameter validation. Five targeted checks passed. The static Pages build was checked without a local API: scene switching, version storage in the browser, undo and source inspection. Video export and project references require the local app.
+
+
+## Product-film refinement, October 11, 2026
+
+PULSE and CAMERA now include layered hardware, restrained material variation,
+selective extreme optics, close camera passes and bounded impact recoil. PULSE
+shows the rear speaker assembly and separated display electronics; CAMERA's
+final assembly replaces decorative particles with visible mechanical details.
+
+- The public Vite build passes (existing bundle-size warning remains).
+- Frame-cache checks pass (7 cases); temporal-sampling checks pass (12 cases).
+- Delivery-tool validation passes 23 checks, including real short X/web encodes.
+- New motion is seek-deterministic at PULSE 9.8 s and CAMERA 14.65 s, tested at
+  480 × 270 with intervening seeks and identical PNG hashes.
+- CAMERA's constrained blade animation retains positive vertical clearance
+  across 860 sampled assembly poses. This is a targeted assembly check, not
+  a general-purpose collision simulation.
+- Three-frame MP4, WebM and ProRes exports decode with BT.709 color. ProRes
+  carries nclc 1/1/1 in its MOV container; the bundled legacy ffprobe omits those
+  fields, so they were also checked with the FFmpeg decoder.
+- Clean stills and short motion clips were inspected before the full export.
+
+The repository product-film skill documents framing, functional construction,
+material scale, clearance, review, and delivery. Premium and supersampled presets
+use source/settings-fingerprinted resumable frames; changed sources do not reuse
+stale frames. The social exporter checks color metadata, timestamps, audio,
+complete decoding and faststart before producing a delivery report.
+
+
+The final audio revision keeps the selected music edits sample-identical before
+AAC encoding and replaces the previous effect layers with three quiet contacts
+per film. Effect peaks are at or below −26.5 dBFS; the PCM masters measure
+−14.08 LUFS / −3.72 dBTP (PULSE) and −14.04 LUFS / −6.69 dBTP (CAMERA), with
+no clipped samples. These measurements verify levels, not subjective sound quality.
+
+Final deliveries: PULSE 417 frames / 13.9 s and CAMERA 462 frames / 15.4 s,
+1920 × 1080 at 30 fps, downsampled from 2560 × 1440 / 48-sample renders.
+H.264 High 4.1, yuv420p, BT.709 limited range, stereo AAC-LC at 48 kHz,
+faststart, complete decoding and frame counts are verified. Website copies use
+CRF 17 with a bitrate cap; X copies use two-pass 8 Mb/s average / 10 Mb/s peak.
+The corrected PULSE audio was muxed without changing any video packet. Final
+compressed contact sheets and new posters were inspected. DOT and REPLAY media
+are unchanged.

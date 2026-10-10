@@ -32,7 +32,17 @@ machine. A separate system `ffmpeg` was not present during testing.
 The wind texture in `src/assets/audio/wind-magnific.mp3` was generated with
 Magnific / ElevenLabs. [Provenance](src/assets/audio/provenance.json) records
 its source and use. This generated audio asset is separate from the MIT code
-license; no third-party music track is bundled. Music is synthesized locally.
+license. The editable application synthesizes its fallback music locally.
+
+The PULSE and CAMERA demo films include music downloaded through the project
+owner’s Artlist account:
+
+- PULSE: [Mansij — RoboRhythm](https://artlist.io/royalty-free-music/song/roborhythm/132753).
+- CAMERA: [Evgeny Bardyuzha — Let It Drop (Instrumental version)](https://artlist.io/royalty-free-music/song/let-it-drop-instrumental-version/116014).
+
+These soundtracks are separately licensed stock assets, not MIT code. The
+original tracks and standalone edited stems are not distributed in this
+repository. Obtain your own appropriate music rights when reusing them.
 
 Demo marks and visual assets retain their owners’ rights. The Andrea Salvo
 logo belongs to its owner. Their inclusion does not grant rights to reuse the

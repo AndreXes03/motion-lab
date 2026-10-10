@@ -30,7 +30,7 @@ Free, open-source Motion Lab: editable scenes, camera and sound, rendered locall
 | [![DOT](demo/dot-poster.jpg)](https://andrexes03.github.io/motion-lab/#dot) | [![REPLAY](demo/replay-poster.jpg)](https://andrexes03.github.io/motion-lab/#replay) |
 | [Watch](https://andrexes03.github.io/motion-lab/#dot) · [1080p MP4](demo/dot-1080.mp4) | [Watch](https://andrexes03.github.io/motion-lab/#replay) · [1080p MP4](demo/replay-1080.mp4) |
 
-All four films: **1920 × 1080 · 30 fps · original audio**. Hybrid combines 3D objects with 2D graphics and typography.
+All four films: **1920 × 1080 · 30 fps · sound design**. Hybrid combines 3D objects with 2D graphics and typography. PULSE/CAMERA include separately licensed music; see [credits](THIRD_PARTY.md).
 
 ## Pop Motion / 2D + 3D
 
@@ -50,7 +50,11 @@ After Effects and Cinema 4D have procedural tools too. Here, the logic lives dir
 
 ## Reusable 3D baseline
 
-The approved PULSE and CAMERA look is available as a [studio baseline](docs/3d-lookdev.md): wide optics, neutral shadows, rim lighting, restrained bloom, matte plastic/rubber/metal materials and temporal motion blur. Start new scenes from these helpers and preview before rendering at 1080p.
+The PULSE and CAMERA studio look is available as a [studio baseline](docs/3d-lookdev.md): wide optics, neutral shadows, rim lighting, restrained bloom, matte plastic/rubber/metal materials and temporal motion blur. Start new scenes from these helpers and preview before rendering at 1080p.
+
+For detailed 3D exports, `--quality premium` selects 1080p, 48 temporal samples and resumable frames. For finer edges, `--quality supersampled` renders at 1440p for 1080p delivery. Use the clean/clay boards before a full render; see the [iteration workflow](docs/3d-lookdev.md#shorter-iteration-loop).
+
+The repository includes a [product-film skill](.agents/skills/motion-lab-product-film/SKILL.md) for coding agents: model construction, lens choreography, impact recoil, efficient review and verified export. Codex discovers it from `.agents/skills`; other agents can read the same guide directly.
 
 ## Studio
 
