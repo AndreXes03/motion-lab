@@ -7,7 +7,7 @@ import {RoundedBoxGeometry} from 'three/addons/geometries/RoundedBoxGeometry.js'
 import {RoomEnvironment} from 'three/addons/environments/RoomEnvironment.js';
 export const afterhoursConfig={id:'afterhours',duration:15.4,fps:30,width:1920,height:1080};
 export const afterhoursCuts=[0,2.4,4.4,6,8.1,9.2,10.4,11.1];
-export const afterhoursShutter=t=>t>2.4&&t<4.4?24:t>5.5&&t<6?40:t>6&&t<8.1?45:t>9.2&&t<10.4?55:t>10.4?60:0;
+export const afterhoursShutter=t=>t<2.4?110:t<4.4?120:t<6?150:t<8.1?150:t<9.2?120:t<10.4?150:170;
 // The requested edit omits the two standalone desert shots and the distant iris hero.
 const filmPhaseToU=q=>.055+.275*(q<0?1.85*q:(q+.08*(1-Math.exp(-q/.08)))/1.08);
 const editTime=t=>t<6?t:t<10.4?t+2.4:t<11.1?t+3.6:14.7+(t-11.1)*4.6/4.3;
