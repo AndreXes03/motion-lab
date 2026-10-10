@@ -1,4 +1,3 @@
-import {createBrandTexture} from '../components/brand.js';
 import * as T from 'three';
 import {createStudio} from '../engine/studio.js';
 import {applyTracks,sampleTrack} from '../engine/animation.js';
@@ -10,7 +9,6 @@ import {createLedSign} from '../components/led-sign.js';
 import {clamp,smooth} from '../engine/timeline.js';
 export function createScene(renderer,config){
  const studio=createStudio(renderer,{top:'#247ac5',bottom:'#c5d6e2'});const {scene}=studio;
- const brand=createBrandTexture({color:'#112438'});
  const camera=new T.PerspectiveCamera(60,16/9,.1,100);
  const device=createDevice({...config,text:{...config.text,display:'BAX'},deviceBrand:'B A X  S T U D I O'});device.group.scale.setScalar(.68);scene.add(device.group);
  for(const o of [...device.group.children])if(o.name.startsWith('cable.'))o.visible=false;
@@ -47,6 +45,7 @@ export function createScene(renderer,config){
  }
  return t;
  }
- function drawOverlay(ctx,t){ctx.drawImage(brand.image,1590,42,252,252/brand.userData.aspect);}
+ // Keep the film free of screen-space branding. Product textures remain in the scene.
+ function drawOverlay(){}
  return {scene,camera,update,drawOverlay};
 }

@@ -1,0 +1,38 @@
+name: Publish Motion Lab demo
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'showcase/**'
+      - 'demo/**'
+      - 'examples/procedural-field.html'
+      - '.github/workflows/demo-pages.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+concurrency:
+  group: pages
+  cancel-in-progress: true
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/configure-pages@v5
+      - name: Assemble demo
+        run: |
+          mkdir -p _site/demo _site/examples
+          cp showcase/index.html _site/index.html
+          cp examples/procedural-field.html _site/examples/
+          cp demo/*.mp4 demo/*.gif demo/*.jpg demo/*.png _site/demo/
+      - uses: actions/upload-pages-artifact@v4
+        with:
+          path: _site
+      - name: Publish
+        id: deployment
+        uses: actions/deploy-pages@v4
