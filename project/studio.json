@@ -4,24 +4,24 @@
     {
       "id": "bax",
       "title": "Objects in play",
-      "subtitle": "Tre oggetti tridimensionali, luce da studio e camera cinematografica.",
+      "subtitle": "Three 3D objects, studio lighting and a cinematic camera.",
       "kind": "3d",
       "controls": [
         {
           "id": "shell",
-          "label": "Scocca",
+          "label": "Shell",
           "type": "color",
           "path": "shell",
           "default": "#173bd5",
-          "help": "Colore della radio; non modifica gli altri oggetti."
+          "help": "Radio color; leaves other objects unchanged."
         },
         {
           "id": "knob",
-          "label": "Manopola",
+          "label": "Knob",
           "type": "color",
           "path": "knob",
           "default": "#f34a13",
-          "help": "Colore della manopola centrale."
+          "help": "Center knob color."
         },
         {
           "id": "display",
@@ -29,29 +29,29 @@
           "type": "text",
           "path": "display",
           "default": "",
-          "help": "Testo LED opzionale. Vuoto mantiene la sequenza originale."
+          "help": "Optional LED text. Leave blank to keep the original sequence."
         },
         {
           "id": "energy",
-          "label": "Energia oggetti",
+          "label": "Object energy",
           "type": "range",
           "min": 0,
           "max": 1.8,
           "step": 0.05,
           "path": "objectMotion",
           "default": 1,
-          "help": "Intensità e velocità degli oggetti; la camera resta invariata."
+          "help": "Object movement strength and speed; camera unchanged."
         },
         {
           "id": "contrast",
-          "label": "Contrasto luce",
+          "label": "Light contrast",
           "type": "range",
           "min": 0,
           "max": 1,
           "step": 0.01,
           "path": "look.lighting",
           "default": 0.85,
-          "help": "Bilancia fill, rim e ambiente senza cambiare la composizione."
+          "help": "Balance fill, rim and environment lighting."
         }
       ],
       "moments": [
@@ -64,11 +64,11 @@
           "time": 2.6
         },
         {
-          "label": "Cover aperta",
+          "label": "Open cover",
           "time": 4.7
         },
         {
-          "label": "Emblema",
+          "label": "Emblem",
           "time": 5.6
         },
         {
@@ -79,7 +79,7 @@
       "presets": [
         {
           "id": "original",
-          "label": "Originale",
+          "label": "Original",
           "values": {
             "energy": 1,
             "contrast": 0.85
@@ -88,7 +88,7 @@
         },
         {
           "id": "sculpted",
-          "label": "Scolpito",
+          "label": "Sculpted",
           "values": {
             "energy": 1.2,
             "contrast": 0.78
@@ -134,46 +134,46 @@
     {
       "id": "procedural",
       "title": "Motion Lab / Procedural Systems",
-      "subtitle": "Campi vettoriali, strutture parametriche e centinaia di elementi sincronizzati alla techno.",
+      "subtitle": "Vector fields, parametric structures and hundreds of elements synced to techno.",
       "kind": "2d",
       "controls": [
         {
           "id": "title",
-          "label": "Titolo",
+          "label": "Title",
           "type": "text",
           "path": "graphics.title",
           "default": "MOTION",
-          "help": "Testo principale delle scene 2D."
+          "help": "Main text in the 2D scenes."
         },
         {
           "id": "accent",
-          "label": "Accento",
+          "label": "Accent",
           "type": "color",
           "path": "graphics.accent",
           "default": "#c2ff38",
-          "help": "Colore delle forme e delle transizioni."
+          "help": "Shape and transition color."
         },
         {
           "id": "density",
-          "label": "Densità",
+          "label": "Density",
           "type": "range",
           "min": 4,
           "max": 18,
           "step": 1,
           "path": "graphics.density",
           "default": 10,
-          "help": "Numero di elementi ripetuti nella composizione."
+          "help": "Number of repeated elements."
         },
         {
           "id": "speed",
-          "label": "Ritmo",
+          "label": "Pace",
           "type": "range",
           "min": 0.25,
           "max": 2.5,
           "step": 0.05,
           "path": "graphics.speed",
           "default": 1,
-          "help": "Velocità dei gesti; non cambia durata o fps."
+          "help": "Motion speed; duration and frame rate unchanged."
         }
       ],
       "moments": [
@@ -190,7 +190,7 @@
           "time": 4.5
         },
         {
-          "label": "Onde",
+          "label": "Waves",
           "time": 6.3
         },
         {
@@ -198,14 +198,14 @@
           "time": 8.1
         },
         {
-          "label": "Finale",
+          "label": "Final",
           "time": 9.6
         }
       ],
       "presets": [
         {
           "id": "original",
-          "label": "Originale",
+          "label": "Original",
           "values": {
             "title": "MOTION",
             "accent": "#c2ff38",
@@ -225,7 +225,7 @@
         },
         {
           "id": "calm",
-          "label": "Calmo",
+          "label": "Calm",
           "values": {
             "title": "MOTION",
             "accent": "#75baff",
@@ -238,29 +238,29 @@
     {
       "id": "pop",
       "title": "PLAY.EXE / Pop Motion",
-      "subtitle": "Player flottante, lettering 3D e città ritmica. 120 BPM.",
+      "subtitle": "Floating player, 3D type and a rhythmic city. 120 BPM.",
       "kind": "hybrid",
       "controls": [
-        {"id":"fisheye","label":"Fish-eye","type":"range","min":0,"max":0.6,"step":0.01,"path":"graphics.fisheye","default":0.3,"help":"Curvatura ottica dell’intera composizione. Zero disattiva l’effetto."},
-        {"id":"cameraMotion","label":"Movimento camera","type":"range","min":0,"max":1,"step":0.05,"path":"graphics.cameraMotion","default":1,"help":"Intensità di zoom, spostamenti e rotazioni. Zero mostra la composizione fissa."},
+        {"id":"fisheye","label":"Fish-eye","type":"range","min":0,"max":0.6,"step":0.01,"path":"graphics.fisheye","default":0.3,"help":"Lens curvature across the full composition. Zero disables the effect."},
+        {"id":"cameraMotion","label":"Camera movement","type":"range","min":0,"max":1,"step":0.05,"path":"graphics.cameraMotion","default":1,"help":"Zoom, pan and roll intensity. Zero keeps the composition fixed."},
         {
           "id": "accent",
-          "label": "Accento sticker",
+          "label": "Sticker accent",
           "type": "color",
           "path": "graphics.accent",
           "default": "#ff66a7",
-          "help": "Colore degli sticker e degli anelli grafici."
+          "help": "Color of stickers and graphic rings."
         },
         {
           "id": "speed",
-          "label": "Energia lettering",
+          "label": "Lettering energy",
           "type": "range",
           "min": 0.25,
           "max": 2.5,
           "step": 0.05,
           "path": "graphics.speed",
           "default": 1,
-          "help": "Intensità dei piccoli movimenti e degli impulsi del lettering."
+          "help": "Intensity of lettering motion and beat accents."
         }
       ],
       "moments": [
