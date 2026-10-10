@@ -2,6 +2,19 @@
 
 [Watch in your browser](https://andrexes03.github.io/motion-lab/)
 
+## Final showcase
+
+| Film | Type | Duration | Watch / download |
+| --- | --- | --- | --- |
+| [![CAMERA](camera-poster.jpg)](https://andrexes03.github.io/motion-lab/#camera) | 3D | 15.4 s | [Watch](https://andrexes03.github.io/motion-lab/#camera) · [1080p MP4](camera-1080.mp4) |
+| [![PULSE](pulse-poster.jpg)](https://andrexes03.github.io/motion-lab/#pulse) | 3D | 13.9 s | [Watch](https://andrexes03.github.io/motion-lab/#pulse) · [1080p MP4](pulse-1080.mp4) |
+| [![DOT](dot-poster.jpg)](https://andrexes03.github.io/motion-lab/#dot) | Hybrid | 16 s | [Watch](https://andrexes03.github.io/motion-lab/#dot) · [1080p MP4](dot-1080.mp4) |
+| [![REPLAY](replay-poster.jpg)](https://andrexes03.github.io/motion-lab/#replay) | Hybrid | 15 s | [Watch](https://andrexes03.github.io/motion-lab/#replay) · [1080p MP4](replay-1080.mp4) |
+
+**1920 × 1080 · 30 fps · original audio.** Hybrid combines 3D objects with 2D graphics and typography. All scenes remain editable in free, open-source Motion Lab and render locally from code.
+
+## Earlier studies
+
 - [Procedural motion](procedural-techno.mp4): 1080p, 30 fps, 10 s, 4 temporal samples, target 12 Mb/s, 14.5 MB. Original techno at 132 BPM and 57 adaptive SFX. [Recipe](procedural-techno.project.json) · [Silent GIF](procedural-showcase.gif).
 - [Objects in play](objects-in-play.mp4): 3D test, 1080p, 25 fps, 24 temporal samples, target 6 Mb/s, with modular SFX. [Recipe](objects-in-play.project.json).
 - [3D cover](hero.jpg) · [3D frames](contact-sheet.png).

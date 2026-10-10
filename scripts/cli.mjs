@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+import {sceneConfig,sceneIds} from '../src/scene-registry.js';
 import { createServer } from 'vite';
 import {planSound,renderSound,encodeWav,normalizeSound} from '../src/engine/sound-design.js';
 import { config } from '../src/config.js';
@@ -14,7 +15,7 @@ import { fileURLToPath } from 'node:url';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const CHROME = '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome';
-const DEFAULT = config;
+let DEFAULT = config;
 
 function output(type, payload = {}) { process.stdout.write(`${JSON.stringify({ type, ...payload })}\n`); }
 function fail(message, extra = {}) { output('error', { message, ...extra }); process.exitCode = 1; }
@@ -34,12 +35,12 @@ function parseArgs(argv) {
     try { parameters = JSON.parse(opts.parameters); } catch { throw new Error('--parameters must be valid JSON'); }
     if (!parameters || Array.isArray(parameters) || typeof parameters !== 'object') throw new Error('--parameters must be a JSON object');
   }
-  if(opts.scene){if(!['bax','procedural','pop'].includes(opts.scene))throw new Error('--scene must be bax, procedural or pop');parameters.scene=opts.scene;}
+  if(opts.scene){if(!sceneIds.includes(opts.scene))throw new Error('--scene must be '+sceneIds.join(', '));parameters.scene=opts.scene;}
   return { command, opts, parameters };
 
 }
 function help() {
-  output('help', { scene: '--scene bax|procedural|pop (all commands)', audio:'--sound on|off (3D and procedural 2D; subtle default mix, saved with the recipe)', settings:'--fps 24|25|30|50|60 --format mp4|webm|prores --bitrate-mbps 2..200 --temporal-samples 1..64 (24 recommended)', commands: {
+  output('help', { scene: '--scene '+sceneIds.join('|')+' (all commands)', audio:'--sound on|off (3D and procedural 2D; subtle default mix, saved with the recipe)', settings:'--fps 24|25|30|50|60 --format mp4|webm|prores --bitrate-mbps 2..200 --temporal-samples 1..64 (24 recommended)', commands: {
     viewer: 'viewer [--width 1920 --height 1080] (opens local preview on :4173)',
     frame: 'frame --out frame.png [--time 0 --width 1920 --height 1080]',
     contact: 'contact --out contact.png [--samples 6 --width 1920 --height 1080]',
@@ -49,7 +50,9 @@ function help() {
   }});
 }
 async function startVite(port = 0) {
-  const server = await createServer({ root: ROOT, server: { host: '127.0.0.1', port, strictPort: port !== 0, hmr: port !== 0, watch: port === 0 ? null : {} }, logLevel: 'error' });
+  // Isolated renders may share node_modules, but must not invalidate each
+  // other's optimized dependencies while their browser is loading.
+  const server = await createServer({ root: ROOT, cacheDir: path.join(ROOT, '.motion-cache', 'vite'), server: { host: '127.0.0.1', port, strictPort: port !== 0, hmr: port !== 0, watch: port === 0 ? null : {} }, logLevel: 'error' });
   await server.listen();
   const address = server.httpServer.address();
   return { server, url: `http://127.0.0.1:${address.port}/` };
@@ -71,14 +74,15 @@ async function renderPng(page, time, width, height, parameters = {}, temporalSam
     const canvas = document.querySelector('#renderCanvas');
     if (!canvas) throw new Error('#renderCanvas disappeared');
     const shutterAngle=window.motion.shutterAngleAt?.(time,parameters)??parameters.look?.post?.shutterAngle??210;
-    if (temporalSamples === 1 || shutterAngle === 0) {
+    const sampleCount=temporalSamples===1?1:Math.min(64,Math.max(1,Math.round(window.motion.temporalSamplesAt?.(time,temporalSamples,parameters)??temporalSamples)));
+    if (sampleCount === 1 || shutterAngle === 0) {
       await window.motion.render(time, { width, height, parameters:{...parameters,renderSample:{fps}} });
     } else {
       const ctx = canvas.getContext('2d');
       const accumulated = new Float32Array(width * height * 4);
       const linear=new Float32Array(256);for(let i=0;i<256;i++){const s=i/255;linear[i]=s<=.04045?s/12.92:Math.pow((s+.055)/1.055,2.4);}
       const {shutterSamples}=await import('/src/engine/temporal.js');
-      const schedule=shutterSamples(time,{fps,duration,samples:temporalSamples,shutterAngle,cuts:window.motion.cutTimes?.(parameters)??parameters.motion?.cuts??[],profile:parameters.look?.post?.shutterProfile??'cosine'});
+      const schedule=shutterSamples(time,{fps,duration,samples:sampleCount,shutterAngle,cuts:window.motion.cutTimes?.(parameters)??parameters.motion?.cuts??[],profile:parameters.look?.post?.shutterProfile??'cosine'});
       for (let i = 0; i < schedule.length; i++) {
         const sample = schedule[i];
         await window.motion.render(sample.time, { width, height, parameters:{...parameters,renderSample:{frameTime:time,grain:false,fps}} });
@@ -193,6 +197,7 @@ async function main() {
   const requested=opts.snapshot?await readSnapshot(path.resolve(opts.snapshot)):{};
   const saved={...sidecar,...requested};
   const parameters={...sidecar.parameters,...requested.parameters,...explicitParameters};
+  DEFAULT=sceneConfig(parameters.scene??saved.config?.scene??config.scene);parameters.scene=DEFAULT.scene;
   if(opts.sound!==undefined){if(!['on','off'].includes(opts.sound))throw Error('--sound must be on or off');parameters.sound=normalizeSound({...parameters.sound,enabled:opts.sound==='on'});}
   if(parameters.sound!==undefined)parameters.sound=normalizeSound(parameters.sound);
   const number=(key,savedValue,fallback)=>{const n=Number(opts[key]??savedValue??fallback);if(!Number.isFinite(n))throw new Error(`--${key} must be finite`);return n;};
@@ -202,7 +207,7 @@ async function main() {
   const width=number('width',saved.settings?.width??saved.width??(legacy?metadata?.streams?.[0]?.width:saved.config?.width),command==='preview'?960:DEFAULT.width);
   const height=number('height',saved.settings?.height??saved.height??(legacy?metadata?.streams?.[0]?.height:saved.config?.height),command==='preview'?540:DEFAULT.height);
   const start=number('start',saved.start,0),end=number('end',saved.end,DEFAULT.duration);
-  const time=number('time',saved.time,0),temporalSamples=number('temporal-samples',saved.settings?.temporalSamples??saved.temporalSamples,1),samples=number('samples',saved.samples,6);
+  const time=number('time',saved.time,0),temporalSamples=number('temporal-samples',saved.settings?.temporalSamples??saved.temporalSamples,['pulse','camera'].includes(parameters.scene)?4:1),samples=number('samples',saved.samples,6);
   const fps=number('fps',saved.settings?.fps??saved.fps??saved.config?.fps,DEFAULT.fps),format=opts.format??saved.settings?.format??saved.format??'mp4',bitrateMbps=format==='prores'?null:number('bitrate-mbps',saved.settings?.bitrateMbps??saved.bitrateMbps,16);
   if(![24,25,30,50,60].includes(fps))throw new Error('--fps must be 24, 25, 30, 50 or 60');
   if(!['mp4','webm','prores'].includes(format))throw new Error('--format must be mp4, webm or prores');
@@ -227,7 +232,7 @@ async function main() {
   let browser;
   try {
     browser = await chromium.launch({ executablePath: CHROME, headless: command !== 'viewer', args: ['--disable-gpu-sandbox'] });
-    const page = await openMotion(browser, command==='viewer'?url+'?scene='+(parameters.scene||'bax')+(opts.sound?'&sound='+opts.sound:''):url+'?render=1', width, height);
+    const page = await openMotion(browser, command==='viewer'?url+'?scene='+(parameters.scene||'bax')+(opts.sound?'&sound='+opts.sound:''):url+'?render=1&scene='+parameters.scene, width, height);
     output('ready', { command, url, width, height, start, end, temporalSamples, config: await page.evaluate(() => window.motion.config ?? null) });
     if (command === 'viewer') {
       await new Promise(resolve => { browser.on('disconnected', resolve); process.on('SIGINT', resolve); process.on('SIGTERM', resolve); });

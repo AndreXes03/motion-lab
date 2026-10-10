@@ -4,6 +4,7 @@ renders/
 archive/
 .reference-upload/
 .motion-frames-*/
+.motion-cache/
 project/history/
 project/versions/
 project/references/

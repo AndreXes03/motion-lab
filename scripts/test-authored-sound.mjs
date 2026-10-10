@@ -1,0 +1,15 @@
+import assert from 'node:assert/strict';
+import {planSound,renderSound} from '../src/engine/sound-design.js';
+import {dotSoundTelemetry} from '../src/scenes/dot-sound.js';
+const timeline=dotSoundTelemetry(),before=JSON.stringify(timeline);
+const plan=planSound(timeline,{music:0}),a=renderSound(plan,{sampleRate:12000,stems:true}),b=renderSound(plan,{sampleRate:12000});
+assert.deepEqual(a.channels,b.channels,'Authored SFX must survive deterministic export');
+assert.equal(JSON.stringify(timeline),before,'Planning must not mutate visual cue timing');
+assert(a.channels.every(ch=>ch.every(Number.isFinite)));
+assert(a.stats.peak>0&&a.stats.peak<=.890001);
+const silent=renderSound(planSound(timeline,{enabled:false}),{sampleRate:12000});
+assert(silent.channels.every(ch=>ch.every(x=>x===0)),'Authored events must obey mute');
+const energy=(at,span=.18)=>{let e=0;for(let i=Math.floor(at*12000);i<Math.floor((at+span)*12000);i++)e+=a.channels[0][i]**2+a.channels[1][i]**2;return e;};
+assert(energy(10.34)>energy(9.6),'Landing pixel SFX must occur with the visual impact');
+assert.throws(()=>planSound({...timeline,authoredEvents:[{module:'bogus',time:1,duration:.2,gain:1}]}));
+console.log(JSON.stringify({passed:true,eventCount:plan.events.length,checks:['deterministic PCM','finite samples','headroom','mute','visual impact timing','invalid module','immutable timeline']}));

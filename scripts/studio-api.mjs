@@ -1,3 +1,4 @@
+import {sceneConfig,sceneIds,isNewScene} from '../src/scene-registry.js';
 import { spawn as nodeSpawn } from 'node:child_process';
 import { createHash, randomUUID } from 'node:crypto';
 import { createReadStream } from 'node:fs';
@@ -25,7 +26,7 @@ async function publishDownload(job) {
 }
 const MAX_BODY = 2 * 1024 * 1024;
 const MAX_JSON_DEPTH = 32;
-const ALLOWED_PARAMETERS = new Set(['scene', 'look', 'motion', 'graphics', 'studio', 'display', 'shell', 'knob', 'objectMotion', 'review', 'inspect', 'sound']);
+const ALLOWED_PARAMETERS = new Set(['scene', 'look', 'motion', 'graphics', 'studio', 'display', 'shell', 'knob', 'objectMotion', 'objectEdits', 'review', 'inspect', 'sound']);
 const LOOK_SECTIONS = {
   camera: new Set(['fov']),
   lighting: new Set(['preset', 'key', 'fill', 'rim', 'environment', 'keyPosition', 'keyTarget', 'rimPosition', 'keyAngle', 'keyPenumbra', 'keyColor', 'rimColor']),
@@ -53,14 +54,14 @@ function merge(base, patch) {
   return out;
 }
 
-function validateMotion(motion, allowedTracks) {
+function validateMotion(motion, allowedTracks, duration=config.duration) {
   if (!isRecord(motion) || !isRecord(motion.tracks)) throw new Error('motion must be an object with a tracks map');
   if (Object.keys(motion).some(key => !['name', 'cuts', 'tracks'].includes(key))) throw new Error('motion contains unsupported fields');
   if (motion.cuts !== undefined) {
     if (!Array.isArray(motion.cuts) || motion.cuts.length > 1000) throw new Error('motion.cuts must be an array of at most 1000 cut times');
     for (const cut of motion.cuts) {
       const time = typeof cut === 'number' ? cut : isRecord(cut) ? (cut.time ?? cut.t) : NaN;
-      if (!Number.isFinite(time) || time < 0 || time > config.duration) throw new Error(`Every motion cut must be a finite time from 0 to ${config.duration} seconds`);
+      if (!Number.isFinite(time) || time < 0 || time > duration) throw new Error(`Every motion cut must be a finite time from 0 to ${duration} seconds`);
     }
   }
   const tracks = Object.entries(motion.tracks);
@@ -81,9 +82,9 @@ function validateMotion(motion, allowedTracks) {
   return motion;
 }
 
-function validateStudioMeta(studio, scene) {
+function validateStudioMeta(studio, scene, look) {
   if (studio === undefined) return undefined;
-  if (!isRecord(studio) || Object.keys(studio).some(k => !['values', 'preset'].includes(k))) throw new Error('studio must contain only values and preset');
+  if (!isRecord(studio) || Object.keys(studio).some(k => !['values', 'preset', 'lookOverrides'].includes(k))) throw new Error('studio must contain only values and preset');
   const project = studioProjects.find(p => p.id === scene);
   if (!project) throw new Error(`Unsupported scene: ${scene}`);
   const presetId = studio.preset ?? 'original';
@@ -98,7 +99,10 @@ function validateStudioMeta(studio, scene) {
     if (control.type === 'color' && (typeof value !== 'string' || !/^#[0-9a-f]{6}$/i.test(value))) throw new Error(`studio.values.${key} must be a hex color`);
     if (control.type === 'text' && (typeof value !== 'string' || value.length > 22)) throw new Error(`studio.values.${key} must be text up to 22 characters`);
   }
-  return { values: structuredClone(values), preset: presetId };
+  const overrides=studio.lookOverrides??{};
+  if(!isRecord(overrides)||Object.entries(overrides).some(([section,fields])=>!LOOK_SECTIONS[section]||!isRecord(fields)||Object.keys(fields).some(key=>!LOOK_SECTIONS[section].has(key))))throw new Error('Unsupported look override');
+  validateLook(merge(look,overrides));
+  return { values: structuredClone(values), preset: presetId, lookOverrides:structuredClone(overrides) };
 }
 
 export async function validateStudioParameters(input) {
@@ -106,13 +110,13 @@ export async function validateStudioParameters(input) {
   finiteTree(input, 'parameters');
   for (const key of Object.keys(input)) if (!ALLOWED_PARAMETERS.has(key)) throw new Error(`Unsupported parameter: ${key}`);
   const scene = input.scene ?? 'bax';
-  if (!['bax', 'procedural', 'pop'].includes(scene)) throw new Error('scene must be bax, procedural or pop');
+  if (!sceneIds.includes(scene)) throw new Error('scene must be '+sceneIds.join(', '));
   const defaults = await Promise.all([readProject('look'), readProject('motion')]);
   const look = merge(defaults[0], input.look ?? {});
   if (!isRecord(look) || Object.entries(look).some(([section, values]) => !LOOK_SECTIONS[section] || !isRecord(values) || Object.keys(values).some(key => !LOOK_SECTIONS[section].has(key)))) throw new Error('look contains unsupported sections or fields');
   try { validateLook(look); } catch (error) { throw new Error(`Invalid look: ${error.message}`); }
   const motion = merge(defaults[1], input.motion ?? {});
-  validateMotion(motion, new Set(Object.keys(defaults[1].tracks)));
+  validateMotion(motion, new Set(Object.keys(defaults[1].tracks)),sceneConfig(scene).duration);
 
   const normalized = { ...structuredClone(input), scene, look, motion };
   if(input.sound !== undefined)normalized.sound=normalizeSound(input.sound);
@@ -132,7 +136,15 @@ export async function validateStudioParameters(input) {
   if (input.objectMotion !== undefined && (typeof input.objectMotion !== 'number' || !Number.isFinite(input.objectMotion) || input.objectMotion < 0 || input.objectMotion > 2)) throw new Error('objectMotion must be 0..2');
   if (input.review !== undefined && (scene !== 'bax' || !['beauty', 'clean', 'clay', 'normals'].includes(input.review))) throw new Error('review is only supported for the BAX scene');
   if (input.inspect !== undefined && (!isRecord(input.inspect) || Object.keys(input.inspect).some(k => !['object', 'yaw'].includes(k)) || scene !== 'bax' || !['device.root', 'bax.emblem', 'bax.kinetic'].includes(input.inspect.object) || (input.inspect.yaw !== undefined && (!Number.isFinite(input.inspect.yaw) || Math.abs(input.inspect.yaw) > 180)))) throw new Error('Invalid inspect parameter');
-  const studio = validateStudioMeta(input.studio, scene);
+  if(input.objectEdits!==undefined){
+    if(!isRecord(input.objectEdits))throw new Error('objectEdits must be an object');
+    for(const [id,edits]of Object.entries(input.objectEdits)){
+      if(scene!=='bax'||!['device.root','bax.emblem','bax.kinetic'].includes(id)||!isRecord(edits))throw new Error('Unsupported object edit');
+      const ranges={x:[-5,5],y:[-5,5],z:[-5,5],yaw:[-180,180],scale:[.25,2]};
+      for(const [key,value]of Object.entries(edits)){const range=ranges[key];if(!range||!Number.isFinite(value)||value<range[0]||value>range[1])throw new Error('Invalid object edit: '+id+'.'+key);}
+    }
+  }
+  const studio = validateStudioMeta(input.studio, scene, look);
   if (studio) normalized.studio = studio;
   return normalized;
 }
@@ -262,8 +274,8 @@ async function loadPersistedJobs() {
       const job = {
         id, kind: record.kind, scene: record.scene, status,
         progress: status === 'completed' ? 100 : Math.max(0, Math.min(99, Number(record.progress) || 0)),
-        frames: Math.max(0, Number(record.frames) || (status === 'completed' ? (record.kind === 'frame' ? 1 : config.duration * (record.settings?.fps ?? config.fps)) : 0)),
-        total: Math.max(1, Number(record.total) || (record.kind === 'frame' ? 1 : config.duration * (record.settings?.fps ?? config.fps))),
+        frames: Math.max(0, Number(record.frames) || (status === 'completed' ? (record.kind === 'frame' ? 1 : sceneConfig(record.scene??'bax').duration * (record.settings?.fps ?? config.fps)) : 0)),
+        total: Math.max(1, Number(record.total) || (record.kind === 'frame' ? 1 : sceneConfig(record.scene??'bax').duration * (record.settings?.fps ?? config.fps))),
         samples: Math.max(0, Number(record.samples) || (status === 'completed' && record.kind === 'frame' ? (record.settings?.temporalSamples ?? 1) : 0)),
         totalSamples: Math.max(0, Number(record.totalSamples) || (record.kind === 'frame' ? (record.settings?.temporalSamples ?? 1) : 0)),
         phase: status === 'completed' ? 'completed' : status === 'failed' ? 'failed' : (record.phase || 'rendering'),
@@ -459,11 +471,11 @@ export function createStudioApi({ spawnFn = nodeSpawn, revealFn = revealWithFind
         if (!['frame', 'preview', 'export'].includes(body.kind)) return send(res, 400, { error: 'kind must be frame, preview, or export' });
         if (activeRenderId) return send(res, 409, { error: 'Another local render is already running' });
         const time = body.time ?? 0;
-        if (typeof time !== 'number' || !Number.isFinite(time) || time < 0 || time > config.duration) return send(res, 400, { error: `time must be a number from 0 to ${config.duration} seconds` });
+        const selectedConfig=sceneConfig(body.parameters?.scene??'bax');if (typeof time !== 'number' || !Number.isFinite(time) || time < 0 || time > selectedConfig.duration) return send(res, 400, { error: `time must be a number from 0 to ${selectedConfig.duration} seconds` });
         reservation = `pending:${randomUUID()}`;
         activeRenderId = reservation;
         const parameters = await validateStudioParameters(body.parameters);
-        const settings = validateRenderSettings(body.kind, body.settings);
+        const settings = validateRenderSettings(body.kind, body.settings);if(['dot','replay'].includes(parameters.scene))settings.temporalSamples=1;else if(['pulse','camera'].includes(parameters.scene)&&body.settings?.temporalSamples===undefined)settings.temporalSamples=4;
         const id = randomUUID();
         const extension = outputExtension(body.kind, settings);
         await mkdir(RENDER_DIR, { recursive: true });
@@ -473,10 +485,10 @@ export function createStudioApi({ spawnFn = nodeSpawn, revealFn = revealWithFind
         const height = settings?.height ?? config.height;
         const fps = settings?.fps ?? config.fps;
         const temporalSamples = settings?.temporalSamples ?? 1;
-        const snapshot = { schemaVersion: 2, command: body.kind, config: { ...config, width, height, fps }, parameters, width, height, fps, settings, time, start: 0, end: config.duration, temporalSamples };
+        const snapshot = { schemaVersion: 2, command: body.kind, config: { ...selectedConfig, width, height, fps }, parameters, width, height, fps, settings, time, start: 0, end: selectedConfig.duration, temporalSamples };
         const sourceHash = await sourceFingerprint();
         await writeFile(snapshotPath, `${JSON.stringify(snapshot, null, 2)}\n`, { flag: 'wx' });
-        const total = body.kind === 'frame' ? 1 : Math.round(config.duration * fps);
+        const total = body.kind === 'frame' ? 1 : Math.round(selectedConfig.duration * fps);
         const totalSamples = body.kind === 'frame' ? settings.temporalSamples : 0;
         const job = { id, kind: body.kind, scene: parameters.scene, status: 'running', progress: 0, frames: 0, total, samples: 0, totalSamples, phase: 'rendering', createdAt: new Date().toISOString(), time, url: null, downloadUrl: null, error: null, extension, settings, sourceHash, outputPath, snapshotPath, manifestPath: `${outputPath}.job.json`, parameters };
         jobs.set(id, job);

@@ -1,3 +1,9 @@
+import {sceneConfig,sceneIds,isNewScene,sceneRegistry} from '../scene-registry.js';
+import {dotSoundTelemetry} from '../scenes/dot-sound.js';
+import {createMascotDemo,mascotShutterAt} from '../scenes/mascot-demo.js';
+import {createDemo as createPulseDemo,shutterAngleAt as pulseShutterAt,temporalSamplesAt as pulseTemporalSamplesAt} from '../scenes/pulse-demo.js';
+import {createAfterhoursDemo,afterhoursShutter} from '../scenes/afterhours-demo.js';
+import {createReplayDemo} from '../scenes/replay-demo.js';
 import {createPopDemo} from '../scenes/pop-demo.js';
 import {sampleProceduralMotion} from './sound-procedural.js';
 import {createProceduralDemo,proceduralTempo,proceduralCuts,proceduralShutter} from '../scenes/procedural-demo.js';
@@ -10,14 +16,17 @@ import {createComposite} from './composite.js';
 import {applyFilmGrain} from './film-grain.js';
 import {smooth} from './timeline.js';
 export function createRuntime(canvas,{initialScene="bax"}={}){
+ let activeScene=initialScene;const studies={};const studyFactories={dot:createMascotDemo,pulse:createPulseDemo,camera:createAfterhoursDemo,replay:createReplayDemo};
  const graphics=createProceduralDemo(config); let pop;
  let renderer,scene,camera,update,drawOverlay,composite;
  let look=structuredClone(savedLook);const ctx=canvas.getContext('2d',{willReadFrequently:true});let width=0,height=0;const diagnosticHidden=[];const clay=new T.MeshStandardMaterial({color:'#a4a6ab',roughness:.65});const normals=new T.MeshNormalMaterial();
  function init3d(){if(renderer)return;renderer=new T.WebGLRenderer({antialias:true,alpha:false,preserveDrawingBuffer:true,powerPreference:'high-performance'});renderer.setPixelRatio(1);renderer.shadowMap.enabled=true;renderer.shadowMap.type=T.PCFSoftShadowMap;renderer.toneMapping=T.ACESFilmicToneMapping;renderer.outputColorSpace=T.SRGBColorSpace;const createScene=config.scene==='bax'?createBax:createSignal;({scene,camera,update,drawOverlay}=createScene(renderer,config));composite=createComposite(renderer,scene,camera,{...config,look:savedLook.post});}
- function finishFrame(targetCtx,time,w,h,parameters={}){const activeLook=parameters.look||look;if(parameters.review&&parameters.review!=='beauty')return;applyFilmGrain(targetCtx,time,w,h,{amount:activeLook.post.grain??0,size:activeLook.post.grainSize??1.1,fps:parameters.renderSample?.fps??config.fps});}
+ function finishFrame(targetCtx,time,w,h,parameters={}){const id=parameters.scene??activeScene;if(id==='camera'){const study=studies.camera??=studyFactories.camera();study.finishFrame?.(targetCtx,time,w,h,parameters);return;}if(isNewScene(id)&&id!=='replay')return;const activeLook=parameters.look||look;if(parameters.review&&parameters.review!=='beauty')return;applyFilmGrain(targetCtx,time,w,h,{amount:id==='replay'?.018:activeLook.post.grain??0,size:id==='replay'?1.1:activeLook.post.grainSize??1.1,fps:parameters.renderSample?.fps??config.fps});}
  function render(time,{width:w=config.width,height:h=config.height,parameters={}}={}){
  if(!Number.isFinite(time))throw new Error('Render time must be finite');
- if(parameters.scene && !['bax','procedural','pop'].includes(parameters.scene))throw new Error('Unknown scene: '+parameters.scene);
+ if(parameters.scene && !sceneIds.includes(parameters.scene))throw new Error('Unknown scene: '+parameters.scene);
+ activeScene=parameters.scene??activeScene;parameters={...parameters,scene:activeScene};
+ if(isNewScene(activeScene)){const cfg=sceneConfig(activeScene),t=Math.max(0,Math.min(cfg.duration,time));const study=studies[activeScene]??=studyFactories[activeScene]();if(canvas.width!==w||canvas.height!==h){canvas.width=w;canvas.height=h;}if(activeScene==='pulse')study.render(ctx,t,w,h,parameters);else study.render(ctx,t,parameters,w,h);if(parameters.renderSample?.grain!==false)finishFrame(ctx,t,w,h,parameters);width=0;height=0;return{scene:activeScene,time:t,frame:Math.min(cfg.duration*cfg.fps-1,Math.floor(t*cfg.fps)),width:w,height:h};}
  if(parameters.scene==='pop'){pop??=createPopDemo();if(canvas.width!==w||canvas.height!==h){canvas.width=w;canvas.height=h;}const t=Math.max(0,Math.min(config.duration,time));pop.render(ctx,t,parameters,w,h);width=0;height=0;if(parameters.renderSample?.grain!==false)finishFrame(ctx,t,w,h,parameters);return {scene:'pop',time:t,frame:Math.min(config.duration*config.fps-1,Math.floor(t*config.fps)),width:w,height:h};}
  if(parameters.scene==='procedural'){const t=Math.max(0,Math.min(config.duration,time));if(canvas.width!==w||canvas.height!==h){canvas.width=w;canvas.height=h;}ctx.save();ctx.scale(w/config.width,h/config.height);try{graphics.render(ctx,t,parameters);}finally{ctx.restore();}width=0;height=0;if(parameters.renderSample?.grain!==false)finishFrame(ctx,t,w,h,parameters);return {scene:'procedural',time:t,frame:Math.min(config.duration*config.fps-1,Math.floor(t*config.fps)),width:w,height:h};}
  init3d();
@@ -31,6 +40,8 @@ export function createRuntime(canvas,{initialScene="bax"}={}){
  ctx.restore();if(parameters.renderSample?.grain!==false)finishFrame(ctx,t,w,h,parameters);return {time:t,frame:Math.min(config.duration*config.fps-1,Math.floor(t*config.fps)),width:w,height:h};
  }
  function sampleMotion(parameters={},rate=60){
+  const id=parameters.scene??activeScene;if(isNewScene(id)){const cfg=sceneConfig(id);if(id==='dot')return dotSoundTelemetry(rate);if(id==='replay'){const study=studies[id]??=studyFactories[id]();return{...sampleProceduralMotion(t=>study.nodesAt(t),{duration:cfg.duration,rate,width:1920,height:1080,seed:16}),musicBpm:120};}const frames=Array.from({length:Math.ceil(cfg.duration*rate)+1},(_,i)=>({time:Math.min(cfg.duration,i/rate),camera:{position:[0,0,0],quaternion:[0,0,0,1]},objects:{}}));return{duration:cfg.duration,rate,frames,cuts:sceneRegistry[id].cuts};}
+
   if(parameters.scene==='pop'){pop??=createPopDemo();return {...sampleProceduralMotion(t=>pop.nodesAt(t,parameters),{duration:config.duration,rate,width:1920,height:1080,seed:42}),musicBpm:120};}
   if(parameters.scene==='procedural')return {...sampleProceduralMotion(t=>graphics.nodesAt(t,parameters),{duration:config.duration,rate,width:1920,height:1080,seed:graphics.config.seed}),musicBpm:proceduralTempo(parameters)};
   init3d();const previousAspect=camera.aspect;const frames=[],v=new T.Vector3(),q=new T.Quaternion();
@@ -51,5 +62,6 @@ export function createRuntime(canvas,{initialScene="bax"}={}){
   }
   camera.aspect=previousAspect;camera.updateProjectionMatrix();return {duration:config.duration,rate,frames,cuts:parameters.motion?.cuts||[]};
  }
- const ready=document.fonts.ready.then(()=>{render(0,{parameters:{scene:initialScene}});return true});return {config,ready,render,finishFrame,sampleMotion,shutterAngleAt:(time,parameters)=>parameters.scene==='procedural'?proceduralShutter(time,parameters.look?.post?.shutterAngle??210):parameters.look?.post?.shutterAngle??210,cutTimes:parameters=>parameters.scene==='procedural'?proceduralCuts:parameters.motion?.cuts??[],get scene(){init3d();return scene},get camera(){init3d();return camera},setLook(next){look=structuredClone(next)},getLook(){return structuredClone(look)}};
+ function pickObject(x,y){if(!scene||!camera)return null;const ray=new T.Raycaster();scene.updateMatrixWorld(true);camera.updateMatrixWorld(true);ray.setFromCamera(new T.Vector2(x*2-1,1-y*2),camera);for(const hit of ray.intersectObjects(scene.children,true)){let object=hit.object;if(!object.visible)continue;while(object){if(['device.root','bax.emblem','bax.kinetic'].includes(object.name))return object.name;if(!object.visible)break;object=object.parent;}}return null;}
+ const ready=document.fonts.ready.then(()=>{render(0,{parameters:{scene:initialScene}});return true});return {get config(){return sceneConfig(activeScene)},ready,render,pickObject,finishFrame,sampleMotion,temporalSamplesAt:(time,samples,parameters={})=>(parameters.scene??activeScene)==='pulse'?pulseTemporalSamplesAt(time,samples):samples,shutterAngleAt:(time,parameters={})=>isNewScene(parameters.scene??activeScene)?((parameters.scene??activeScene)==='pulse'?pulseShutterAt(time):(parameters.scene??activeScene)==='camera'?afterhoursShutter(time):(parameters.scene??activeScene)==='dot'?mascotShutterAt(time):0):parameters.scene==='procedural'?proceduralShutter(time,parameters.look?.post?.shutterAngle??210):parameters.look?.post?.shutterAngle??210,cutTimes:(parameters={})=>isNewScene(parameters.scene??activeScene)?sceneRegistry[parameters.scene??activeScene].cuts:parameters.scene==='procedural'?proceduralCuts:parameters.motion?.cuts??[],get scene(){init3d();return scene},get camera(){init3d();return camera},setLook(next){look=structuredClone(next)},getLook(){return structuredClone(look)}};
 }

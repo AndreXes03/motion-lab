@@ -16,6 +16,22 @@
 
 Work with Codex or Claude on scenes, formulas and JSON recipes, then inspect the result in the viewer. Camera, materials and timing remain editable: precise changes do not require another prompt-based video generation.
 
+## Four final films
+
+Free, open-source Motion Lab: editable scenes, camera and sound, rendered locally from code.
+
+| CAMERA · 3D · 15.4 s | PULSE · 3D · 13.9 s |
+| --- | --- |
+| [![CAMERA](demo/camera-poster.jpg)](https://andrexes03.github.io/motion-lab/#camera) | [![PULSE](demo/pulse-poster.jpg)](https://andrexes03.github.io/motion-lab/#pulse) |
+| [Watch](https://andrexes03.github.io/motion-lab/#camera) · [1080p MP4](demo/camera-1080.mp4) | [Watch](https://andrexes03.github.io/motion-lab/#pulse) · [1080p MP4](demo/pulse-1080.mp4) |
+
+| DOT · Hybrid · 16 s | REPLAY · Hybrid · 15 s |
+| --- | --- |
+| [![DOT](demo/dot-poster.jpg)](https://andrexes03.github.io/motion-lab/#dot) | [![REPLAY](demo/replay-poster.jpg)](https://andrexes03.github.io/motion-lab/#replay) |
+| [Watch](https://andrexes03.github.io/motion-lab/#dot) · [1080p MP4](demo/dot-1080.mp4) | [Watch](https://andrexes03.github.io/motion-lab/#replay) · [1080p MP4](demo/replay-1080.mp4) |
+
+All four films: **1920 × 1080 · 30 fps · original audio**. Hybrid combines 3D objects with 2D graphics and typography.
+
 ## Pop Motion / 2D + 3D
 
 [![PLAY.EXE](demo/pop-hero.jpg)](https://andrexes03.github.io/motion-lab/#pop)

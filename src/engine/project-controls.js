@@ -1,8 +1,9 @@
+import {newStudioProjects,isNewScene,sceneRegistry} from '../scene-registry.js';
 import studio from '../../project/studio.json' with { type: 'json' };
 import defaultLook from '../../project/look.json' with { type: 'json' };
 
 /** Persisted UI schema. Controls target public render parameters, not mesh internals. */
-export const studioProjects = studio.projects;
+export const studioProjects = [...studio.projects,...newStudioProjects];
 
 function merge(target, patch) {
   for (const [key, value] of Object.entries(patch ?? {})) {
@@ -32,6 +33,7 @@ export function resolveParameters(scene, values = {}, presetId = 'original', bas
   const controls = Object.fromEntries(project.controls.map(control => [control.id, control.default]));
   Object.assign(controls, preset.values ?? {}, values);
 
+  if(isNewScene(scene))return{scene,look:{...structuredClone(baseLook??defaultLook),post:{...structuredClone(baseLook??defaultLook).post,shutterAngle:sceneRegistry[scene].shutterAngle??0,grain:0}}};
   if (scene === 'pop') return {scene,graphics:{accent:color(controls.accent,'#ff66a7'),speed:limit(controls.speed,.25,2.5,1),cameraMotion:limit(controls.cameraMotion,0,1,1),fisheye:limit(controls.fisheye,0,.6,.3)}};
 
   if (scene === 'procedural') return {

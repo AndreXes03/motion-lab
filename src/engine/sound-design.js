@@ -27,6 +27,12 @@ function chooseTempo(events,duration){let best={score:-Infinity,bpm:112,phase:0}
 }
 export function planSound(telemetry,input={}){
  const settings=normalizeSound(input),{frames,duration,rate=60}=telemetry,dt=1/rate;
+ if(telemetry.authoredEvents){
+  if(!Array.isArray(telemetry.authoredEvents)||duration<=0||duration>300)throw Error('Invalid authored sound timeline');
+  const events=telemetry.authoredEvents.map(e=>({...e}));
+  for(const e of events)if(!soundKits[e.module]||!Number.isFinite(e.time)||!Number.isFinite(e.duration)||e.time<0||e.duration<=0||!Number.isFinite(e.gain)||e.gain<0)throw Error('Invalid authored sound event');
+  return {kind:telemetry.kind,duration,rate,settings,events,curves:telemetry.curves??{camera:new Array(Math.ceil(duration*rate)).fill(0)},bpm:settings.tempo==='manual'?settings.bpm:telemetry.musicBpm??120,phase:0};
+ }
  if(!frames?.length||duration<=0||duration>300)throw Error('Invalid motion telemetry');
  if(telemetry.kind==='procedural'){const p=planProceduralSound(telemetry,settings),tempo=settings.tempo==='auto'?(telemetry.musicBpm?{bpm:telemetry.musicBpm,phase:0}:chooseTempo(p.events.filter(e=>e.module!=='objects'),duration)):{bpm:settings.bpm,phase:0};return {...p,kind:'procedural',duration,rate,settings,bpm:tempo.bpm,phase:tempo.phase};}
  const events=[],curves={};
@@ -85,6 +91,9 @@ export function renderSound(plan,{sampleRate=48000,stems=false}={}){
   const variant=soundKits[e.module].indexOf(e.kind),color=.04+variant*.025;
   voice(e.module,e.time,e.duration,e.gain*(e.detail?s[e.detail]:1),e.pan,(t,u)=>{
    const noise=random();low+=color*(noise-low);const attack=Math.min(1,t/.006),tail=Math.min(1,(1-u)*35);
+   if(e.digital==='pixel'){const phase=TAU*(e.frequency??660)*t,triangle=2/Math.PI*Math.asin(Math.sin(phase));return attack*tail*Math.exp(-t*27)*(triangle*.7+Math.sin(phase*2)*.19+Math.sin(phase*.5)*.11);}
+   if(e.digital==='pixel-thud')return attack*tail*Math.exp(-t*52)*Math.sin(TAU*(175*t-320*t*t));
+   if(e.digital==='pixel-air'){const hold=Math.floor(t*sampleRate/(4+Math.floor(u*18))),n=Math.sin(hold*78.233+e.time*4.7)*43758.5453;airLow+=.11*((n-Math.floor(n))*2-1-airLow);return Math.sin(Math.PI*u)**2*(airLow+Math.sin(TAU*(420*t+640*t*t))*.14);}
    if(e.graphic){const f=(e.graphic==='pop'?680:e.graphic==='settle'?290:410)*e.pitch;return attack*tail*(e.module==='accents'?Math.exp(-t*55):Math.sin(Math.PI*clamp(u))**2)*(.23*Math.sin(TAU*f*t)*Math.exp(-t*10)+low*.12);}
    if(e.foley)return foleySample(e,t,u,noise,low);
    if(e.module==='camera'){
