@@ -18,7 +18,7 @@ function activateFilm(id){selectFilm(id);history.replaceState(null,'','#'+id);}
 for(const button of filmButtons){button.onclick=()=>activateFilm(button.dataset.film);button.onkeydown=e=>{if(!['ArrowLeft','ArrowRight','Home','End'].includes(e.key))return;e.preventDefault();const count=filmIds.length,index=e.key==='Home'?0:e.key==='End'?count-1:(filmIds.indexOf(button.dataset.film)+(e.key==='ArrowRight'?1:count-1))%count;activateFilm(filmIds[index]);filmButtons[index].focus();};}
 function selectHashFilm(){const id=location.hash.slice(1);if(films[id])selectFilm(id);}
 const requestedFilm=new URLSearchParams(location.search).get('film');
-selectFilm(Object.hasOwn(films,location.hash.slice(1))?location.hash.slice(1):Object.hasOwn(films,requestedFilm)?requestedFilm:'camera');
+selectFilm(Object.hasOwn(films,location.hash.slice(1))?location.hash.slice(1):Object.hasOwn(films,requestedFilm)?requestedFilm:'pulse');
 window.addEventListener('hashchange',selectHashFilm);
 document.getElementById('copy-setup').onclick=async()=>{try{await navigator.clipboard.writeText(document.getElementById('setup-code').textContent);document.getElementById('copy-status').textContent='Copied. Paste these commands into Terminal.';}catch{document.getElementById('copy-status').textContent='Select the commands and copy them with ⌘C.';}};
 
