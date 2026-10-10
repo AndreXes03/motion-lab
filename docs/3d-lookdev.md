@@ -15,3 +15,5 @@ Use AgX tone mapping for highlight handling and inspect a clean frame alongside 
 The v6 publication preserves the approved audio and retains only the scene bloom; no additional post-render glow. Its exact finishing command and input versions are recorded in the delivery script, not in the scene motion.
 
 Preserve rendered colors and approved AAC audio without re-encoding with `node scripts/finish-film.mjs --video silent.mp4 --audio approved.mp4 --out final.mp4`. It refuses to overwrite an existing output. Match input durations before finishing.
+
+PULSE uses a 270–320 degree shutter for visible motion blur. Temporal exposure is clipped at cuts by the shared sampler; do not blend across shots. Use `--temporal-samples 24` for its final export (32 samples remain adaptive on the fast speaker turn). Preserve colors by remuxing the approved audio: the finishing tool performs no color or glow transform.

@@ -16,7 +16,7 @@ export const editTime=t=>t<4.25?t:t+1.1;
 const retimeKeys=[[2.45,2.45],[3.45,3.15],[4.25,4.2],[5.35,4.85],[6.35,6.15],[7,6.72],[7.775,7.775]];
 export function sourceTime(t){if(t<2.45||t>=7.775)return t;let j=0;while(j<retimeKeys.length-2&&t>=retimeKeys[j+1][0])j++;const[a,x]=retimeKeys[j],[b,y]=retimeKeys[j+1];return x+(y-x)*(t-a)/(b-a);}
 const originalShutter=t=>t>=8.55&&t<14.6?110:(t>=1.15&&t<1.78)||(t>=3.02&&t<3.62)||(t>=4.82&&t<5.85)||(t>=6.15&&t<7.775)||(t>=8.75&&t<11.8)?180:(t>=11.8&&t<14.6)?120:60;
-export const shutterAngleAt=t=>{const clock=editTime(t);return cuts.some(c=>c!==1.46&&Math.abs(t-c)<.07)?60:originalShutter(sourceTime(clock));};
+export const shutterAngleAt=t=>{const clock=editTime(t);return Math.max(270,Math.min(320,originalShutter(sourceTime(clock))*1.8));};
 export const temporalSamplesAt=(t,base)=>{const clock=editTime(t);return clock>=1.20&&clock<=1.72?Math.max(base,32):shutterAngleAt(t)>=160?Math.max(base,16):base;};
 const spring=x=>x<=0?0:x>=1.5?1:1-Math.exp(-9*x)*(Math.cos(10*x)+.9*Math.sin(10*x));
 const impulse=x=>x<=0?0:Math.exp(-4.8*x)*Math.sin(11*x);
