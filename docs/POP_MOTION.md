@@ -28,3 +28,5 @@ node scripts/test-pop.mjs
 La ricetta riproduce il mix e il render consegnati. Il font Helvetiker Bold è distribuito con la propria licenza in `src/assets/fonts/LICENSE.txt`.
 
 Fish-eye: lo shader `src/engine/graphic-lens.js` curva l’intera composizione dopo il disegno 2D/3D e prima della grana. Intensità 0–0,6, default 0,3. Zero bypassa il passaggio. Le viste diagnostiche isolate non vengono deformate.
+
+Export della demo: motion blur disattivato, 1 campione per fotogramma, shutter 0. Questa scelta riguarda solo PLAY.EXE; le altre demo conservano le proprie impostazioni.
