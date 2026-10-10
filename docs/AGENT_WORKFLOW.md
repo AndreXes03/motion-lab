@@ -35,8 +35,8 @@ motore che le traduca automaticamente in scene.
    intero e correggi scatti o transizioni deboli. Usa campioni temporali
    solo su riprese continue e quando il blur migliora davvero il movimento.
 7. **Esporta e verifica.** Esegui
-   `node scripts/cli.mjs export --out renders/bax-film.mp4` e
-   `node scripts/cli.mjs verify --out renders/bax-film.mp4 --time 2.8`.
+   `node scripts/cli.mjs export --out renders/film.mp4` e
+   `node scripts/cli.mjs verify --out renders/film.mp4 --time 2.8`.
    Controlla anche un seek all'indietro nel viewer e apri il video finale.
    Riporta durata, dimensioni, fps, numero di frame e limiti effettivamente
    verificati.

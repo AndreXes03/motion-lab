@@ -3,7 +3,7 @@
   "projects": [
     {
       "id": "bax",
-      "title": "BAX / Objects in play",
+      "title": "Objects in play",
       "subtitle": "Tre oggetti tridimensionali, luce da studio e camera cinematografica.",
       "kind": "3d",
       "controls": [
@@ -40,7 +40,7 @@
       "moments": [
         {"label":"Opening","time":1.3},
         {"label":"By Code","time":4.1},
-        {"label":"BAX Studio","time":7.6},
+        {"label":"Wordmark","time":7.6},
         {"label":"Finale","time":9.4}
       ],
       "presets": [

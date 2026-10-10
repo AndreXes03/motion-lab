@@ -29,10 +29,10 @@ il percorso è impostato in `scripts/cli.mjs`.
 
 ```sh
 node scripts/cli.mjs frame --time 2.8 --out renders/frame.png
-node scripts/cli.mjs contact --samples 6 --out renders/bax-hard-contact.png
-node scripts/cli.mjs preview --out renders/bax-hard-preview.mp4 --temporal-samples 8
-node scripts/cli.mjs export --out renders/bax-hard-surface.mp4 --temporal-samples 16
-node scripts/cli.mjs verify --time 2.8 --out renders/bax-hard-surface.mp4
+node scripts/cli.mjs contact --samples 6 --out renders/contact.png
+node scripts/cli.mjs preview --out renders/preview.mp4 --temporal-samples 8
+node scripts/cli.mjs export --out renders/film.mp4 --temporal-samples 16
+node scripts/cli.mjs verify --time 2.8 --out renders/film.mp4
 ```
 
 `frame` valuta un istante preciso; `contact` compone sei frame di controllo;
@@ -105,7 +105,7 @@ per il ciclo di lavoro.
 
 `src/config.js` centralizza durata, fps, dimensioni, palette e testi.
 `src/components/` costruisce il dispositivo con geometrie e texture
-procedurali; `src/scenes/bax.js` imposta il layout e `src/engine/studio.js` le luci; `src/engine/`
+procedurali; il modulo della scena in `src/scenes/` imposta il layout e `src/engine/studio.js` le luci; `src/engine/`
 applica le tracce, renderizza Three.js e compone gli overlay 2D. `src/viewer/`
 gestisce l’interfaccia; `scripts/` contiene CLI ed export.
 
@@ -130,7 +130,7 @@ predisposto nella configurazione, ma mux e sincronizzazione audio non sono
 ancora implementati.
 
 Il rendering deterministico è verificabile nella stessa macchina e versione
-del browser; GPU e driver diversi possono cambiare alcuni pixel. La scena BAX contiene tre oggetti costruiti proceduralmente e un display LED. Import glTF, inserimento
+del browser; GPU e driver diversi possono cambiare alcuni pixel. La scena 3D contiene tre oggetti costruiti proceduralmente e un display LED. Import glTF, inserimento
 di prodotti arbitrari, ricostruzione da immagini e profondità di campo sono
 sviluppi successivi.
 
@@ -143,20 +143,20 @@ ridistribuito. Fonti e avvisi in [THIRD_PARTY.md](../THIRD_PARTY.md) e `licenses
 
 Il menu **Schema luci** offre Studio morbido, Contrasto deciso, Taglio laterale e Bordo freddo. Ogni scelta modifica posizione, direzione, colore e intensità delle luci, mantenendo camera e compositing. I testi sotto i controlli ne spiegano l’effetto. Una modifica manuale delle luci passa a Personalizzato; **Salva aspetto** conserva il risultato. I preset editabili sono in `project/lighting-presets.json`.
 
-Ogni render scrive un file `.project.json` accanto all’output con la copia delle impostazioni utilizzate. Il rendering non riceve aggiornamenti live dal viewer. Per replicare lo stesso look in un frame, aggiungi `--snapshot renders/bax-hard-surface.mp4.project.json`. La verifica usa automaticamente la copia associata al video.
+Ogni render scrive un file `.project.json` accanto all’output con la copia delle impostazioni utilizzate. Il rendering non riceve aggiornamenti live dal viewer. Per replicare lo stesso look in un frame, aggiungi `--snapshot renders/film.mp4.project.json`. La verifica usa automaticamente la copia associata al video.
 
 ## Revisione modelli e lente
 
-Il menu **Controllo** confronta immagine finale, immagine senza effetti, soli volumi e normali. La CLI accetta `--parameters '{"inspect":{"object":"bax.emblem","yaw":20},"review":"clean"}'` per isolare un modello. `node scripts/quality.mjs --out renders/quality-board.png` genera la tavola materiali/volumi dei tre oggetti, senza dichiarare automaticamente un'approvazione visiva.
+Il menu **Controllo** confronta immagine finale, immagine senza effetti, soli volumi e normali. La CLI accetta `--parameters '{"inspect":{"object":"device.root","yaw":20},"review":"clean"}'` per isolare un modello. `node scripts/quality.mjs --out renders/quality-board.png` genera la tavola materiali/volumi dei tre oggetti, senza dichiarare automaticamente un'approvazione visiva.
 
 La ricetta include **Curvatura della lente** (distorsione a barilotto con overscan), **Frange di colore**, **Vignettatura** e **Ombre nelle giunzioni** (GTAO). Le frange sono espresse in pixel Full HD, quindi la preview mantiene la stessa intensità visiva dell'export. Il compositing usa HDR lineare, bloom, un solo OutputPass per tone mapping/sRGB e poi trattamento ottico. La media temporale decodifica i campioni sRGB prima di mediarli. GTAO usa rumore fisso riproducibile. Riferimenti tecnici: [OutputPass](https://threejs.org/docs/pages/OutputPass.html), [gestione colore](https://threejs.org/manual/pages/color-management.html), [materiali fisici](https://threejs.org/docs/pages/MeshPhysicalMaterial.html).
 
-La direzione gonfiabile/portachiavi è conservata nei componenti precedenti e nei render BAX v1. La B attiva combina alluminio spazzolato, smalto blu e cover meccanica; il giroscopio usa cinematica deterministica, senza simulazione fisica. Il wordmark viene isolato a caricamento dallo screenshot fornito dall’utente; `brandReady` è atteso prima di creare le scene.
+La direzione gonfiabile/portachiavi è conservata nei componenti precedenti e nei render precedenti. La B attiva combina alluminio spazzolato, smalto blu e cover meccanica; il giroscopio usa cinematica deterministica, senza simulazione fisica. Il wordmark viene isolato a caricamento dallo screenshot fornito dall’utente; `brandReady` è atteso prima di creare le scene.
 
 
 ## Motion graphics procedurale
 
-Nel viewer scegli **Motion · Grafica procedurale**: titolo, colore accento e densità si modificano senza montare clip. Play/pausa e cursore servono solo per ispezionare il tempo. La scena 3D BAX resta selezionabile.
+Nel viewer scegli **Motion · Grafica procedurale**: titolo, colore accento e densità si modificano senza montare clip. Play/pausa e cursore servono solo per ispezionare il tempo. La scena 3D resta selezionabile.
 
 ```sh
 node scripts/cli.mjs viewer --scene procedural

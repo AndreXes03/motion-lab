@@ -52,4 +52,4 @@ a company license required outside those categories.
 
 No third-party images, music, logos or font files are bundled for the demo.
 
-La revisione hard surface riutilizza inoltre GTAOPass, RectAreaLightUniformsLib e toCreasedNormals dalla stessa distribuzione Three.js (MIT, avviso già incluso). Il logo BAX è materiale fornito dall’utente, non incluso nella licenza MIT del codice. La sua disponibilità in questo progetto non concede diritti di riutilizzo ad altri soggetti.
+La revisione hard surface riutilizza inoltre GTAOPass, RectAreaLightUniformsLib e toCreasedNormals dalla stessa distribuzione Three.js (MIT, avviso già incluso). Il logo della demo è materiale fornito dall’utente, non incluso nella licenza MIT del codice. La sua disponibilità in questo progetto non concede diritti di riutilizzo ad altri soggetti.

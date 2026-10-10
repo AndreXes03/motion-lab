@@ -11,27 +11,27 @@ Dal viewer interattivo al video, con gli stessi sorgenti.
 ![Local rendering](https://img.shields.io/badge/Rendering-locale-173bd5?style=flat-square)
 ![MIT](https://img.shields.io/badge/Codice-MIT-f34a13?style=flat-square)
 
-[Guarda la demo BAX Studio](https://github.com/AndreXes03/motion-lab/blob/main/demo/bax-objects-in-play.mp4) · [Avvia il progetto](#inizia-da-qui) · [Guida completa](docs/USAGE.md)
+[Guarda la demo 3D](https://github.com/AndreXes03/motion-lab/blob/main/demo/objects-in-play.mp4) · [Avvia il progetto](#inizia-da-qui) · [Guida completa](docs/USAGE.md)
 
 </div>
 
-[![BAX Studio — Objects in play](demo/bax-hero.jpg)](https://github.com/AndreXes03/motion-lab/blob/main/demo/bax-objects-in-play.mp4)
+[![Objects in play](demo/hero.jpg)](https://github.com/AndreXes03/motion-lab/blob/main/demo/objects-in-play.mp4)
 
-## BAX Studio · Objects in play
+## Objects in play
 
 Una radio blu, un emblema in alluminio e smalto, un giroscopio meccanico. Tre oggetti nello stesso spazio, attraversati da una camera grandangolare: riflessi, dettagli e movimento diventano il film.
 
 **10 secondi · Render originale 4K · 25 fps · MP4 senza audio.**
 
-Il [video demo Full HD](demo/bax-objects-in-play.mp4), derivato dall’export 4K, è già incluso: puoi guardarlo senza installare nulla. I sorgenti permettono di esplorare la scena e creare nuove varianti. La demo documenta una versione renderizzata; le impostazioni attuali possono produrre un risultato diverso.
+Il [video demo Full HD](demo/objects-in-play.mp4), derivato dall’export 4K, è già incluso: puoi guardarlo senza installare nulla. I sorgenti permettono di esplorare la scena e creare nuove varianti. La demo documenta una versione renderizzata; le impostazioni attuali possono produrre un risultato diverso.
 
-![Sequenza del film BAX](demo/bax-contact-sheet.png)
+![Sequenza del film](demo/contact-sheet.png)
 
 ### Dettagli dal render 4K
 
-![Radio — scocca, manopola e display](demo/bax-radio-4k.jpg)
+![Radio — scocca, manopola e display](demo/radio-4k.jpg)
 
-![Emblema — smalto blu e bordo in alluminio](demo/bax-emblem-4k.jpg)
+![Emblema — smalto blu e bordo in alluminio](demo/emblem-4k.jpg)
 
 [Scarica il film originale in 4K](https://github.com/AndreXes03/motion-lab/releases/latest)
 
@@ -56,7 +56,7 @@ npm ci
 npm run viewer
 ```
 
-Apri **http://127.0.0.1:4173/**. Scegli il progetto BAX o la grafica procedurale, prova un preset e usa i controlli per creare una variante. Gli export dal viewer vengono salvati nella cartella Download.
+Apri **http://127.0.0.1:4173/**. Scegli il progetto 3D o la grafica procedurale, prova un preset e usa i controlli per creare una variante. Gli export dal viewer vengono salvati nella cartella Download.
 
 Il progetto usa un server locale per salvare ricette e renderizzare: il solo build statico non offre tutte le funzioni dello studio. Non esporre il server locale su Internet. Gli script di rendering utilizzano il percorso di Chrome su macOS; Windows e Linux richiedono adattamento e non sono verificati.
 
@@ -76,7 +76,7 @@ Per la [demo procedurale 2D](demo/procedural.mp4), aggiungi `--scene procedural`
 
 | Cartella | Contenuto |
 | --- | --- |
-| `src/scenes/` | Scene BAX, SIGNAL e grafica procedurale |
+| `src/scenes/` | Scene 3D, SIGNAL e grafica procedurale |
 | `src/components/` | Oggetti 3D, materiali e texture |
 | `src/engine/` | Camera, timeline, rendering e compositing |
 | `src/viewer/` | Interfaccia dello studio |
@@ -90,6 +90,6 @@ Consulta la [guida d'uso](docs/USAGE.md), il [workflow per agenti](docs/AGENT_WO
 
 È un laboratorio funzionante, in evoluzione. Audio, profondità di campo e import di modelli glTF non sono implementati. Un controllo ha rilevato una differenza nei pixel 2D dopo il passaggio 2D → 3D → 2D; se usi la grafica procedurale, riapri la scena prima del confronto. La riproducibilità dei pixel dipende anche da browser, GPU e driver.
 
-Codice di **Andrea Salvo**, distribuito con [licenza MIT](LICENSE). Il marchio BAX Studio e gli asset del brand mantengono i diritti dei rispettivi titolari: la licenza del codice non concede diritti sul marchio. Dipendenze e avvisi sono in [THIRD_PARTY.md](THIRD_PARTY.md). I binari di FFmpeg non sono inclusi.
+Codice di **Andrea Salvo**, distribuito con [licenza MIT](LICENSE). Il marchio e gli asset visivi della demo mantengono i diritti dei rispettivi titolari: la licenza del codice non concede diritti sul marchio. Dipendenze e avvisi sono in [THIRD_PARTY.md](THIRD_PARTY.md). I binari di FFmpeg non sono inclusi.
 
 Questa pubblicazione include sorgenti e demo selezionate. Reference personali, cronologie, log, render intermedi e dipendenze installate restano fuori dal repository.

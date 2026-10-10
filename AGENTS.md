@@ -10,5 +10,5 @@ Before delivering a changed product film:
 5. Export and verify duration, frame count, dimensions, fps, and seek determinism. Preserve prior versions and report remaining visual limitations without claiming reference equivalence.
 
 Stable configuration: project/look.json, project/motion.json, src/config.js.
-Inspection parameters: {"inspect":{"object":"bax.emblem","yaw":20},"review":"clean"}. Modes: beauty, clean, clay, normals.
+Inspection parameters: {"inspect":{"object":"device.root","yaw":20},"review":"clean"}. Modes: beauty, clean, clay, normals.
 Do not alter shared files while another agent is rendering a quality gate; coordinate component ownership and announce when a file is stable.

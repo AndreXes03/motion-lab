@@ -2,7 +2,7 @@
 
 I controlli ad hoc delle due demo sono definiti in `project/studio.json`. `src/engine/project-controls.js` esporta `studioProjects` per costruire il pannello e `resolveParameters(scene, values, presetId, baseLook)` per produrre i parametri del renderer. Il preset `original` conserva il look 3D di progetto; `objectMotion` varia solo il movimento degli oggetti, senza spostare la camera.
 
-Per i prossimi animatic, `src/engine/camera-path.js` offre una traiettoria camera riusabile, indipendente dalla scena BAX attuale:
+Per i prossimi animatic, `src/engine/camera-path.js` offre una traiettoria camera riusabile, indipendente dalla scena 3D attuale:
 
 ```js
 import { createCameraPath } from './src/engine/camera-path.js';
