@@ -1,0 +1,20 @@
+#!/usr/bin/env node
+import {spawn} from 'node:child_process';
+import {mkdtemp,readFile,writeFile,rm} from 'node:fs/promises';
+import path from 'node:path';
+import {fileURLToPath} from 'node:url';
+const ROOT=path.resolve(path.dirname(fileURLToPath(import.meta.url)),'..');
+const folder=await mkdtemp(path.join(ROOT,'.cli-replay-test-'));
+const tests=[];
+function assert(ok,message){if(!ok)throw new Error(message);}
+async function cli(args){return new Promise((resolve,reject)=>{const child=spawn(process.execPath,['scripts/cli.mjs',...args],{cwd:ROOT,stdio:['ignore','pipe','pipe']});let stdout='',stderr='';child.stdout.on('data',c=>stdout+=c);child.stderr.on('data',c=>stderr+=c);child.on('error',reject);child.on('close',code=>resolve({code,events:stdout.trim().split('\n').filter(Boolean).map(s=>JSON.parse(s)),stderr}));});}
+async function test(name,fn){try{await fn();tests.push({name,passed:true});}catch(error){tests.push({name,passed:false,error:error.message});}}
+try{
+ await test('invalid dimensions rejected before rendering',async()=>{for(const [kind,width,height]of [['frame','129.5','128'],['preview','129','128'],['export','128','127'],['frame','8193','128']]){const r=await cli([kind,'--out',path.join(folder,'invalid'),'--width',width,'--height',height]);assert(r.code!==0&&!r.events.some(e=>e.type==='ready'),'Invalid dimensions reached renderer');}});
+ const video=path.join(folder,'short.mp4');
+ await test('short preview stores actual defaults and samples',async()=>{const r=await cli(['preview','--scene','procedural','--out',video,'--start','0.1','--end','0.2','--temporal-samples','2']);assert(r.code===0,JSON.stringify(r));const snapshot=JSON.parse(await readFile(video+'.project.json','utf8'));assert(snapshot.schemaVersion===2&&snapshot.width===960&&snapshot.height===540,'Preview sidecar wrong dimensions');assert(snapshot.start===.1&&snapshot.end===.2&&snapshot.temporalSamples===2,'Sidecar dropped export settings');assert(snapshot.config.width===960&&snapshot.parameters.scene==='procedural','Snapshot config/scene mismatch');});
+ await test('verify with no settings replays short preview sidecar',async()=>{const r=await cli(['verify','--out',video]);const v=r.events.find(e=>e.type==='verification');assert(r.code===0&&v?.valid,JSON.stringify(r));assert(v.expected.width===960&&v.expected.height===540&&v.expected.frames===3&&Math.abs(v.expected.duration-.1)<1e-9,'Verify did not restore actual video metadata');assert(v.temporalSamples===2&&v.start===.1&&v.end===.2,'Verify dropped saved settings');});
+ await test('legacy sidecar config dimensions corrected using encoded video',async()=>{const side=JSON.parse(await readFile(video+'.project.json','utf8'));delete side.schemaVersion;delete side.width;delete side.height;side.config.width=1920;side.config.height=1080;await writeFile(video+'.project.json',JSON.stringify(side));const r=await cli(['verify','--out',video]);assert(r.code===0&&r.events.find(e=>e.type==='verification')?.expected.width===960,JSON.stringify(r));});
+ await test('explicit scene and dimensions override snapshot',async()=>{const snapshot=path.join(folder,'snapshot.json');await writeFile(snapshot,JSON.stringify({config:{width:960,height:540},parameters:{scene:'bax',display:'SNAPSHOT'},start:.1,end:.2,temporalSamples:2,time:.15}));const out=path.join(folder,'overridden.png');const r=await cli(['frame','--out',out,'--snapshot',snapshot,'--scene','procedural','--width','320','--height','180','--time','1','--temporal-samples','1','--parameters','{"graphics":{"title":"OVERRIDE"}}']);assert(r.code===0,JSON.stringify(r));const saved=JSON.parse(await readFile(out+'.project.json','utf8'));assert(saved.parameters.scene==='procedural'&&saved.width===320&&saved.height===180&&saved.time===1&&saved.temporalSamples===1,'Explicit options lost to snapshot');assert(saved.parameters.graphics.title==='OVERRIDE'&&saved.parameters.display==='SNAPSHOT','Parameters merge failed');});
+ console.log(JSON.stringify({type:'tests',passed:tests.every(t=>t.passed),tests}));if(tests.some(t=>!t.passed))process.exitCode=1;
+}finally{await rm(folder,{recursive:true,force:true});}

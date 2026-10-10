@@ -1,0 +1,22 @@
+{
+  "contrast": {
+    "label": "Contrasto deciso",
+    "description": "Una luce concentrata sul prodotto, ombre profonde e un bordo freddo. Per un risultato più grafico e drammatico.",
+    "lighting": {"preset":"contrast","key":115,"fill":0.025,"rim":1.8,"environment":0.16,"keyPosition":[-2.5,4.3,4.8],"keyTarget":[0.7,1.2,0.3],"rimPosition":[4,1,-4],"keyAngle":0.4,"keyPenumbra":0.45,"keyColor":"#fff4e4","rimColor":"#7dbbff"}
+  },
+  "soft": {
+    "label": "Studio morbido",
+    "description": "Luce ampia e ombre schiarite: mette in evidenza forma, colore e dettagli in modo uniforme.",
+    "lighting": {"preset":"soft","key":65,"fill":0.75,"rim":0.7,"environment":0.65,"keyPosition":[-3,5,6],"keyTarget":[0.8,0.3,0],"rimPosition":[4,3,-4],"keyAngle":0.85,"keyPenumbra":1,"keyColor":"#fff8ef","rimColor":"#dce8ff"}
+  },
+  "side": {
+    "label": "Taglio laterale",
+    "description": "La luce arriva da sinistra e lascia l’altro lato più scuro. Fa leggere rilievi, bordi e texture della scocca.",
+    "lighting": {"preset":"side","key":170,"fill":0.02,"rim":1.2,"environment":0.18,"keyPosition":[-5,1.5,3],"keyTarget":[0.8,0.3,0],"rimPosition":[4,3,-3],"keyAngle":0.58,"keyPenumbra":0.3,"keyColor":"#ffe3c2","rimColor":"#b4d6ff"}
+  },
+  "coolrim": {
+    "label": "Bordo freddo",
+    "description": "Profilo azzurro brillante e fronte più scuro, con un accento caldo. Per una lettura più elettronica e notturna.",
+    "lighting": {"preset":"coolrim","key":80,"fill":0.035,"rim":4.5,"environment":0.12,"keyPosition":[-2,3,5],"keyTarget":[0.8,0.6,0],"rimPosition":[4,1,-2],"keyAngle":0.5,"keyPenumbra":0.7,"keyColor":"#ffce9a","rimColor":"#3bbcff"}
+  }
+}

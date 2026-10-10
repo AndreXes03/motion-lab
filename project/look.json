@@ -1,0 +1,51 @@
+{
+  "camera": {
+    "fov": 74
+  },
+  "lighting": {
+    "preset": "custom",
+    "key": 340,
+    "fill": 0.015,
+    "rim": 4.8,
+    "environment": 0.5,
+    "keyPosition": [
+      -5,
+      7,
+      3
+    ],
+    "keyTarget": [
+      0.7,
+      1.2,
+      0.3
+    ],
+    "rimPosition": [
+      4,
+      2,
+      -3
+    ],
+    "keyAngle": 0.4,
+    "keyPenumbra": 0.45,
+    "keyColor": "#fff4e4",
+    "rimColor": "#7dbbff"
+  },
+  "surface": {
+    "shellRoughness": 0.36,
+    "grainScale": 0.0012
+  },
+  "post": {
+    "exposure": 1.03,
+    "bloomStrength": 0.12,
+    "bloomThreshold": 2.2,
+    "bloomRadius": 0.15,
+    "aberrationPx": 2.8,
+    "grain": 0.018,
+    "vignette": 0.16,
+    "lensDistortion": 0.24,
+    "aoIntensity": 0.45,
+    "shutterAngle": 210,
+    "grainSize": 1.1
+  },
+  "motion": {
+    "amount": 1
+  }
+}

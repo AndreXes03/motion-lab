@@ -1,0 +1,16 @@
+node_modules/
+dist/
+renders/
+archive/
+.reference-upload/
+.motion-frames-*/
+project/history/
+project/versions/
+project/references/
+.env
+.env.*
+!.env.example
+*.log
+.DS_Store
+*.pem
+*.key

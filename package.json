@@ -1,0 +1,41 @@
+{
+  "name": "motion-lab",
+  "version": "1.0.0",
+  "description": "Local deterministic 3D product film studio",
+  "main": "index.js",
+  "scripts": {
+    "viewer": "node scripts/cli.mjs viewer",
+    "frame": "node scripts/cli.mjs frame",
+    "contact": "node scripts/cli.mjs contact",
+    "preview": "node scripts/cli.mjs preview",
+    "export": "node scripts/cli.mjs export",
+    "verify": "node scripts/cli.mjs verify",
+    "build": "vite build"
+  },
+  "keywords": [
+    "threejs",
+    "motion-design",
+    "procedural-animation",
+    "3d",
+    "local-rendering"
+  ],
+  "author": "Andrea Salvo",
+  "license": "MIT",
+  "type": "module",
+  "dependencies": {
+    "ffmpeg-static": "^5.3.0",
+    "ffprobe-static": "^3.1.0",
+    "playwright": "^1.64.0",
+    "sharp": "^0.35.5",
+    "three": "^0.186.1",
+    "vite": "^8.3.4"
+  },
+  "private": true,
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/AndreXes03/motion-lab.git"
+  },
+  "engines": {
+    "node": ">=22.12.0"
+  }
+}

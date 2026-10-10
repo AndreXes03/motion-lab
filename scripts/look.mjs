@@ -1,0 +1,3 @@
+import {readProject,saveLook} from './project-store.mjs';
+import {readFile} from 'node:fs/promises';
+try{const [command,...args]=process.argv.slice(2);if(command==='show')console.log(JSON.stringify({type:'look',look:await readProject('look')}));else if(command==='set'){const flag=args[0];const look=JSON.parse(flag==='--file'?await readFile(args[1],'utf8'):args[1]);await saveLook(look);console.log(JSON.stringify({type:'saved',path:'project/look.json',look}));}else throw Error('Use: node scripts/look.mjs show | set --file recipe.json | set --json JSON');}catch(e){console.error(JSON.stringify({type:'error',message:e.message}));process.exitCode=1}

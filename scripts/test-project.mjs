@@ -1,0 +1,14 @@
+import assert from 'node:assert/strict';
+import {readFile} from 'node:fs/promises';
+import {validateLook} from './project-store.mjs';
+import {sampleTrack} from '../src/engine/animation.js';
+const base='http://127.0.0.1:4173';
+const project=await fetch(base+'/api/project').then(r=>r.json());validateLook(project.look);assert(Array.isArray(project.references));
+const bad=structuredClone(project.look);bad.camera.fov=999;
+const reject=await fetch(base+'/api/look',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(bad)});assert.equal(reject.status,400);
+const unchanged=await fetch(base+'/api/project').then(r=>r.json());assert.deepEqual(unchanged.look,project.look);
+const image=await readFile(new URL('../archive/v2/hero-v2.png',import.meta.url));const uploaded=await fetch(base+'/api/references',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({filename:'test-ref.png',role:'look',note:'Duplicate of existing internal reference',data:image.toString('base64')})}).then(r=>r.json());assert(uploaded.id);
+const reread=await fetch(base+'/api/project').then(r=>r.json());assert.equal(reread.references.length,project.references.length);
+const forbidden=await fetch(base+'/api/look',{method:'POST',headers:{Origin:'https://example.com','Content-Type':'application/json'},body:JSON.stringify(project.look)});assert.equal(forbidden.status,403);
+const track=[{t:0,value:[0,2,3]},{t:2,value:[4,6,7]}];const expected=sampleTrack(track,1);sampleTrack(track,2);sampleTrack(track,0);assert.deepEqual(sampleTrack(track,1),expected);assert.deepEqual(sampleTrack(track,1,0),track[0].value);
+console.log(JSON.stringify({passed:true,checks:['read project','reject invalid look without write','deduplicate local reference upload','reject foreign origin','absolute motion tracks']}));

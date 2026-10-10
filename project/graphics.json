@@ -1,0 +1,27 @@
+{
+  "seed": 24109,
+  "defaults": {
+    "title": "MOTION",
+    "accent": "#ff5a24",
+    "density": 10,
+    "speed": 1
+  },
+  "palette": {
+    "blue": "#1646f5",
+    "cream": "#f5eedf",
+    "ink": "#111827"
+  },
+  "timing": {
+    "beats": {
+      "one": [0, 3.15],
+      "two": [3.2, 6.58],
+      "three": [6.72, 8.96],
+      "final": [8.87, 10]
+    },
+    "wipes": {
+      "one": [2.62, 3.28],
+      "two": [6.2, 6.78],
+      "final": [8.5, 8.92]
+    }
+  }
+}
