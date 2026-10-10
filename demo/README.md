@@ -7,3 +7,5 @@
 - [3D cover](hero.jpg) · [3D frames](contact-sheet.png).
 
 Films are rendered from the source code. Product marks in the 3D test and the personal logo retain their owners' rights and are not covered by the code license.
+
+- [PLAY.EXE / Pop Motion](pop-motion.mp4): 2D camera, extruded type, fish-eye and beat-synced motion. 1080p, 30 fps, 10 s, no motion blur. [Recipe](pop-motion.project.json).

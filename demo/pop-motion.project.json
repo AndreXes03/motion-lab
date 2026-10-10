@@ -1,5 +1,50 @@
 {
   "schemaVersion": 2,
+  "command": "export",
+  "config": {
+    "id": "objects-in-play",
+    "scene": "bax",
+    "title": "Objects in play",
+    "duration": 10,
+    "fps": 30,
+    "width": 1920,
+    "height": 1080,
+    "palette": {
+      "shell": "#173bd5",
+      "knob": "#f34a13",
+      "background": "#dceaf1",
+      "ink": "#122335",
+      "led": "#fff1db"
+    },
+    "text": {
+      "display": "BAX.",
+      "title": "BAX STUDIO",
+      "eyebrow": "OBJECTS IN PLAY",
+      "footer": "IDEAS, MADE TANGIBLE."
+    },
+    "beats": {
+      "device": 0,
+      "kinetic": 2.2,
+      "emblem": 4.5,
+      "hero": 7.5,
+      "hold": 8.7
+    },
+    "animation": {
+      "reveal": [
+        8,
+        8.7
+      ],
+      "knobTurn": [
+        0.3,
+        1.8
+      ],
+      "settle": [
+        0,
+        8.7
+      ]
+    },
+    "audio": null
+  },
   "parameters": {
     "scene": "pop",
     "graphics": {
@@ -8,13 +53,22 @@
     },
     "sound": {
       "enabled": true,
-      "tempo": "manual",
-      "bpm": 120,
-      "music": 0.6,
+      "camera": 0.12,
       "objects": 0.12,
       "accents": 0.18,
-      "camera": 0.12,
-      "master": 0.8
+      "dial": 0.85,
+      "hinge": 0.85,
+      "gyro": 0.5,
+      "music": 0.6,
+      "master": 0.8,
+      "density": 0.65,
+      "musicStyle": "scene",
+      "tempo": "manual",
+      "bpm": 120,
+      "seed": 42,
+      "cameraKit": "air",
+      "objectKit": "mechanical",
+      "accentKit": "soft"
     },
     "motion": {
       "cuts": [
@@ -22,16 +76,76 @@
         5,
         7.5
       ]
+    },
+    "look": {
+      "camera": {
+        "fov": 74
+      },
+      "lighting": {
+        "preset": "custom",
+        "key": 340,
+        "fill": 0.015,
+        "rim": 4.8,
+        "environment": 0.5,
+        "keyPosition": [
+          -5,
+          7,
+          3
+        ],
+        "keyTarget": [
+          0.7,
+          1.2,
+          0.3
+        ],
+        "rimPosition": [
+          4,
+          2,
+          -3
+        ],
+        "keyAngle": 0.4,
+        "keyPenumbra": 0.45,
+        "keyColor": "#fff4e4",
+        "rimColor": "#7dbbff"
+      },
+      "surface": {
+        "shellRoughness": 0.36,
+        "grainScale": 0.0012
+      },
+      "post": {
+        "exposure": 1.03,
+        "bloomStrength": 0.12,
+        "bloomThreshold": 2.2,
+        "bloomRadius": 0.15,
+        "aberrationPx": 2.8,
+        "grain": 0.018,
+        "vignette": 0.16,
+        "lensDistortion": 0.24,
+        "aoIntensity": 0.45,
+        "shutterAngle": 210,
+        "grainSize": 1.1
+      },
+      "motion": {
+        "amount": 1
+      }
     }
   },
-  "start": 0,
-  "end": 10,
+  "width": 1920,
+  "height": 1080,
+  "fps": 30,
+  "format": "mp4",
+  "bitrateMbps": 12,
   "settings": {
     "width": 1920,
     "height": 1080,
     "fps": 30,
-    "temporalSamples": 4,
     "format": "mp4",
-    "bitrateMbps": 12
-  }
+    "bitrateMbps": 12,
+    "temporalSamples": 4
+  },
+  "start": 0,
+  "end": 10,
+  "time": 0,
+  "samples": 6,
+  "temporalSamples": 4,
+  "createdAt": "2026-10-10T13:50:03.383Z"
 }

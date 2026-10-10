@@ -14,3 +14,5 @@
 | Check validation and limits | [Validation](VALIDATION.md) |
 
 [Engine](../src/engine/) · [Scenes](../src/scenes/) · [Objects and materials](../src/components/) · [Recipes](../project/) · [Rendering](../scripts/) · [Demos](../demo/)
+
+- [Pop Motion](POP_MOTION.md): 2D camera, fish-eye, extruded type and beat-synced motion.
