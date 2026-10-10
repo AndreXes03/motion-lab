@@ -1,8 +1,8 @@
 # Procedural motion: one rule, 792 elements
 
-![Procedural motion field](../demo/procedural-field.gif)
+![Procedural motion field](../demo/procedural-motion.gif)
 
-A grid folds into an orbital field and returns to its starting state. Every element gets its position, orientation, scale and brightness from the same clock and a few equations. There are no individual keyframes, stored simulations or video-generation prompts.
+The GIF shows only the animation and Andrea Salvo's personal logo. A grid folds into an orbital field and returns to its starting state. Every element gets its position, orientation, scale and brightness from the same clock and a few equations. There are no individual keyframes, stored simulations or video-generation prompts.
 
 The example is a small standalone Canvas 2D study of the same code-driven workflow used by Motion Lab's Three.js scenes. It is deliberately separate from the 3D product-film demo.
 

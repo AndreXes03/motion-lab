@@ -11,6 +11,7 @@ const browser=await chromium.launch({headless:true, channel:'chrome'});
 try {
   const page=await browser.newPage({viewport:{width:960,height:600},deviceScaleFactor:1});
   await page.goto(pathToFileURL(resolve('examples/procedural-field.html')).href);
+  await page.evaluate(()=>window.proceduralReady);
   // Stop the live clock: every output frame uses an explicit time.
   await page.evaluate(()=> {window.requestAnimationFrame=()=>0;});
   await mkdir('demo',{recursive:true});
@@ -28,7 +29,7 @@ try {
   }
   await page.evaluate(t=>window.renderAt(t),duration/2);
   await page.locator('canvas').screenshot({path:resolve('demo/procedural-field-poster.png')});
-  const result=spawnSync(ffmpeg,['-y','-framerate',String(fps),'-i',join(frames,'%04d.png'),'-filter_complex','[0:v]scale=800:500:flags=lanczos,split[a][b];[a]palettegen=max_colors=64:stats_mode=diff[p];[b][p]paletteuse=dither=bayer:bayer_scale=3','-loop','0','demo/procedural-field.gif'],{encoding:'utf8'});
+  const result=spawnSync(ffmpeg,['-y','-framerate',String(fps),'-i',join(frames,'%04d.png'),'-filter_complex','[0:v]scale=800:500:flags=lanczos,split[a][b];[a]palettegen=max_colors=64:stats_mode=diff[p];[b][p]paletteuse=dither=bayer:bayer_scale=5','-loop','0','demo/procedural-motion.gif'],{encoding:'utf8'});
   if(result.status!==0)throw new Error(result.stderr);
   console.log(`Rendered ${fps*duration} frames, 800 × 500, ${fps} fps, ${duration}-second loop.`);
 } finally {await browser.close();await rm(frames,{recursive:true,force:true});}

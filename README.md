@@ -17,7 +17,7 @@ Motion graphics 2D e scene 3D, dal codice al video nello stesso studio locale.
 
 ## Il movimento nasce dalle regole
 
-![Motion graphics procedurale: un campo animato costruito in codice](demo/procedural-field.gif)
+![Motion graphics procedurale: un campo animato costruito in codice](demo/procedural-motion.gif)
 
 In questo test, **792 elementi** passano da una griglia a un campo orbitale con poche formule periodiche. Una composizione procedurale lega molti elementi alle stesse funzioni: il tempo, l’indice, il seed e i parametri diventano strumenti di design. Cambiare una regola cambia l’intero sistema, mantenendo le relazioni tra le parti. [Apri le formule dell’esempio](examples/procedural-field.html), la [spiegazione del test](docs/PROCEDURAL-EXAMPLE.md) e il [motore 2D](src/engine/procedural.js).
 
