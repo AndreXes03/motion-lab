@@ -12,6 +12,6 @@ Explicit width, height, bitrate and temporal-sample flags override the preset. N
 
 Use AgX tone mapping for highlight handling and inspect a clean frame alongside the composite. Narrow reflection cards and dark gaps articulate glossy surfaces; avoid raising roughness everywhere. Normal maps describe micro-relief; they are not displacement. Motion blur integrates actual scene time samples. The WebGL renderer does not provide path-traced global illumination.
 
-The v6 publication preserves the approved audio and adds a restrained highlight-only glow after rendering. Its exact finishing command and input versions are recorded in the delivery script, not in the scene motion.
+The v6 publication preserves the approved audio and retains only the scene bloom; no additional post-render glow. Its exact finishing command and input versions are recorded in the delivery script, not in the scene motion.
 
-Reproduce the restrained glow and preserve approved AAC audio with `node scripts/finish-film.mjs --video silent.mp4 --audio approved.mp4 --out final.mp4`. It refuses to overwrite an existing output. Match input durations before finishing.
+Preserve rendered colors and approved AAC audio without re-encoding with `node scripts/finish-film.mjs --video silent.mp4 --audio approved.mp4 --out final.mp4`. It refuses to overwrite an existing output. Match input durations before finishing.
