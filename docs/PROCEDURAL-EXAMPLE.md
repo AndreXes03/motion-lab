@@ -1,15 +1,15 @@
-# Esempio procedurale
+# Procedural example
 
-[Animazione live](https://andrexes03.github.io/motion-lab/examples/procedural-field.html) · [Scena e formule](../src/scenes/procedural-demo.js) · [Video con audio](https://andrexes03.github.io/motion-lab/)
+[Live animation](https://andrexes03.github.io/motion-lab/examples/procedural-field.html) · [Scene and formulas](../src/scenes/procedural-demo.js) · [Video with audio](https://andrexes03.github.io/motion-lab/)
 
-Flussi, toro parametrico, griglia/spirale, onde e tunnel sono costruiti in codice. Tempo, seed e parametri determinano ogni frame; non servono keyframe per ogni elemento.
+Flows, a parametric torus, grid/spiral, waves and a tunnel are built in code. Time, seed and parameters determine each frame, without individual keyframes for every element.
 
-La preview live e la [GIF](../demo/procedural-showcase.gif) mostrano solo animazione e logo personale. Il [film 1080p](../demo/procedural-techno.mp4) include il montaggio, techno originale a 132 BPM e SFX modulari.
+The live preview and [GIF](../demo/procedural-showcase.gif) show the animation and personal logo. The [1080p film](../demo/procedural-techno.mp4) includes the edit, original 132 BPM techno and modular SFX.
 
-Per modificare la scena: [sorgente](../src/scenes/procedural-demo.js) e [parametri](../project/graphics.json). Per rigenerare la GIF:
+Edit the [scene](../src/scenes/procedural-demo.js) and [parameters](../project/graphics.json). Regenerate the GIF with:
 
 ```sh
 node examples/render-procedural.mjs
 ```
 
-La GIF è muta. I BPM manuali cambiano pulsazioni e musica del film; i tagli restano ai tempi editoriali della demo. [Motore Canvas2D](PROCEDURAL.md)
+GIFs have no audio. Manual BPM changes affect pulses and music; cuts keep the demo's editorial timing. [Canvas2D engine](PROCEDURAL.md)

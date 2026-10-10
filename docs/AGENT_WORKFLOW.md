@@ -1,12 +1,12 @@
-# Workflow con agenti
+# Agent workflow
 
-L’agente modifica codice e JSON. Le reference guidano le scelte visive; non vengono convertite automaticamente in scene.
+The agent edits code and JSON. References guide visual choices; they are not automatically converted into scenes.
 
-1. **Leggi il brief e le reference.** Apri immagini e video; annota camera, luci, palette e movimento da mantenere.
-2. **Modifica la scena.** Look in `project/look.json`, tracce in `project/motion.json`, geometrie in `src/components/` e composizioni in `src/scenes/`. Usa tempo assoluto e random con seed.
-3. **Confronta i frame.** Stesso istante per ogni variante, poi un contact sheet per controllare clipping, riflessi, testo e passaggi camera.
-4. **Guarda una preview intera.** Correggi movimento e transizioni. Se attivi l’audio, ascolta il mix senza coprire il movimento con troppi accenti.
-5. **Esporta e verifica.** Controlla dimensioni, durata, fps e seek; apri il video finale. Distingui validazione tecnica e approvazione creativa.
+1. **Read the brief and references.** Inspect images and videos for camera, lighting, palette and movement.
+2. **Edit the scene.** Look settings live in `project/look.json`, tracks in `project/motion.json`, geometry in `src/components/` and compositions in `src/scenes/`. Use absolute time and seeded randomness.
+3. **Compare frames.** Use matching timestamps, then a contact sheet to check clipping, reflections, text and camera transitions.
+4. **Watch a full preview.** Check movement, transitions and the audio mix.
+5. **Export and verify.** Check dimensions, duration, frame rate and seeking; open the final video. Record technical validation separately from creative approval.
 
 ```sh
 npm run contact -- --samples 6 --out renders/contact.png
@@ -17,8 +17,8 @@ npm run verify -- --out renders/film.mp4 --time 2.8
 
 ## Audio
 
-`parameters.sound` salva on/off, volumi, densità, timbri, seed e BPM. `--sound off` esclude l’audio.
+`parameters.sound` stores enable state, volumes, density, timbres, seed and BPM. `--sound off` omits audio.
 
-Per nuovi meccanismi 3D assegna profili in `userData.sound`. Per nuove scene 2D esporta `nodesAt` e `render` dalla stessa costruzione del grafo: il sound design segue le forme realmente animate. `sound:false` esclude un nodo. [Controlli e limiti](SOUND_DESIGN.md).
+Assign `userData.sound` profiles to new 3D mechanisms. For 2D scenes, expose `nodesAt` and `render` from the same graph construction so sound follows the actual animation. `sound:false` excludes a node. See [controls and limits](SOUND_DESIGN.md).
 
-Conserva sorgenti, ricette e tracce. Reference personali, versioni locali, render intermedi e `node_modules` restano fuori dal repository pubblico.
+Keep sources, recipes and tracks. Personal references, local versions, intermediate renders and `node_modules` stay outside the public repository.

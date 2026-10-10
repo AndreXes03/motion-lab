@@ -1,8 +1,8 @@
-# Studio: controlli e percorsi camera
+# Studio controls and camera paths
 
-I controlli ad hoc delle due demo sono definiti in `project/studio.json`. `src/engine/project-controls.js` esporta `studioProjects` per costruire il pannello e `resolveParameters(scene, values, presetId, baseLook)` per produrre i parametri del renderer. Il preset `original` conserva il look 3D di progetto; `objectMotion` varia solo il movimento degli oggetti, senza spostare la camera.
+Demo controls are defined in `project/studio.json`. `src/engine/project-controls.js` exports `studioProjects` for the panel and `resolveParameters(scene, values, presetId, baseLook)` for renderer parameters. The `original` preset preserves the 3D look; `objectMotion` changes object movement without moving the camera.
 
-Per i prossimi animatic, `src/engine/camera-path.js` offre una traiettoria camera riusabile, indipendente dalla scena 3D attuale:
+`src/engine/camera-path.js` provides a reusable camera path:
 
 ```js
 import { createCameraPath } from './src/engine/camera-path.js';
@@ -16,6 +16,8 @@ camera.position.copy(position);
 camera.lookAt(target);
 ```
 
-Coordinate e `lookAhead` sono in metri, `duration` e `sample(t)` in secondi. `position`, `target` e `tangent` sono nuovi `THREE.Vector3` per ogni campione; `length` è la lunghezza totale in metri e `speed` è in m/s. La Catmull-Rom usa campionamento per lunghezza d’arco (`getPointAt`), così la velocità lungo il percorso rimane quasi costante anche con segmenti di lunghezza diversa. `lookAhead` mira a un punto più avanti sulla curva ed estrapola la tangente alla fine. Il campionamento è deterministico, senza stato di playback; tempi fuori intervallo vengono bloccati agli estremi. Non modifica la scena o la camera esistente finché non lo si usa esplicitamente.
+Coordinates and `lookAhead` are in meters; `duration` and `sample(t)` use seconds. Each sample returns new `THREE.Vector3` values for `position`, `target` and `tangent`. `length` is in meters and `speed` in m/s.
 
-Verifica: `node scripts/test-camera-path.mjs` controlla uniformità dei passi, seek arbitrari, estremi e input non validi.
+The Catmull-Rom curve uses arc-length sampling (`getPointAt`) for nearly constant speed across unequal segments. `lookAhead` targets a point ahead on the curve and extrapolates the tangent at the end. Sampling is deterministic and clamps out-of-range times. It only affects a scene when explicitly applied.
+
+`node scripts/test-camera-path.mjs` checks step uniformity, arbitrary seeks, endpoints and invalid inputs.

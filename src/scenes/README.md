@@ -1,9 +1,9 @@
-# Scene d’esempio
+# Example scenes
 
-Queste composizioni mostrano cosa può produrre il motore. Si possono modificare o usare come punto di partenza per nuovi esperimenti.
+Edit these compositions or use them as starting points.
 
-- [Objects in play](bax.js): scena 3D, disposizione degli oggetti e aggiornamento al tempo richiesto.
-- [Grafica procedurale](procedural-demo.js): tipografia e forme 2D.
-- [SIGNAL](signal.js): studio 3D precedente, conservato come riferimento di codice.
+- [Objects in play](bax.js): 3D scene, object layout and updates at a given time.
+- [Procedural graphics](procedural-demo.js): generative fields, structures, swarms and 2D typography.
+- [SIGNAL](signal.js): an earlier 3D study retained as a code reference.
 
-Le scene usano [componenti](../components/), [motore](../engine/) e [ricette](../../project/). Per aggiungerne una, consulta [Architettura](../../docs/ARCHITECTURE.md).
+Scenes use [components](../components/), the [engine](../engine/) and [recipes](../../project/). See [Architecture](../../docs/ARCHITECTURE.md) to add a scene.

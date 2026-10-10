@@ -1,5 +1,5 @@
-# Demo web
+# Web demo
 
-Pagina statica con player video, esempio procedurale e screenshot dello studio. Pubblicata su [GitHub Pages](https://andrexes03.github.io/motion-lab/).
+Static page with video players, a procedural example and studio screenshots. Published on [GitHub Pages](https://andrexes03.github.io/motion-lab/).
 
-Il workflow [.github/workflows/demo-pages.yml](../.github/workflows/demo-pages.yml) copia questa pagina e i soli media di `demo/` nella cartella di pubblicazione. Lo studio locale completo rimane nell’applicazione alla radice e richiede `npm run viewer`.
+The [.github/workflows/demo-pages.yml](../.github/workflows/demo-pages.yml) workflow copies this page and the demo assets into the publication folder. The full local studio runs from the root application with `npm run viewer`.

@@ -1,18 +1,16 @@
-# Esplora Motion Lab
+# Motion Lab docs
 
-Motion Lab trasforma scene e parametri in fotogrammi e video. Qui trovi le guide, ordinate per ciò che vuoi fare.
-
-| Obiettivo | Parti da qui |
+| Task | Guide |
 | --- | --- |
-| Capire come funziona il motore | [Architettura e percorsi nei sorgenti](ARCHITECTURE.md) |
-| Avviare il viewer, salvare una ricetta e renderizzare | [Guida d’uso](USAGE.md) |
-| Lavorare con un agente su scene e animazioni | [Workflow vibe motion](AGENT_WORKFLOW.md) |
-| Esplorare la demo procedurale | [Esempio e formule](PROCEDURAL-EXAMPLE.md) |
-| Costruire grafica 2D procedurale | [Grafica procedurale](PROCEDURAL.md) |
-| Aggiungere controlli e una traiettoria camera | [Controlli e camera](STUDIO.md) |
-| Capire motion blur, grana e finitura | [Compositing](COMPOSITING.md) |
-| Sonorizzare il movimento ed esportare audio | [Sound design](SOUND_DESIGN.md) |
-| Controllare geometrie e risultato | [Revisione visiva](QUALITY-GATES.md) |
-| Consultare verifiche e limiti | [Validazione](VALIDATION.md) |
+| Understand the engine | [Architecture](ARCHITECTURE.md) |
+| Run the viewer and render | [Usage](USAGE.md) |
+| Work with a coding agent | [Agent workflow](AGENT_WORKFLOW.md) |
+| Explore the procedural demo | [Example and formulas](PROCEDURAL-EXAMPLE.md) |
+| Build procedural 2D graphics | [Procedural graphics](PROCEDURAL.md) |
+| Add controls and camera paths | [Studio](STUDIO.md) |
+| Adjust motion blur and effects | [Compositing](COMPOSITING.md) |
+| Add movement-driven audio | [Sound design](SOUND_DESIGN.md) |
+| Review models and frames | [Visual checks](QUALITY-GATES.md) |
+| Check validation and limits | [Validation](VALIDATION.md) |
 
-[Motore](../src/engine/) · [Scene](../src/scenes/) · [Oggetti e materiali](../src/components/) · [Ricette](../project/) · [Rendering](../scripts/) · [Demo](../demo/)
+[Engine](../src/engine/) · [Scenes](../src/scenes/) · [Objects and materials](../src/components/) · [Recipes](../project/) · [Rendering](../scripts/) · [Demos](../demo/)

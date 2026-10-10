@@ -1,31 +1,23 @@
-# Motion Lab
+# Usage
 
-Studio locale in codice per scene 3D e motion graphics. La scena attiva è un film di **10 secondi, 1920 × 1080, 30 fps**, con radio, una B bold in alluminio e smalto blu con cover meccanica, e un giroscopio meccanico attivo. Il gyro usa cinematica deterministica, senza simulazione fisica. Camera grandangolare, passaggi rapidi con easing quintico, materiali procedurali e compositing condiviso tra viewer ed export. Nessun account cloud o chatbot. Le scene SIGNAL precedenti sono in `archive/`.
+Motion Lab is a local rendering engine for Three.js scenes and Canvas2D motion graphics. The 3D test is a 10-second film with a radio, mechanical emblem and gyroscope. The gyroscope uses deterministic kinematics, rather than a physics simulation. The procedural demo builds generative graphics directly from code.
 
-## Avvio e rendering
+## Start
 
-Servono Node.js, npm e Google Chrome su macOS. Da questa cartella:
+Requires Node.js, npm and Google Chrome on macOS:
 
 ```sh
 npm ci
 node scripts/cli.mjs viewer
 ```
 
-Il viewer si apre su `http://127.0.0.1:4173/`. Le tre icone **Layout** offrono
-**Bilanciato** (proprietà a destra), **Controlli estesi** (video piccolo sopra,
-proprietà sotto) e **Video grande**. Trascina il separatore per ridimensionare
-il pannello; funziona anche con le frecce da tastiera. Layout e larghezza del
-pannello vengono conservati nel browser. Lo sfondo sfocato segue il frame corrente.
+The viewer opens at `http://127.0.0.1:4173/`. Choose a 3D or procedural project, a preset and scene controls. Moment buttons jump to useful shots; advanced settings and references have separate panels.
 
-L’ingranaggio accanto a **Esporta** permette di scegliere risoluzione fino a 4K,
-fps, MP4 / WebM / ProRes, bitrate e qualità del motion blur.
-In **Finitura** si regolano grana e otturatore. Dettagli e limiti in [COMPOSITING.md](COMPOSITING.md).
+The layout controls offer a balanced view, expanded controls and a large video. Drag the divider or use arrow keys to resize the panel. Layout and panel width persist in the browser.
 
-Il pannello **Export** in basso mostra storico, errori, percorso del file e
-azioni **Apri**, **Scarica**, **Finder**. I file sono salvati automaticamente
-nella cartella **Download** dell’utente; lo storico rimane dopo il riavvio. Il pannello si può
-chiudere per dare più spazio al lavoro. La CLI usa Google Chrome su macOS;
-il percorso è impostato in `scripts/cli.mjs`.
+## Render
+
+The gear beside Export controls resolution up to 4K, frame rate, MP4/WebM/ProRes, bitrate and motion blur quality. Finishing controls grain and shutter angle. See [Compositing](COMPOSITING.md).
 
 ```sh
 node scripts/cli.mjs frame --time 2.8 --out renders/frame.png
@@ -35,124 +27,55 @@ node scripts/cli.mjs export --out renders/film.mp4 --temporal-samples 16
 node scripts/cli.mjs verify --time 2.8 --out renders/film.mp4
 ```
 
-`frame` valuta un istante preciso; `contact` compone sei frame di controllo;
-`preview` renderizza a 960 × 540; `export` renderizza a 1920 × 1080 e codifica
-un MP4 con FFmpeg. La CLI produce righe JSON con stato, percorso ed eventuali
-errori. Per esportare solo una porzione, usa `--start` e `--end` su confini di
-frame. `--width`, `--height` e `--parameters '{"display":"TEST"}'` consentono
-varianti senza cambiare la scena salvata. `verify` controlla la stabilità dello
-stesso frame dopo seek diversi e, con `--out`, i metadati del video.
+`frame` evaluates one time; `contact` produces six review frames. Preview defaults to 960 × 540; export to 1920 × 1080, encoded through FFmpeg. CLI output is JSON with status, paths and errors. Use `--start` and `--end` on frame boundaries to export a section. `--width`, `--height` and `--parameters '{"display":"TEST"}'` create variants without editing the saved scene.
 
-## Lavorare nello studio
+`verify` checks the same frame after different seeks and, with `--out`, video metadata. Enable modular 2D/3D audio with `--sound on`; `--sound off` produces silent video. See [Sound design](SOUND_DESIGN.md).
 
-Scegli il progetto 3D o procedurale, un preset e i pochi controlli dedicati.
-I pulsanti dei momenti portano direttamente alle inquadrature utili. Le opzioni
-avanzate e le reference restano disponibili in un pannello separato.
+Only one render can run at a time. The export panel shows history, errors, file paths and open/download/Finder actions. Viewer exports go to Downloads; history persists after restart. The CLI's Chrome path is configured in `scripts/cli.mjs`.
 
-**Salva versione** conserva le impostazioni complete in `project/versions/`;
-puoi ripristinarle dal menu o trasferirle come ricetta JSON. **Crea preview** e
-**Esporta MP4** avviano un render locale delle impostazioni correnti, con
-avanzamento e collegamento al nuovo risultato. I link marcati “demo” indicano
-invece i film già prodotti. È consentito un solo render alla volta.
+## Versions and recipes
 
-Il render conserva parametri e impronta dei sorgenti: se i file di codice
-cambiano durante il lavoro, segnala il risultato come non valido. Non crea
-una copia isolata dei sorgenti; termina il render prima di modificarli.
-La preview live è 960 × 540, l’export finale 1920 × 1080. Il compositing è
-condiviso; il motion blur temporale viene calcolato durante l’export.
+Save version stores complete settings in `project/versions/`. Restore them from the menu or transfer them as JSON recipes. Preview and export use the current settings; links marked demo open existing films.
 
-Per aggiungere controlli e momenti a una scena, consulta [STUDIO.md](STUDIO.md).
+Each render writes a `.project.json` sidecar with its settings. It does not receive live viewer changes. Use `--snapshot renders/film.mp4.project.json` to reproduce a frame; verification automatically uses the video's sidecar.
 
-## Reference → ricetta → scena
+Source fingerprints flag a render as invalid if code changes during rendering. There is no isolated source copy: finish rendering before editing sources. Viewer and export share compositing; temporal blur is calculated during export.
 
-Il pannello del viewer e la CLI raccolgono reference con ruolo **look**,
-**camera** o **elements**. Accettano PNG, JPG, WebP, MP4 e MOV locali, oppure
-link HTTP(S). I media locali sono copiati in `project/references/`; i link
-restano link, senza download automatico. Le note spiegano all’agente cosa
-osservare. Per un video, `sheet` estrae sei istanti utili alla revisione.
+`project/look.json` defines camera, lights, surfaces, post-processing and motion strength. Viewer changes are previews; saving the look writes the recipe and keeps the previous version in `project/history/`. `project/motion.json` contains stable tracks such as `camera.position`, `camera.target`, `device.root.rotation` and `dial.rotor.rotation.z`.
+
+## References
+
+References have a look, camera or elements role. Local PNG/JPG/WebP/MP4/MOV files are copied into `project/references/`; HTTP(S) links remain links without automatic download. Notes tell the agent what to inspect. A video contact sheet extracts six review times.
 
 ```sh
-node scripts/reference.mjs add --file /percorso/reference.jpg --role look --note "ombre profonde e riflessi stretti"
-node scripts/reference.mjs link --url https://example.com/reference --role camera --note "grandangolo ravvicinato"
+node scripts/reference.mjs add --file /path/reference.jpg --role look --note "deep shadows and narrow reflections"
+node scripts/reference.mjs link --url https://example.com/reference --role camera --note "close wide-angle shot"
 node scripts/reference.mjs list
 node scripts/reference.mjs sheet --id ref_XXXXXXXXXXXXXXX --out renders/reference-sheet.png
 node scripts/look.mjs show
-node scripts/look.mjs set --file /percorso/look-variant.json
-```
-
-L’agente deve **guardare** immagini e contact sheet, descrivere le decisioni
-utili e tradurle in parametri e geometrie. L’app non deduce automaticamente un
-look né crea un modello 3D da un’immagine. Per confrontare più look senza modificare la scena:
-
-```sh
+node scripts/look.mjs set --file /path/look-variant.json
 node scripts/brief.mjs
 node scripts/review.mjs --looks project/looks/soft-lighting.json,project/looks/contrast-lighting.json --time 2.8 --out renders/looks.png
 ```
 
-Il confronto conserva i frame singoli e produce un foglio affiancato.
+The agent must inspect references and translate decisions into parameters and geometry. The app does not infer looks or reconstruct 3D models automatically. Look comparison retains individual frames and creates a side-by-side sheet. See [Agent workflow](AGENT_WORKFLOW.md).
 
-`project/look.json` contiene la ricetta per camera, illuminazione, superficie,
-post-produzione e intensità del movimento. I controlli del viewer applicano
-una modifica in anteprima; **Salva aspetto** scrive il file e conserva la versione
-precedente in `project/history/`. `project/motion.json` contiene tracce con
-nomi stabili, come `camera.position`, `camera.target`,
-`device.root.rotation` e `dial.rotor.rotation.z`: ogni valore dipende solo dal
-tempo richiesto. Questi file sono leggibili e modificabili anche da Codex e
-altri agenti tramite comandi locali. Vedi [AGENT_WORKFLOW.md](AGENT_WORKFLOW.md)
-per il ciclo di lavoro.
+## Lighting and inspection
 
-## Sorgenti e seconda scena
+Lighting presets change light position, direction, color and intensity while retaining camera and compositing. Manual lighting changes select a custom state; saving the look keeps it. Presets live in `project/lighting-presets.json`.
 
-`src/config.js` centralizza durata, fps, dimensioni, palette e testi.
-`src/components/` costruisce il dispositivo con geometrie e texture
-procedurali; il modulo della scena in `src/scenes/` imposta il layout e `src/engine/studio.js` le luci; `src/engine/`
-applica le tracce, renderizza Three.js e compone gli overlay 2D. `src/viewer/`
-gestisce l’interfaccia; `scripts/` contiene CLI ed export.
+Inspection offers final image, clean image, clay and normals. Isolate an object with:
 
-Per una seconda scena crea un modulo in `src/scenes/` che esporti
-`createScene(renderer, config)`, poi registra il modulo nella selezione di scena in
-`src/engine/runtime.js` e scegli il suo identificatore in `src/config.js`. Crea nuovi `project/look.json` e
-`project/motion.json` coerenti con gli oggetti della scena, aggiorna
-`src/config.js` e controlla l'anteprima. Mantieni il calcolo del frame come
-funzione assoluta del tempo, anche andando all'indietro nella timeline.
+```sh
+node scripts/cli.mjs frame --parameters '{"inspect":{"object":"device.root","yaw":20},"review":"clean"}' --out renders/inspection.png
+node scripts/quality.mjs --out renders/quality-board.png
+```
 
-## Limiti
+Lens controls include barrel distortion with overscan, chromatic fringes, vignette and GTAO contact shadows. Fringes use Full HD pixels for consistent preview/export intensity. Compositing uses linear HDR, bloom, one OutputPass for tone mapping/sRGB, then optical treatment. Temporal averaging decodes sRGB samples first. GTAO uses fixed noise. See [OutputPass](https://threejs.org/docs/pages/OutputPass.html), [color management](https://threejs.org/manual/pages/color-management.html) and [physical materials](https://threejs.org/docs/pages/MeshPhysicalMaterial.html).
 
-Il film usa vere geometrie 3D, prospettiva, materiali PBR, riflessi da luci
-procedurali, texture procedurali e overlay 2D. Sono presenti antialiasing WebGL,
-un pass per bloom regolabile e lieve aberrazione cromatica. Le alte luci vengono limitate prima del bloom, così il bagliore non cancella i materiali.
-`--temporal-samples` accetta da 1 a 64 campioni, mediati in luce lineare nell’intervallo dell’otturatore; la demo usa 24 campioni. Non integrare il motion blur attraverso tagli netti. Profondità di campo 3D opzionale, con fuoco automatico o manuale.
+## Procedural graphics
 
-Sound design modulare 2D/3D disponibile nel viewer e negli export con `--sound on`; `--sound off` produce un video muto. [Audio e controlli](SOUND_DESIGN.md).
-
-Il rendering deterministico è verificabile nella stessa macchina e versione
-del browser; GPU e driver diversi possono cambiare alcuni pixel. La scena 3D contiene tre oggetti costruiti proceduralmente e un display LED. Import glTF, inserimento
-di prodotti arbitrari, ricostruzione da immagini sono
-sviluppi successivi.
-
-Per condividere il progetto, includi sorgenti, `project/`, lockfile e
-documentazione, escludendo `node_modules` e cartelle temporanee. Il binario
-FFmpeg locale installato da `ffmpeg-static` usa `--enable-nonfree` e non va
-ridistribuito. Fonti e avvisi in [THIRD_PARTY.md](../THIRD_PARTY.md) e `licenses/`.
-
-## Schemi luci e controlli
-
-Il menu **Schema luci** offre Studio morbido, Contrasto deciso, Taglio laterale e Bordo freddo. Ogni scelta modifica posizione, direzione, colore e intensità delle luci, mantenendo camera e compositing. I testi sotto i controlli ne spiegano l’effetto. Una modifica manuale delle luci passa a Personalizzato; **Salva aspetto** conserva il risultato. I preset editabili sono in `project/lighting-presets.json`.
-
-Ogni render scrive un file `.project.json` accanto all’output con la copia delle impostazioni utilizzate. Il rendering non riceve aggiornamenti live dal viewer. Per replicare lo stesso look in un frame, aggiungi `--snapshot renders/film.mp4.project.json`. La verifica usa automaticamente la copia associata al video.
-
-## Revisione modelli e lente
-
-Il menu **Controllo** confronta immagine finale, immagine senza effetti, soli volumi e normali. La CLI accetta `--parameters '{"inspect":{"object":"device.root","yaw":20},"review":"clean"}'` per isolare un modello. `node scripts/quality.mjs --out renders/quality-board.png` genera la tavola materiali/volumi dei tre oggetti, senza dichiarare automaticamente un'approvazione visiva.
-
-La ricetta include **Curvatura della lente** (distorsione a barilotto con overscan), **Frange di colore**, **Vignettatura** e **Ombre nelle giunzioni** (GTAO). Le frange sono espresse in pixel Full HD, quindi la preview mantiene la stessa intensità visiva dell'export. Il compositing usa HDR lineare, bloom, un solo OutputPass per tone mapping/sRGB e poi trattamento ottico. La media temporale decodifica i campioni sRGB prima di mediarli. GTAO usa rumore fisso riproducibile. Riferimenti tecnici: [OutputPass](https://threejs.org/docs/pages/OutputPass.html), [gestione colore](https://threejs.org/manual/pages/color-management.html), [materiali fisici](https://threejs.org/docs/pages/MeshPhysicalMaterial.html).
-
-La direzione gonfiabile/portachiavi è conservata nei componenti precedenti e nei render precedenti. La B attiva combina alluminio spazzolato, smalto blu e cover meccanica; il giroscopio usa cinematica deterministica, senza simulazione fisica. Il wordmark viene isolato a caricamento dallo screenshot fornito dall’utente; `brandReady` è atteso prima di creare le scene.
-
-
-## Motion graphics procedurale
-
-Nel viewer scegli **Motion · Grafica procedurale**: titolo, colore accento e densità si modificano senza montare clip. Play/pausa e cursore servono solo per ispezionare il tempo. La scena 3D resta selezionabile.
+Choose the procedural project to edit title, accent color and density without assembling clips. Playback and scrubbing inspect absolute time; the 3D scene remains available.
 
 ```sh
 node scripts/cli.mjs viewer --scene procedural
@@ -163,6 +86,16 @@ node scripts/cli.mjs export --scene procedural --temporal-samples 8 --out render
 node scripts/cli.mjs verify --scene procedural --time 4.2 --out renders/procedural-final.mp4
 ```
 
-Per una variazione dell'agente: `--parameters '{"graphics":{"title":"PLAY","accent":"#ef5533","density":12,"speed":1.2}}'`. I parametri sono conservati nel file `.project.json` del render; le modifiche nei controlli del viewer sono temporanee. **↓ Ricetta** scarica una configurazione riutilizzabile con `--snapshot /percorso/procedural.project.json`; in alternativa passa gli stessi parametri alla CLI.
+Example variation: `--parameters '{"graphics":{"title":"PLAY","accent":"#ef5533","density":12,"speed":1.2}}'`. Parameters are stored in the render sidecar. Download a recipe and reuse it with `--snapshot /path/procedural.project.json`.
 
-API e creazione di una seconda composizione: [PROCEDURAL.md](PROCEDURAL.md). Il motore Canvas2D è locale e non richiede nuove dipendenze. Questa modalità gestisce grafica vettoriale e tipografia procedurale; import video, scontorno e collegamento di generazioni Magnific restano fuori da questa implementazione.
+See [Procedural graphics](PROCEDURAL.md) for the API. This Canvas2D mode handles procedural vectors and typography. Footage import, background removal and connections to generated videos are not implemented.
+
+## Sources and limits
+
+`src/config.js` centralizes duration, frame rate, dimensions, palette and text. Components build geometry and materials; scenes define compositions; `src/engine/studio.js` sets lighting. The engine applies tracks, renders and composites; the viewer handles UI; scripts handle CLI and export.
+
+Add a scene module exporting `createScene(renderer, config)`, register it in `src/engine/runtime.js` and `src/config.js`, and supply matching look, motion and control definitions. Keep frame calculation a function of absolute time, including backward seeks. See [Studio](STUDIO.md).
+
+Rendering is repeatable on the same machine/browser version; GPUs and drivers may change pixels. The 3D demo uses real geometry, perspective, PBR materials, procedural reflections and textures, 2D overlays, adjustable bloom, chromatic aberration and optional depth of field. `--temporal-samples` accepts 1–64 samples; never integrate across hard cuts. glTF import, arbitrary product insertion and reconstruction from images are not implemented.
+
+Share sources, `project/`, lockfile and docs, excluding dependencies and temporary files. The local `ffmpeg-static` binary uses `--enable-nonfree` and must not be redistributed. See [Third-party notices](../THIRD_PARTY.md) and `licenses/`.

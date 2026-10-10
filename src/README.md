@@ -1,11 +1,11 @@
-# Sorgenti del motore
+# Engine source
 
-| Cartella o file | Ruolo |
+| Folder or file | Role |
 | --- | --- |
-| [engine/](engine/) | Rendering, tempo, camera, compositing e grafica procedurale |
-| [scenes/](scenes/) | Composizioni d’esempio e aggiornamento degli oggetti |
-| [components/](components/) | Geometrie, materiali e texture |
-| [viewer/](viewer/) | Interfaccia per esplorare e renderizzare |
-| [config.js](config.js) | Impostazioni generali della composizione |
+| [engine/](engine/) | Rendering, time, camera, compositing and procedural graphics |
+| [scenes/](scenes/) | Example compositions and object updates |
+| [components/](components/) | Geometry, materials and textures |
+| [viewer/](viewer/) | Interface for previewing and rendering |
+| [config.js](config.js) | Composition defaults |
 
-Per seguire il percorso da scena a video, leggi la [mappa dell’architettura](../docs/ARCHITECTURE.md).
+Follow the path from scene to video in the [architecture map](../docs/ARCHITECTURE.md).

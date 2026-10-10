@@ -1,18 +1,18 @@
-# Motore
+# Engine
 
-Il punto di ingresso è [runtime.js](runtime.js): valuta la scena al tempo richiesto e produce un fotogramma.
+[runtime.js](runtime.js) evaluates a scene at a given time and produces a frame.
 
-| File | Cosa fa |
+| File | Role |
 | --- | --- |
-| [runtime.js](runtime.js) | Seleziona 3D/2D, applica il look e compone il frame |
-| [animation.js](animation.js) e [timeline.js](timeline.js) | Valutano tracce e interpolazioni al tempo assoluto |
-| [camera-path.js](camera-path.js) | Percorso camera campionato per lunghezza d’arco |
-| [studio.js](studio.js) | Luci e ambiente della scena |
-| [composite.js](composite.js) | Bloom, occlusione, distorsione e finitura |
-| [temporal.js](temporal.js) | Tempi e pesi dei campioni di motion blur |
-| [film-grain.js](film-grain.js) | Grana applicata dopo l’integrazione temporale |
-| [procedural.js](procedural.js) | Primitive e funzioni per motion graphics 2D |
-| [sound-design.js](sound-design.js) e [sound-foley.js](sound-foley.js) | Analizzano il movimento e generano SFX e musica |
-| [project-controls.js](project-controls.js) | Risolve preset e controlli nei parametri di rendering |
+| [runtime.js](runtime.js) | Selects 3D/2D, applies the look and composes the frame |
+| [animation.js](animation.js) and [timeline.js](timeline.js) | Evaluate tracks and interpolation at absolute time |
+| [camera-path.js](camera-path.js) | Camera path sampled by arc length |
+| [studio.js](studio.js) | Scene lighting and environment |
+| [composite.js](composite.js) | Depth of field, bloom, occlusion, distortion and finishing |
+| [temporal.js](temporal.js) | Motion blur sample times and weights |
+| [film-grain.js](film-grain.js) | Grain applied after temporal integration |
+| [procedural.js](procedural.js) | Primitives and functions for 2D motion graphics |
+| [sound-design.js](sound-design.js) and [sound-foley.js](sound-foley.js) | Analyze movement and generate SFX and music |
+| [project-controls.js](project-controls.js) | Resolve presets and controls into render parameters |
 
-[Architettura completa](../../docs/ARCHITECTURE.md) · [Compositing](../../docs/COMPOSITING.md) · [Sound design](../../docs/SOUND_DESIGN.md)
+[Architecture](../../docs/ARCHITECTURE.md) · [Compositing](../../docs/COMPOSITING.md) · [Sound design](../../docs/SOUND_DESIGN.md)

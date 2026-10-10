@@ -1,49 +1,43 @@
-# Dal codice al video
+# Architecture
 
-Motion Lab è un motore locale di rendering per scene Three.js e grafica Canvas2D. Il viewer permette di esplorare il risultato; la CLI calcola i fotogrammi allo stesso modo e li codifica in video.
+Motion Lab renders Three.js scenes and Canvas2D graphics locally. The viewer and CLI use the same frame calculation; the CLI encodes frames into video.
 
 ```mermaid
 flowchart LR
-    A[Codice della scena] --> C[Runtime]
-    B[Ricetta JSON e timeline] --> C
-    T[Tempo richiesto] --> C
-    C --> D[Scena 3D o grafica 2D]
-    D --> E[Compositing e motion blur]
-    E --> F[Fotogramma]
+    A[Scene code] --> C[Runtime]
+    B[JSON recipe and timeline] --> C
+    T[Requested time] --> C
+    C --> D[3D scene or 2D graphics]
+    D --> E[Compositing and motion blur]
+    E --> F[Frame]
     F --> G[Viewer]
     F --> H[FFmpeg]
     H --> I[Video]
 ```
 
-## Scegli cosa esplorare
-
-| Voglio capire o cambiare… | File da aprire |
+| Change or inspect | Source |
 | --- | --- |
-| Durata, dimensioni, palette e testi | [Configurazione](../src/config.js) |
-| Come viene calcolato un frame | [Runtime](../src/engine/runtime.js) |
-| Timeline e interpolazione | [Animazione](../src/engine/animation.js), [timeline](../src/engine/timeline.js) |
-| Camera e traiettorie | [Percorso camera](../src/engine/camera-path.js), [tracce JSON](../project/motion.json) |
-| Geometrie e materiali | [Componenti](../src/components/), [materiali](../src/components/materials.js) |
-| Luce, lente e finitura | [Ricetta look](../project/look.json), [compositing](../src/engine/composite.js) |
-| Motion blur temporale | [Campionamento dell’otturatore](../src/engine/temporal.js), [render CLI](../scripts/cli.mjs) |
-| Grafica 2D e tipografia | [Motore procedurale](../src/engine/procedural.js), [demo 2D](../src/scenes/procedural-demo.js) |
-| Pannelli, preset e controlli | [Viewer](../src/viewer/main.js), [schema dello studio](../project/studio.json) |
-| Salvataggio, versioni e render locali | [API dello studio](../scripts/studio-api.mjs) |
+| Duration, dimensions, palette and text | [Configuration](../src/config.js) |
+| Frame calculation | [Runtime](../src/engine/runtime.js) |
+| Timeline and interpolation | [Animation](../src/engine/animation.js), [timeline](../src/engine/timeline.js) |
+| Camera and paths | [Camera path](../src/engine/camera-path.js), [JSON tracks](../project/motion.json) |
+| Geometry and materials | [Components](../src/components/), [materials](../src/components/materials.js) |
+| Lighting, lens and effects | [Look recipe](../project/look.json), [compositing](../src/engine/composite.js) |
+| Temporal motion blur | [Shutter sampling](../src/engine/temporal.js), [render CLI](../scripts/cli.mjs) |
+| 2D graphics and typography | [Procedural engine](../src/engine/procedural.js), [2D demo](../src/scenes/procedural-demo.js) |
+| Panels, presets and controls | [Viewer](../src/viewer/main.js), [studio schema](../project/studio.json) |
+| Saving, versions and local renders | [Studio API](../scripts/studio-api.mjs) |
 
-## Un ciclo di vibe motion
+## Working with an agent
 
-1. Descrivi l’idea a Codex o Claude: composizione, forme, materiali e ritmo.
-2. L’agente modifica la scena, le tracce o la ricetta JSON.
-3. Ispezioni tempi precisi nel viewer, anche andando indietro.
-4. Correggi un parametro o un oggetto e confronti il risultato.
-5. Renderizzi un frame, una preview o il film completo.
+Describe the composition, shapes, materials and rhythm to Codex or Claude. The agent edits the scene, tracks or recipe. Inspect specific times in the viewer, adjust parameters, compare results and render.
 
-L’agente lavora su file espliciti e versionabili. Il motore non interpreta da solo i prompt e non ricostruisce automaticamente modelli 3D dalle reference.
+The engine works with explicit, versioned files. It does not interpret prompts itself or reconstruct 3D models from references.
 
-## Come aggiungere una scena
+## Adding a scene
 
-La scena 3D è un modulo che esporta `createScene(renderer, config)` e restituisce scena, camera, funzione di aggiornamento e overlay. La modalità 2D renderizza sul canvas. I punti di integrazione attuali sono [runtime](../src/engine/runtime.js), [configurazione](../src/config.js) e [schema dei controlli](../project/studio.json): aggiungere una scena richiede collegarla in questi file.
+A 3D module exports `createScene(renderer, config)` and returns the scene, camera, update function and overlay. The 2D mode renders to a canvas. Register scenes in [runtime](../src/engine/runtime.js), [configuration](../src/config.js) and the [control schema](../project/studio.json).
 
-Ogni aggiornamento deve dipendere dal tempo assoluto. Non usare timer di playback, accumuli tra frame o casualità non inizializzata. Questo permette seek, confronto e render ripetibili nella stessa configurazione di browser e GPU.
+Updates must depend on absolute time. Avoid playback timers, accumulated frame state and unseeded randomness. This supports repeatable seeking and rendering within the same browser and GPU configuration.
 
-[Guida d’uso](USAGE.md) · [Workflow per agenti](AGENT_WORKFLOW.md) · [Torna all’indice](README.md)
+[Usage](USAGE.md) · [Agent workflow](AGENT_WORKFLOW.md) · [Docs index](README.md)

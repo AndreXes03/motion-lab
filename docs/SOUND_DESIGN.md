@@ -1,29 +1,29 @@
 # Sound design
 
-Attiva **Sound design** e premi Play. Camera, oggetti, accenti e musica hanno volumi separati; 0 spegne il modulo. Le modifiche si ascoltano al Play successivo.
+Enable **Sound design** and press Play. Camera, objects, accents and music have separate volumes; 0 mutes a module. Changes apply on the next playback.
 
-- **3D:** whoosh di camera, rotazioni, cerniere e scatti dei meccanismi.
-- **2D:** forme, testi, entrate e transizioni guidano gli SFX. La densità seleziona i gesti principali delle griglie.
-- **Musica:** stili scena, techno e ambient; BPM automatici o manuali. La demo 2D usa techno originale a 132 BPM. In manuale cambiano musica e pulsazioni, ma i tagli mantengono i tempi editoriali.
-- **Output:** ascolto, WAV stereo e audio negli export. Ricette e versioni salvano volumi, timbri e variante in `parameters.sound`.
+- **3D:** camera whooshes, rotations, hinges and mechanical detents.
+- **2D:** shapes, text, entrances and transitions drive SFX. Density selects the main gestures in grids.
+- **Music:** scene, techno and ambient styles, with automatic or manual BPM. The 2D demo uses original 132 BPM techno. Manual BPM changes affect music and pulses, while cuts retain their editorial timing.
+- **Output:** playback, stereo WAV and audio in video exports. Recipes and versions store volumes, timbres and variant in `parameters.sound`.
 
-## Comandi
+## Commands
 
 ```sh
 npm run export -- --sound on --out renders/film.mp4
 npm run preview -- --scene procedural --sound on --out renders/procedural.mp4
 ```
 
-`--sound off` esporta senza audio. Per un video già renderizzato:
+`--sound off` exports without audio. To add sound to an existing render:
 
 ```sh
 npm run soundtrack -- --video renders/film.mp4 --recipe renders/film.mp4.project.json --out renders/film-audio.mp4
 ```
 
-Video, ricetta e sorgenti devono corrispondere. Il comando conserva il flusso video e salva mix WAV e tracce separate; usa un nuovo nome di output. `npm run sound:bank` genera esempi WAV dei timbri.
+The video, recipe and sources must match. The command preserves the video stream and saves the WAV mix and separate stems. Use a new output filename. `npm run sound:bank` generates timbre samples as WAV files.
 
-## Estensione
+## Extension and limits
 
-Audio stereo a 48 kHz, movimento campionato a 60 Hz. In 3D i profili sono in `userData.sound`; in 2D `nodesAt(time, parameters)` condivide il grafo del disegno. `sound:false` esclude un nodo e i suoi figli.
+Audio is stereo at 48 kHz; movement is sampled at 60 Hz. 3D profiles use `userData.sound`. In 2D, `nodesAt(time, parameters)` shares the drawing graph. `sound:false` excludes a node and its children.
 
-Sintesi locale, più una [texture di vento inclusa](../src/assets/audio/provenance.json). La visibilità audio è geometrica: non legge i pixel né simula collisioni. Analisi BPM e time-stretch di brani importati non sono implementati. [Workflow](AGENT_WORKFLOW.md) · [Verifiche](VALIDATION.md)
+Local synthesis includes a [wind texture](../src/assets/audio/provenance.json). Audio visibility is geometric: it does not read pixels or simulate collisions. Imported-track BPM analysis and time-stretch are not implemented. [Workflow](AGENT_WORKFLOW.md) · [Validation](VALIDATION.md)

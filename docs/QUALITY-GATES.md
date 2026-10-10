@@ -1,18 +1,18 @@
-# Verifica visiva prima del rendering finale
+# Visual checks
 
-Generare il confronto dei tre oggetti con materiali e in clay:
+Generate material and clay views of the three objects:
 
 ```sh
 node scripts/quality.mjs --out renders/quality-board.png
 ```
 
-Il risultato è una tavola di sei fotogrammi, i singoli PNG e un manifesto JSON. Il comando usa le viste isolate dell'applicativo. Una riuscita tecnica significa solo che le immagini sono state prodotte: l'approvazione visiva richiede di guardarle.
+The command produces a six-frame board, individual PNGs and a JSON manifest using isolated object views. Successful rendering does not establish visual approval.
 
-1. **Forma e dettagli:** controllare silhouette, spessore, raccordi, saldature, anelli e punti di attacco. Il palloncino deve mostrare volume gonfiato e cuciture credibili; il portachiavi deve avere collegamenti reali; la manopola deve avanzare verso la camera e stare dentro il proprio collare.
-2. **Normali e intersezioni:** guardare la clay e, per i difetti dubbi, la vista `review: 'normals'`. Cercare facce capovolte, superfici mancanti, compenetrazioni, spigoli casuali e ombre spezzate. Ripetere con un altro angolo di rotazione.
-3. **Materiali:** verificare la scala della texture in primo piano, le differenze fra plastica, metallo e film del palloncino, la continuità UV e il comportamento delle riflessioni. Controllare che la grana non diventi puntinatura visibile e che le luci non cancellino i dettagli.
-4. **Movimento:** guardare una preview continua. Verificare pivot, inerzia, vincoli, contatti, oscillazioni, arresti e rotazione della manopola. I fotogrammi isolati non verificano la fisica o la fluidità.
-5. **Compositing:** controllare l'inquadratura completa in movimento e alla risoluzione finale: gerarchia, sovrapposizioni, ombre, contrasto, leggibilità e tagli ai margini. Verificare bloom e motion blur sia attivi sia disattivi.
-6. **Consegna:** eseguire la verifica tecnica di seek deterministico e metadati del video; poi guardare il file esportato. Registrare separatamente rendering riuscito, controllo visivo eseguito e approvazione dell'utente.
+1. **Shape and detail:** inspect silhouettes, thickness, bevels, seams, rings and attachment points. Check inflated volume and seams on balloon components, real keychain connections, and the dial's travel within its collar.
+2. **Normals and intersections:** inspect clay and `review: 'normals'` views for reversed faces, missing surfaces, intersections and broken shadows. Repeat at another angle.
+3. **Materials:** check close-up texture scale, plastic/metal/film differences, UV continuity and reflections. Grain and highlights should retain detail.
+4. **Movement:** watch a continuous preview for pivots, inertia, constraints, contacts, oscillations and stops. Still frames cannot validate fluidity or physics.
+5. **Compositing:** review the full frame in motion at final resolution. Check hierarchy, overlaps, shadows, contrast, readability and edge cropping. Compare bloom and motion blur on and off.
+6. **Delivery:** verify deterministic seeking and video metadata, then watch the exported file. Record render completion, visual review and user approval separately.
 
-Se uno dei primi tre controlli fallisce, correggere il modello prima di generare l'intero filmato. Se fallisce il movimento, produrre prima una preview breve della parte interessata.
+Fix geometry and materials before rendering the full film. For motion issues, render a short preview of the affected section first.

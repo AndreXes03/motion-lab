@@ -1,5 +1,5 @@
-# Demo procedurale
+# Procedural demo
 
-[Animazione live](https://andrexes03.github.io/motion-lab/examples/procedural-field.html) · [Video con audio](https://andrexes03.github.io/motion-lab/#procedural-video) · [Scena e formule](../src/scenes/procedural-demo.js)
+[Live animation](https://andrexes03.github.io/motion-lab/examples/procedural-field.html) · [Video with audio](https://andrexes03.github.io/motion-lab/#procedural-video) · [Scene and formulas](../src/scenes/procedural-demo.js)
 
-Il live usa la stessa scena dello studio, senza testi e con il logo personale. Il video include tipografia, techno originale a 132 BPM e SFX.
+The live example uses the studio scene, with no text and with the personal logo. The video includes typography, original techno at 132 BPM and SFX.

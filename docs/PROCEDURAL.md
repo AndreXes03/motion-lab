@@ -1,10 +1,10 @@
-# Motion graphics procedurale
+# Procedural motion graphics
 
-Il motore Canvas2D calcola ogni frame dal tempo assoluto. Posizioni, rotazioni, scale e maschere possono essere funzioni: una regola muove centinaia di elementi, anche dopo un seek.
+The Canvas2D engine calculates every frame from absolute time. Position, rotation, scale and masks can be functions: one rule animates hundreds of elements and supports arbitrary seeking.
 
-La [scena demo](../src/scenes/procedural-demo.js) combina 55 flussi, 60 anelli di un toro parametrico, 720 elementi griglia/spirale, 100 onde d’interferenza e un tunnel di 26 cornici. [Seed, densità, velocità e colore](../project/graphics.json) sono modificabili.
+The [demo](../src/scenes/procedural-demo.js) combines 55 flows, 60 parametric torus rings, 720 grid/spiral elements, 100 interference waves and a 26-frame tunnel. Edit [seed, density, speed and color](../project/graphics.json).
 
-## Scrivere una scena
+## Writing a scene
 
 ```js
 const nodes = Array.from({length: 100}, (_, i) => ({
@@ -16,15 +16,15 @@ const nodes = Array.from({length: 100}, (_, i) => ({
 renderProcedural(ctx, time, {width: 1920, height: 1080, nodes, seed: 42});
 ```
 
-Nodi disponibili: gruppi, cerchi, rettangoli, testi e path; supportano trasformazioni, opacità, blend e clip. Per gli SFX, `nodesAt(time, parameters)` restituisce lo stesso grafo usato nel disegno; `sound:false` esclude un nodo. `clear:false` permette overlay su un frame esistente.
+Nodes include groups, circles, rectangles, text and paths, with transforms, opacity, blending and clipping. For SFX, `nodesAt(time, parameters)` returns the same graph used for drawing. `sound:false` excludes a node. `clear:false` allows overlays on an existing frame.
 
-La demo usa techno a 132 BPM e tagli ogni quattro beat. I BPM manuali cambiano musica e pulsazioni, mentre i tagli mantengono i tempi editoriali originali. L’export evita il motion blur tra capitoli.
+The demo uses 132 BPM techno and cuts every four beats. Manual BPM changes affect music and pulses, while cuts retain their original editorial timing. Export avoids motion blur across chapter boundaries.
 
-## Verifica
+## Checks
 
 ```sh
 node scripts/test-procedural.mjs
 node scripts/test-procedural-showcase.mjs
 ```
 
-Il rendering è ripetibile nello stesso ambiente; font e browser diversi possono cambiare i pixel. Il 2D non importa footage e non applica gli effetti ottici del renderer 3D. [Esempio live](PROCEDURAL-EXAMPLE.md) · [Sound design](SOUND_DESIGN.md)
+Rendering is repeatable within the same environment; fonts and browsers can change pixels. The 2D mode does not import footage or apply the 3D renderer's optical effects. [Live example](PROCEDURAL-EXAMPLE.md) · [Sound design](SOUND_DESIGN.md)

@@ -1,14 +1,14 @@
-# Oggetti, materiali e texture
+# Objects, materials and textures
 
-Qui si costruiscono gli elementi della scena con geometrie e materiali procedurali.
+Scene elements built with procedural geometry and materials.
 
-- [Radio](device.js): corpo, manopola e display.
-- [Emblema meccanico](bax-emblem.js): scocca, smalto e cover.
-- [Giroscopio](bax-kinetic.js): anelli e cinematica.
-- [Display LED](led-sign.js): testo come elemento della scena.
-- [Materiali condivisi](materials.js): superfici e dettagli procedurali.
-- [Texture del marchio](brand.js): preparazione dell’asset presente sui prodotti.
+- [Radio](device.js): body, dial and display.
+- [Mechanical emblem](bax-emblem.js): shell, enamel and cover.
+- [Gyroscope](bax-kinetic.js): rings and kinematics.
+- [LED display](led-sign.js): text as a scene element.
+- [Shared materials](materials.js): surfaces and procedural details.
+- [Brand texture](brand.js): prepares the asset used on the products.
 
-I componenti gonfiabili e portachiavi sono studi precedenti. La demo attiva usa radio, emblema e giroscopio. Geometrie e aggiornamento restano espliciti: cinematica deterministica, non simulazione rigida completa.
+Inflatable and keychain components are earlier studies. The active demo uses the radio, emblem and gyroscope. Geometry and updates are explicit: deterministic kinematics, rather than a full rigid-body simulation.
 
-[Scena 3D](../scenes/bax.js) · [Ricetta look](../../project/look.json)
+[3D scene](../scenes/bax.js) · [Look recipe](../../project/look.json)

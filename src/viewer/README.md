@@ -1,7 +1,7 @@
-# Viewer locale
+# Local viewer
 
-[main.js](main.js) costruisce lo studio: selezione della composizione, timeline, preset, controlli, versioni ed export. [style.css](style.css) gestisce layout e pannelli. Il [pannello reference](reference-panel.js) raccoglie media e note di lavoro locali.
+[main.js](main.js) builds the studio: composition selection, timeline, presets, controls, versions and export. [style.css](style.css) handles layout and panels. The [reference panel](reference-panel.js) collects local media and notes.
 
-Il viewer chiama il [runtime](../engine/runtime.js) per la preview e le [API locali](../../scripts/studio-api.mjs) per salvataggi ed export. Le API richiedono il server locale: la demo web pubblicata mostra il film, mentre lo studio completo si avvia con `npm run viewer`.
+The viewer uses the [runtime](../engine/runtime.js) for preview and the [local API](../../scripts/studio-api.mjs) for saves and exports. Run the full studio with `npm run viewer`; the published web demo plays the rendered films.
 
-[Guida d’uso](../../docs/USAGE.md) · [Schema dei controlli](../../project/studio.json)
+[Usage](../../docs/USAGE.md) · [Controls schema](../../project/studio.json)
