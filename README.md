@@ -36,13 +36,15 @@ Export MP4, WebM e ProRes, con risoluzione, frame rate, campioni e bitrate regol
 
 **Compositing:** occlusione ambientale, bloom, controllo delle alte luci, aberrazione cromatica, vignettatura e distorsione lente. Grana applicata dopo il motion blur e overlay 2D sopra il render. [Sorgenti](src/engine/composite.js).
 
+**Sound design:** SFX legati ai movimenti 2D/3D, moduli regolabili e musica procedurale con BPM automatico o manuale. [Guida](docs/SOUND_DESIGN.md).
+
 ## Demo 3D
 
 [![Objects in play](demo/hero.jpg)](https://andrexes03.github.io/motion-lab/)
 
 Objects in play è un test di luci, camera e cinematica.
 
-**1080p · 25 fps · 24 campioni · obiettivo 6 Mb/s · senza audio.**
+**1080p · 25 fps · 24 campioni · obiettivo 6 Mb/s · SFX modulari.**
 
 [Video nel browser](https://andrexes03.github.io/motion-lab/) · [MP4](demo/objects-in-play.mp4) · [Ricetta](demo/objects-in-play.project.json) · [Altre demo](demo/README.md)
 
@@ -78,6 +80,6 @@ npm run export -- --snapshot demo/objects-in-play.project.json --out renders/fil
 
 ## Stato e licenze
 
-In sviluppo. Audio, profondità di campo e import glTF non implementati. Dopo un passaggio 2D → 3D → 2D sono state rilevate differenze nei pixel: riapri la scena per i confronti. [Verifiche e limiti](docs/VALIDATION.md).
+In sviluppo. Profondità di campo e import glTF non implementati. Dopo un passaggio 2D → 3D → 2D sono state rilevate differenze nei pixel: riapri la scena per i confronti. [Verifiche e limiti](docs/VALIDATION.md).
 
 Codice di Andrea Salvo, [MIT](LICENSE). Marchi e asset demo conservano i rispettivi diritti. FFmpeg non incluso. [Dipendenze e avvisi](THIRD_PARTY.md).

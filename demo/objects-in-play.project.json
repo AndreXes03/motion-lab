@@ -602,7 +602,25 @@
       "values": {},
       "preset": "original"
     },
-    "review": "beauty"
+    "review": "beauty",
+    "sound": {
+      "enabled": true,
+      "camera": 0.22,
+      "objects": 0.38,
+      "accents": 0.25,
+      "dial": 0.85,
+      "hinge": 0.85,
+      "gyro": 0.5,
+      "music": 0.38,
+      "master": 0.8,
+      "density": 0.65,
+      "tempo": "auto",
+      "bpm": 112,
+      "seed": 42,
+      "cameraKit": "air",
+      "objectKit": "mechanical",
+      "accentKit": "soft"
+    }
   },
   "settings": {
     "width": 1920,

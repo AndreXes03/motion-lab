@@ -121,13 +121,9 @@ funzione assoluta del tempo, anche andando all'indietro nella timeline.
 Il film usa vere geometrie 3D, prospettiva, materiali PBR, riflessi da luci
 procedurali, texture procedurali e overlay 2D. Sono presenti antialiasing WebGL,
 un pass per bloom regolabile e lieve aberrazione cromatica. Le alte luci vengono limitate prima del bloom, così il bagliore non cancella i materiali.
-La ricetta salvata imposta `shutterAngle` a 270°. `--temporal-samples` accetta
-da 1 a 16 campioni, mediati in luce lineare nell'intervallo dell'otturatore;
-gli esempi usano 8 campioni per la preview e 16 per l'export finale. È
-appropriato qui perché la ripresa è continua. Non usarlo attraverso tagli
-netti. La profondità di campo non è implementata. Il video è muto: `audio` è
-predisposto nella configurazione, ma mux e sincronizzazione audio non sono
-ancora implementati.
+`--temporal-samples` accetta da 1 a 64 campioni, mediati in luce lineare nell’intervallo dell’otturatore; la demo usa 24 campioni. Non integrare il motion blur attraverso tagli netti. La profondità di campo non è implementata.
+
+Sound design modulare 2D/3D disponibile nel viewer e negli export con `--sound on`; `--sound off` produce un video muto. [Audio e controlli](SOUND_DESIGN.md).
 
 Il rendering deterministico è verificabile nella stessa macchina e versione
 del browser; GPU e driver diversi possono cambiare alcuni pixel. La scena 3D contiene tre oggetti costruiti proceduralmente e un display LED. Import glTF, inserimento

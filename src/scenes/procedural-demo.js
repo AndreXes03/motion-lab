@@ -114,7 +114,8 @@ export function createProceduralDemo(config) {
   }
   return {
     render,
+    nodesAt:(time,parameters={})=>buildNodes(time,parameters.graphics??{},W,H),
     nodes,
-    config: { duration: config?.duration ?? 10, width: W, height: H, palette: { blue: BLUE, cream: CREAM, accent: DEFAULTS.accent }, graphics: DEFAULTS }
+    config: { seed:graphicsRecipe.seed, duration: config?.duration ?? 10, width: W, height: H, palette: { blue: BLUE, cream: CREAM, accent: DEFAULTS.accent }, graphics: DEFAULTS }
   };
 }

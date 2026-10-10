@@ -12,6 +12,7 @@ Il punto di ingresso è [runtime.js](runtime.js): valuta la scena al tempo richi
 | [temporal.js](temporal.js) | Tempi e pesi dei campioni di motion blur |
 | [film-grain.js](film-grain.js) | Grana applicata dopo l’integrazione temporale |
 | [procedural.js](procedural.js) | Primitive e funzioni per motion graphics 2D |
+| [sound-design.js](sound-design.js) e [sound-foley.js](sound-foley.js) | Analizzano il movimento e generano SFX e musica |
 | [project-controls.js](project-controls.js) | Risolve preset e controlli nei parametri di rendering |
 
-[Architettura completa](../../docs/ARCHITECTURE.md) · [Compositing](../../docs/COMPOSITING.md)
+[Architettura completa](../../docs/ARCHITECTURE.md) · [Compositing](../../docs/COMPOSITING.md) · [Sound design](../../docs/SOUND_DESIGN.md)

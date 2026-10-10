@@ -1,45 +1,24 @@
-# Workflow per un agente
+# Workflow con agenti
 
-Questo progetto si pilota modificando codice e JSON ed eseguendo comandi
-locali. Le reference orientano il giudizio visivo dell'agente: non esiste un
-motore che le traduca automaticamente in scene.
+L’agente modifica codice e JSON. Le reference guidano le scelte visive; non vengono convertite automaticamente in scene.
 
-1. **Leggi brief e reference.** Esamina `project/references.json`, apri le
-   immagini locali e crea un contact sheet per ciascun video con
-   `node scripts/reference.mjs sheet --id ID --out renders/ref-ID.png`. Apri
-   anche i link accessibili. Distingui ciò che è effettivamente visibile da
-   ciò che il brief chiede di aggiungere.
-2. **Annota decisioni specifiche.** Per ogni reference registra ruolo,
-   inquadratura/lunghezza focale apparente, direzione e rapporto delle luci,
-   caratteristiche delle superfici, palette, movimento ed elementi da
-   preservare. Riconcilia reference in conflitto prima di cambiare la scena.
-3. **Scrivi ricetta e tracce.** Modifica `project/look.json` per camera,
-   lighting, surface, post e `motion.amount`. Modifica `project/motion.json`
-   per le proprietà con ID stabili. Se servono forme o dettagli nuovi, cambia
-   `src/components/` o `src/scenes/`. Ogni traccia deve dipendere dal tempo
-   assoluto; non usare timer, integrazione dipendente dal playback o random
-   non inizializzato. Usa `node scripts/look.mjs set --file ...` per salvare
-   ricette complete con una copia precedente in `project/history/`.
-4. **Confronta look in fermo.** Renderizza lo stesso istante per le varianti
-   e guardalo alla dimensione utile. Valuta composizione, silhouette,
-   riflessi, contrasto, testo e dettagli contro le reference. Usa
-   `node scripts/review.mjs --looks a.json,b.json --time 2.8 --out renders/looks.png`. Scegli la ricetta più fedele al brief,
-   poi salva.
-5. **Controlla almeno sei frame.** Crea
-   `node scripts/cli.mjs contact --samples 6 --out renders/contact.png`.
-   Apri il file e correggi clipping, geometrie, testo, continuità dei
-   riflessi e passaggi della camera. Ripeti il foglio dopo modifiche
-   sostanziali.
-6. **Controlla il movimento.** Esporta
-   `node scripts/cli.mjs preview --out renders/preview.mp4`, guardalo per
-   intero e correggi scatti o transizioni deboli. Usa campioni temporali
-   solo su riprese continue e quando il blur migliora davvero il movimento.
-7. **Esporta e verifica.** Esegui
-   `node scripts/cli.mjs export --out renders/film.mp4` e
-   `node scripts/cli.mjs verify --out renders/film.mp4 --time 2.8`.
-   Controlla anche un seek all'indietro nel viewer e apri il video finale.
-   Riporta durata, dimensioni, fps, numero di frame e limiti effettivamente
-   verificati.
+1. **Leggi il brief e le reference.** Apri immagini e video; annota camera, luci, palette e movimento da mantenere.
+2. **Modifica la scena.** Look in `project/look.json`, tracce in `project/motion.json`, geometrie in `src/components/` e composizioni in `src/scenes/`. Usa tempo assoluto e random con seed.
+3. **Confronta i frame.** Stesso istante per ogni variante, poi un contact sheet per controllare clipping, riflessi, testo e passaggi camera.
+4. **Guarda una preview intera.** Correggi movimento e transizioni. Se attivi l’audio, ascolta il mix senza coprire il movimento con troppi accenti.
+5. **Esporta e verifica.** Controlla dimensioni, durata, fps e seek; apri il video finale. Distingui validazione tecnica e approvazione creativa.
 
-Mantieni il film editabile: salva ricette, tracce, sorgenti e reference nel
-progetto. Non includere `node_modules` nel pacchetto condiviso.
+```sh
+npm run contact -- --samples 6 --out renders/contact.png
+npm run preview -- --sound on --out renders/preview.mp4
+npm run export -- --sound on --out renders/film.mp4
+npm run verify -- --out renders/film.mp4 --time 2.8
+```
+
+## Audio
+
+`parameters.sound` salva on/off, volumi, densità, timbri, seed e BPM. `--sound off` esclude l’audio.
+
+Per nuovi meccanismi 3D assegna profili in `userData.sound`. Per nuove scene 2D esporta `nodesAt` e `render` dalla stessa costruzione del grafo: il sound design segue le forme realmente animate. `sound:false` esclude un nodo. [Controlli e limiti](SOUND_DESIGN.md).
+
+Conserva sorgenti, ricette e tracce. Reference personali, versioni locali, render intermedi e `node_modules` restano fuori dal repository pubblico.

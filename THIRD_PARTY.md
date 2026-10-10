@@ -14,17 +14,8 @@ may change them within the declared version ranges.
 | [Vite](https://github.com/vitejs/vite) | 8.3.4 | [MIT](https://github.com/vitejs/vite/blob/main/LICENSE.md) | Local viewer server and asset build |
 | [sharp](https://github.com/lovell/sharp) | 0.35.5 | [Apache 2.0](https://github.com/lovell/sharp/blob/main/LICENSE) | Contact-sheet image assembly |
 
-`RoundedBoxGeometry` and `RoomEnvironment` are imported directly from the
-official three.js addons in the installed version. Their implementations were
-checked before use. `RoundedBoxGeometry(width, height, depth, segments, radius)`
-extends `BoxGeometry`, clamps the radius to half the shortest side, and creates
-rounded edges with modified normals and UVs. It suits the device shell and
-buttons. `RoomEnvironment` constructs a fixed room with emissive panels and a
-point light for `PMREMGenerator.fromScene()`. It provides reflections for the
-plastic and metal materials without a remote HDR asset. The demo's use of both
-matches their documented constructors and intended PMREM workflow. See the
-[geometry source](https://github.com/mrdoob/three.js/blob/dev/examples/jsm/geometries/RoundedBoxGeometry.js)
-and [environment source](https://github.com/mrdoob/three.js/blob/dev/examples/jsm/environments/RoomEnvironment.js).
+Three.js addons include RoundedBoxGeometry, RoomEnvironment, GTAOPass,
+RectAreaLightUniformsLib and toCreasedNormals under the same MIT notice.
 
 The bundled FFmpeg executable found at `node_modules/ffmpeg-static/ffmpeg` was
 verified locally as FFmpeg 6.0. Its configure flags include `--enable-gpl`,
@@ -36,22 +27,18 @@ contain the project files and lockfile, **not `node_modules` or this executable*
 Running `npm install` installs the required local toolchain on the user's
 machine. A separate system `ffmpeg` was not present during testing.
 
-The [Howseen claude-motion-design repository](https://github.com/howseen-ai/claude-motion-design)
-was examined as a reference only. Its [render script](https://github.com/howseen-ai/claude-motion-design/blob/main/examples/howseen-launch/render.py)
-waits for readiness, seeks to exact times, takes Chromium screenshots, builds a
-contact sheet and encodes frames. Its [film source](https://github.com/howseen-ai/claude-motion-design/blob/main/examples/howseen-launch/film.html)
-waits for fonts and images before marking the page ready. No Howseen code or
-media was copied into this prototype. The repository is [MIT licensed](https://github.com/howseen-ai/claude-motion-design/blob/main/LICENSE)
-and credits Howseen AI / Raphaël Aubry (2026).
+## Demo assets
 
-[Remotion](https://github.com/remotion-dev/remotion) was evaluated but omitted:
-its composition/rendering layer does not simplify the direct Three.js seeking
-and Chromium frame pipeline needed here. Its [license](https://github.com/remotion-dev/remotion/blob/main/LICENSE.md)
-allows free use by individuals and companies with up to three employees, with
-a company license required outside those categories.
+The wind texture in `src/assets/audio/wind-magnific.mp3` was generated with
+Magnific / ElevenLabs. [Provenance](src/assets/audio/provenance.json) records
+its source and use. This generated audio asset is separate from the MIT code
+license; no third-party music track is bundled. Music is synthesized locally.
 
-No third-party images, music, logos or font files are bundled for the demo.
+Demo marks and visual assets retain their owners’ rights. The Andrea Salvo
+logo belongs to its owner. Their inclusion does not grant rights to reuse the
+marks, and the MIT code license does not cover them.
 
-La revisione hard surface riutilizza inoltre GTAOPass, RectAreaLightUniformsLib e toCreasedNormals dalla stessa distribuzione Three.js (MIT, avviso già incluso). Il logo della demo è materiale fornito dall’utente, non incluso nella licenza MIT del codice. La sua disponibilità in questo progetto non concede diritti di riutilizzo ad altri soggetti.
+## References
 
-Il logo personale Andrea Salvo incluso nell’esempio procedurale resta di proprietà del suo titolare; la licenza MIT del codice non concede diritti sul marchio.
+[Howseen’s motion-design repository](https://github.com/howseen-ai/claude-motion-design)
+was studied for seeking, frame capture and encoding. No code or media was copied.

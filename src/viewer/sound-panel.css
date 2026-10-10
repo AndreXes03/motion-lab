@@ -1,0 +1,7 @@
+#sound-tools>label{display:block;margin-top:12px;font-size:11px;color:var(--text,#e3e7ec)}
+#sound-tools>label>select{margin-top:6px}
+#sound-tools input[type=number]{box-sizing:border-box;display:block;width:100%;padding:7px 9px;margin:6px 0 0;border:1px solid #46505e;border-radius:4px;background:#1c2430;color:#f2f4f8;font:inherit}
+#sound-tools input[type=number]:disabled{opacity:.45}
+#sound-tools .finish-checkbox{display:flex;align-items:center;gap:7px}
+#sound-tools .finish-checkbox input{accent-color:#b4c3ef}
+#sound-status{line-height:1.5;min-height:2.7em}

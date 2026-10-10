@@ -11,6 +11,7 @@ Motion Lab trasforma scene e parametri in fotogrammi e video. Qui trovi le guide
 | Costruire grafica 2D procedurale | [Grafica procedurale](PROCEDURAL.md) |
 | Aggiungere controlli e una traiettoria camera | [Controlli e camera](STUDIO.md) |
 | Capire motion blur, grana e finitura | [Compositing](COMPOSITING.md) |
+| Sonorizzare il movimento ed esportare audio | [Sound design](SOUND_DESIGN.md) |
 | Controllare geometrie e risultato | [Revisione visiva](QUALITY-GATES.md) |
 | Consultare verifiche e limiti | [Validazione](VALIDATION.md) |
 

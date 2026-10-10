@@ -7,6 +7,7 @@ import { homedir } from 'node:os';
 import { fileURLToPath } from 'node:url';
 import { readProject, ROOT, validateLook } from './project-store.mjs';
 import { studioProjects } from '../src/engine/project-controls.js';
+import { normalizeSound } from '../src/engine/sound-design.js';
 import { config } from '../src/config.js';
 
 const SCRIPT_DIR = path.dirname(fileURLToPath(import.meta.url));
@@ -24,7 +25,7 @@ async function publishDownload(job) {
 }
 const MAX_BODY = 2 * 1024 * 1024;
 const MAX_JSON_DEPTH = 32;
-const ALLOWED_PARAMETERS = new Set(['scene', 'look', 'motion', 'graphics', 'studio', 'display', 'shell', 'knob', 'objectMotion', 'review', 'inspect']);
+const ALLOWED_PARAMETERS = new Set(['scene', 'look', 'motion', 'graphics', 'studio', 'display', 'shell', 'knob', 'objectMotion', 'review', 'inspect', 'sound']);
 const LOOK_SECTIONS = {
   camera: new Set(['fov']),
   lighting: new Set(['preset', 'key', 'fill', 'rim', 'environment', 'keyPosition', 'keyTarget', 'rimPosition', 'keyAngle', 'keyPenumbra', 'keyColor', 'rimColor']),
@@ -114,6 +115,7 @@ export async function validateStudioParameters(input) {
   validateMotion(motion, new Set(Object.keys(defaults[1].tracks)));
 
   const normalized = { ...structuredClone(input), scene, look, motion };
+  if(input.sound !== undefined)normalized.sound=normalizeSound(input.sound);
   if (input.graphics !== undefined) {
     if (scene !== 'procedural' || !isRecord(input.graphics) || Object.keys(input.graphics).some(k => !['title', 'accent', 'density', 'speed'].includes(k))) throw new Error('graphics is only supported for the procedural scene');
     const g = input.graphics;

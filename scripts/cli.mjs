@@ -1,5 +1,6 @@
 #!/usr/bin/env node
 import { createServer } from 'vite';
+import {planSound,renderSound,encodeWav,normalizeSound} from '../src/engine/sound-design.js';
 import { config } from '../src/config.js';
 import { chromium } from 'playwright';
 import ffmpegPath from 'ffmpeg-static';
@@ -38,7 +39,7 @@ function parseArgs(argv) {
 
 }
 function help() {
-  output('help', { scene: '--scene bax|procedural (all commands)', settings:'--fps 24|25|30|50|60 --format mp4|webm|prores --bitrate-mbps 2..200 --temporal-samples 1..64 (24 recommended)', commands: {
+  output('help', { scene: '--scene bax|procedural (all commands)', audio:'--sound on|off (3D and procedural 2D; subtle default mix, saved with the recipe)', settings:'--fps 24|25|30|50|60 --format mp4|webm|prores --bitrate-mbps 2..200 --temporal-samples 1..64 (24 recommended)', commands: {
     viewer: 'viewer [--width 1920 --height 1080] (opens local preview on :4173)',
     frame: 'frame --out frame.png [--time 0 --width 1920 --height 1080]',
     contact: 'contact --out contact.png [--samples 6 --width 1920 --height 1080]',
@@ -96,10 +97,10 @@ async function renderPng(page, time, width, height, parameters = {}, temporalSam
 }
 function outPath(value) { if (!value) throw new Error('This command requires --out <path>'); return path.resolve(process.cwd(), value); }
 async function writeImage(png, target) { await mkdir(path.dirname(target), { recursive: true }); await writeFile(target, png); }
-async function encodeFrames(frameDir, target, width, height, fps, format, bitrateMbps) {
+async function encodeFrames(frameDir, target, width, height, fps, format, bitrateMbps, audioPath=null) {
   await mkdir(path.dirname(target), { recursive: true });
   const codec=format==='webm'?['-c:v','libvpx-vp9','-b:v',`${bitrateMbps}M`,'-pix_fmt','yuv420p']:format==='prores'?['-c:v','prores_ks','-profile:v','3','-pix_fmt','yuv422p10le']:['-c:v','libx264','-preset','medium','-b:v',`${bitrateMbps}M`,'-pix_fmt','yuv420p','-movflags','+faststart'];
-  const args = ['-hide_banner','-loglevel','error','-y','-framerate',String(fps),'-i',path.join(frameDir,'frame-%06d.png'),...codec,'-f',format==='prores'?'mov':format,target];
+  const args = ['-hide_banner','-loglevel','error','-y','-framerate',String(fps),'-i',path.join(frameDir,'frame-%06d.png'),...(audioPath?['-i',audioPath,'-map','0:v:0','-map','1:a:0','-c:a',format==='webm'?'libopus':format==='prores'?'pcm_s16le':'aac','-shortest']:[]),...codec,'-f',format==='prores'?'mov':format,target];
   await run(ffmpegPath, args);
 }
 async function writeProgressJpeg(page, png, target) {
@@ -134,7 +135,14 @@ async function exportVideo(page, target, width, height, parameters, start, end, 
       output('progress', { phase: 'rendering', frames: i + 1, total, previewFrame, percent: Math.min(98, Math.round((i + 1) / total * 98)) });
     }
     output('progress', { phase: 'encoding', frames: total, total, percent: 99 });
-    await encodeFrames(frameDir, target, width, height, fps, format, bitrateMbps);
+    let audioPath=null;
+    if(parameters.sound?.enabled){
+      const telemetry=await page.evaluate(p=>window.motion.sampleMotion(p),parameters);
+      const result=renderSound(planSound(telemetry,parameters.sound));
+      const channels=result.channels.map(c=>c.slice(Math.round(start*result.sampleRate),Math.round(end*result.sampleRate)));
+      audioPath=path.join(frameDir,'sound.wav');await writeFile(audioPath,encodeWav(channels,result.sampleRate));
+    }
+    await encodeFrames(frameDir, target, width, height, fps, format, bitrateMbps,audioPath);
   } finally { await rm(frameDir, { recursive: true, force: true }); }
 }
 async function contactSheet(page, target, samples, width, height, parameters, fps) {
@@ -184,6 +192,8 @@ async function main() {
   const requested=opts.snapshot?await readSnapshot(path.resolve(opts.snapshot)):{};
   const saved={...sidecar,...requested};
   const parameters={...sidecar.parameters,...requested.parameters,...explicitParameters};
+  if(opts.sound!==undefined){if(!['on','off'].includes(opts.sound))throw Error('--sound must be on or off');parameters.sound=normalizeSound({...parameters.sound,enabled:opts.sound==='on'});}
+  if(parameters.sound!==undefined)parameters.sound=normalizeSound(parameters.sound);
   const number=(key,savedValue,fallback)=>{const n=Number(opts[key]??savedValue??fallback);if(!Number.isFinite(n))throw new Error(`--${key} must be finite`);return n;};
   // Legacy sidecars described design resolution instead of the encoded preview resolution.
   const metadata=command==='verify'&&target?await probeVideo(target):null;
@@ -216,7 +226,7 @@ async function main() {
   let browser;
   try {
     browser = await chromium.launch({ executablePath: CHROME, headless: command !== 'viewer', args: ['--disable-gpu-sandbox'] });
-    const page = await openMotion(browser, command==='viewer'?url+'?scene='+(parameters.scene||'bax'):url+'?render=1', width, height);
+    const page = await openMotion(browser, command==='viewer'?url+'?scene='+(parameters.scene||'bax')+(opts.sound?'&sound='+opts.sound:''):url+'?render=1', width, height);
     output('ready', { command, url, width, height, start, end, temporalSamples, config: await page.evaluate(() => window.motion.config ?? null) });
     if (command === 'viewer') {
       await new Promise(resolve => { browser.on('disconnected', resolve); process.on('SIGINT', resolve); process.on('SIGTERM', resolve); });
