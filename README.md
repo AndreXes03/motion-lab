@@ -20,10 +20,10 @@ Work with Codex or Claude on scenes, formulas and JSON recipes, then inspect the
 
 Free, open-source Motion Lab: editable scenes, camera and sound, rendered locally from code.
 
-| CAMERA · 3D · 15.4 s | PULSE · 3D · 13.9 s |
+| PULSE · 3D · 13.9 s | CAMERA · 3D · 15.4 s |
 | --- | --- |
-| [![CAMERA](demo/camera-poster.jpg)](https://andrexes03.github.io/motion-lab/#camera) | [![PULSE](demo/pulse-poster.jpg)](https://andrexes03.github.io/motion-lab/#pulse) |
-| [Watch](https://andrexes03.github.io/motion-lab/#camera) · [1080p MP4](demo/camera-1080.mp4) | [Watch](https://andrexes03.github.io/motion-lab/#pulse) · [1080p MP4](demo/pulse-1080.mp4) |
+| [![PULSE](demo/pulse-poster.jpg)](https://andrexes03.github.io/motion-lab/#pulse) | [![CAMERA](demo/camera-poster.jpg)](https://andrexes03.github.io/motion-lab/#camera) |
+| [Watch](https://andrexes03.github.io/motion-lab/#pulse) · [1080p MP4](demo/pulse-1080.mp4) | [Watch](https://andrexes03.github.io/motion-lab/#camera) · [1080p MP4](demo/camera-1080.mp4) |
 
 | DOT · Hybrid · 16 s | REPLAY · Hybrid · 15 s |
 | --- | --- |
@@ -44,9 +44,13 @@ A floating player, extruded lettering, comic halftones and a rhythmic city. **10
 
 Flow fields, a parametric torus, 720 transforming elements, waves and tunnels. Original techno at 132 BPM, with movement-driven SFX.
 
-[Watch with audio](https://andrexes03.github.io/motion-lab/?film=procedural#demo) · [MP4](demo/procedural-techno.mp4) · [Live example](https://andrexes03.github.io/motion-lab/examples/procedural-field.html) · [Code and formulas](src/scenes/procedural-demo.js)
+[MP4](demo/procedural-techno.mp4) · [Live example](https://andrexes03.github.io/motion-lab/examples/procedural-field.html) · [Code and formulas](src/scenes/procedural-demo.js)
 
 After Effects and Cinema 4D have procedural tools too. Here, the logic lives directly in source code, readable and editable by you and your coding agent.
+
+## Reusable 3D baseline
+
+The approved PULSE and CAMERA look is available as a [studio baseline](docs/3d-lookdev.md): wide optics, neutral shadows, rim lighting, restrained bloom, matte plastic/rubber/metal materials and temporal motion blur. Start new scenes from these helpers and preview before rendering at 1080p.
 
 ## Studio
 

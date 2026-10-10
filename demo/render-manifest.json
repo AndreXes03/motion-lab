@@ -1,0 +1,23 @@
+{
+  "version": "approved-wide-materials-v9",
+  "files": [
+    {
+      "film": "PULSE",
+      "file": "demo/pulse-1080.mp4",
+      "bytes": 48393271,
+      "sha256": "7d943ce9ee40d547723642fafeeea00bcde13ea33c62c4f62db04fb6e512a9bb",
+      "duration": "13.900000",
+      "audioHash": "SHA256=13210d0c6fccbe0faf37078f030126e2f080357c843fc73409c3c6aa2cd1cafa",
+      "temporalSamples": 24
+    },
+    {
+      "film": "CAMERA",
+      "file": "demo/camera-1080.mp4",
+      "bytes": 56430958,
+      "sha256": "16d846a2dce1d85ff1675e0806100ee7b859d6145683e2c4f9e84062297d1c7d",
+      "duration": "15.400000",
+      "audioHash": "SHA256=88f48ba56b57901a000f074f07bb9c0e0c92bbd9079f59edd6d0caa85a613f6e",
+      "temporalSamples": 16
+    }
+  ]
+}

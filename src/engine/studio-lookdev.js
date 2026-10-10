@@ -6,7 +6,10 @@ import {glossStudio} from '../scenes/gloss-studio.js';
 export function createStudioMaterials(renderer){
  const env=glossStudio(renderer),leather=organicSurface('leather'),metal=organicSurface('metal'),paper=organicSurface('paper');
  const materials={
-  leather:new T.MeshPhysicalMaterial({...leather,color:'#161b24',roughness:.66,metalness:0,normalScale:new T.Vector2(.45,.45),envMap:env}),
+  leather:new T.MeshPhysicalMaterial({...leather,color:'#151617',roughness:.76,metalness:0,normalScale:new T.Vector2(.45,.45),envMap:env}),
+  rubber:new T.MeshPhysicalMaterial({...leather,color:'#111212',roughness:.9,metalness:0,normalScale:new T.Vector2(.48,.48),envMap:env,envMapIntensity:.3}),
+  mattePlastic:new T.MeshPhysicalMaterial({color:'#e8e2d8',roughness:.53,metalness:0,clearcoat:.04,envMap:env,envMapIntensity:.65}),
+  satinPlastic:new T.MeshPhysicalMaterial({color:'#ff681c',roughness:.43,metalness:0,clearcoat:.08,clearcoatRoughness:.28,envMap:env,envMapIntensity:.65}),
   brushedMetal:new T.MeshPhysicalMaterial({...metal,color:'#ddd8d0',metalness:1,roughness:.2,normalScale:new T.Vector2(.12,.12),anisotropy:.45,envMap:env,envMapIntensity:1.1}),
   enamel:new T.MeshPhysicalMaterial({color:'#ff681c',metalness:0,roughness:.17,clearcoat:.65,clearcoatRoughness:.075,specularIntensity:.72,ior:1.46,envMap:env,envMapIntensity:1.35}),
   fibre:new T.MeshPhysicalMaterial({...paper,color:'#34363c',metalness:0,roughness:.86,normalScale:new T.Vector2(.65,.65),envMap:env})

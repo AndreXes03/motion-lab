@@ -29,6 +29,12 @@ const reflectionEnv=glossStudio(renderer);
  anodized.roughness=.24;anodized.normalScale.set(.25,.25);
  orange.metalness=.05;orange.roughness=.2;orange.clearcoat=.45;orange.clearcoatRoughness=.07;orange.emissiveIntensity=.12;orange.specularIntensity=.5;
  white.clearcoat=.4;white.clearcoatRoughness=.1;white.specularIntensity=.55;
+ // Matte polymer / rubber contrast; optical glass and machined metals remain distinct.
+ shell.color.set('#151617');shell.roughness=.68;shell.metalness=0;shell.clearcoat=0;shell.normalScale.set(.14,.14);
+ grip.color.set('#111212');grip.roughness=.9;grip.metalness=0;grip.clearcoat=0;grip.normalScale.set(.48,.48);
+ black.color.set('#151617');black.roughness=.76;black.metalness=0;black.clearcoat=0;
+ white.roughness=.53;white.clearcoat=.04;white.metalness=0;white.bumpScale=.006;
+ orange.roughness=.4;orange.clearcoat=.06;orange.metalness=0;orange.emissiveIntensity=.045;
  const opticalCard=document.createElement('canvas');opticalCard.width=128;opticalCard.height=256;const oc=opticalCard.getContext('2d'),og=oc.createLinearGradient(0,0,128,0);og.addColorStop(0,'#000000');og.addColorStop(.14,'#585858');og.addColorStop(.42,'#dddddd');og.addColorStop(.65,'#ffffff');og.addColorStop(.9,'#686868');og.addColorStop(1,'#000000');oc.fillStyle=og;oc.fillRect(0,0,128,256);const opticalCardMap=new T.CanvasTexture(opticalCard);opticalCardMap.colorSpace=T.SRGBColorSpace;
  const opticsStudio=new T.Scene();opticsStudio.background=new T.Color('#010203');for(const [x,y,z,w,h,c]of [[-4,2,8,.8,6,'#b8d8ef'],[3,3,9,.35,7,'#e5efe2'],[0,-5,7,4,.4,'#56688e']]){const strip=new T.Mesh(new T.BoxGeometry(w,h,.05),new T.MeshBasicMaterial({color:new T.Color(c).multiplyScalar(2.4),map:opticalCardMap}));strip.position.set(x,y,z);opticsStudio.add(strip);}const opticsGenerator=new T.PMREMGenerator(renderer),opticsEnv=opticsGenerator.fromScene(opticsStudio,.015);opticsGenerator.dispose();
  const glass=new T.MeshPhysicalMaterial({color:'#172131',roughness:.065,metalness:0,transmission:.45,thickness:.42,ior:1.52,attenuationColor:new T.Color('#5e8a89'),attenuationDistance:1.0,iridescence:.18,iridescenceIOR:1.3,clearcoat:0,envMap:opticsEnv.texture,envMapIntensity:.8,transparent:false,opacity:1});

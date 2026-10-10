@@ -22,3 +22,8 @@ npm run verify -- --out renders/film.mp4 --time 2.8
 Assign `userData.sound` profiles to new 3D mechanisms. For 2D scenes, expose `nodesAt` and `render` from the same graph construction so sound follows the actual animation. `sound:false` excludes a node. See [controls and limits](SOUND_DESIGN.md).
 
 Keep sources, recipes and tracks. Personal references, local versions, intermediate renders and `node_modules` stay outside the public repository.
+
+
+## Default for new 3D work
+
+Start from the approved wide/contrast baseline in [3d-lookdev.md](3d-lookdev.md), using `studio-baseline.js` and `createStudioMaterials`. Use matte plastic, rubber and metal deliberately, neutral shadow fill, restrained scene bloom, and temporal motion blur. Preserve existing approved scenes. Render a few frames and a 540p preview before a final export; require the user's creative approval before replacing approved films.
