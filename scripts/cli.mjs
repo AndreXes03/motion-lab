@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+import {applyRenderQuality} from '../src/engine/render-quality.js';
 import {sceneConfig,sceneIds} from '../src/scene-registry.js';
 import { createServer } from 'vite';
 import {planSound,renderSound,encodeWav,normalizeSound} from '../src/engine/sound-design.js';
@@ -21,7 +22,7 @@ function output(type, payload = {}) { process.stdout.write(`${JSON.stringify({ t
 function fail(message, extra = {}) { output('error', { message, ...extra }); process.exitCode = 1; }
 function parseArgs(argv) {
   const [command, ...rest] = argv;
-  const opts = {};
+  let opts = {};
   for (let i = 0; i < rest.length; i++) {
     const token = rest[i];
     if (!token.startsWith('--')) throw new Error(`Unexpected argument: ${token}`);
@@ -30,6 +31,7 @@ function parseArgs(argv) {
     if (!rest[i + 1] || rest[i + 1].startsWith('--')) throw new Error(`Missing value for --${key}`);
     opts[key] = rest[++i];
   }
+  opts=applyRenderQuality(opts);
   let parameters = {};
   if (opts.parameters !== undefined) {
     try { parameters = JSON.parse(opts.parameters); } catch { throw new Error('--parameters must be valid JSON'); }
@@ -40,7 +42,7 @@ function parseArgs(argv) {
 
 }
 function help() {
-  output('help', { scene: '--scene '+sceneIds.join('|')+' (all commands)', audio:'--sound on|off (3D and procedural 2D; subtle default mix, saved with the recipe)', settings:'--fps 24|25|30|50|60 --format mp4|webm|prores --bitrate-mbps 2..200 --temporal-samples 1..64 (24 recommended)', commands: {
+  output('help', { scene: '--scene '+sceneIds.join('|')+' (all commands)', audio:'--sound on|off (3D and procedural 2D; subtle default mix, saved with the recipe)', quality:'--quality preview|lookdev|final (explicit dimensions and sample counts override the preset)', settings:'--fps 24|25|30|50|60 --format mp4|webm|prores --bitrate-mbps 2..200 --temporal-samples 1..64 (24 recommended)', commands: {
     viewer: 'viewer [--width 1920 --height 1080] (opens local preview on :4173)',
     frame: 'frame --out frame.png [--time 0 --width 1920 --height 1080]',
     contact: 'contact --out contact.png [--samples 6 --width 1920 --height 1080]',

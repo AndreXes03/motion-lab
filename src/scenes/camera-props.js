@@ -1,3 +1,6 @@
+import {glossStudio} from './gloss-studio.js';
+import {organicSurface} from './organic-surface.js';
+import {finishMap} from './refined-finishes.js';
 import * as T from 'three';
 import {buildCityExtension} from './camera-city.js';
 import {createMachinedFinish,createMaterialFinishes} from './camera-surface.js';
@@ -8,9 +11,28 @@ export function buildCameraProps(scene,env,renderer){
  const white=new T.MeshPhysicalMaterial({color:'#e8e2d8',metalness:.12,roughness:.21,clearcoat:.85,envMap:env});
  const chrome=new T.MeshPhysicalMaterial({color:'#ddd8d0',metalness:1,roughness:.13,envMap:env});
  const materialFinishes=createMaterialFinishes();const shell=new T.MeshPhysicalMaterial({color:'#121621',metalness:.25,roughness:.43,clearcoat:.18,clearcoatRoughness:.3,envMap:env,envMapIntensity:1,roughnessMap:materialFinishes.sprayedRoughness,normalMap:materialFinishes.orangePeelNormal,normalScale:new T.Vector2(.07,.07)}),anodized=new T.MeshPhysicalMaterial({color:'#111723',metalness:.72,roughness:.34,envMap:env,roughnessMap:materialFinishes.linearBrushRoughness,anisotropy:.45}),grip=new T.MeshPhysicalMaterial({color:'#090c12',metalness:.02,roughness:.66,clearcoat:.02,envMap:env,envMapIntensity:.3});
- const opticsStudio=new T.Scene();opticsStudio.background=new T.Color('#010203');for(const [x,y,z,w,h,c]of [[-4,2,8,.3,8,'#c9dbef'],[3,3,9,.2,6,'#ecffc5']]){const strip=new T.Mesh(new T.BoxGeometry(w,h,.05),new T.MeshBasicMaterial({color:new T.Color(c).multiplyScalar(4)}));strip.position.set(x,y,z);opticsStudio.add(strip);}const opticsGenerator=new T.PMREMGenerator(renderer),opticsEnv=opticsGenerator.fromScene(opticsStudio,.015);opticsGenerator.dispose();
- const glass=new T.MeshPhysicalMaterial({color:'#172131',roughness:.12,metalness:.12,transmission:.42,thickness:.45,ior:1.52,clearcoat:0,envMap:opticsEnv.texture,envMapIntensity:.7,transparent:true,opacity:.68});
- const coatLighting=shader=>{shader.fragmentShader=shader.fragmentShader.replace('#include <lights_fragment_end>','#include <lights_fragment_end>\n reflectedLight.directSpecular *= 0.025; reflectedLight.directDiffuse *= 0.15;');};glass.onBeforeCompile=coatLighting;
+ const brushed=finishMap('brush'),pebble=finishMap('rubber'),enamel=finishMap('satin');
+ shell.metalness=.02;shell.roughness=.72;shell.normalScale.set(.4,.4);shell.clearcoat=.05;
+ grip.roughness=.95;grip.bumpMap=pebble;grip.bumpScale=.12;grip.roughnessMap=pebble;
+ black.metalness=.02;black.roughness=.65;black.clearcoat=.1;black.bumpMap=pebble;black.bumpScale=.035;
+ anodized.metalness=1;anodized.roughness=.44;anodized.anisotropy=.85;anodized.bumpMap=brushed;anodized.bumpScale=.055;anodized.roughnessMap=brushed;
+ chrome.roughness=.32;chrome.bumpMap=brushed;chrome.bumpScale=.028;chrome.anisotropy=.8;
+ white.metalness=0;white.roughness=.34;white.clearcoat=1;white.bumpMap=enamel;white.bumpScale=.018;
+const leatherFinish=organicSurface('leather'),metalFinish=organicSurface('metal');
+ Object.assign(black,leatherFinish);black.color.set('#161b24');black.bumpMap=null;black.normalScale.set(.45,.45);black.roughness=.66;black.clearcoat=0;
+ Object.assign(grip,leatherFinish);grip.color.set('#191d25');grip.bumpMap=null;grip.normalScale.set(1.05,1.05);grip.roughness=.85;
+ Object.assign(anodized,metalFinish);anodized.bumpMap=null;anodized.normalScale.set(.4,.4);anodized.roughness=.33;
+ chrome.bumpMap=null;chrome.normalMap=metalFinish.normalMap;chrome.normalScale.set(.25,.25);chrome.roughness=.22;
+const reflectionEnv=glossStudio(renderer);
+ for(const m of [chrome,anodized,orange,white]){m.envMap=reflectionEnv;m.envMapIntensity=1.1;}
+ chrome.roughness=.13;chrome.anisotropy=.3;chrome.normalScale.set(.12,.12);
+ anodized.roughness=.24;anodized.normalScale.set(.25,.25);
+ orange.metalness=.05;orange.roughness=.2;orange.clearcoat=.45;orange.clearcoatRoughness=.07;orange.emissiveIntensity=.12;orange.specularIntensity=.5;
+ white.clearcoat=.4;white.clearcoatRoughness=.1;white.specularIntensity=.55;
+ const opticalCard=document.createElement('canvas');opticalCard.width=128;opticalCard.height=256;const oc=opticalCard.getContext('2d'),og=oc.createLinearGradient(0,0,128,0);og.addColorStop(0,'#000000');og.addColorStop(.14,'#585858');og.addColorStop(.42,'#dddddd');og.addColorStop(.65,'#ffffff');og.addColorStop(.9,'#686868');og.addColorStop(1,'#000000');oc.fillStyle=og;oc.fillRect(0,0,128,256);const opticalCardMap=new T.CanvasTexture(opticalCard);opticalCardMap.colorSpace=T.SRGBColorSpace;
+ const opticsStudio=new T.Scene();opticsStudio.background=new T.Color('#010203');for(const [x,y,z,w,h,c]of [[-4,2,8,.8,6,'#b8d8ef'],[3,3,9,.35,7,'#e5efe2'],[0,-5,7,4,.4,'#56688e']]){const strip=new T.Mesh(new T.BoxGeometry(w,h,.05),new T.MeshBasicMaterial({color:new T.Color(c).multiplyScalar(2.4),map:opticalCardMap}));strip.position.set(x,y,z);opticsStudio.add(strip);}const opticsGenerator=new T.PMREMGenerator(renderer),opticsEnv=opticsGenerator.fromScene(opticsStudio,.015);opticsGenerator.dispose();
+ const glass=new T.MeshPhysicalMaterial({color:'#172131',roughness:.035,metalness:0,transmission:.92,thickness:.24,ior:1.52,attenuationColor:new T.Color('#5e8a89'),attenuationDistance:2.5,iridescence:.18,iridescenceIOR:1.3,clearcoat:0,envMap:opticsEnv.texture,envMapIntensity:1.1,transparent:false,opacity:1});
+ const coatLighting=shader=>{shader.fragmentShader=shader.fragmentShader.replace('#include <lights_fragment_end>','#include <lights_fragment_end>\n reflectedLight.directSpecular *= 0.025; reflectedLight.directDiffuse *= 0.15;');};
  const add=(g,m,p)=>{const o=new T.Mesh(g,m);o.castShadow=o.receiveShadow=true;p.add(o);return o;};
  const box=(w,h,d,r,m,p)=>add(new RoundedBoxGeometry(w,h,d,5,r),m,p);
  function label(text,w,h,size=70){const c=document.createElement('canvas');c.width=w;c.height=h;const x=c.getContext('2d');x.clearRect(0,0,w,h);x.fillStyle='#eee9e1';x.textAlign='center';x.font=`600 ${size}px Arial`;x.fillText(text,w/2,h*.66);const tx=new T.CanvasTexture(c);tx.colorSpace=T.SRGBColorSpace;return new T.MeshBasicMaterial({map:tx,transparent:true,depthWrite:false});}
@@ -20,7 +42,7 @@ export function buildCameraProps(scene,env,renderer){
  for(const [r,d,z,mat]of [[2.3,.7,2.05,anodized],[2.18,.14,2.48,chrome],[2.03,.3,2.56,black],[1.82,.12,2.75,orange],[1.66,.28,2.81,black]]){const ringShape=new T.Shape();ringShape.absarc(0,0,r,0,Math.PI*2,false);const inner=new T.Path();inner.absarc(0,0,r===2.3?1.58:r-.15,0,Math.PI*2,true);ringShape.holes.push(inner);const o=add(new T.ExtrudeGeometry(ringShape,{depth:d,curveSegments:128,bevelEnabled:true,bevelThickness:.02,bevelSize:.018,bevelSegments:3}),mat,housing);o.position.z=z-d/2;}
  for(let i=0;i<12;i++){const ring=add(new T.TorusGeometry(1.94-i*.006,.016,8,128),i%3?black:chrome,housing);ring.position.z=2.6+i*.015;}
  const lens=add(new T.SphereGeometry(1.6,96,64,0,Math.PI*2,0,Math.PI),glass,housing);lens.scale.z=.18;lens.position.z=2.98;lens.layers.set(1);
- for(let i=0;i<7;i++){const iris=add(new T.CircleGeometry(1.48-i*.14,96),new T.MeshPhysicalMaterial({color:i%2?'#344e5f':'#101922',metalness:.55,roughness:.18,envMap:opticsEnv.texture,envMapIntensity:.55,transparent:false}),housing);iris.position.z=2.98+i*.017;iris.layers.set(1);iris.material.onBeforeCompile=coatLighting;}
+ for(let i=0;i<7;i++){const iris=add(new T.CircleGeometry(1.48-i*.14,96),new T.MeshPhysicalMaterial({color:i%2?'#142c32':'#080e14',metalness:.15,roughness:.12,envMap:opticsEnv.texture,envMapIntensity:.55,transparent:false}),housing);iris.position.z=2.98+i*.017;iris.layers.set(1);iris.material.onBeforeCompile=coatLighting;}
  for(const [r,y]of [[1.05,.16],[.78,-.12],[.55,.1]]){const ring=add(new T.TorusGeometry(r,.019,10,96),new T.MeshPhysicalMaterial({color:'#62758e',metalness:.4,roughness:.24,envMap:env,envMapIntensity:.2}),housing);ring.position.set(0,y,2.99);}
  const mark=add(new T.PlaneGeometry(3,.55),label('MOTION / 35',512,128,48),housing);mark.position.set(0,-2.21,2.19);
  // The physical curved nameplate shares the casing crown and keeps typography on its surface.

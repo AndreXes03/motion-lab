@@ -1,3 +1,6 @@
+import {glossStudio} from './gloss-studio.js';
+import {organicSurface} from './organic-surface.js';
+import {finishMap} from './refined-finishes.js';
 import {buildInstruments,buildHeadphones,buildGlints} from './pulse-instruments.js';
 import {direction,centralDirection} from './pulse-direction.js';
 import * as THREE from 'three';
@@ -39,7 +42,7 @@ export function createDemo(){
 
  scene.add(new THREE.HemisphereLight('#c8deff','#0b0636',1.7));RectAreaLightUniformsLib.init();const areaKey=new THREE.RectAreaLight('#ffffff',7,2.4,.8);areaKey.position.set(1.8,3.8,1.5);areaKey.lookAt(0,.35,0);scene.add(areaKey);
  for(const [pos,c,intensity] of [[[4,5,6],'#ffffff',95],[[-5,1,3],'#bdb7ff',48],[[1,-4,2],'#ffb87a',25]]){let l=new THREE.PointLight(c,intensity);l.position.set(...pos);scene.add(l);}
- const renderer=new THREE.WebGLRenderer({antialias:true,preserveDrawingBuffer:true});renderer.setPixelRatio(1);renderer.outputColorSpace=THREE.SRGBColorSpace;renderer.toneMapping=THREE.ACESFilmicToneMapping;renderer.toneMappingExposure=1.05;
+ const renderer=new THREE.WebGLRenderer({antialias:true,preserveDrawingBuffer:true});renderer.setPixelRatio(1);renderer.outputColorSpace=THREE.SRGBColorSpace;renderer.toneMapping=THREE.AgXToneMapping;renderer.toneMappingExposure=1.05;
  const composite=createComposite(renderer,scene,camera,{...config,look:{bloomStrength:.06,bloomRadius:.18,bloomThreshold:1.8,aoIntensity:.35,aberrationPx:.25,vignette:.12}});
  let renderWidth=0,renderHeight=0;
  
@@ -50,6 +53,23 @@ export function createDemo(){
  const props=buildPulseProps();scene.add(props.monitor,props.row,props.atmosphere);const monitorCables=cables.clone();props.monitor.add(monitorCables);
  const instruments=buildInstruments(),headphones=buildHeadphones(),glints=buildGlints();const satellites=new THREE.Group();const distantMonitor=props.monitor.clone();distantMonitor.scale.setScalar(.5);distantMonitor.position.set(-5,2.5,-5);satellites.add(distantMonitor);const distantLed=new THREE.Group();distantLed.add(led.clone(),ledFrame.clone());distantLed.children.forEach(o=>o.visible=true);distantLed.scale.setScalar(.5);distantLed.position.set(4,3,-7);satellites.add(distantLed);const distantCups=headphones.clone();distantCups.scale.setScalar(.7);distantCups.position.set(-4,-3,-3);satellites.add(distantCups);scene.add(satellites);scene.add(instruments.mixer,instruments.cables,headphones,glints);renderer.shadowMap.enabled=true;renderer.shadowMap.type=THREE.PCFSoftShadowMap;const sun=new THREE.DirectionalLight('#fff7dd',2.5);sun.position.set(-3,5,5);sun.castShadow=true;sun.shadow.mapSize.set(1024,1024);sun.shadow.camera.left=-4;sun.shadow.camera.right=4;sun.shadow.camera.top=4;sun.shadow.camera.bottom=-4;sun.shadow.bias=-.00015;scene.add(sun);
  const arm=new THREE.Group();scene.add(arm);function pipe(a,b,r){const av=new THREE.Vector3(...a),bv=new THREE.Vector3(...b),o=new THREE.Mesh(new THREE.CylinderGeometry(r,r,av.distanceTo(bv),16),mats.silver);o.position.copy(av.clone().add(bv).multiplyScalar(.5));o.quaternion.setFromUnitVectors(new THREE.Vector3(0,1,0),bv.sub(av).normalize());arm.add(o);}pipe([-1.2,.36,-.8],[-1.2,.68,-.8],.07);pipe([-1.2,.68,-.8],[.65,.68,.65],.045);pipe([.65,.68,.65],[.65,.505,.65],.055);const cartridge=new THREE.Mesh(new THREE.BoxGeometry(.15,.12,.21),mats.black);cartridge.position.set(.65,.500,.65);arm.add(cartridge);const stylus=new THREE.Mesh(new THREE.CylinderGeometry(.008,.006,.075,12),mats.silver);stylus.position.set(.65,.401,.65);arm.add(stylus);const counter=new THREE.Mesh(new THREE.CylinderGeometry(.12,.12,.25,24),mats.silver);counter.rotation.z=Math.PI/2;counter.position.set(-1.43,.68,-.91);arm.add(counter);
+// Material-only preview: woven cone, rubber surround, enamel basket and brushed metal.
+ const woven=finishMap('rubber'),brushed=finishMap('brush'),paintGrain=finishMap('satin');
+ coneMat.roughness=.92;coneMat.metalness=0;coneMat.clearcoat=0;coneMat.bumpMap=woven;coneMat.bumpScale=.025;coneMat.roughnessMap=null;
+ mats.black.metalness=0;mats.black.roughness=.88;mats.black.bumpMap=woven;mats.black.bumpScale=.018;
+ mats.orange.metalness=.08;mats.orange.roughness=.38;mats.orange.clearcoat=1;mats.orange.clearcoatRoughness=.16;mats.orange.bumpMap=paintGrain;mats.orange.bumpScale=.018;
+ mats.silver.roughness=.42;mats.silver.bumpMap=brushed;mats.silver.bumpScale=.022;mats.silver.roughnessMap=brushed;
+ dome.material.roughness=.42;dome.material.anisotropy=.85;dome.material.bumpMap=brushed;dome.material.bumpScale=.018;dome.material.clearcoat=0;
+const paperFinish=organicSurface('paper'),rubberFinish=organicSurface('leather'),metalFinish=organicSurface('metal');
+ Object.assign(coneMat,paperFinish);coneMat.color.set('#34363c');coneMat.roughness=.86;coneMat.bumpMap=null;coneMat.clearcoat=0;coneMat.normalScale.set(.65,.65);
+ Object.assign(mats.black,rubberFinish);mats.black.bumpMap=null;mats.black.roughness=.82;mats.black.normalScale.set(.45,.45);
+ Object.assign(dome.material,metalFinish);dome.material.bumpMap=null;dome.material.roughness=.31;dome.material.normalScale.set(.35,.35);dome.material.anisotropy=.7;
+ mats.orange.bumpMap=null;mats.orange.roughness=.25;mats.orange.clearcoat=.85;mats.orange.clearcoatRoughness=.17;
+const glossEnv=glossStudio(renderer);
+ for(const m of [mats.orange,mats.silver,dome.material]){m.envMap=glossEnv;m.envMapIntensity=1.35;}
+ mats.orange.metalness=.0;mats.orange.roughness=.17;mats.orange.clearcoat=.65;mats.orange.clearcoatRoughness=.075;mats.orange.specularIntensity=.72;mats.orange.ior=1.46;
+ mats.silver.roughness=.16;mats.silver.bumpMap=null;
+ dome.material.roughness=.2;dome.material.anisotropy=.45;dome.material.normalScale.set(.12,.12);dome.material.clearcoat=0;
 function render(ctx,t,w,h,p={}){const clock=editTime(t);t=sourceTime(clock);props.update(t);instruments.update(t);const cream=t>=4.2&&t<6.15?1:0;const dark=t>=6.72&&t<7.775?.05:1;const mix=(a,b)=>Math.round((a+(b-a)*cream)*dark);const skygrad=sk.createRadialGradient(256,230,20,256,256,390);skygrad.addColorStop(0,`rgb(${mix(20,248)},${mix(66,240)},${mix(170,215)})`);skygrad.addColorStop(1,`rgb(${mix(1,215)},${mix(5,207)},${mix(40,186)})`);sk.fillStyle=skygrad;sk.fillRect(0,0,512,512);scene.background.needsUpdate=true;renderer.setSize(w,h);camera.aspect=w/h;let beat=Math.pow(Math.max(0,Math.sin(t*Math.PI*4)),8);
  const lerp=(a,b,x)=>a+(b-a)*x;
  const ledStart=1.46,mixerStart=2.45,vinylStart=3.15,cableStart=4.2,crtStart=4.85,headStart=6.15,tileStart=7.775;
@@ -81,7 +101,7 @@ function render(ctx,t,w,h,p={}){const clock=editTime(t);t=sourceTime(clock);prop
  camera.up.set(Math.sin(roll),Math.cos(roll),0);camera.lookAt(target);camera.updateProjectionMatrix();
  if(w!==renderWidth||h!==renderHeight){composite.setSize(w,h);renderWidth=w;renderHeight=h;}
  const macro=t<1.5||mi||vi||ca||(t>=8.3&&t<10.5),finalHold=t>=12.5;
- composite.applyLook({bloomStrength:ti?.16:.13,bloomThreshold:ti?1.05:1.2,bloomRadius:.24,aoIntensity:mi?.45:ti?.14:or?0:ca?.14:.35,dofEnabled:true,dofAuto:false,dofFocus:mi?new THREE.Vector3(-.55,.29,.9).lerp(new THREE.Vector3(.68,.52,-.05),ease((t-2.45)/.32)).sub(camera.position).dot(camera.getWorldDirection(new THREE.Vector3())):camera.position.distanceTo(target),dofStrength:mi?1.3:vi?0:macro?.09:.04,dofMaxBlur:mi?24:macro?7:3.5,aberrationPx:(mi||vi?1.25:ti?.8:.95)*(w/960),vignette:.14,lensDistortion:mi||vi?.02:.006,antialias:true});
+ composite.applyLook({bloomStrength:sp?.035:ti?.16:.13,bloomThreshold:ti?1.05:1.2,bloomRadius:.24,aoIntensity:mi?.45:ti?.14:or?0:ca?.14:.35,dofEnabled:!sp,dofAuto:false,dofFocus:mi?new THREE.Vector3(-.55,.29,.9).lerp(new THREE.Vector3(.68,.52,-.05),ease((t-2.45)/.32)).sub(camera.position).dot(camera.getWorldDirection(new THREE.Vector3())):camera.position.distanceTo(target),dofStrength:mi?1.3:vi?0:macro?.09:.04,dofMaxBlur:mi?24:macro?7:3.5,aberrationPx:sp?0:(mi||vi?1.25:ti?.8:.95)*(w/960),vignette:.14,lensDistortion:mi||vi?.02:.006,antialias:!sp});
  composite.setReview(p.review);
  if(scene.overrideMaterial)renderer.render(scene,camera);else composite.render();ctx.drawImage(renderer.domElement,0,0,w,h);
  // Deliberately crisp vector graphics, rendered after 3D: zero temporal blur.
