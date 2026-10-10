@@ -28,3 +28,7 @@ node scripts/test-procedural-showcase.mjs
 ```
 
 Rendering is repeatable within the same environment; fonts and browsers can change pixels. The 2D mode does not import footage or apply the 3D renderer's optical effects. [Live example](PROCEDURAL-EXAMPLE.md) · [Sound design](SOUND_DESIGN.md)
+
+## Selective motion blur
+
+Flow, torus, swarm, interference and the finale render without motion blur. Only the kinetic tunnel uses the requested shutter angle. The CLI follows this policy even with multiple temporal samples.

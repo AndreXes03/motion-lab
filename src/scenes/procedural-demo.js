@@ -7,6 +7,7 @@ const node=(id,type,props)=>({id:'lab.'+id,type,...props});
 const path=(id,points,stroke,width=1.5,extra={})=>node(id,'path',{commands:points.map((p,i)=>[i?'L':'M',...p]),stroke,lineWidth:width,sound:false,...extra});
 const text=(id,value,x,y,size,color=WHITE,extra={})=>node(id,'text',{text:value,x,y,font:`700 ${size}px Arial, sans-serif`,fill:color,baseline:'middle',...extra});
 export const proceduralCuts=[1,2,3,4,5].map(i=>i*20/11);
+export function proceduralShutter(time,requested=210){return Math.min(5,Math.floor(Math.max(0,time)/(20/11)))===4?requested:0;}
 export function proceduralTempo(parameters={}){return parameters.sound?.tempo==='manual'?clamp(Number(parameters.sound.bpm)||132,60,180):132;}
 function buildNodes(t,parameters={}){
  const g={...recipe.defaults,...parameters.graphics},accent=/^#[0-9a-f]{6}$/i.test(g.accent)?g.accent:'#c2ff38',speed=clamp(Number(g.speed)||1,.25,2.5),density=clamp(Number(g.density)||10,4,18),bpm=proceduralTempo(parameters),beat=t*bpm/60,pulse=Math.exp(-(beat%1)*9),u=t*speed;

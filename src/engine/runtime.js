@@ -1,6 +1,6 @@
 import {createPopDemo} from '../scenes/pop-demo.js';
 import {sampleProceduralMotion} from './sound-procedural.js';
-import {createProceduralDemo,proceduralTempo,proceduralCuts} from '../scenes/procedural-demo.js';
+import {createProceduralDemo,proceduralTempo,proceduralCuts,proceduralShutter} from '../scenes/procedural-demo.js';
 import * as T from 'three';
 import {config} from '../config.js';
 import savedLook from '../../project/look.json';
@@ -51,5 +51,5 @@ export function createRuntime(canvas,{initialScene="bax"}={}){
   }
   camera.aspect=previousAspect;camera.updateProjectionMatrix();return {duration:config.duration,rate,frames,cuts:parameters.motion?.cuts||[]};
  }
- const ready=document.fonts.ready.then(()=>{render(0,{parameters:{scene:initialScene}});return true});return {config,ready,render,finishFrame,sampleMotion,cutTimes:parameters=>parameters.scene==='procedural'?proceduralCuts:parameters.motion?.cuts??[],get scene(){init3d();return scene},get camera(){init3d();return camera},setLook(next){look=structuredClone(next)},getLook(){return structuredClone(look)}};
+ const ready=document.fonts.ready.then(()=>{render(0,{parameters:{scene:initialScene}});return true});return {config,ready,render,finishFrame,sampleMotion,shutterAngleAt:(time,parameters)=>parameters.scene==='procedural'?proceduralShutter(time,parameters.look?.post?.shutterAngle??210):parameters.look?.post?.shutterAngle??210,cutTimes:parameters=>parameters.scene==='procedural'?proceduralCuts:parameters.motion?.cuts??[],get scene(){init3d();return scene},get camera(){init3d();return camera},setLook(next){look=structuredClone(next)},getLook(){return structuredClone(look)}};
 }
