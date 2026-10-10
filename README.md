@@ -34,7 +34,7 @@ Timeline, preset, camera e look. Ricette JSON salvabili e rendering con motion b
 
 Export MP4, WebM e ProRes, con risoluzione, frame rate, campioni e bitrate regolabili.
 
-**Compositing:** occlusione ambientale, bloom, controllo delle alte luci, aberrazione cromatica, vignettatura e distorsione lente. Grana applicata dopo il motion blur e overlay 2D sopra il render. [Sorgenti](src/engine/composite.js).
+**Compositing:** profondità di campo 3D, occlusione ambientale, bloom, controllo delle alte luci, aberrazione cromatica, vignettatura e distorsione lente. Grana applicata dopo il motion blur e overlay 2D sopra il render. [Sorgenti](src/engine/composite.js).
 
 **Sound design:** SFX legati ai movimenti 2D/3D, moduli regolabili e musica procedurale con BPM automatico o manuale. [Guida](docs/SOUND_DESIGN.md).
 
@@ -80,6 +80,6 @@ npm run export -- --snapshot demo/objects-in-play.project.json --out renders/fil
 
 ## Stato e licenze
 
-In sviluppo. Profondità di campo e import glTF non implementati. Dopo un passaggio 2D → 3D → 2D sono state rilevate differenze nei pixel: riapri la scena per i confronti. [Verifiche e limiti](docs/VALIDATION.md).
+In sviluppo. Import glTF non implementato. Dopo un passaggio 2D → 3D → 2D sono state rilevate differenze nei pixel: riapri la scena per i confronti. [Verifiche e limiti](docs/VALIDATION.md).
 
 Codice di Andrea Salvo, [MIT](LICENSE). Marchi e asset demo conservano i rispettivi diritti. FFmpeg non incluso. [Dipendenze e avvisi](THIRD_PARTY.md).

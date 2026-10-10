@@ -38,7 +38,7 @@ La CLI rispetta il percorso --out; il pulsante del viewer pubblica nei Download.
 
 L’integrazione recupera luce lineare dai frame già tone-mapped a 8 bit: non è
 un accumulatore HDR del renderer. ProRes codifica a 10 bit/4:2:2 ma non recupera
-la precisione persa nella sorgente, non è HDR né include alpha. Non c’è DOF.
+la precisione persa nella sorgente, non è HDR né include alpha. Profondità di campo 3D disponibile, disattivata di default.
 Il blur è temporale per campioni: movimenti estremi possono richiedere 48–64
 campioni. La grana può essere attenuata dai codec a basso bitrate. Le opzioni
 4K sono disponibili; per una prova rapida conviene iniziare da 1080p.
@@ -81,3 +81,11 @@ Il frame singolo completato appare alla risoluzione originale ed è scaricabile.
 Il browser del viewer (anche Safari) e il motore di export sono separati:
 Chrome viene avviato in background per il rendering deterministico. Il processo
 locale del viewer deve rimanere attivo fino alla fine dell’export.
+
+## Profondità di campo
+
+Pass bokeh 3D prima del bloom, con fuoco automatico al centro o distanza manuale. Overlay 2D nitidi; disattivato di default e nelle viste di ispezione. Il pannello non compare nella grafica 2D.
+
+Le ricette salvano `look.post.dofEnabled`, `dofAuto`, `dofFocus` (.1–1000), `dofStrength` (0–1) e `dofMaxBlur` (0–30 pixel a 1080p).
+
+Effetto screen-space: trasparenze e bordi sfocati sono approssimati. L’autofocus può saltare attraversando sagome; usa il fuoco manuale in quelle riprese.

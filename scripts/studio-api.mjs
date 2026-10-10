@@ -30,7 +30,7 @@ const LOOK_SECTIONS = {
   camera: new Set(['fov']),
   lighting: new Set(['preset', 'key', 'fill', 'rim', 'environment', 'keyPosition', 'keyTarget', 'rimPosition', 'keyAngle', 'keyPenumbra', 'keyColor', 'rimColor']),
   surface: new Set(['shellRoughness', 'grainScale']),
-  post: new Set(['exposure', 'bloomStrength', 'bloomThreshold', 'bloomRadius', 'aberrationPx', 'grain', 'grainSize', 'vignette', 'lensDistortion', 'aoIntensity', 'shutterAngle', 'antialias']),
+  post: new Set(['dofEnabled','dofAuto','dofFocus','dofStrength','dofMaxBlur','exposure', 'bloomStrength', 'bloomThreshold', 'bloomRadius', 'aberrationPx', 'grain', 'grainSize', 'vignette', 'lensDistortion', 'aoIntensity', 'shutterAngle', 'antialias']),
   motion: new Set(['amount'])
 };
 const jobs = new Map();

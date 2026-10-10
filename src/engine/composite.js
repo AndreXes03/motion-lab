@@ -1,4 +1,5 @@
-import { HalfFloatType, Vector2, WebGLRenderTarget, DataTexture, RGBAFormat, RepeatWrapping } from 'three';
+import { BokehPass } from 'three/addons/postprocessing/BokehPass.js';
+import { Raycaster, Vector3, HalfFloatType, Vector2, WebGLRenderTarget, DataTexture, RGBAFormat, RepeatWrapping } from 'three';
 import { EffectComposer } from 'three/addons/postprocessing/EffectComposer.js';
 import { RenderPass } from 'three/addons/postprocessing/RenderPass.js';
 import { ShaderPass } from 'three/addons/postprocessing/ShaderPass.js';
@@ -105,6 +106,10 @@ export function createComposite(renderer, scene, camera, config) {
   // Luminance-preserving soft knee controls extreme specular energy before bloom.
   const highlights=new ShaderPass({uniforms:{tDiffuse:{value:null}},vertexShader:FinishShader.vertexShader,fragmentShader:`uniform sampler2D tDiffuse;varying vec2 vUv;void main(){vec4 c=texture2D(tDiffuse,vUv);float peak=max(c.r,max(c.g,c.b));float excess=max(peak-2.0,0.0);float compressed=2.0+excess/(1.0+excess/6.0);c.rgb*=peak>2.0?compressed/peak:1.0;gl_FragColor=c;}`});
   highlights.material.toneMapped=false;composer.addPass(highlights);
+  const dofPass=new BokehPass(scene,camera,{focus:8,aperture:.001,maxblur:.012});
+  dofPass.enabled=false;dofPass.materialBokeh.toneMapped=false;
+  composer.addPass(dofPass);
+  const focusRay=new Raycaster(),focusPoint=new Vector3();let dofSettings={};
   composer.addPass(bloomPass);
   composer.addPass(outputPass);
   composer.addPass(finishPass);
@@ -117,15 +122,32 @@ export function createComposite(renderer, scene, camera, config) {
 
   return {
     applyLook(next) {
+      dofSettings=next;dofPass.enabled=next.dofEnabled===true;
+      dofPass.uniforms.aperture.value=(next.dofStrength??.35)*.006;
+      dofPass.uniforms.maxblur.value=(next.dofMaxBlur??12)/1080;
       aaPass.enabled=next.antialias!==false;
       bloomPass.strength=next.bloomStrength;bloomPass.threshold=next.bloomThreshold;bloomPass.radius=next.bloomRadius;
       aoPass.blendIntensity=next.aoIntensity??.4;aoPass.enabled=aoPass.blendIntensity>0;
       for(const key of ['aberrationPx','vignette','lensDistortion'])finishPass.uniforms[key].value=next[key]??LOOK[key];
     },
     setReview(mode) {
-      const clean=mode&&mode!=='beauty';bloomPass.enabled=!clean;finishPass.enabled=!clean;highlights.enabled=!clean;if(clean)aoPass.enabled=false;
+      const clean=mode&&mode!=='beauty';bloomPass.enabled=!clean;finishPass.enabled=!clean;highlights.enabled=!clean;if(clean){aoPass.enabled=false;dofPass.enabled=false;}
     },
     render() {
+      if(dofPass.enabled){
+        scene.updateMatrixWorld(true);camera.updateMatrixWorld(true);
+        let focus=dofSettings.dofFocus??8;
+        if(dofSettings.dofAuto!==false){
+          focusRay.setFromCamera(new Vector2(0,0),camera);
+          const hit=focusRay.intersectObjects(scene.children,true).find(hit=>{
+            for(let o=hit.object;o;o=o.parent)if(!o.visible)return false;
+            const m=Array.isArray(hit.object.material)?hit.object.material[hit.face?.materialIndex??0]:hit.object.material;
+            return hit.object.isMesh&&m?.visible!==false&&m?.depthWrite!==false;
+          });
+          if(hit)focus=-focusPoint.copy(hit.point).applyMatrix4(camera.matrixWorldInverse).z;
+        }
+        dofPass.uniforms.focus.value=Math.max(camera.near,Math.min(camera.far,focus));
+      }
       composer.render(0);
     },
     setSize(w, h) {

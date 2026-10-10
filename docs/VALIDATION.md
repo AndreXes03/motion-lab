@@ -10,6 +10,8 @@ Verificato il 10 ottobre 2026 su macOS con Chrome e Node.js 25.8.1.
 - Demo web: 1920 × 1080, 25 fps, 250 frame, 10 secondi, H.264 yuv420p, 24 campioni, bitrate obiettivo 6 Mb/s, 7.451.311 byte, AAC stereo 48 kHz. Decodifica completa e seek con hash identico: passati.
 - Copertina del giroscopio: frame a 2,4 s con 24 campioni, senza logo nell’angolo. Fotogrammi dal nuovo video e screenshot reali della UI: controllati visivamente.
 
+- Profondità di campo 3D: effetto on/off, ripristino, seek deterministico, bypass ispezione, UI e salvataggio versione passati (`node scripts/test-dof.mjs`). Disattivata di default.
+
 ## Audio
 
 Verifiche dedicate: `npm run test:sound`, `node scripts/test-sound-browser.mjs`, `node scripts/test-sound-2d.mjs` e `node scripts/test-sound-2d-browser.mjs`. Coprono sintesi, movimento 2D/3D, trasporto, WAV e persistenza; passati sulla copia pubblica. Browser: 202 eventi 3D e 35 eventi 2D, fotogrammi invariati, Play/Pausa/seek, WAV, BPM e ricette verificati senza errori. Export 2D on/off verificati. Il mux della demo conserva tutti i 250 pacchetti video identici.
