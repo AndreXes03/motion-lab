@@ -1,3 +1,4 @@
+import {createObjectEditor} from '../engine/object-editor.js';
 import * as T from 'three';
 import {createStudio} from '../engine/studio.js';
 import {applyTracks,sampleTrack} from '../engine/animation.js';
@@ -15,7 +16,9 @@ export function createScene(renderer,config){
  const plush=createBaxEmblem();scene.add(plush);
  const keys=createBaxKinetic();keys.scale.setScalar(.83);scene.add(keys);
  const sign=createLedSign({width:3.0,height:1.3});sign.root.position.set(-1.2,3.0,-3.0);scene.add(sign.root);
+ const editObjects=createObjectEditor(scene);
  function update(time,parameters={}){
+ editObjects.restore();
  const t=clamp(time,0,config.duration),look=parameters.look;studio.applyLook(look);camera.fov=look.camera.fov;camera.updateProjectionMatrix();
  const activeMotion=parameters.motion||motion;
  applyTracks(scene,camera,activeMotion,t,look.motion.amount);
@@ -35,6 +38,7 @@ export function createScene(renderer,config){
  sign.setText(t<7.5?'IDEAS\nIN PLAY.':'@brand');
  plush.userData.update?.(t,{amount:objectMotion});
  keys.userData.update?.(t,{motion:activeMotion,amount:objectMotion});
+ editObjects.apply(parameters.objectEdits);
  const roots=[device.group,plush,keys,sign.root];for(const root of roots)root.visible=true;
  if(parameters.inspect){
   const chosen=scene.getObjectByName(parameters.inspect.object);if(!chosen)throw new Error('Unknown inspection object');

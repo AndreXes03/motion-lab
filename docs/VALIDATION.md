@@ -23,3 +23,7 @@ Technical validation does not establish listening or creative approval. Windows 
 The public copy excludes previous Git history, personal references and screenshots, local versions, logs, intermediate output, caches and installed dependencies. Selected text was checked for personal paths, email addresses and common credential patterns. Third-party notices retain their original attribution.
 
 The crisp procedural update preserves decoded audio exactly. Order/Chaos exported with one or four temporal samples produces identical PNG pixels.
+
+## Dark studio and public browser preview
+
+Checked October 10, 2026: English interface, live scene backdrop, contextual controls, expandable recipe/source panel, deterministic relative object edits and parameter validation. Five targeted checks passed. The static Pages build was checked without a local API: scene switching, version storage in the browser, undo and source inspection. Video export and project references require the local app.

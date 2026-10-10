@@ -25,7 +25,7 @@ async function publishDownload(job) {
 }
 const MAX_BODY = 2 * 1024 * 1024;
 const MAX_JSON_DEPTH = 32;
-const ALLOWED_PARAMETERS = new Set(['scene', 'look', 'motion', 'graphics', 'studio', 'display', 'shell', 'knob', 'objectMotion', 'review', 'inspect', 'sound']);
+const ALLOWED_PARAMETERS = new Set(['scene', 'look', 'motion', 'graphics', 'studio', 'display', 'shell', 'knob', 'objectMotion', 'objectEdits', 'review', 'inspect', 'sound']);
 const LOOK_SECTIONS = {
   camera: new Set(['fov']),
   lighting: new Set(['preset', 'key', 'fill', 'rim', 'environment', 'keyPosition', 'keyTarget', 'rimPosition', 'keyAngle', 'keyPenumbra', 'keyColor', 'rimColor']),
@@ -81,9 +81,9 @@ function validateMotion(motion, allowedTracks) {
   return motion;
 }
 
-function validateStudioMeta(studio, scene) {
+function validateStudioMeta(studio, scene, look) {
   if (studio === undefined) return undefined;
-  if (!isRecord(studio) || Object.keys(studio).some(k => !['values', 'preset'].includes(k))) throw new Error('studio must contain only values and preset');
+  if (!isRecord(studio) || Object.keys(studio).some(k => !['values', 'preset', 'lookOverrides'].includes(k))) throw new Error('studio must contain only values and preset');
   const project = studioProjects.find(p => p.id === scene);
   if (!project) throw new Error(`Unsupported scene: ${scene}`);
   const presetId = studio.preset ?? 'original';
@@ -98,7 +98,10 @@ function validateStudioMeta(studio, scene) {
     if (control.type === 'color' && (typeof value !== 'string' || !/^#[0-9a-f]{6}$/i.test(value))) throw new Error(`studio.values.${key} must be a hex color`);
     if (control.type === 'text' && (typeof value !== 'string' || value.length > 22)) throw new Error(`studio.values.${key} must be text up to 22 characters`);
   }
-  return { values: structuredClone(values), preset: presetId };
+  const overrides=studio.lookOverrides??{};
+  if(!isRecord(overrides)||Object.entries(overrides).some(([section,fields])=>!LOOK_SECTIONS[section]||!isRecord(fields)||Object.keys(fields).some(key=>!LOOK_SECTIONS[section].has(key))))throw new Error('Unsupported look override');
+  validateLook(merge(look,overrides));
+  return { values: structuredClone(values), preset: presetId, lookOverrides:structuredClone(overrides) };
 }
 
 export async function validateStudioParameters(input) {
@@ -132,7 +135,15 @@ export async function validateStudioParameters(input) {
   if (input.objectMotion !== undefined && (typeof input.objectMotion !== 'number' || !Number.isFinite(input.objectMotion) || input.objectMotion < 0 || input.objectMotion > 2)) throw new Error('objectMotion must be 0..2');
   if (input.review !== undefined && (scene !== 'bax' || !['beauty', 'clean', 'clay', 'normals'].includes(input.review))) throw new Error('review is only supported for the BAX scene');
   if (input.inspect !== undefined && (!isRecord(input.inspect) || Object.keys(input.inspect).some(k => !['object', 'yaw'].includes(k)) || scene !== 'bax' || !['device.root', 'bax.emblem', 'bax.kinetic'].includes(input.inspect.object) || (input.inspect.yaw !== undefined && (!Number.isFinite(input.inspect.yaw) || Math.abs(input.inspect.yaw) > 180)))) throw new Error('Invalid inspect parameter');
-  const studio = validateStudioMeta(input.studio, scene);
+  if(input.objectEdits!==undefined){
+    if(!isRecord(input.objectEdits))throw new Error('objectEdits must be an object');
+    for(const [id,edits]of Object.entries(input.objectEdits)){
+      if(scene!=='bax'||!['device.root','bax.emblem','bax.kinetic'].includes(id)||!isRecord(edits))throw new Error('Unsupported object edit');
+      const ranges={x:[-5,5],y:[-5,5],z:[-5,5],yaw:[-180,180],scale:[.25,2]};
+      for(const [key,value]of Object.entries(edits)){const range=ranges[key];if(!range||!Number.isFinite(value)||value<range[0]||value>range[1])throw new Error('Invalid object edit: '+id+'.'+key);}
+    }
+  }
+  const studio = validateStudioMeta(input.studio, scene, look);
   if (studio) normalized.studio = studio;
   return normalized;
 }

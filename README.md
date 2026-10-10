@@ -10,7 +10,7 @@
 ![Procedural motion](https://img.shields.io/badge/Motion-procedural-173bd5?style=flat-square)
 ![MIT](https://img.shields.io/badge/Code-MIT-f34a13?style=flat-square)
 
-[Demo](https://andrexes03.github.io/motion-lab/) · [Setup](#setup) · [Architecture](docs/ARCHITECTURE.md) · [Docs](docs/README.md)
+[Demo](https://andrexes03.github.io/motion-lab/) · [Try the studio](https://andrexes03.github.io/motion-lab/studio/) · [Setup](#setup) · [Architecture](docs/ARCHITECTURE.md) · [Docs](docs/README.md)
 
 </div>
 
@@ -18,7 +18,7 @@ Work with Codex or Claude on scenes, formulas and JSON recipes, then inspect the
 
 ## Pop Motion / 2D + 3D
 
-[![PLAY.EXE](demo/pop-hero.jpg)](https://andrexes03.github.io/motion-lab/#pop)
+[![PLAY.EXE](demo/pop-hero.jpg)](https://andrexes03.github.io/motion-lab/?film=pop#demo)
 
 A floating player, extruded lettering, comic halftones and a rhythmic city. **10 s · 1080p · 30 fps · 120 BPM.** Select PLAY.EXE in the viewer. [Video](demo/pop-motion.mp4) · [Recipe](demo/pop-motion.project.json) · [Tools and limitations](docs/POP_MOTION.md).
 
@@ -28,15 +28,17 @@ A floating player, extruded lettering, comic halftones and a rhythmic city. **10
 
 Flow fields, a parametric torus, 720 transforming elements, waves and tunnels. Original techno at 132 BPM, with movement-driven SFX.
 
-[Watch with audio](https://andrexes03.github.io/motion-lab/#procedural-video) · [MP4](demo/procedural-techno.mp4) · [Live example](https://andrexes03.github.io/motion-lab/examples/procedural-field.html) · [Code and formulas](src/scenes/procedural-demo.js)
+[Watch with audio](https://andrexes03.github.io/motion-lab/?film=procedural#demo) · [MP4](demo/procedural-techno.mp4) · [Live example](https://andrexes03.github.io/motion-lab/examples/procedural-field.html) · [Code and formulas](src/scenes/procedural-demo.js)
 
 After Effects and Cinema 4D have procedural tools too. Here, the logic lives directly in source code, readable and editable by you and your coding agent.
 
 ## Studio
 
-![Scene, timeline and controls](demo/ui-studio.png)
+![Scene, timeline and controls](demo/ui-studio-v2.jpg)
 
-Timeline, presets, camera and look controls. Saved JSON recipes and temporal motion blur.
+Dark translucent panels with the current scene blurred behind the workspace. Contextual object, camera and lighting controls, undo/redo and a before/after comparison. Expand the Code panel to inspect live parameters or scene source.
+
+[Try the English browser studio](https://andrexes03.github.io/motion-lab/studio/): preview scenes, adjust controls, save versions in your browser, download PNG frames and JSON recipes. Video rendering and project-file management require the local app.
 
 ![Export settings](demo/ui-export.png)
 
