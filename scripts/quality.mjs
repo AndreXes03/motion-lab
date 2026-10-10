@@ -18,16 +18,16 @@ async function frame(output,parameters,time,width,height){
 }
 async function main(){
  for(let i=0;i<args.length;i+=2){if(!args[i].startsWith('--')||args[i+1]===undefined)throw new Error('Usage: node scripts/quality.mjs [--out renders/quality-board.png] [--time 2] [--width 720] [--height 720] [--yaw 20]');options[args[i].slice(2)]=args[i+1];}
- for(const key of Object.keys(options))if(!['out','time','width','height','yaw'].includes(key))throw new Error(`Unknown option --${key}`);
+ for(const key of Object.keys(options))if(!['out','time','width','height','yaw','scene'].includes(key))throw new Error(`Unknown option --${key}`);
  const time=Number(options.time??2),width=Number(options.width??720),height=Number(options.height??720),yaw=Number(options.yaw??20);
  if(!Number.isFinite(time)||time<0||time>10||!Number.isFinite(yaw)||![width,height].every(n=>Number.isInteger(n)&&n>=128&&n<=4096))throw new Error('Invalid time, yaw or dimensions');
  const output=path.resolve(ROOT,options.out??'renders/quality-board.png');
  const frameDir=path.join(path.dirname(output),path.basename(output,path.extname(output))+'-frames');await mkdir(frameDir,{recursive:true});
- const objects=[['device.root','Radio'],['bax.emblem','B smaltata'],['bax.kinetic','Giroscopio']],reviews=['clean','clay'];
+ const objects=options.scene==='pop'?[['pop.player','Player'],['type.PLAY','PLAY'],['type.BASS','BASS']]:[['device.root','Radio'],['bax.emblem','B smaltata'],['bax.kinetic','Giroscopio']],reviews=['clean','clay'];
  const overlays=[],records=[],labelHeight=48;
  for(let row=0;row<reviews.length;row++)for(let col=0;col<objects.length;col++){
   const [object,label]=objects[col],review=reviews[row],file=path.join(frameDir,`${object.replaceAll('.','-')}-${review}.png`);
-  emit('progress',{object,review,path:file});await frame(file,{inspect:{object,yaw},review},time,width,height);
+  emit('progress',{object,review,path:file});await frame(file,{scene:options.scene??'bax',inspect:{object,yaw},review},time,width,height);
   overlays.push({input:await readFile(file),left:col*width,top:row*(height+labelHeight)});
   const caption=`${label} / ${review==='clean'?'materiali':'geometria clay'}`;
   overlays.push({input:Buffer.from(`<svg width="${width}" height="${labelHeight}"><rect width="100%" height="100%" fill="#17202b"/><text x="18" y="31" fill="white" font-family="Arial" font-size="20">${escapeXml(caption)}</text></svg>`),left:col*width,top:row*(height+labelHeight)+height});

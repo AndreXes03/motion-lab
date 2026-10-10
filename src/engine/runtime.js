@@ -1,3 +1,4 @@
+import {createPopDemo} from '../scenes/pop-demo.js';
 import {sampleProceduralMotion} from './sound-procedural.js';
 import {createProceduralDemo,proceduralTempo,proceduralCuts} from '../scenes/procedural-demo.js';
 import * as T from 'three';
@@ -9,14 +10,15 @@ import {createComposite} from './composite.js';
 import {applyFilmGrain} from './film-grain.js';
 import {smooth} from './timeline.js';
 export function createRuntime(canvas,{initialScene="bax"}={}){
- const graphics=createProceduralDemo(config);
+ const graphics=createProceduralDemo(config); let pop;
  let renderer,scene,camera,update,drawOverlay,composite;
  let look=structuredClone(savedLook);const ctx=canvas.getContext('2d',{willReadFrequently:true});let width=0,height=0;const diagnosticHidden=[];const clay=new T.MeshStandardMaterial({color:'#a4a6ab',roughness:.65});const normals=new T.MeshNormalMaterial();
  function init3d(){if(renderer)return;renderer=new T.WebGLRenderer({antialias:true,alpha:false,preserveDrawingBuffer:true,powerPreference:'high-performance'});renderer.setPixelRatio(1);renderer.shadowMap.enabled=true;renderer.shadowMap.type=T.PCFSoftShadowMap;renderer.toneMapping=T.ACESFilmicToneMapping;renderer.outputColorSpace=T.SRGBColorSpace;const createScene=config.scene==='bax'?createBax:createSignal;({scene,camera,update,drawOverlay}=createScene(renderer,config));composite=createComposite(renderer,scene,camera,{...config,look:savedLook.post});}
  function finishFrame(targetCtx,time,w,h,parameters={}){const activeLook=parameters.look||look;if(parameters.review&&parameters.review!=='beauty')return;applyFilmGrain(targetCtx,time,w,h,{amount:activeLook.post.grain??0,size:activeLook.post.grainSize??1.1,fps:parameters.renderSample?.fps??config.fps});}
  function render(time,{width:w=config.width,height:h=config.height,parameters={}}={}){
  if(!Number.isFinite(time))throw new Error('Render time must be finite');
- if(parameters.scene && !['bax','procedural'].includes(parameters.scene))throw new Error('Unknown scene: '+parameters.scene);
+ if(parameters.scene && !['bax','procedural','pop'].includes(parameters.scene))throw new Error('Unknown scene: '+parameters.scene);
+ if(parameters.scene==='pop'){pop??=createPopDemo();if(canvas.width!==w||canvas.height!==h){canvas.width=w;canvas.height=h;}const t=Math.max(0,Math.min(config.duration,time));pop.render(ctx,t,parameters,w,h);width=0;height=0;if(parameters.renderSample?.grain!==false)finishFrame(ctx,t,w,h,parameters);return {scene:'pop',time:t,frame:Math.min(config.duration*config.fps-1,Math.floor(t*config.fps)),width:w,height:h};}
  if(parameters.scene==='procedural'){const t=Math.max(0,Math.min(config.duration,time));if(canvas.width!==w||canvas.height!==h){canvas.width=w;canvas.height=h;}ctx.save();ctx.scale(w/config.width,h/config.height);try{graphics.render(ctx,t,parameters);}finally{ctx.restore();}width=0;height=0;if(parameters.renderSample?.grain!==false)finishFrame(ctx,t,w,h,parameters);return {scene:'procedural',time:t,frame:Math.min(config.duration*config.fps-1,Math.floor(t*config.fps)),width:w,height:h};}
  init3d();
  if(width!==w||height!==h){width=w;height=h;canvas.width=w;canvas.height=h;renderer.setSize(w,h,false);composite.setSize(w,h);camera.aspect=w/h;camera.updateProjectionMatrix()}
@@ -29,6 +31,7 @@ export function createRuntime(canvas,{initialScene="bax"}={}){
  ctx.restore();if(parameters.renderSample?.grain!==false)finishFrame(ctx,t,w,h,parameters);return {time:t,frame:Math.min(config.duration*config.fps-1,Math.floor(t*config.fps)),width:w,height:h};
  }
  function sampleMotion(parameters={},rate=60){
+  if(parameters.scene==='pop'){pop??=createPopDemo();return {...sampleProceduralMotion(t=>pop.nodesAt(t,parameters),{duration:config.duration,rate,width:1920,height:1080,seed:42}),musicBpm:120};}
   if(parameters.scene==='procedural')return {...sampleProceduralMotion(t=>graphics.nodesAt(t,parameters),{duration:config.duration,rate,width:1920,height:1080,seed:graphics.config.seed}),musicBpm:proceduralTempo(parameters)};
   init3d();const previousAspect=camera.aspect;const frames=[],v=new T.Vector3(),q=new T.Quaternion();
   const names=['device.root','dial.rotor','bax.kinetic','bax.gyro.outer-gimbal-pivot','bax.gyro.inner-gimbal-pivot','bax.gyro.rotor','bax.emblem','bax.cover.hinge'];

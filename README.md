@@ -16,6 +16,12 @@
 
 Work with Codex or Claude on scenes, formulas and JSON recipes, then inspect the result in the viewer. Camera, materials and timing remain editable: precise changes do not require another prompt-based video generation.
 
+## Pop Motion / 2D + 3D
+
+[![PLAY.EXE](demo/pop-hero.jpg)](https://andrexes03.github.io/motion-lab/#pop)
+
+A floating player, extruded lettering, comic halftones and a rhythmic city. **10 s · 1080p · 30 fps · 120 BPM.** Select PLAY.EXE in the viewer. [Video](demo/pop-motion.mp4) · [Recipe](demo/pop-motion.project.json) · [Tools and limitations](docs/POP_MOTION.md).
+
 ## Procedural motion
 
 ![Procedural motion graphics](demo/procedural-showcase.gif)

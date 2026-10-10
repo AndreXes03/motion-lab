@@ -42,3 +42,7 @@ marks, and the MIT code license does not cover them.
 
 [Howseen’s motion-design repository](https://github.com/howseen-ai/claude-motion-design)
 was studied for seeking, frame capture and encoding. No code or media was copied.
+
+## Helvetiker Bold
+
+Font JSON from the official Three.js examples. Copyright (c) 2004 MAGENTA Ltd. The embedded permission notice is also retained in `src/assets/fonts/LICENSE.txt`.

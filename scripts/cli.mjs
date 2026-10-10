@@ -34,12 +34,12 @@ function parseArgs(argv) {
     try { parameters = JSON.parse(opts.parameters); } catch { throw new Error('--parameters must be valid JSON'); }
     if (!parameters || Array.isArray(parameters) || typeof parameters !== 'object') throw new Error('--parameters must be a JSON object');
   }
-  if(opts.scene){if(!['bax','procedural'].includes(opts.scene))throw new Error('--scene must be bax or procedural');parameters.scene=opts.scene;}
+  if(opts.scene){if(!['bax','procedural','pop'].includes(opts.scene))throw new Error('--scene must be bax, procedural or pop');parameters.scene=opts.scene;}
   return { command, opts, parameters };
 
 }
 function help() {
-  output('help', { scene: '--scene bax|procedural (all commands)', audio:'--sound on|off (3D and procedural 2D; subtle default mix, saved with the recipe)', settings:'--fps 24|25|30|50|60 --format mp4|webm|prores --bitrate-mbps 2..200 --temporal-samples 1..64 (24 recommended)', commands: {
+  output('help', { scene: '--scene bax|procedural|pop (all commands)', audio:'--sound on|off (3D and procedural 2D; subtle default mix, saved with the recipe)', settings:'--fps 24|25|30|50|60 --format mp4|webm|prores --bitrate-mbps 2..200 --temporal-samples 1..64 (24 recommended)', commands: {
     viewer: 'viewer [--width 1920 --height 1080] (opens local preview on :4173)',
     frame: 'frame --out frame.png [--time 0 --width 1920 --height 1080]',
     contact: 'contact --out contact.png [--samples 6 --width 1920 --height 1080]',

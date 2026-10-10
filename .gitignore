@@ -14,3 +14,6 @@ project/references/
 .DS_Store
 *.pem
 *.key
+
+# Also ignore a local dependency symlink used by isolated checkouts.
+/node_modules

@@ -106,7 +106,7 @@ export async function validateStudioParameters(input) {
   finiteTree(input, 'parameters');
   for (const key of Object.keys(input)) if (!ALLOWED_PARAMETERS.has(key)) throw new Error(`Unsupported parameter: ${key}`);
   const scene = input.scene ?? 'bax';
-  if (!['bax', 'procedural'].includes(scene)) throw new Error('scene must be bax or procedural');
+  if (!['bax', 'procedural', 'pop'].includes(scene)) throw new Error('scene must be bax, procedural or pop');
   const defaults = await Promise.all([readProject('look'), readProject('motion')]);
   const look = merge(defaults[0], input.look ?? {});
   if (!isRecord(look) || Object.entries(look).some(([section, values]) => !LOOK_SECTIONS[section] || !isRecord(values) || Object.keys(values).some(key => !LOOK_SECTIONS[section].has(key)))) throw new Error('look contains unsupported sections or fields');
@@ -117,7 +117,7 @@ export async function validateStudioParameters(input) {
   const normalized = { ...structuredClone(input), scene, look, motion };
   if(input.sound !== undefined)normalized.sound=normalizeSound(input.sound);
   if (input.graphics !== undefined) {
-    if (scene !== 'procedural' || !isRecord(input.graphics) || Object.keys(input.graphics).some(k => !['title', 'accent', 'density', 'speed'].includes(k))) throw new Error('graphics is only supported for the procedural scene');
+    if (!['procedural','pop'].includes(scene) || !isRecord(input.graphics) || Object.keys(input.graphics).some(k => !['title', 'accent', 'density', 'speed'].includes(k))) throw new Error('graphics is only supported for procedural and pop scenes');
     const g = input.graphics;
     if (g.title !== undefined && (typeof g.title !== 'string' || g.title.length > 22)) throw new Error('graphics.title must be text up to 22 characters');
     if (g.accent !== undefined && (typeof g.accent !== 'string' || !/^#[0-9a-f]{6}$/i.test(g.accent))) throw new Error('graphics.accent must be a hex color');

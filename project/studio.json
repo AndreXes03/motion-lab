@@ -234,6 +234,69 @@
           }
         }
       ]
+    },
+    {
+      "id": "pop",
+      "title": "PLAY.EXE / Pop Motion",
+      "subtitle": "Player flottante, lettering 3D e città ritmica. 120 BPM.",
+      "kind": "hybrid",
+      "controls": [
+        {
+          "id": "accent",
+          "label": "Accento sticker",
+          "type": "color",
+          "path": "graphics.accent",
+          "default": "#ff66a7",
+          "help": "Colore degli sticker e degli anelli grafici."
+        },
+        {
+          "id": "speed",
+          "label": "Energia lettering",
+          "type": "range",
+          "min": 0.25,
+          "max": 2.5,
+          "step": 0.05,
+          "path": "graphics.speed",
+          "default": 1,
+          "help": "Intensità dei piccoli movimenti e degli impulsi del lettering."
+        }
+      ],
+      "moments": [
+        {
+          "label": "Play",
+          "time": 1
+        },
+        {
+          "label": "Bass",
+          "time": 3.5
+        },
+        {
+          "label": "Move",
+          "time": 6
+        },
+        {
+          "label": "Finale",
+          "time": 9
+        }
+      ],
+      "presets": [
+        {
+          "id": "original",
+          "label": "Pop",
+          "values": {
+            "accent": "#ff66a7",
+            "speed": 1
+          }
+        },
+        {
+          "id": "electric",
+          "label": "Electric",
+          "values": {
+            "accent": "#6bddf5",
+            "speed": 1.5
+          }
+        }
+      ]
     }
   ]
 }
