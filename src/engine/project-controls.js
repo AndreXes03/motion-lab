@@ -32,7 +32,7 @@ export function resolveParameters(scene, values = {}, presetId = 'original', bas
   const controls = Object.fromEntries(project.controls.map(control => [control.id, control.default]));
   Object.assign(controls, preset.values ?? {}, values);
 
-  if (scene === 'pop') return {scene,graphics:{accent:color(controls.accent,'#ff66a7'),speed:limit(controls.speed,.25,2.5,1)}};
+  if (scene === 'pop') return {scene,graphics:{accent:color(controls.accent,'#ff66a7'),speed:limit(controls.speed,.25,2.5,1),cameraMotion:limit(controls.cameraMotion,0,1,1),fisheye:limit(controls.fisheye,0,.6,.3)}};
 
   if (scene === 'procedural') return {
     scene,

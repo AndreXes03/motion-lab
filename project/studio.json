@@ -241,6 +241,8 @@
       "subtitle": "Player flottante, lettering 3D e città ritmica. 120 BPM.",
       "kind": "hybrid",
       "controls": [
+        {"id":"fisheye","label":"Fish-eye","type":"range","min":0,"max":0.6,"step":0.01,"path":"graphics.fisheye","default":0.3,"help":"Curvatura ottica dell’intera composizione. Zero disattiva l’effetto."},
+        {"id":"cameraMotion","label":"Movimento camera","type":"range","min":0,"max":1,"step":0.05,"path":"graphics.cameraMotion","default":1,"help":"Intensità di zoom, spostamenti e rotazioni. Zero mostra la composizione fissa."},
         {
           "id": "accent",
           "label": "Accento sticker",

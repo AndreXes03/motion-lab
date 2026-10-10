@@ -117,8 +117,10 @@ export async function validateStudioParameters(input) {
   const normalized = { ...structuredClone(input), scene, look, motion };
   if(input.sound !== undefined)normalized.sound=normalizeSound(input.sound);
   if (input.graphics !== undefined) {
-    if (!['procedural','pop'].includes(scene) || !isRecord(input.graphics) || Object.keys(input.graphics).some(k => !['title', 'accent', 'density', 'speed'].includes(k))) throw new Error('graphics is only supported for procedural and pop scenes');
+    if (!['procedural','pop'].includes(scene) || !isRecord(input.graphics) || Object.keys(input.graphics).some(k => !['title', 'accent', 'density', 'speed', ...(scene==='pop'?['cameraMotion','fisheye']:[])].includes(k))) throw new Error('graphics is only supported for procedural and pop scenes');
     const g = input.graphics;
+    if (g.fisheye !== undefined && (typeof g.fisheye !== 'number' || !Number.isFinite(g.fisheye) || g.fisheye < 0 || g.fisheye > .6)) throw new Error('graphics.fisheye must be 0..0.6');
+    if (g.cameraMotion !== undefined && (typeof g.cameraMotion !== 'number' || !Number.isFinite(g.cameraMotion) || g.cameraMotion < 0 || g.cameraMotion > 1)) throw new Error('graphics.cameraMotion must be 0..1');
     if (g.title !== undefined && (typeof g.title !== 'string' || g.title.length > 22)) throw new Error('graphics.title must be text up to 22 characters');
     if (g.accent !== undefined && (typeof g.accent !== 'string' || !/^#[0-9a-f]{6}$/i.test(g.accent))) throw new Error('graphics.accent must be a hex color');
     if (g.density !== undefined && (!Number.isInteger(g.density) || g.density < 4 || g.density > 18)) throw new Error('graphics.density must be an integer from 4 to 18');

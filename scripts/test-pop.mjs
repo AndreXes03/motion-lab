@@ -16,3 +16,13 @@ assert.equal(sampleGraphicCamera(.5,shots).x,200);
 assert.equal(sampleGraphicCamera(-1,shots).zoom,1);
 assert.equal(sampleGraphicCamera(10,shots).zoom,2);
 assert.deepEqual(sampleGraphicCamera(.5,shots),sampleGraphicCamera(.5,shots));
+
+assert.ok(Math.abs(beatClock(.5-.00001).pulse-beatClock(.5+.00001).pulse)<1e-8, "beat pulse must stay continuous across the shutter");
+
+assert.equal(resolveParameters('pop',{cameraMotion:0}).graphics.cameraMotion,0);
+await assert.rejects(()=>validateStudioParameters({scene:'pop',graphics:{cameraMotion:2}}));
+assert.equal((await validateStudioParameters({scene:'pop',graphics:{cameraMotion:.5}})).graphics.cameraMotion,.5);
+
+assert.equal(resolveParameters('pop',{fisheye:0}).graphics.fisheye,0);
+await assert.rejects(()=>validateStudioParameters({scene:'pop',graphics:{fisheye:.8}}));
+assert.equal((await validateStudioParameters({scene:'pop',graphics:{fisheye:.3}})).graphics.fisheye,.3);

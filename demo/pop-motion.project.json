@@ -49,7 +49,9 @@
     "scene": "pop",
     "graphics": {
       "accent": "#ff66a7",
-      "speed": 1
+      "speed": 1,
+      "fisheye": 0.3,
+      "cameraMotion": 1
     },
     "sound": {
       "enabled": true,
