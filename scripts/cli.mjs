@@ -77,7 +77,7 @@ async function renderPng(page, time, width, height, parameters = {}, temporalSam
       const accumulated = new Float32Array(width * height * 4);
       const linear=new Float32Array(256);for(let i=0;i<256;i++){const s=i/255;linear[i]=s<=.04045?s/12.92:Math.pow((s+.055)/1.055,2.4);}
       const {shutterSamples}=await import('/src/engine/temporal.js');
-      const schedule=shutterSamples(time,{fps,duration,samples:temporalSamples,shutterAngle:parameters.look?.post?.shutterAngle??210,cuts:parameters.motion?.cuts??[],profile:parameters.look?.post?.shutterProfile??'cosine'});
+      const schedule=shutterSamples(time,{fps,duration,samples:temporalSamples,shutterAngle:parameters.look?.post?.shutterAngle??210,cuts:window.motion.cutTimes?.(parameters)??parameters.motion?.cuts??[],profile:parameters.look?.post?.shutterProfile??'cosine'});
       for (let i = 0; i < schedule.length; i++) {
         const sample = schedule[i];
         await window.motion.render(sample.time, { width, height, parameters:{...parameters,renderSample:{frameTime:time,grain:false,fps}} });

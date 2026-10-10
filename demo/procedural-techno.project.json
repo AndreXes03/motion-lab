@@ -1,0 +1,35 @@
+{
+  "schemaVersion": 2,
+  "parameters": {
+    "scene": "procedural",
+    "sound": {
+      "enabled": true,
+      "camera": 0.22,
+      "objects": 0.38,
+      "accents": 0.25,
+      "dial": 0.85,
+      "hinge": 0.85,
+      "gyro": 0.5,
+      "music": 0.38,
+      "master": 0.8,
+      "density": 0.65,
+      "musicStyle": "scene",
+      "tempo": "auto",
+      "bpm": 132,
+      "seed": 42,
+      "cameraKit": "air",
+      "objectKit": "mechanical",
+      "accentKit": "soft"
+    }
+  },
+  "settings": {
+    "width": 1920,
+    "height": 1080,
+    "fps": 30,
+    "format": "mp4",
+    "bitrateMbps": 12,
+    "temporalSamples": 4
+  },
+  "start": 0,
+  "end": 10
+}

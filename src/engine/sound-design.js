@@ -1,15 +1,16 @@
+import {technoMusic} from './music-techno.js';
 import {planProceduralSound} from './sound-procedural.js';
 import {windSample,windSampleRate} from '../assets/audio/wind-sample.js';
 import {planFoley,foleySample} from './sound-foley.js';
 /** Deterministic PCM sound engine. Shared by the viewer and offline exports. */
 const clamp=(v,a=0,b=1)=>Math.max(a,Math.min(b,v));
 const TAU=Math.PI*2;
-export const soundDefaults={enabled:true,camera:.22,objects:.38,accents:.25,dial:.85,hinge:.85,gyro:.5,music:.38,master:.8,density:.65,tempo:'auto',bpm:112,seed:42,cameraKit:'air',objectKit:'mechanical',accentKit:'soft'};
+export const soundDefaults={enabled:true,camera:.22,objects:.38,accents:.25,dial:.85,hinge:.85,gyro:.5,music:.38,master:.8,density:.65,musicStyle:'scene',tempo:'auto',bpm:132,seed:42,cameraKit:'air',objectKit:'mechanical',accentKit:'soft'};
 export const soundKits={camera:['air','silk','deep','grain','swirl','reverse','bright','riser'],objects:['mechanical','metal','plastic','glass','rubber','wood','electric','ceramic'],accents:['soft','click','knock','snap','ping','sub','chime','pop']};
 export function normalizeSound(input={}){
  if(!input||typeof input!=='object'||Array.isArray(input))throw Error('Invalid sound settings');
  for(const k of Object.keys(input))if(!(k in soundDefaults))throw Error('Unknown sound setting: '+k);
- const s={...soundDefaults,...input};
+ const s={...soundDefaults,...input};if(!['scene','ambient','techno'].includes(s.musicStyle))throw Error('Invalid music style');
  if(typeof s.enabled!=='boolean'||!['auto','manual'].includes(s.tempo))throw Error('Invalid sound mode');
  for(const k of ['camera','objects','accents','music','master','density','dial','hinge','gyro'])if(!Number.isFinite(s[k])||s[k]<0||s[k]>1)throw Error('Sound '+k+' must be 0..1');
  if(!Number.isFinite(s.bpm)||s.bpm<60||s.bpm>180)throw Error('BPM must be 60..180');
@@ -27,7 +28,7 @@ function chooseTempo(events,duration){let best={score:-Infinity,bpm:112,phase:0}
 export function planSound(telemetry,input={}){
  const settings=normalizeSound(input),{frames,duration,rate=60}=telemetry,dt=1/rate;
  if(!frames?.length||duration<=0||duration>300)throw Error('Invalid motion telemetry');
- if(telemetry.kind==='procedural'){const p=planProceduralSound(telemetry,settings),tempo=settings.tempo==='auto'?chooseTempo(p.events.filter(e=>e.module!=='objects'),duration):{bpm:settings.bpm,phase:0};return {...p,duration,rate,settings,bpm:tempo.bpm,phase:tempo.phase};}
+ if(telemetry.kind==='procedural'){const p=planProceduralSound(telemetry,settings),tempo=settings.tempo==='auto'?(telemetry.musicBpm?{bpm:telemetry.musicBpm,phase:0}:chooseTempo(p.events.filter(e=>e.module!=='objects'),duration)):{bpm:settings.bpm,phase:0};return {...p,kind:'procedural',duration,rate,settings,bpm:tempo.bpm,phase:tempo.phase};}
  const events=[],curves={};
  const crossesCut=i=>(telemetry.cuts||[]).some(t=>t>=(i-1)*dt&&t<=i*dt);
  const camera=frames.map((f,i)=>i&&!crossesCut(i)?distance(f.camera.position,frames[i-1].camera.position)/dt+angle(f.camera.quaternion,frames[i-1].camera.quaternion)/dt*.9:0);
@@ -108,6 +109,7 @@ export function renderSound(plan,{sampleRate=48000,stems=false}={}){
    const f=(variant===5?55:180+variant*85)*e.pitch;return attack*tail*Math.exp(-t*(variant===4||variant===6?13:25))*(Math.sin(TAU*f*t+2*Math.exp(-t*40))*.75+Math.sin(TAU*f*2.71*t)*.13+noise*.14*Math.exp(-t*70));
   });
  }
+ if(s.musicStyle==='techno'||(s.musicStyle==='scene'&&plan.kind==='procedural'))technoMusic({voice,duration,bpm,phase,seed:s.seed,random:rng});else{
  const beat=60/bpm,notes=[0,7,10,14,12,7,3,10],bass=[0,0,3,7];
  for(let k=-1;k*beat+phase<duration;k++){
   const at=k*beat+phase;if(at<0)continue;const rand=rng(s.seed+k*111+987),activity=clamp((plan.curves.camera[Math.min(plan.curves.camera.length-1,Math.round(at*plan.rate))]||0)/15);
@@ -119,6 +121,7 @@ export function renderSound(plan,{sampleRate=48000,stems=false}={}){
  }
  // Soft harmonic bed, ducked automatically under movement accents.
  const chord=[130.813,155.563,195.998,233.082];for(let k=0;k<chord.length;k++)voice('music',0,duration,.021,k%2?.5:-.5,(t,u)=>Math.sin(TAU*chord[k]*t+Math.sin(t*.5)*.1)*Math.min(1,t/.5)*Math.min(1,(duration-t)/.65));
+ }
  const mix=[new Float32Array(n),new Float32Array(n)];let peak=0,sum=0;
  for(let i=0;i<n;i++){
   const t=i/sampleRate,fade=Math.min(1,t/.012,(duration-t)/.13);let duck=1;

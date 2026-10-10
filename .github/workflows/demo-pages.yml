@@ -5,7 +5,7 @@ on:
     paths:
       - 'showcase/**'
       - 'demo/**'
-      - 'examples/procedural-field.html'
+      - 'examples/**'
       - '.github/workflows/demo-pages.yml'
   workflow_dispatch:
 permissions:
@@ -28,7 +28,7 @@ jobs:
         run: |
           mkdir -p _site/demo _site/examples
           cp showcase/index.html _site/index.html
-          cp examples/procedural-field.html _site/examples/
+          cp examples/procedural-field.html examples/procedural-live.js _site/examples/
           cp demo/*.mp4 demo/*.gif demo/*.jpg demo/*.png _site/demo/
       - uses: actions/upload-pages-artifact@v4
         with:

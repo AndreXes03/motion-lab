@@ -1,5 +1,5 @@
 import {sampleProceduralMotion} from './sound-procedural.js';
-import {createProceduralDemo} from '../scenes/procedural-demo.js';
+import {createProceduralDemo,proceduralTempo,proceduralCuts} from '../scenes/procedural-demo.js';
 import * as T from 'three';
 import {config} from '../config.js';
 import savedLook from '../../project/look.json';
@@ -29,7 +29,7 @@ export function createRuntime(canvas,{initialScene="bax"}={}){
  ctx.restore();if(parameters.renderSample?.grain!==false)finishFrame(ctx,t,w,h,parameters);return {time:t,frame:Math.min(config.duration*config.fps-1,Math.floor(t*config.fps)),width:w,height:h};
  }
  function sampleMotion(parameters={},rate=60){
-  if(parameters.scene==='procedural')return sampleProceduralMotion(t=>graphics.nodesAt(t,parameters),{duration:config.duration,rate,width:1920,height:1080,seed:graphics.config.seed});
+  if(parameters.scene==='procedural')return {...sampleProceduralMotion(t=>graphics.nodesAt(t,parameters),{duration:config.duration,rate,width:1920,height:1080,seed:graphics.config.seed}),musicBpm:proceduralTempo(parameters)};
   init3d();const previousAspect=camera.aspect;const frames=[],v=new T.Vector3(),q=new T.Quaternion();
   const names=['device.root','dial.rotor','bax.kinetic','bax.gyro.outer-gimbal-pivot','bax.gyro.inner-gimbal-pivot','bax.gyro.rotor','bax.emblem','bax.cover.hinge'];
   const profiles={'dial.rotor':'dial','bax.cover.hinge':'hinge','bax.gyro.rotor':'rotor','bax.gyro.outer-gimbal-pivot':'bearing','bax.gyro.inner-gimbal-pivot':'bearing'};
@@ -48,5 +48,5 @@ export function createRuntime(canvas,{initialScene="bax"}={}){
   }
   camera.aspect=previousAspect;camera.updateProjectionMatrix();return {duration:config.duration,rate,frames,cuts:parameters.motion?.cuts||[]};
  }
- const ready=document.fonts.ready.then(()=>{render(0,{parameters:{scene:initialScene}});return true});return {config,ready,render,finishFrame,sampleMotion,get scene(){init3d();return scene},get camera(){init3d();return camera},setLook(next){look=structuredClone(next)},getLook(){return structuredClone(look)}};
+ const ready=document.fonts.ready.then(()=>{render(0,{parameters:{scene:initialScene}});return true});return {config,ready,render,finishFrame,sampleMotion,cutTimes:parameters=>parameters.scene==='procedural'?proceduralCuts:parameters.motion?.cuts??[],get scene(){init3d();return scene},get camera(){init3d();return camera},setLook(next){look=structuredClone(next)},getLook(){return structuredClone(look)}};
 }

@@ -18,9 +18,11 @@ Con Codex o Claude puoi modificare scene, formule e ricette JSON, poi verificarl
 
 ## Motion procedurale
 
-![Motion graphics procedurale](demo/procedural-motion.gif)
+![Motion graphics procedurale](demo/procedural-showcase.gif)
 
-792 elementi, dalla griglia alle orbite. Cambi una formula e aggiorni tutta la composizione. [Esempio live](https://andrexes03.github.io/motion-lab/examples/procedural-field.html) · [Codice e formule](https://github.com/AndreXes03/motion-lab/blob/main/examples/procedural-field.html#L22).
+Campi di flusso, toro parametrico, 720 elementi in trasformazione, onde e tunnel. Techno originale a 132 BPM e SFX legati al movimento.
+
+[Video con audio](https://andrexes03.github.io/motion-lab/#procedural-video) · [MP4](demo/procedural-techno.mp4) · [Esempio live](https://andrexes03.github.io/motion-lab/examples/procedural-field.html) · [Codice e formule](src/scenes/procedural-demo.js)
 
 After Effects e Cinema 4D hanno strumenti procedurali; qui la logica è direttamente nei sorgenti, leggibile e modificabile anche da un agente.
 

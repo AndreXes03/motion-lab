@@ -1,13 +1,5 @@
-# Esperimenti procedurali
+# Demo procedurale
 
-[Procedural field](https://andrexes03.github.io/motion-lab/examples/procedural-field.html) è un esempio Canvas2D autonomo: 792 elementi, poche formule, un loop di 6 secondi. Apri il file in un browser e modifica `SETTINGS` per cambiare densità, durata, twist e deformazione.
+[Animazione live](https://andrexes03.github.io/motion-lab/examples/procedural-field.html) · [Video con audio](https://andrexes03.github.io/motion-lab/#procedural-video) · [Scena e formule](../src/scenes/procedural-demo.js)
 
-[Guarda l’esempio live](https://andrexes03.github.io/motion-lab/examples/procedural-field.html) · [Come funziona](../docs/PROCEDURAL-EXAMPLE.md) · [GIF](../demo/procedural-motion.gif)
-
-Per riprodurre la GIF dal repository installato:
-
-```sh
-node examples/render-procedural.mjs
-```
-
-L’esempio illustra il workflow in codice senza cambiare la scena dello studio. [Motore procedurale dello studio](../src/engine/procedural.js).
+Il live usa la stessa scena dello studio, senza testi e con il logo personale. Il video include tipografia, techno originale a 132 BPM e SFX.

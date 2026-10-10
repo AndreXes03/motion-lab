@@ -12,6 +12,8 @@ Verificato il 10 ottobre 2026 su macOS con Chrome e Node.js 25.8.1.
 
 - Profondità di campo 3D: effetto on/off, ripristino, seek deterministico, bypass ispezione, UI e salvataggio versione passati (`node scripts/test-dof.mjs`). Disattivata di default.
 
+- Nuova demo procedurale: 1080p, 30 fps, 300 frame, 10 s, AAC stereo 48 kHz, techno 132 BPM, 57 SFX. Nessun riferimento al cliente nei testi.
+
 ## Audio
 
 Verifiche dedicate: `npm run test:sound`, `node scripts/test-sound-browser.mjs`, `node scripts/test-sound-2d.mjs` e `node scripts/test-sound-2d-browser.mjs`. Coprono sintesi, movimento 2D/3D, trasporto, WAV e persistenza; passati sulla copia pubblica. Browser: 202 eventi 3D e 35 eventi 2D, fotogrammi invariati, Play/Pausa/seek, WAV, BPM e ricette verificati senza errori. Export 2D on/off verificati. Il mux della demo conserva tutti i 250 pacchetti video identici.

@@ -27,10 +27,11 @@ export function sampleGraph(nodes,time,{width=1920,height=1080,seed=1}={}){
   const box=bounds(m,x,y,Math.max(w,1),Math.max(h,1));items.push({id:node.id,box,clip,alpha,m,type:node.type,size:[Math.abs(w*sx)/width,Math.abs(h*sy)/height],cover:node.type==='rect'&&!!node.fill&&alpha>.98,silent});
  }
  for(const node of nodes)visit(node,[1,0,0,1,0,0],1,viewport);
- const objects={};for(let i=0;i<items.length;i++){
+ const covers=items.filter(b=>b.cover);const objects={};for(let i=0;i<items.length;i++){
+  if(items[i].silent)continue;
   const a=items[i],visible=intersection(intersection(a.box,a.clip),viewport),total=area(a.box);let visibility=a.alpha*(total?area(visible)/total:0);
   // Later opaque rectangles suppress hidden layers (including chapter backgrounds).
-  if(!a.transition&&visibility>0)for(let j=i+1;j<items.length;j++){const b=items[j];if(b.cover){const coverage=area(intersection(visible,intersection(b.box,b.clip)))/Math.max(1,area(visible));visibility*=1-clamp(coverage);}}
+  if(!a.transition&&visibility>0)for(const b of covers){if(items.indexOf(b)>i){const coverage=area(intersection(visible,intersection(b.box,b.clip)))/Math.max(1,area(visible));visibility*=1-clamp(coverage);}}
   const cx=(a.box.x+a.box.r)/2,cy=(a.box.y+a.box.b)/2,rotation=Math.atan2(a.m[1],a.m[0]);
   objects[a.id]={position:[cx/width*8,cy/height*4,0],quaternion:[0,0,Math.sin(rotation/2),Math.cos(rotation/2)],visibility:a.silent?0:visibility,opacity:a.alpha,pan:clamp(cx/width*2-1,-.85,.85),size:a.size,renderKind:a.type,transition:!!a.transition,importance:clamp(Math.sqrt(total/(width*height))*3,.05,1)};
  }

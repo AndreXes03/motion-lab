@@ -1,10 +1,9 @@
-# Demo del motore
+# Demo
 
-Objects in play è un test 3D del motore; la grafica procedurale è un secondo esempio 2D.
+[Guarda nel browser](https://andrexes03.github.io/motion-lab/)
 
-- [Guarda la demo nel browser](https://andrexes03.github.io/motion-lab/).
-- [MP4 1080p](objects-in-play.mp4): 25 fps, 24 campioni di motion blur, bitrate obiettivo 6 Mb/s, con SFX modulari.
-- [Demo 2D](procedural.mp4).
-- [Copertina](hero.jpg) e [sequenza di frame](contact-sheet.png).
+- [Motion procedurale](procedural-techno.mp4): 1080p, 30 fps, 10 s, 4 campioni temporali, obiettivo 12 Mb/s, 14,5 MB. Techno originale a 132 BPM e 57 SFX adattivi. [Ricetta](procedural-techno.project.json) · [GIF muta](procedural-showcase.gif).
+- [Objects in play](objects-in-play.mp4): test 3D, 1080p, 25 fps, 24 campioni temporali, obiettivo 6 Mb/s, con SFX modulari. [Ricetta](objects-in-play.project.json).
+- [Copertina 3D](hero.jpg) · [Frame 3D](contact-sheet.png).
 
-Il film è renderizzato dai sorgenti e dalla [ricetta condivisa](objects-in-play.project.json). Il marchio presente sui prodotti fa parte del test visivo; non identifica il motore e non è concesso dalla licenza del codice.
+I film sono renderizzati dai sorgenti. I marchi sui prodotti del test 3D e il logo personale conservano i propri diritti; la licenza del codice non li include.
