@@ -2,57 +2,57 @@
 
 # Motion Lab
 
-**Rendering in codice per il vibe motion.**
+**Code-driven rendering for vibe motion.**
 
-Motion graphics 2D e scene 3D: codice, preview e render locale.
+2D motion graphics and 3D scenes: code, preview and local rendering.
 
 ![Three.js](https://img.shields.io/badge/Three.js-WebGL-111111?style=flat-square)
-![Procedural motion](https://img.shields.io/badge/Motion-procedurale-173bd5?style=flat-square)
-![MIT](https://img.shields.io/badge/Codice-MIT-f34a13?style=flat-square)
+![Procedural motion](https://img.shields.io/badge/Motion-procedural-173bd5?style=flat-square)
+![MIT](https://img.shields.io/badge/Code-MIT-f34a13?style=flat-square)
 
-[Demo](https://andrexes03.github.io/motion-lab/) · [Installazione](#installazione) · [Architettura](docs/ARCHITECTURE.md) · [Guide](docs/README.md)
+[Demo](https://andrexes03.github.io/motion-lab/) · [Setup](#setup) · [Architecture](docs/ARCHITECTURE.md) · [Docs](docs/README.md)
 
 </div>
 
-Con Codex o Claude puoi modificare scene, formule e ricette JSON, poi verificarle nel viewer. Camera, materiali e timing restano editabili: una correzione precisa non richiede una nuova generazione video da prompt, come con Seedance o Kling.
+Work with Codex or Claude on scenes, formulas and JSON recipes, then inspect the result in the viewer. Camera, materials and timing remain editable: precise changes do not require another prompt-based video generation.
 
-## Motion procedurale
+## Procedural motion
 
-![Motion graphics procedurale](demo/procedural-showcase.gif)
+![Procedural motion graphics](demo/procedural-showcase.gif)
 
-Campi di flusso, toro parametrico, 720 elementi in trasformazione, onde e tunnel. Techno originale a 132 BPM e SFX legati al movimento.
+Flow fields, a parametric torus, 720 transforming elements, waves and tunnels. Original techno at 132 BPM, with movement-driven SFX.
 
-[Video con audio](https://andrexes03.github.io/motion-lab/#procedural-video) · [MP4](demo/procedural-techno.mp4) · [Esempio live](https://andrexes03.github.io/motion-lab/examples/procedural-field.html) · [Codice e formule](src/scenes/procedural-demo.js)
+[Watch with audio](https://andrexes03.github.io/motion-lab/#procedural-video) · [MP4](demo/procedural-techno.mp4) · [Live example](https://andrexes03.github.io/motion-lab/examples/procedural-field.html) · [Code and formulas](src/scenes/procedural-demo.js)
 
-After Effects e Cinema 4D hanno strumenti procedurali; qui la logica è direttamente nei sorgenti, leggibile e modificabile anche da un agente.
+After Effects and Cinema 4D have procedural tools too. Here, the logic lives directly in source code, readable and editable by you and your coding agent.
 
 ## Studio
 
-![Scena, timeline e controlli](demo/ui-studio.png)
+![Scene, timeline and controls](demo/ui-studio.png)
 
-Timeline, preset, camera e look. Ricette JSON salvabili e rendering con motion blur temporale.
+Timeline, presets, camera and look controls. Saved JSON recipes and temporal motion blur.
 
-![Impostazioni di export](demo/ui-export.png)
+![Export settings](demo/ui-export.png)
 
-Export MP4, WebM e ProRes, con risoluzione, frame rate, campioni e bitrate regolabili.
+MP4, WebM and ProRes export with adjustable resolution, frame rate, samples and bitrate.
 
-**Compositing:** profondità di campo 3D, occlusione ambientale, bloom, controllo delle alte luci, aberrazione cromatica, vignettatura e distorsione lente. Grana applicata dopo il motion blur e overlay 2D sopra il render. [Sorgenti](src/engine/composite.js).
+**Compositing:** 3D depth of field, ambient occlusion, bloom, highlight control, chromatic aberration, vignette and lens distortion. Grain is applied after motion blur; 2D overlays stay above the render. [Source](src/engine/composite.js).
 
-**Sound design:** SFX legati ai movimenti 2D/3D, moduli regolabili e musica procedurale con BPM automatico o manuale. [Guida](docs/SOUND_DESIGN.md).
+**Sound design:** movement-driven 2D/3D SFX, separate modules and procedural music with automatic or manual BPM. [Guide](docs/SOUND_DESIGN.md).
 
-## Demo 3D
+## 3D demo
 
 [![Objects in play](demo/hero.jpg)](https://andrexes03.github.io/motion-lab/)
 
-Objects in play è un test di luci, camera e cinematica.
+Objects in play tests lighting, camera movement and kinematics.
 
-**1080p · 25 fps · 24 campioni · obiettivo 6 Mb/s · SFX modulari.**
+**1080p · 25 fps · 24 samples · target 6 Mb/s · modular SFX.**
 
-[Video nel browser](https://andrexes03.github.io/motion-lab/) · [MP4](demo/objects-in-play.mp4) · [Ricetta](demo/objects-in-play.project.json) · [Altre demo](demo/README.md)
+[Watch in browser](https://andrexes03.github.io/motion-lab/) · [MP4](demo/objects-in-play.mp4) · [Recipe](demo/objects-in-play.project.json) · [More demos](demo/README.md)
 
-## Installazione
+## Setup
 
-Verificato su **macOS, Node.js 22.12+ e Google Chrome**. Internet necessario per la prima installazione.
+Tested on **macOS, Node.js 22.12+ and Google Chrome**. Internet is needed for the first installation.
 
 ```sh
 git clone https://github.com/AndreXes03/motion-lab.git
@@ -61,27 +61,27 @@ npm ci
 npm run viewer
 ```
 
-Apri **http://127.0.0.1:4173/**. Gli export del viewer vanno in Download. Il build statico ha funzioni ridotte; Windows e Linux richiedono adattamenti e non sono verificati. [Uso ed export](docs/USAGE.md).
+Open **http://127.0.0.1:4173/**. Viewer exports go to Downloads. The static build has fewer features; Windows and Linux require adaptation and are untested. [Usage and export](docs/USAGE.md).
 
-Render della demo:
+Render the demo:
 
 ```sh
 npm run export -- --snapshot demo/objects-in-play.project.json --out renders/film.mp4 --width 1920 --height 1080 --fps 25 --temporal-samples 24 --bitrate-mbps 6
 ```
 
-## Esplora
+## Explore
 
-| Parte | Sorgenti / guida |
+| Area | Source / guide |
 | --- | --- |
-| Rendering, tempo e camera | [Motore](src/engine/) · [Architettura](docs/ARCHITECTURE.md) |
-| Composizioni e oggetti | [Scene](src/scenes/) · [Componenti](src/components/) |
-| Interfaccia e parametri | [Viewer](src/viewer/) · [Ricette JSON](project/README.md) |
-| Rendering e verifiche | [Script](scripts/README.md) |
-| Lavoro con agenti | [Workflow](docs/AGENT_WORKFLOW.md) |
-| Tutte le guide | [Documentazione](docs/README.md) |
+| Rendering, time and camera | [Engine](src/engine/) · [Architecture](docs/ARCHITECTURE.md) |
+| Compositions and objects | [Scenes](src/scenes/) · [Components](src/components/) |
+| Interface and parameters | [Viewer](src/viewer/) · [JSON recipes](project/README.md) |
+| Rendering and checks | [Scripts](scripts/README.md) |
+| Working with agents | [Workflow](docs/AGENT_WORKFLOW.md) |
+| All guides | [Documentation](docs/README.md) |
 
-## Stato e licenze
+## Status and licenses
 
-In sviluppo. Import glTF non implementato. Dopo un passaggio 2D → 3D → 2D sono state rilevate differenze nei pixel: riapri la scena per i confronti. [Verifiche e limiti](docs/VALIDATION.md).
+In development. glTF import is not implemented. Pixel differences were found after switching 2D → 3D → 2D: reopen the scene before comparisons. [Checks and limits](docs/VALIDATION.md).
 
-Codice di Andrea Salvo, [MIT](LICENSE). Marchi e asset demo conservano i rispettivi diritti. FFmpeg non incluso. [Dipendenze e avvisi](THIRD_PARTY.md).
+Code by Andrea Salvo, [MIT](LICENSE). Demo trademarks and assets retain their respective rights. FFmpeg binaries are not included. [Dependencies and notices](THIRD_PARTY.md).
