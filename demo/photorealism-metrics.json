@@ -1,0 +1,39 @@
+{
+  "asset": "headphones",
+  "width": 2880,
+  "height": 2160,
+  "samples": 2048,
+  "bounces": 8,
+  "rasterMs": 48.69999998807907,
+  "setupMs": 830.0999999940395,
+  "pathMs": 291354.6999999881,
+  "meshes": 416,
+  "instances": 352,
+  "triangles": 338308,
+  "basicMaterials": 0,
+  "customShaders": 0,
+  "disabledClearcoat": 3,
+  "lensFov": 114,
+  "artDirection": "Extreme close wide angle, floating object, warm key and cool rim",
+  "finishes": [
+    "brushed gold",
+    "silver rails",
+    "embossed leather",
+    "matte rubber",
+    "satin ceramic grille",
+    "titanium fasteners",
+    "glossy RGB display"
+  ],
+  "surfaceDetail": "Fingerprint roughness on display, sparse metal wear, low-amplitude leather displacement, modeled stitches",
+  "renderer": "WebKit WebGL",
+  "note": "Same frozen geometry, materials, camera and lights. No denoiser, bloom, depth of field or motion blur. Basic materials adapted; custom material shaders omitted; clearcoat disabled in both views because the tested path tracer produces black coated surfaces. Surface maps from Motion Lab applied to both views. Still-image experiment.",
+  "masterSha256": "95bb5291f17f4089e17c489932656b794d9c8aa63ea717ea634dc24a1def2172",
+  "delivery": {
+    "master": "photorealism.png",
+    "web": "photorealism.jpg",
+    "raster": "photorealism-raster.jpg",
+    "crop": "photorealism-detail.jpg",
+    "webWidth": 1920,
+    "webHeight": 1440
+  }
+}

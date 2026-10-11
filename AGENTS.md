@@ -16,3 +16,5 @@ Do not alter shared files while another agent is rendering a quality gate; coord
 For product-film modeling, impact animation, lens choreography and final delivery, use the repository skill at `.agents/skills/motion-lab-product-film/SKILL.md`. It documents the working renderer and efficient checks without replacing the user's current creative or publication instructions.
 
 For new 3D product scenes, start with `src/scenes/product-starter.js` and import reusable parts through `src/product-kit/index.js`. See `docs/PRODUCT_KIT.md` for model/material ownership, controls and render commands. Preserve existing authored films when improving shared tools.
+
+For an optional photorealism still, use `scripts/photoreal.mjs` and `docs/PHOTOREALISM.md`. Install experiment dependencies separately. This path does not replace the film renderer; report its material adaptations and inspect the exported image before publication.

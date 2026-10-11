@@ -41,3 +41,7 @@ A 3D module exports `createScene(renderer, config)` and returns the scene, camer
 Updates must depend on absolute time. Avoid playback timers, accumulated frame state and unseeded randomness. This supports repeatable seeking and rendering within the same browser and GPU configuration.
 
 [Usage](USAGE.md) · [Agent workflow](AGENT_WORKFLOW.md) · [Docs index](README.md)
+
+## Optional still-image path tracing
+
+`experiments/photoreal/` is an isolated renderer experiment, installed separately from the main application. `scripts/photoreal.mjs` serves it to headless Chrome. It freezes a product-kit model, converts supported materials, expands static instances, renders a plain raster reference, accumulates path-traced light with bounded GPU readbacks, then captures the target explicitly. It is not imported into the studio build or the film exporter. [Reproduction, measured settings and compatibility limits](PHOTOREALISM.md).

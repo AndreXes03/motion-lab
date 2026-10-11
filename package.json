@@ -15,7 +15,9 @@
     "sound:bank": "node scripts/export-sfx-bank.mjs",
     "soundtrack": "node scripts/soundtrack.mjs",
     "test:sound:2d": "node scripts/test-sound-2d.mjs",
-    "test:product-kit": "node scripts/test-product-kit.mjs"
+    "test:product-kit": "node scripts/test-product-kit.mjs",
+    "photoreal": "node scripts/photoreal.mjs",
+    "test:photoreal": "node scripts/test-photoreal.mjs"
   },
   "keywords": [
     "threejs",

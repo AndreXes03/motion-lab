@@ -40,3 +40,13 @@ Measure the whole moving assembly for clearances, including hidden support parts
 6. `scripts/prepare-demo.mjs` can validate and install PULSE/CAMERA master files with posters, hashes and backups. It does not upload. Preserve unrelated films and keep public source free of private reference material.
 
 A useful handoff states what changed visibly, which export was inspected, any remaining limitation, and which destinations were actually updated. Do not describe a queued job or a preview as a finished master.
+
+## Optional photorealism stills
+
+For an explicitly requested photorealism test or hero still, read [Photorealism](../../../docs/PHOTOREALISM.md). Reuse a product-kit asset and compare the same scene through `scripts/photoreal.mjs`; start at 640 × 480 / 64 samples, then export the selected still at 1440 × 1080 / 1024 samples. For an explicitly requested high-quality still, use 2880 × 2160 / 2048 samples after approving the small framing test. Install its pinned dependencies separately. Inspect both actual exported files and the metrics; a sample counter alone does not prove the captured image came from path tracing. Keep the explicit canvas presentation, bounded GPU readback checkpoints and duplicate-image guard. The sample counter can advance before queued GPU work completes; do not publish timing without those checkpoints.
+
+Art-direct the still before raising sample count: choose a close foreground feature, useful wide-angle perspective, distinct functional finishes and a controlled warm/cool light hierarchy. Keep extra model details in the experimental instance. Avoid a generic wide catalog shot when a dramatic macro was requested.
+
+Inspect bevels, long perforated-panel triangles, screen legibility and every new surface at crop scale. Do not bend a sparsely triangulated perforated plate: it produces visible ridges. Do not claim a glossy emissive display is a validated refractive glass simulation.
+
+Report the clearcoat adaptation, shader/material limits and remaining noise. Do not silently replace the working film renderer or claim animation, glass, motion-blur or production compositing parity. Preserve source material and texture ownership. Publish only within the user's authorized scope; embed a verified public image URL when mobile access is requested.

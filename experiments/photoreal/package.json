@@ -1,0 +1,1 @@
+{"name":"motion-lab-photoreal-experiment","private":true,"type":"module","dependencies":{"three":"0.181.2","three-gpu-pathtracer":"0.0.24","three-mesh-bvh":"0.9.1","xatlas-web":"0.1.0"}}

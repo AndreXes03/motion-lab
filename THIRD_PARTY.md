@@ -56,3 +56,19 @@ was studied for seeking, frame capture and encoding. No code or media was copied
 ## Helvetiker Bold
 
 Font JSON from the official Three.js examples. Copyright (c) 2004 MAGENTA Ltd. The embedded permission notice is also retained in `src/assets/fonts/LICENSE.txt`.
+
+## Optional Photorealism experiment
+
+Installed separately with `npm ci --prefix experiments/photoreal --ignore-scripts`.
+These packages are not added to the main application or the Pages studio bundle.
+
+| Component | Pinned version | License | Use |
+| --- | --- | --- | --- |
+| [three-gpu-pathtracer](https://github.com/gkjohnson/three-gpu-pathtracer/tree/v0.0.24) | 0.0.24 | MIT | Optional WebGL path-traced stills |
+| [three-mesh-bvh](https://github.com/gkjohnson/three-mesh-bvh) | 0.9.1 | MIT | Ray intersection acceleration |
+| [xatlas-web](https://github.com/mozillareality/xatlas-web) | 0.1.0 | MIT | Upstream dependency; no atlas generation in this test |
+| Three.js | 0.181.2 | MIT | Isolated version for this experiment |
+
+Original notices are retained in `licenses/photoreal/`. The rendered headphones,
+surface maps and studio lighting reuse Motion Lab code; no external HDR image or
+AI-generated bitmap is used for this test.

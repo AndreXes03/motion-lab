@@ -11,6 +11,7 @@
 | Adjust motion blur and effects | [Compositing](COMPOSITING.md) |
 | Add movement-driven audio | [Sound design](SOUND_DESIGN.md) |
 | Build tactile product films | [3D look development](3d-lookdev.md) · [Agent skill](../.agents/skills/motion-lab-product-film/SKILL.md) |
+| Render an experimental path-traced still | [Photorealism](PHOTOREALISM.md) |
 | Review models and frames | [Visual checks](QUALITY-GATES.md) |
 | Check validation and limits | [Validation](VALIDATION.md) |
 

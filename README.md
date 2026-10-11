@@ -62,6 +62,14 @@ For detailed 3D exports, `--quality premium` selects 1080p, 48 temporal samples 
 
 The repository includes a [product-film skill](.agents/skills/motion-lab-product-film/SKILL.md) for coding agents: model construction, lens choreography, impact recoil, efficient review and verified export. Codex discovers it from `.agents/skills`; other agents can read the same guide directly.
 
+## Photorealism / experimental
+
+[![Photorealism: PULSE headphones rendered with path tracing](demo/photorealism.jpg)](https://andrexes03.github.io/motion-lab/#photorealism)
+
+An optional still renderer: multi-bounce light and reflections, using the PULSE model with a detailed ceramic grille, rubber, leather and metal. A 114° macro view brings the finishes forward. **2880 × 2160 · 2048 samples · 8 bounces.** Includes a same-scene raster comparison and a reproducible export command. Clearcoat is disabled in this experiment due to a compatibility issue; the current films and studio renderer are unchanged.
+
+[Render your own still](docs/PHOTOREALISM.md) · [Compare the images](https://andrexes03.github.io/motion-lab/#photorealism) · [Full PNG](demo/photorealism.png)
+
 ## Studio
 
 ![Scene, timeline and controls](demo/ui-studio-v2.jpg)
