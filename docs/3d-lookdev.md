@@ -1,5 +1,7 @@
 # Fast 3D look development
 
+For new scenes, start with the [runnable product kit](PRODUCT_KIT.md). It combines the helpers below and exposes existing film models without copying their timelines.
+
 Use `createStudioMaterials(renderer)` from `src/engine/studio-lookdev.js` once per scene. It provides fibre, leather, enamel, brushed metal, and an HDR reflection environment. Reuse materials across meshes; dispose the kit when the scene is removed. These are starting points, not a guarantee of photorealism. Match texture scale and reflection-card placement to the object.
 
 ## Render only what you need

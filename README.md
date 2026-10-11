@@ -48,6 +48,12 @@ Flow fields, a parametric torus, 720 transforming elements, waves and tunnels. O
 
 After Effects and Cinema 4D have procedural tools too. Here, the logic lives directly in source code, readable and editable by you and your coding agent.
 
+## Start your next scene
+
+[Open the product starter](https://andrexes03.github.io/motion-lab/studio/?scene=starter) · [Product kit guide](docs/PRODUCT_KIT.md)
+
+Reusable studio materials and lights, existing CAMERA/PULSE models, configurable optical/mechanical parts, camera travel and contact recoil. The starter includes editable colors, lighting and lens controls. Import from `src/product-kit/index.js`; keep your own subject, timing and art direction.
+
 ## Reusable 3D baseline
 
 The PULSE and CAMERA studio look is available as a [studio baseline](docs/3d-lookdev.md): wide optics, neutral shadows, rim lighting, restrained bloom, matte plastic/rubber/metal materials and temporal motion blur. Start new scenes from these helpers and preview before rendering at 1080p.

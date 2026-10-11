@@ -7,6 +7,12 @@ description: Build and refine tactile product films in this Three.js Motion Lab 
 
 Work in the existing renderer. Preserve the user's selected objects, palette, edit and publication scope. Use `src/engine/studio-baseline.js`, `studio-lookdev.js` and `composite.js`; read [3D look development](../../../docs/3d-lookdev.md) for their current interfaces. Never promise path-traced or reference-equivalent quality from this raster pipeline.
 
+## Start from implemented components
+
+For a new product scene, read [the product kit](../../../docs/PRODUCT_KIT.md) and copy `src/scenes/product-starter.js`. Import through `src/product-kit/index.js`. Prefer existing film assets (`camera`, `turntable`, `headphones`) or configurable optical cells, rotary controls and housing panels before constructing another bespoke model. The kit combines stage lighting/materials/compositing with independent absolute-time camera and impact motion. Its starter is available in the studio and CLI as `starter`.
+
+Use a scene-owned material kit and its `variant()` function; keep shared texture ownership explicit. Reuse functions, not the absolute shot times or scene-specific object names from PULSE/CAMERA. Inspect the copied starter's real output before adapting it; the kit does not guarantee art direction automatically. For changes to shared code, run `npm run test:product-kit` and the targeted browser check. Do not rerender unchanged full films just to test a helper.
+
 ## Spend effort where it shows
 
 Identify a small set of visible weaknesses before editing. Compare the same frame and framing before/after. More polygons, samples or bloom cannot repair a poor silhouette or unconvincing construction.

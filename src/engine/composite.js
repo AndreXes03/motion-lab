@@ -150,7 +150,9 @@ export function createComposite(renderer, scene, camera, config) {
   aaPass.uniforms.resolution.value.set(1 / width, 1 / height);
   composer.addPass(aaPass);
 
+  let disposed=false;
   return {
+    dispose(){if(disposed)return;disposed=true;for(const pass of composer.passes)pass.dispose?.();noiseTex.dispose();composer.dispose();},
     applyLook(next) {
       dofSettings=next;dofPass.enabled=next.dofEnabled===true;
       dofPass.uniforms.aperture.value=(next.dofStrength??.35)*.006;

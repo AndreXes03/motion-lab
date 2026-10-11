@@ -14,3 +14,5 @@ Inspection parameters: {"inspect":{"object":"device.root","yaw":20},"review":"cl
 Do not alter shared files while another agent is rendering a quality gate; coordinate component ownership and announce when a file is stable.
 
 For product-film modeling, impact animation, lens choreography and final delivery, use the repository skill at `.agents/skills/motion-lab-product-film/SKILL.md`. It documents the working renderer and efficient checks without replacing the user's current creative or publication instructions.
+
+For new 3D product scenes, start with `src/scenes/product-starter.js` and import reusable parts through `src/product-kit/index.js`. See `docs/PRODUCT_KIT.md` for model/material ownership, controls and render commands. Preserve existing authored films when improving shared tools.

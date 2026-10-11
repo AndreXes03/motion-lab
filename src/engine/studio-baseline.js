@@ -18,18 +18,19 @@ export function configureStudioRenderer(renderer){
   renderer.shadowMap.type=T.PCFSoftShadowMap;
 }
 // Units are relative to a roughly 3-unit product. Scale the rig with the subject.
-export function createStudioLighting(scene,{scale=1}={}){
+export function createStudioLighting(scene,{scale=1,keyStrength=1,rimStrength=1,fillIntensity=.10,environmentIntensity=.20}={}){
   if(!Number.isFinite(scale)||scale<=0)throw Error('Lighting scale must be positive');
+  if([keyStrength,rimStrength,fillIntensity,environmentIntensity].some(v=>!Number.isFinite(v)||v<0))throw Error('Lighting intensities must be non-negative');
   RectAreaLightUniformsLib.init();
   const rig=new T.Group();rig.name='Studio contrast lighting';
-  const fill=new T.HemisphereLight('#ffffff','#070707',.10);rig.add(fill);
-  const key=new T.RectAreaLight('#ffffff',12,1.2*scale,4.5*scale);
+  const fill=new T.HemisphereLight('#ffffff','#070707',fillIntensity);rig.add(fill);
+  const key=new T.RectAreaLight('#ffffff',12*keyStrength,1.2*scale,4.5*scale);
   key.position.set(-3.8*scale,3*scale,scale);key.lookAt(0,.35*scale,0);rig.add(key);
   const rims=[];
   for(const [position,color,intensity] of [[[4,1,-3],'#dceaff',135],[[1,-4,-2],'#ffffff',65]]){
-    const light=new T.PointLight(color,intensity*scale*scale);light.position.fromArray(position).multiplyScalar(scale);rig.add(light);rims.push(light);
+    const light=new T.PointLight(color,intensity*scale*scale*rimStrength);light.position.fromArray(position).multiplyScalar(scale);rig.add(light);rims.push(light);
   }
-  scene.add(rig);const oldIntensity=scene.environmentIntensity;scene.environmentIntensity=.20;
+  scene.add(rig);const oldIntensity=scene.environmentIntensity;scene.environmentIntensity=environmentIntensity;
   let disposed=false;
   return {rig,key,fill,rims,dispose(){if(disposed)return;disposed=true;scene.remove(rig);scene.environmentIntensity=oldIntensity;rig.traverse(o=>{if(o.isLight)o.dispose();});}};
 }
