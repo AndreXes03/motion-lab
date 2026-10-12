@@ -1,4 +1,36 @@
-# Publication checks
+# Validation and evidence
+
+## Scene tools and renderer contracts, October 12, 2026
+
+The current release adds 104 catalog controls across eight scenes, independent camera/object group clocks, per-parameter rates, curated scene presets and browser-local preview quality. These are implementation and contract results; this section does not assert a completed Pages deployment or approval of newly converted films.
+
+Confirmed checks:
+
+- `npm run prebuild`: scene-control contract, motion workflow, render policy and Cycles option/dispatch contract passed.
+- The scene contract covers all eight saved tool layouts, safe paths and category taxonomy, universal neutral contrast/saturation, group windows, bounded presets and renderer recommendations.
+- The motion workflow validates independent group clocks, identity/outside/disabled behavior, per-parameter rate migration, preset schemas and API round trips. Neutral display grading performs no pixel read/write.
+- `npm run test:compositor`: alpha, identity, masks, grading, glow, frame timing, bounded asset paths, small H.264 encodes and explicit audio passed.
+- Four browser suites passed: 8 scene layouts and legacy migration, key editing and undo, deterministic 2D/3D switching, preset batches and Custom state, independent camera/group clocks, input coalescing and mobile 480 px preview limits. Public-build checks passed with no local API requests.
+- `node scripts/test-renderer-studio-api.mjs`: mocked Studio dispatch passed. A mock worker confirms routing, capability rejection and metadata preservation; it is not a Blender or device render.
+
+Keep the following evidence separate:
+
+| Check | Scope and required evidence |
+| --- | --- |
+| `test-adaptive-controls-browser.mjs` | Actual local Studio key editing, undo/redo, recipes and preview/renderer comparisons; requires Chrome and Studio on port 4194 |
+| `test-scene-tools-browser.mjs` | Actual scene panels, filters, motion targets and legacy selections; requires the same local Studio |
+| `scripts/cycles/test-browser.mjs` | Browser baking/scene adapter checks; does not alone prove Blender produced an output |
+| `test-cycles-studio.mjs` | Real Studio → local Blender/Cycles → PNG job; record completed status, device, samples, dimensions and retained frame proof after it finishes |
+| A converted video | Complete decode, duration/frame count, metadata and arbitrary seek, followed by contact-sheet/playback visual inspection |
+| Public deployment | Confirm the completed deployment and inspect the deployed page separately from a local build |
+
+A real Studio → Cycles → PNG job completed on Metal (Apple M4 Max), at 384 × 216 and 16 samples. The retained local proof is `outputs/release-review/cycles-studio-frame.png`. A separate real Studio → Mixed → PNG proof matched the prepared Cycles RGBA and graphic-layer composite byte for byte. PULSE is the supported Cycles scene; its Auto recommendation prefers 96 samples but still requires local capability checks. Cycles currently exports PNG/MP4. Three.js also supports WebM/ProRes, and prepared Mixed output runs through Studio after plan, asset, dimensions and timeline preflight; the compositor CLI remains available. An unsupported explicit engine is blocked.
+
+Fast/Auto/Balanced/Sharp preview preferences stay outside the recipe/API. Full-effect final output uses separate dimensions, frame rate and sampling; fast-preview simplifications must not leak into saved controls or an export. Group curves change only their declared pose clock, not cuts, captions, music or film duration. Renderer conversion can change materials, light units and color response, and does not transfer all raster shaders or optical passes.
+
+The reports below describe earlier retained checks and deliveries. Their dates and media measurements are historical evidence; they do not validate this release's browser/native paths or publication.
+
+## Earlier publication checks, October 10, 2026
 
 Checked on October 10, 2026, on macOS with Chrome and Node.js 25.8.1.
 

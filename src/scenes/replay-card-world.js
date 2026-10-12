@@ -34,12 +34,12 @@ export function createReplayCardWorld(getImage,getModel){
  extractedScene.add(fill.clone());
  let sw=0,sh=0;
  return {
-  render(ctx,poses,t,wireAlpha){
+  render(ctx,poses,t,wireAlpha,cameraTime=t){
    const w=ctx.canvas.width,h=ctx.canvas.height;
    if(w!==sw||h!==sh){renderer.setSize(w,h);camera.aspect=w/h;camera.updateProjectionMatrix();sw=w;sh=h;}
    // A camera moving through the same world: dolly, lateral track and a shallow
    // crane. The rhythm follows objects, rather than scaling each chapter canvas.
-   const lens=replayCameraPose(t);
+   const lens=replayCameraPose(cameraTime);
    camera.position.fromArray(lens.position);camera.lookAt(new T.Vector3(...lens.target));camera.rotation.z=lens.roll;
    ground.visible=false;
    for(let id=0;id<21;id++){

@@ -2,6 +2,7 @@ import {drawDotPixels,dotPixelWipe} from './dot-pixels.js';
 import {applyDotOptics} from './dot-optics.js';
 import {heroPose,personalityPose,characterActing,compositionPose} from './dot-motion.js';
 import {createDotDevice} from './dot-device.js';
+import {sampleAnimationGroupTime} from '../engine/animation-groups.js';
 /** DOT: 2.5D character motion with soft silhouettes and procedural LED facial acting. */
 export const mascotConfig={id:'dot-personality',title:'DOT / A little character',duration:16,fps:30,width:1920,height:1080,scene:'mascot'};
 // Preserve crisp2D silhouettes; temporal exposure belongs only to the physical device move.
@@ -138,9 +139,33 @@ function graphicDial(c,x,y,r,t,collapse=0){
  for(let i=0;i<60;i++){const a=i/60*TAU-TAU/4,d=(i%5===0?315:330)*(1-.7*smoother(collapse));c.strokeStyle=i%5===0?'#46404f':'#918691';c.lineWidth=i%5===0?3:1.2;c.beginPath();c.moveTo(Math.cos(a)*d,Math.sin(a)*d);c.lineTo(Math.cos(a)*341*(1-.7*smoother(collapse)),Math.sin(a)*341*(1-.7*smoother(collapse)));c.stroke();}
  const a=-1.57+(t-11)*1.5;c.strokeStyle='#b77b2e';c.lineWidth=5;c.lineCap='round';c.beginPath();c.moveTo(-Math.cos(a)*35,-Math.sin(a)*35);c.lineTo(Math.cos(a)*298*(1-prog(collapse,0,.55)),Math.sin(a)*298*(1-prog(collapse,0,.55)));c.stroke();circle(c,0,0,10,C.orange);c.restore();
 }
+const dotControlDefaults={characterScale:1,actingStrength:1,lensMotion:1,glowStrength:1};
+function dotControls(parameters){
+ const source=parameters.sceneControls??{},bounds={characterScale:[.8,1.15],actingStrength:[0,1.5],lensMotion:[0,1.5],glowStrength:[0,1.5]};
+ return Object.fromEntries(Object.entries(dotControlDefaults).map(([key,fallback])=>[key,Number.isFinite(source[key])?Math.max(bounds[key][0],Math.min(bounds[key][1],source[key])):fallback]));
+}
+function cameraPoseAt(time,parameters={}){
+ const graphicTime=clamp(Number.isFinite(parameters.renderSample?.frameTime)?parameters.renderSample.frameTime:time,0,16);
+ const cameraTime=sampleAnimationGroupTime(parameters,'camera',graphicTime),pose=compositionPose(cameraTime),strength=dotControls(parameters).lensMotion;
+ if(strength!==1){pose.x*=strength;pose.y*=strength;pose.roll*=strength;pose.scale=1+(pose.scale-1)*strength;}
+ return pose;
+}
+const cameraChannels=[
+ {id:'camera.position.x',label:'Camera center X',unit:'px'},
+ {id:'camera.position.y',label:'Camera center Y',unit:'px'},
+ {id:'camera.zoom',label:'Camera zoom',unit:'scale'},
+ {id:'camera.roll',label:'Camera roll',unit:'rad'}
+];
 export function createMascotDemo(){
- let device;
- function render(c,time,p={},w=1920,h=1080){const t=Math.max(0,Math.min(16,time));const graphicTime=Math.max(0,Math.min(16,p.renderSample?.frameTime??t));let displayContour=null;c.save();c.scale(w/1920,h/1080);const lens=compositionPose(graphicTime);c.translate(960+lens.x,540+lens.y);c.rotate(lens.roll);c.scale(lens.scale,lens.scale);c.translate(-960,-540);
+ let device,controls=dotControlDefaults;
+ // Scale character expression and pose offsets, never the authored cut times.
+ function drawMascot(c,pose){
+  const strength=controls.actingStrength;
+  const adapted={...pose,r:(pose.r??200)*controls.characterScale,glowStrength:(pose.glowStrength??.45)*controls.glowStrength};
+  if(strength!==1){adapted.sx=1+((pose.sx??1)-1)*strength;adapted.sy=1+((pose.sy??1)-1)*strength;adapted.rot=(pose.rot??0)*strength;adapted.look=(pose.look??0)*strength;if(pose.act)adapted.act=Object.fromEntries(Object.entries(pose.act).map(([key,value])=>[key,typeof value==='number'?value*strength:value]));}
+  mascot(c,adapted);
+ }
+ function render(c,time,p={},w=1920,h=1080){controls=dotControls(p);const t=Math.max(0,Math.min(16,time));const graphicTime=Math.max(0,Math.min(16,p.renderSample?.frameTime??t)),characterTime=sampleAnimationGroupTime(p,'character',t),characterGraphicTime=sampleAnimationGroupTime(p,'character',graphicTime);let displayContour=null;c.save();c.scale(w/1920,h/1080);const lens=cameraPoseAt(t,p);c.translate(960+lens.x,540+lens.y);c.rotate(lens.roll);c.scale(lens.scale,lens.scale);c.translate(-960,-540);
  // A single optical journey. The hero is the punctuation, grows, then opens the cast.
  if(t<6.32){
   scene(c,C.cream,graphicTime);
@@ -155,27 +180,27 @@ export function createMascotDemo(){
    title(c,['BABY','TEEN','BESTIE'][k],126,893,92,ink,t,3.54+k*.78);c.save();c.globalAlpha=prog(t,3.57+k*.78,3.75+k*.78);mono(c,['JUST GETTING STARTED.','HAS OPINIONS.','KNOWS YOU.'][k],134,951,23,ink);c.restore();
   }
   const retract=prog(t,1.46,2.23),jump=bell(t,2.87,3.7),exit=prog(t,5.9,6.32);
-  const [x,y,r]=heroPose(t),inv=t>3.28&&t<5.2,baseInk=inv?'#eef0e7':'#171425',ink=colour(baseInk,'#873c13',prog(t,6.13,6.32));
-  mascot(c,{x,y,r,t,color:ink,inverse:inv,kind:'dot',look:mix(-.8,.4,prog(t,.35,.85))-.9*growth,blink:bump(t,1.29,.08)+bump(t,3.28,.12)+prog(t,6.05,6.14)*(1-prog(t,6.35,6.45)),mood:stage===0&&t>3.4?'curious':'happy',sx:1+.15*bell(t,2.88,3.4),sy:1-.17*bell(t,2.88,3.4),rot:-.09*jump,glowStrength:t<1.7?0:.1,eyesOnly:t<1.7||t>6.06,eyeOpacity:prog(t,.06,.38)});
+  const [x,y,r]=heroPose(characterTime),inv=t>3.28&&t<5.2,baseInk=inv?'#eef0e7':'#171425',ink=colour(baseInk,'#873c13',prog(t,6.13,6.32));
+  drawMascot(c,{x,y,r,t:characterTime,color:ink,inverse:inv,kind:'dot',look:mix(-.8,.4,prog(characterTime,.35,.85))-.9*prog(characterTime,2.96,3.69),blink:bump(characterTime,1.29,.08)+bump(characterTime,3.28,.12)+prog(characterTime,6.05,6.14)*(1-prog(characterTime,6.35,6.45)),mood:stage===0&&t>3.4?'curious':'happy',sx:1+.15*bell(characterTime,2.88,3.4),sy:1-.17*bell(characterTime,2.88,3.4),rot:-.09*bell(characterTime,2.87,3.7),glowStrength:t<1.7?0:.1,eyesOnly:t<1.7||t>6.06,eyeOpacity:prog(characterTime,.06,.38)});
   if(t<1.5){c.save();c.globalAlpha=prog(t,.1,.4)*(1-prog(t,1.08,1.45));mono(c,'EYE KNOW.',960,974,25,'#c7c7d2','center');c.restore();}
   // The outgoing body becomes the dark field; no whole-frame cross dissolve.
 
  }
  if(t>=6.32&&t<10.93){
-  const castAt=8.87,wide=prog(t,castAt,9.65),colors=[C.orange,C.pink,'#7b80dd',C.mint],kinds=['spark','bunny','cloud','mint'],moods=['wild','love','sleepy','curious'];
+  const castAt=8.87,wide=prog(t,castAt,9.65),castWide=prog(characterTime,castAt,9.65),colors=[C.orange,C.pink,'#7b80dd',C.mint],kinds=['spark','bunny','cloud','mint'],moods=['wild','love','sleepy','curious'];
   scene(c,C.dark,graphicTime);const pinkIn=prog(t,7.1,7.36),pinkOut=prog(t,7.99,8.2);wipe(c,C.cream,pinkIn,625,550);wipe(c,C.dark,pinkOut,625,550);
   if(!p.review||p.review==='beauty')drawDotPixels(c,graphicTime,'back');
   let which=t<7.22?0:t<8.13?1:2;
   for(let i=0;i<4;i++){
-   const local=t-[6.32,7.22,8.13,9.05][i],entry=prog(local,-.11,.21),exit=prog(local,.70,1.0),isActive=i===which;
-   const takeoff=9.85+i*.17,flight=clamp((t-takeoff)/.49),wave=Math.sin(Math.PI*flight)**1.1,anticipation=bell(t,takeoff-.13,takeoff),landTime=Math.max(0,t-takeoff-.49),landingRebound=t>takeoff+.49?Math.sin(landTime*23)*Math.exp(-landTime*15):0;const castSquash=.14*anticipation+.065*landingRebound-.095*Math.sin(Math.PI*flight);const endX=340+i*390+18*Math.sin(Math.PI*flight)*(i%2?1:-1),endY=664-(i===1?134:i===2?112:140)*wave+12*Math.sin((t-9.3)*2+i);
-   let x=625,y=583-95*bell(local,-.12,.42),r=238;if(i===0&&t<7.03){[x,y,r]=personalityPose(t);}
+   const local=characterTime-[6.32,7.22,8.13,9.05][i],entry=prog(local,-.11,.21),exit=prog(local,.70,1.0),isActive=i===which;
+   const takeoff=9.85+i*.17,flight=clamp((characterTime-takeoff)/.49),wave=Math.sin(Math.PI*flight)**1.1,anticipation=bell(characterTime,takeoff-.13,takeoff),landTime=Math.max(0,characterTime-takeoff-.49),landingRebound=characterTime>takeoff+.49?Math.sin(landTime*23)*Math.exp(-landTime*15):0;const castSquash=.14*anticipation+.065*landingRebound-.095*Math.sin(Math.PI*flight);const endX=340+i*390+18*Math.sin(Math.PI*flight)*(i%2?1:-1),endY=664-(i===1?134:i===2?112:140)*wave+12*Math.sin((characterTime-9.3)*2+i);
+   let x=625,y=583-95*bell(local,-.12,.42),r=238;if(i===0&&t<7.03){[x,y,r]=personalityPose(characterTime);}
    if(i<=which){y-=exit*1250;x+=110*exit;}else y+=1250*(1-entry);
    if(i===3){x=2100;y=680;}
-   x=mix(x,endX,wide);y=mix(y,endY,wide);r=mix(r,170,wide);
+   x=mix(x,endX,castWide);y=mix(y,endY,castWide);r=mix(r,170,castWide);
    if(t<castAt&&(i>which||i<which-1))continue;
-   const landing=Math.exp(-Math.max(0,local)*5)*Math.sin(Math.max(0,local)*12),breath=Math.sin(t*2.1+i)*.018;
-   mascot(c,{x,y,r,t,color:colors[i],kind:kinds[i],mood:moods[i],look:i===which?-.3+Math.sin(local*2.5)*.55:Math.sin(t+i)*.55,blink:i===0&&t<6.46?prog(t,6.05,6.14)*(1-prog(t,6.35,6.45)):i===2?.25:softBlink((t+i*.19)%2,1.7,.07),sx:1-.14*landing+breath+castSquash*wide,sy:1+.24*landing-breath-castSquash*wide,eyesOnly:i===0&&t<6.4,groundY:mix(865,854,wide),rot:(.06*Math.sin(local*4)*Math.exp(-Math.max(0,local)*2))*(1-wide)+(.022*Math.sin(t*2+i)+.085*Math.sin(Math.PI*flight)*(i%2?1:-1))*wide,glowStrength:.15,act:characterActing(t,local,flight,i)});
+   const landing=Math.exp(-Math.max(0,local)*5)*Math.sin(Math.max(0,local)*12),breath=Math.sin(characterTime*2.1+i)*.018;
+   drawMascot(c,{x,y,r,t:characterTime,color:colors[i],kind:kinds[i],mood:moods[i],look:i===which?-.3+Math.sin(local*2.5)*.55:Math.sin(characterTime+i)*.55,blink:i===0&&t<6.46?prog(characterTime,6.05,6.14)*(1-prog(characterTime,6.35,6.45)):i===2?.25:softBlink((characterTime+i*.19)%2,1.7,.07),sx:1-.14*landing+breath+castSquash*castWide,sy:1+.24*landing-breath-castSquash*castWide,eyesOnly:i===0&&t<6.4,groundY:mix(865,854,castWide),rot:(.06*Math.sin(local*4)*Math.exp(-Math.max(0,local)*2))*(1-castWide)+(.022*Math.sin(characterTime*2+i)+.085*Math.sin(Math.PI*flight)*(i%2?1:-1))*castWide,glowStrength:.15,act:characterActing(characterTime,local,flight,i)});
    if(i===1&&isActive&&wide<.4){for(let j=0;j<3;j++){const u=clamp((local-.22-j*.12)/.7);c.save();c.globalAlpha=Math.sin(u*Math.PI)*.7;txt(c,'♥',650+80*Math.sin(j*2+u),250-u*170,19+18*u,C.pink,'center');c.restore();}}
    if(i===2&&isActive&&wide<.4){for(let j=0;j<3;j++){const u=(Math.max(0,local)*.7+j*.28)%1;c.save();c.globalAlpha=Math.sin(Math.PI*u);txt(c,'z',810+u*110,360-u*180,35+25*u,'#a1bff2','center',600);c.restore();}}
   }
@@ -183,7 +208,7 @@ export function createMascotDemo(){
   c.save();c.globalAlpha=wide;title(c,'Every mood.',510,165,117,C.cream,t,9.6);mono(c,'FOUR PERSONALITIES. ONE DOT.',960,955,24,C.cream,'center');c.restore();
  }
  if(t>=10.93){
-  scene(c,C.dark,graphicTime);const g=prog(t,10.93,12.04),product=prog(t,13.3,14.55),clockExit=prog(t,13.27,13.86),cx=mix(1310,620,product),cy=550+Math.sin(product*Math.PI)*75;
+  scene(c,C.dark,graphicTime);const g=prog(t,10.93,12.04),product=prog(characterTime,13.3,14.55),clockExit=prog(t,13.27,13.86),cx=mix(1310,620,product),cy=550+Math.sin(product*Math.PI)*75;
   // Hold the2D wipe at exposure center; only the physical device is temporally sampled.
   const graphicProduct=prog(graphicTime,13.3,14.55),graphicX=mix(1310,620,graphicProduct),graphicY=550+Math.sin(graphicProduct*Math.PI)*75;
   wipe(c,C.violet,clamp((graphicTime-13.56)/.6),graphicX,graphicY);
@@ -193,14 +218,14 @@ export function createMascotDemo(){
   c.save();c.globalAlpha=prog(t,11.66,12.02)*(1-prog(t,13.2,13.58));title(c,'Lives',220,375,118,C.cream,t,11.62);title(c,'your day.',220,507,118,C.cream,t,11.7);const digits=String(Math.floor(3+Math.max(0,t-11.55)*14)).padStart(2,'0');txt(c,'17:'+digits,222,725,146,C.orange);mono(c,'PLAY TIME — IT IS.',228,797,23,C.cream);c.restore();
   const colors=[C.orange,C.pink,'#7b80dd',C.mint],kinds=['spark','bunny','cloud','mint'],moods=['wild','love','sleepy','curious'];
   for(let i=3;i>=0;i--){
-   const angle=-TAU/4+(i-1)*TAU/3+Math.max(0,t-12.04)*.5,a=i===0?0:angle;
-   const gi=prog(t,10.93+i*.055,11.87+i*.055),arc=Math.sin(Math.PI*gi);const x=mix(340+i*390,i===0?1310:1310+Math.cos(a)*203,gi)+arc*(i-1.5)*28,y=mix(664+12*Math.sin((t-9.3)*2+i),i===0?550:550+Math.sin(a)*203,gi)-arc*(160+i*34),r=mix(170,i===0?60:43,smoother(gi));
-   if(i>0&&product>.01){const fly=prog(t,13.35+i*.055,14.02+i*.045);mascot(c,{x:mix(x,cx,fly),y:mix(y,cy,fly),r:mix(r,20,fly),t,color:colors[i],kind:kinds[i],mood:moods[i],sx:1,sy:1,rot:(i-2)*.12*fly,glowStrength:.14});}
-   else if(i>0&&t<13.32)mascot(c,{x,y,r,t,color:colors[i],kind:kinds[i],mood:moods[i],look:-Math.cos(a)*.7,glowStrength:.1});
+   const angle=-TAU/4+(i-1)*TAU/3+Math.max(0,characterTime-12.04)*.5,a=i===0?0:angle;
+   const gi=prog(characterTime,10.93+i*.055,11.87+i*.055),arc=Math.sin(Math.PI*gi);const x=mix(340+i*390,i===0?1310:1310+Math.cos(a)*203,gi)+arc*(i-1.5)*28,y=mix(664+12*Math.sin((characterTime-9.3)*2+i),i===0?550:550+Math.sin(a)*203,gi)-arc*(160+i*34),r=mix(170,i===0?60:43,smoother(gi));
+   if(i>0&&product>.01){const fly=prog(characterTime,13.35+i*.055,14.02+i*.045);drawMascot(c,{x:mix(x,cx,fly),y:mix(y,cy,fly),r:mix(r,20,fly),t:characterTime,color:colors[i],kind:kinds[i],mood:moods[i],sx:1,sy:1,rot:(i-2)*.12*fly,glowStrength:.14});}
+   else if(i>0&&t<13.32)drawMascot(c,{x,y,r,t:characterTime,color:colors[i],kind:kinds[i],mood:moods[i],look:-Math.cos(a)*.7,glowStrength:.1});
    if(i===0){
     const rr=mix(358,315,product);
-    if(t>12.02){if(product>.24){const reveal=prog(graphicTime,13.85,14.55);mascot(c,{x:graphicX-85*reveal,y:graphicY-80*reveal,r:335*reveal,t:graphicTime,color:C.orange,kind:'spark',mood:'wild',rot:-.08*reveal,glowStrength:.12});}device??=createDotDevice(ledFace,(ctx,tt,q)=>{graphicDial(ctx,384,384,384,tt,q);mascot(ctx,{x:384,y:384,r:64,t:tt,color:C.orange,kind:'spark',mood:'wild',glowStrength:0});for(let j=1;j<4;j++){const aa=-TAU/4+(j-1)*TAU/3+Math.max(0,tt-12.04)*.5;mascot(ctx,{x:384+Math.cos(aa)*208,y:384+Math.sin(aa)*208,r:44,t:tt,color:colors[j],kind:kinds[j],mood:moods[j],glowStrength:0});}});displayContour=device.render(c,cx,cy,rr,t,prog(t,12.02,12.19),1-product)?.displayContour;}
-    else mascot(c,{x,y,r,t,color:colors[0],kind:'spark',mood:'wild',look:-.4,glowStrength:.1});
+    if(t>12.02){if(product>.24){const reveal=prog(characterGraphicTime,13.85,14.55);drawMascot(c,{x:graphicX-85*reveal,y:graphicY-80*reveal,r:335*reveal,t:characterGraphicTime,color:C.orange,kind:'spark',mood:'wild',rot:-.08*reveal,glowStrength:.12});}device??=createDotDevice(ledFace,(ctx,tt,q)=>{graphicDial(ctx,384,384,384,tt,q);drawMascot(ctx,{x:384,y:384,r:64,t:tt,color:C.orange,kind:'spark',mood:'wild',glowStrength:0});for(let j=1;j<4;j++){const aa=-TAU/4+(j-1)*TAU/3+Math.max(0,tt-12.04)*.5;drawMascot(ctx,{x:384+Math.cos(aa)*208,y:384+Math.sin(aa)*208,r:44,t:tt,color:colors[j],kind:kinds[j],mood:moods[j],glowStrength:0});}});displayContour=device.render(c,cx,cy,rr,characterTime,prog(t,12.02,12.19),1-product)?.displayContour;}
+    else drawMascot(c,{x,y,r,t:characterTime,color:colors[0],kind:'spark',mood:'wild',look:-.4,glowStrength:.1});
    }
   }
   if(graphicTime>14.13){title(c,'DOT.',1170,595,222,C.cream,graphicTime,14.13);c.save();c.globalAlpha=prog(graphicTime,14.39,14.7);txt(c,'made with motion lab',1180,664,38,C.cream,'left',700);c.restore();c.save();const badge=prog(graphicTime,14.59,14.91);c.globalAlpha=badge;c.translate(0,22*(1-badge));c.fillStyle=C.cream;c.beginPath();c.roundRect(1180,713,405,72,36);c.fill();txt(c,'free + open source',1382,760,29,C.violet,'center',700);c.restore();}
@@ -208,5 +233,5 @@ export function createMascotDemo(){
  if(!p.review||p.review==='beauty')drawDotPixels(c,graphicTime,'front',{protectDisplay:displayContour});
  c.restore();if(!p.review||p.review==='beauty')applyDotOptics(c,graphicTime,w,h);return {chapter:mascotCuts.filter(x=>x<=t).length-1,local:t};
  }
- return {render};
+ return {render,animationChannels(groupId){return groupId==='camera'?cameraChannels.map(channel=>({...channel})):[];},animationState(groupId,time,parameters={}){if(groupId!=='camera')return{};const pose=cameraPoseAt(time,parameters);return{'camera.position.x':960+pose.x,'camera.position.y':540+pose.y,'camera.zoom':pose.scale,'camera.roll':pose.roll};}};
 }

@@ -1,3 +1,4 @@
+import {sampleAnimationGroupTime} from '../engine/animation-groups.js';
 import {refineTurntableArm} from './pulse-hardware-detail.js';
 import {pulseImpactCues} from '../engine/impact-motion.js';
 import {pulseLanding,pulseExplosion,lensCameraTime} from './pulse-finish-v15.js';
@@ -26,6 +27,8 @@ export const temporalSamplesAt=(t,base)=>{if(base<=8)return base;const clock=edi
 const spring=x=>x<=0?0:x>=1.5?1:1-Math.exp(-9*x)*(Math.cos(10*x)+.9*Math.sin(10*x));
 const impulse=x=>x<=0?0:Math.exp(-4.8*x)*Math.sin(11*x);
 const ease=x=>{x=Math.max(0,Math.min(1,x));return x*x*(3-2*x);};
+// Public gains leave the authored film intact at one and never retime its cuts.
+const controlGain=(controls,key,min,max)=>Number.isFinite(controls?.[key])?Math.max(min,Math.min(max,controls[key])):1;
 export function createDemo(){
  const clayMaterial=new THREE.MeshStandardMaterial({color:'#a9adb1',roughness:.72,metalness:0});
  const scene=new THREE.Scene(),camera=new THREE.PerspectiveCamera(34,16/9,.1,100);scene.background=new THREE.Color('#08277b');
@@ -83,14 +86,15 @@ const glossEnv=glossStudio(renderer);
  const refinedMaterials=new Set();
  for(const group of [props.monitor,props.row,headphones,instruments.mixer])group.traverse(o=>{for(const m of (Array.isArray(o.material)?o.material:[o.material])){if(!m||refinedMaterials.has(m)||!m.isMeshPhysicalMaterial||m.metalness>.4||m.emissiveMap||m.transmission>0||m.userData.preserveOptics)continue;refinedMaterials.add(m);m.roughness=Math.max(m.roughness,.48);m.clearcoat=.06;m.clearcoatRoughness=.3;}});
  const speakerHardware=addSpeakerHardware(rig,mats,ledFrame);configureDetailSampling(renderer,scene);
- function render(ctx,t,w,h,p={}){const frameTime=t,clock=editTime(t);t=sourceTime(clock);props.update(t);instruments.update(t);const cream=t>=4.2&&t<6.15?1:0;const dark=t>=6.72&&t<7.775?.05:1;const mix=(a,b)=>Math.round((a+(b-a)*cream)*dark);const skygrad=sk.createRadialGradient(256,230,20,256,256,390);skygrad.addColorStop(0,`rgb(${mix(20,248)},${mix(66,240)},${mix(170,215)})`);skygrad.addColorStop(1,`rgb(${mix(1,215)},${mix(5,207)},${mix(40,186)})`);sk.fillStyle=skygrad;sk.fillRect(0,0,512,512);scene.background.needsUpdate=true;renderer.setSize(w,h);camera.aspect=w/h;let beat=Math.pow(Math.max(0,Math.sin(t*Math.PI*4)),8);
+ function render(ctx,t,w,h,p={}){const controls=p.sceneControls,exposure=controlGain(controls,'exposure',.25,3),lensStrength=controlGain(controls,'lensStrength',0,1.25),focusBlur=controlGain(controls,'focusBlur',0,1.5),mechanismMotion=controlGain(controls,'mechanismMotion',0,1.5),keyLight=controlGain(controls,'keyLight',0,2),fillLight=controlGain(controls,'fillLight',0,2),bloomStrength=controlGain(controls,'bloomStrength',0,8);renderer.toneMappingExposure=1.05*exposure;const frameTime=t,clock=editTime(t),mechanismFrameTime=sampleAnimationGroupTime(p,'mechanisms',t),mechanismClock=editTime(mechanismFrameTime),mechanismTime=sourceTime(mechanismClock),cameraFrameTime=sampleAnimationGroupTime(p,'camera',t);t=sourceTime(clock);props.update(t);instruments.update(t);const cream=t>=4.2&&t<6.15?1:0;const dark=t>=6.72&&t<7.775?.05:1;const mix=(a,b)=>Math.round((a+(b-a)*cream)*dark);const skygrad=sk.createRadialGradient(256,230,20,256,256,390);skygrad.addColorStop(0,`rgb(${mix(20,248)},${mix(66,240)},${mix(170,215)})`);skygrad.addColorStop(1,`rgb(${mix(1,215)},${mix(5,207)},${mix(40,186)})`);sk.fillStyle=skygrad;sk.fillRect(0,0,512,512);scene.background.needsUpdate=true;renderer.setSize(w,h);camera.aspect=w/h;let beat=Math.pow(Math.max(0,Math.sin(t*Math.PI*4)),8);
  const lerp=(a,b,x)=>a+(b-a)*x;
  const ledStart=1.46,mixerStart=2.45,vinylStart=3.15,cableStart=4.2,crtStart=4.85,headStart=6.15,tileStart=7.775;
- satellites.visible=t>=7.775&&t<12.4;satellites.children.forEach((o,j)=>{o.rotation.set(.25*Math.sin(t+j),t*.3+j,.14*Math.cos(t+j));const retreat=ease((t-10.2)/1.5);o.position.z=[-5,-7,-3][j]-30*retreat;o.position.y=[2.5,3,-3][j]+[15,15,-15][j]*retreat;});const sp=t<ledStart,ld=t>=ledStart&&t<mixerStart,mi=t>=mixerStart&&t<vinylStart,vi=t>=vinylStart&&t<cableStart,ca=t>=cableStart&&t<crtStart,cr=t>=crtStart&&t<headStart,he=t>=headStart&&t<6.72,or=t>=6.72&&t<tileStart,ti=t>=tileStart;speakerHardware.visible=sp;instruments.mixer.visible=mi;instruments.cables.visible=ca;headphones.visible=he;glints.visible=or;glints.children.forEach((o,j)=>{const a=(t-6.72)*4.2+j*1.9;if(j<3){o.position.set(Math.sin(a)*1.15,Math.cos(a*1.1)*.55,Math.cos(a)*.9);o.rotation.y=a;}else{o.position.set(Math.sin(j*2.4+a)*2.4,Math.cos(j*1.7+a)*1.4,Math.sin(j*.7+a)*1.2);}});sun.visible=ca;areaKey.visible=true;scene.environment=vi?vinylEnvironment:mainEnvironment;scene.environmentIntensity=vi?1.5:ca?.12:or?.12:.20;scene.children.forEach(o=>{if(o.isPointLight){o.userData.originalIntensity??=o.intensity;o.intensity=o.userData.originalIntensity*(ca?.35:1);}if(o.isHemisphereLight)o.intensity=.10;});headphones.rotation.set(.15*Math.sin(t*3), (t-6.15)*3.8,-.17+.07*Math.sin(t*3));
+ satellites.visible=t>=7.775&&t<12.4;satellites.children.forEach((o,j)=>{o.rotation.set(.25*Math.sin(mechanismTime+j),mechanismTime*.3+j,.14*Math.cos(mechanismTime+j));const retreat=ease((mechanismTime-10.2)/1.5);o.position.z=[-5,-7,-3][j]-30*retreat;o.position.y=[2.5,3,-3][j]+[15,15,-15][j]*retreat;});const sp=t<ledStart,ld=t>=ledStart&&t<mixerStart,mi=t>=mixerStart&&t<vinylStart,vi=t>=vinylStart&&t<cableStart,ca=t>=cableStart&&t<crtStart,cr=t>=crtStart&&t<headStart,he=t>=headStart&&t<6.72,or=t>=6.72&&t<tileStart,ti=t>=tileStart;speakerHardware.visible=sp;instruments.mixer.visible=mi;instruments.cables.visible=ca;headphones.visible=he;glints.visible=or;glints.children.forEach((o,j)=>{const a=(mechanismTime-6.72)*4.2+j*1.9;if(j<3){o.position.set(Math.sin(a)*1.15,Math.cos(a*1.1)*.55,Math.cos(a)*.9);o.rotation.y=a;}else{o.position.set(Math.sin(j*2.4+a)*2.4,Math.cos(j*1.7+a)*1.4,Math.sin(j*.7+a)*1.2);}});sun.visible=ca;areaKey.visible=true;areaKey.intensity=12*keyLight;scene.environment=vi?vinylEnvironment:mainEnvironment;scene.environmentIntensity=(vi?1.5:ca?.12:or?.12:.20)*fillLight;scene.children.forEach(o=>{if(o.isPointLight){o.userData.originalIntensity??=o.intensity;o.intensity=o.userData.originalIntensity*(ca?.35:1)*(o.position.x<0?keyLight:fillLight);}if(o.isHemisphereLight)o.intensity=.10*fillLight;});headphones.rotation.set(.15*Math.sin(mechanismTime*3), (mechanismTime-6.15)*3.8,-.17+.07*Math.sin(mechanismTime*3));
  floor.visible=cr;contactShadow.visible=cr;rig.visible=sp||ld||vi;props.monitor.visible=cr;props.row.visible=ti;props.atmosphere.visible=ti;cables.visible=sp||ld;vinyl.visible=vi;arm.visible=vi;led.visible=ld;ledFrame.visible=ld;
  for(const p of parts){p.o.position.z=p.z;p.o.visible=sp;}
- cone.scale.y=1+.048*beat;dome.position.z=.57+.026*beat;dome.scale.z=.45;ledMaterial.emissiveIntensity=1.6+.08*beat;
- rig.rotation.set(.13,-.3,0);rig.position.set(0,0,0);if(sp){rig.rotation.z=.105*Math.sin(t*5.2);rig.position.set(.10*Math.sin(t*4.1),.055*Math.sin(t*3.1),0);}for(const sim of cableSimulations){for(let j=1;j<sim.points.length-1;j++){const a=Math.sin(j/(sim.points.length-1)*Math.PI),p=sim.points[j];sim.curve.points[j].set(p.x+.14*a*Math.sin(t*6.5-sim.k*.5-j*.45),p.y+.095*a*Math.sin(t*5.5-sim.k*.7-j*.6),p.z+.13*a*Math.sin(t*4.8-sim.k*.5-j*.4));}if(sp||ld){sim.wire.geometry.dispose();sim.wire.geometry=new THREE.TubeGeometry(sim.curve,96,[.062,.078,.053][sim.k],24,false);}}rig.scale.setScalar(1);vinyl.rotation.z=0;platter.rotation.z=t*3.49;arm.position.set(0,0,0);arm.rotation.set(0,.065*Math.sin((t-3.3)*.9),0);props.monitor.position.set(0,-.12,0);props.monitor.rotation.set(.04*Math.sin((t-4.85)*4),-.08-.23*spring((t-4.85)/.24),.06*Math.sin((t-4.85)*5));props.monitor.position.y=-.12+(cr?pulseLanding(frameTime):.11*impulse(t-4.9));props.row.position.set(0,0,0);props.row.rotation.set(0,0,0);
+ function applyMechanismPose(frameTime){const clock=editTime(frameTime),t=sourceTime(clock),beat=Math.pow(Math.max(0,Math.sin(t*Math.PI*4)),8);instruments.update(t);
+ cone.scale.y=1+.048*beat*mechanismMotion;dome.position.z=.57+.026*beat*mechanismMotion;dome.scale.z=.45;ledMaterial.emissiveIntensity=1.6+.08*beat;
+ rig.rotation.set(.13,-.3,0);rig.position.set(0,0,0);if(sp){rig.rotation.z=.105*Math.sin(t*5.2)*mechanismMotion;rig.position.set(.10*Math.sin(t*4.1)*mechanismMotion,.055*Math.sin(t*3.1)*mechanismMotion,0);}for(const sim of cableSimulations){for(let j=1;j<sim.points.length-1;j++){const a=Math.sin(j/(sim.points.length-1)*Math.PI),p=sim.points[j];sim.curve.points[j].set(p.x+.14*a*Math.sin(t*6.5-sim.k*.5-j*.45),p.y+.095*a*Math.sin(t*5.5-sim.k*.7-j*.6),p.z+.13*a*Math.sin(t*4.8-sim.k*.5-j*.4));}if(sp||ld){sim.wire.geometry.dispose();sim.wire.geometry=new THREE.TubeGeometry(sim.curve,96,[.062,.078,.053][sim.k],24,false);}}rig.scale.setScalar(1);vinyl.rotation.z=0;platter.rotation.z=t*3.49*mechanismMotion;arm.position.set(0,0,0);arm.rotation.set(0,.065*Math.sin((t-3.3)*.9),0);props.monitor.position.set(0,-.12,0);props.monitor.rotation.set(.04*Math.sin((t-4.85)*4),-.08-.23*spring((t-4.85)/.24),.06*Math.sin((t-4.85)*5));props.monitor.position.y=-.12+(cr?pulseLanding(frameTime):.11*impulse(t-4.9));props.row.position.set(0,0,0);props.row.rotation.set(0,0,0);
  // A fast edge-on product turn hides the surface exchange; no visible asset pop.
  if(t>=1.235&&t<1.685){const q=ease((t-1.235)/.45);const cameraYaw=Math.atan2(direction(t).position[0],direction(t).position[2]);rig.rotation.y=cameraYaw+Math.PI*q+(-.3-cameraYaw)*(1-q)**2*Math.cos(q*Math.PI)-(ld?Math.PI:0);rig.rotation.z=.10*Math.sin(q*Math.PI);rig.position.set(.10*Math.sin(t*4.1)*(1-q),.055*Math.sin(t*3.1)*(1-q),0);}
  if(t>=1.685&&t<2.45){const q=spring((t-1.685)/.55),a=Math.atan2(direction(t).position[0],direction(t).position[2]);rig.rotation.y=a-.43*q;rig.rotation.z=-.13*Math.sin((t-1.685)*5.5);rig.position.set(.15*Math.sin((t-1.685)*5),.10*Math.sin((t-1.685)*4),0);}
@@ -111,7 +115,11 @@ const glossEnv=glossStudio(renderer);
   instruments.jack.position.set(-.2+.16*Math.sin(u*Math.PI),.025+.12*Math.sin(u*Math.PI),.4+.13*Math.sin(u*Math.PI));
   instruments.updateCableMotion(u);
  }
- const lensClock=editTime(lensCameraTime(frameTime)),lensTime=sourceTime(lensClock);
+ }
+ applyMechanismPose(frameTime);
+ ledMaterial.emissiveIntensity=1.6+.08*beat;
+ const target=(()=>{const t=sourceTime(editTime(cameraFrameTime)),clock=editTime(cameraFrameTime);
+ const lensClock=editTime(lensCameraTime(cameraFrameTime)),lensTime=sourceTime(lensClock);
  const directed=lensClock>=2.45&&lensClock<7.775?centralDirection(lensClock):direction(lensTime),target=new THREE.Vector3(...directed.target),roll=directed.roll;camera.position.set(...directed.position);// Wide lens, compensated subject framing; original timing and poses are untouched.
  const originalFov=directed.fov;camera.fov=Math.min(116,originalFov+46);
  const distanceRatio=Math.tan(THREE.MathUtils.degToRad(originalFov/2))/Math.tan(THREE.MathUtils.degToRad(camera.fov/2));
@@ -151,14 +159,37 @@ const glossEnv=glossStudio(renderer);
    camera.position.addScaledVector(camera.position.clone().sub(target).normalize(),1.42*boardPass);camera.position.y+=.72*boardPass;
  }
  camera.up.set(Math.sin(roll),Math.cos(roll),0);camera.lookAt(target);camera.updateProjectionMatrix();
+ return target;})();
+ if(mechanismFrameTime!==frameTime)applyMechanismPose(mechanismFrameTime);
  if(w!==renderWidth||h!==renderHeight){composite.setSize(w,h);renderWidth=w;renderHeight=h;}
  const macro=t<1.5||mi||vi||ca||(t>=8.3&&t<10.5),finalHold=t>=12.5;
- composite.applyLook({bloomStrength:sp?.025:ti?.065:.045,bloomThreshold:1.7,bloomRadius:.18,aoIntensity:mi?.45:ti?.14:or?0:ca?.14:.35,dofEnabled:true,dofAuto:false,dofFocus:mi?new THREE.Vector3(-.55,.29,.9).lerp(new THREE.Vector3(.68,.52,-.05),ease((t-2.45)/.32)).sub(camera.position).dot(camera.getWorldDirection(new THREE.Vector3())):camera.position.distanceTo(target),dofStrength:mi?.7:sp?.28:vi?.24:macro?.24:ti?.15:.16,dofMaxBlur:mi?14:sp?10:macro?12:7,aberrationPx:(mi||vi?1.65:ti?1.15:1.2)*(w/960),fisheye:p.look?.post?.fisheye??(sp?.64:ld?.56:mi?.64:vi?.53:cr?.43:he?.62:or?.48:ti?(t<10.5?.59:.37):.45),edgeSoftness:p.look?.post?.edgeSoftness??1.4,vignette:.14,lensDistortion:0,antialias:!sp});
+ const post={bloomStrength:(sp?.025:ti?.065:.045)*bloomStrength,bloomThreshold:1.7,bloomRadius:.18,aoIntensity:mi?.45:ti?.14:or?0:ca?.14:.35,dofEnabled:true,dofAuto:false,dofFocus:mi?new THREE.Vector3(-.55,.29,.9).lerp(new THREE.Vector3(.68,.52,-.05),ease((t-2.45)/.32)).sub(camera.position).dot(camera.getWorldDirection(new THREE.Vector3())):camera.position.distanceTo(target),dofStrength:(mi?.7:sp?.28:vi?.24:macro?.24:ti?.15:.16)*focusBlur,dofMaxBlur:mi?14:sp?10:macro?12:7,aberrationPx:(mi||vi?1.65:ti?1.15:1.2)*(w/960),fisheye:(p.look?.post?.fisheye??(sp?.64:ld?.56:mi?.64:vi?.53:cr?.43:he?.62:or?.48:ti?(t<10.5?.59:.37):.45))*lensStrength,edgeSoftness:(p.look?.post?.edgeSoftness??1.4)*lensStrength,vignette:.14,lensDistortion:0,antialias:!sp};
+ if(p.previewQuality==='fast'){post.dofEnabled=false;post.aoIntensity=0;post.bloomStrength=0;post.bloomEnabled=false;post.antialias=false;}
+ composite.applyLook(post);
  composite.setReview(p.review);
  scene.overrideMaterial=p.review==='clay'?clayMaterial:null;
  if(p.review==='clay'||p.review==='clean')renderer.render(scene,camera);else composite.render();ctx.drawImage(renderer.domElement,0,0,w,h);
  // Deliberately crisp vector graphics, rendered after 3D: zero temporal blur.
  ctx.save();ctx.scale(w/1920,h/1080);if(t>12.7){ctx.globalAlpha=ease((t-12.7)/.5);ctx.fillStyle='#f4f3df';ctx.textAlign='center';ctx.font='600 25px Arial';ctx.fillText('MOTION LAB',960,978);ctx.font='400 16px Arial';ctx.fillText('OPEN SOURCE. FULL VOLUME.',960,1014);}
  ctx.restore();}
- return {render,scene,camera,renderer,shutterAngleAt,state:()=>({camera:camera.position.toArray(),direction:camera.getWorldDirection(new THREE.Vector3()).toArray(),fov:camera.fov,rigEuler:[rig.rotation.x,rig.rotation.y,rig.rotation.z],impactCues:pulseImpactCues}),dispose:()=>renderer.dispose()};
+ const cameraChannels=[
+  ...['x','y','z'].map(axis=>({id:`camera.position.${axis}`,label:`Camera position ${axis.toUpperCase()}`,unit:'scene units'})),
+  ...['x','y','z'].map(axis=>({id:`camera.rotation.${axis}`,label:`Camera rotation ${axis.toUpperCase()}`,unit:'rad'})),
+  {id:'camera.fov',label:'Camera field of view',unit:'deg'}
+ ];
+ const mechanismChannels=[
+  {id:'pulse.device.rotation.z',label:'Speaker turn',unit:'rad'},
+  {id:'pulse.record.rotation.z',label:'Record rotation',unit:'rad'},
+  {id:'pulse.speaker.cone.scale.y',label:'Speaker cone movement',unit:'scale'},
+  {id:'pulse.dome.position.z',label:'Dome movement',unit:'scene units'},
+  {id:'pulse.mixer.rotation.y',label:'Mixer rotation Y',unit:'rad'},
+  {id:'pulse.mixer.rotation.z',label:'Mixer rotation Z',unit:'rad'},
+  {id:'pulse.headphones.rotation.y',label:'Headphone rotation Y',unit:'rad'}
+ ];
+ function captureAuthoredAnimation(groupId){
+  if(groupId==='camera')return{channels:cameraChannels.map(channel=>({...channel})),values:{'camera.position.x':camera.position.x,'camera.position.y':camera.position.y,'camera.position.z':camera.position.z,'camera.rotation.x':camera.rotation.x,'camera.rotation.y':camera.rotation.y,'camera.rotation.z':camera.rotation.z,'camera.fov':camera.fov}};
+  if(groupId==='mechanisms')return{channels:mechanismChannels.map(channel=>({...channel})),values:{'pulse.device.rotation.z':rig.rotation.z,'pulse.record.rotation.z':platter.rotation.z,'pulse.speaker.cone.scale.y':cone.scale.y,'pulse.dome.position.z':dome.position.z,'pulse.mixer.rotation.y':instruments.mixer.rotation.y,'pulse.mixer.rotation.z':instruments.mixer.rotation.z,'pulse.headphones.rotation.y':headphones.rotation.y}};
+  return{channels:[],values:{}};
+ }
+ return {render,scene,camera,renderer,shutterAngleAt,state:()=>({camera:camera.position.toArray(),direction:camera.getWorldDirection(new THREE.Vector3()).toArray(),fov:camera.fov,rigEuler:[rig.rotation.x,rig.rotation.y,rig.rotation.z],impactCues:pulseImpactCues}),animationChannels(groupId){return(groupId==='camera'?cameraChannels:groupId==='mechanisms'?mechanismChannels:[]).map(channel=>({...channel}));},captureAuthoredAnimation,actualState:captureAuthoredAnimation,dispose:()=>renderer.dispose()};
 }

@@ -1,25 +1,171 @@
 <!doctype html>
 <html lang="en">
-<head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="theme-color" content="#0d0d0f"><meta name="description" content="Motion Lab. A local studio for editable 2D and 3D motion. Shape your scene, refine the details and render on your Mac."><link rel="canonical" href="https://andrexes03.github.io/motion-lab/"><meta property="og:type" content="website"><meta property="og:title" content="Motion Lab — Motion, made yours."><meta property="og:description" content="An independent motion design studio by Andrea Salvo. Editable 2D and 3D scenes, tactile materials and local rendering. Free, open source."><meta property="og:url" content="https://andrexes03.github.io/motion-lab/"><meta property="og:image" content="https://andrexes03.github.io/motion-lab/demo/pulse-poster.jpg"><meta name="twitter:card" content="summary_large_image"><meta name="author" content="Andrea Salvo"><link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='16' fill='%2308080c'/%3E%3Cpath d='M13 45V19l19 17 19-17v26' fill='none' stroke='%23d7f56b' stroke-width='6'/%3E%3C/svg%3E"><title>Motion Lab — Your motion. Your control.</title><link rel="stylesheet" href="./site.css?v=photorealism-v1"></head>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="theme-color" content="#101112">
+  <meta name="description" content="Build editable 2D and 3D scenes with a coding agent. Shape motion, lens, lighting and grading in Motion Lab. Preview in the browser; render locally.">
+  <link rel="canonical" href="https://andrexes03.github.io/motion-lab/">
+  <meta property="og:type" content="website">
+  <meta property="og:title" content="Motion Lab — Make motion. Keep control.">
+  <meta property="og:description" content="Build a scene with a coding agent. Shape its motion, materials, light and finish in the studio. Render locally.">
+  <meta property="og:url" content="https://andrexes03.github.io/motion-lab/">
+  <meta property="og:image" content="https://andrexes03.github.io/motion-lab/demo/pulse-poster.jpg">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="author" content="Andrea Salvo">
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='16' fill='%23101112'/%3E%3Cpath d='M13 45V19l19 17 19-17v26' fill='none' stroke='%23d7f56b' stroke-width='6'/%3E%3C/svg%3E">
+  <title>Motion Lab — Make motion. Keep control.</title>
+  <link rel="stylesheet" href="./site.css?v=product-story-v2">
+</head>
 <body>
-<a class="skip-link" href="#demo">Skip to the films</a>
-<canvas id="site-ambient" width="240" height="135" aria-hidden="true"></canvas>
-<header class="site-header"><a class="wordmark" href="#top">Motion Lab<span>Studio</span></a><nav aria-label="Main navigation"><a href="#studio">The studio</a><a href="#demo">Examples</a><a href="https://github.com/AndreXes03/motion-lab">GitHub ↗</a></nav><a class="nav-cta" href="./studio/">Try the studio <span>↗</span></a></header>
-<main id="top">
-<section class="hero" aria-labelledby="hero-title"><p class="eyebrow"><span class="live-dot"></span> INDEPENDENT MOTION DESIGN · OPEN SOURCE</p><h1 id="hero-title">Motion,<br><span>made yours.</span></h1><p class="hero-description">A personal project by Andrea Salvo.<br>Built for the details. Open for you to make your own.</p><div class="hero-actions"><a class="button primary" href="./studio/">Try the studio</a><a class="text-link" href="#demo">Watch it move <span>↓</span></a></div><a class="hero-film" href="#demo" aria-label="Watch PULSE and the other Motion Lab films"><img data-asset="demo/pulse-poster.jpg" src="./demo/pulse-poster.jpg" alt="PULSE: sculptural sound objects, colored materials and detailed 3D hardware" width="1920" height="1080" fetchpriority="high"><span class="hero-film-top"><span>SELECTED WORK / 01</span><span>DESIGNED & RENDERED IN MOTION LAB</span></span><span class="hero-film-bottom"><span><strong>PULSE</strong><small>Sound, shaped into motion.</small></span><span class="play-mark" aria-hidden="true">↗</span></span></a><div class="hero-caption"><span><i class="live-dot"></i> Editable scene sources</span><span>2D & 3D scenes</span><span>Local rendering</span><span>Open source</span></div></section>
-<section id="studio" class="studio-section"><div class="section-intro"><p class="eyebrow">THE STUDIO</p><h2>Less in the way.<br>More in your hands.</h2><p>Work with a coding agent to build the scene. Preview it here, adjust the available controls, and keep refining the same project.</p></div><div class="feature-row"><article><span class="feature-index">01</span><h3>Make it yours.</h3><p>Scene-specific controls for color, camera and lighting. The new product starter puts its reusable kit directly in your hands.</p></article><article><span class="feature-index">02</span><h3>Find the right frame.</h3><p>Adjust the camera and studio lighting. Compare with a reference and undo a change.</p></article><article><span class="feature-index">03</span><h3>See what drives it.</h3><p>Expand the code panel to inspect the scene source or its live parameter recipe.</p></article></div><div class="detail-shot"><img data-asset="demo/ui-code-v2.jpg" src="../demo/ui-code-v2.jpg" alt="Motion Lab with the expandable code inspector beside the animated composition" width="1280" height="720" loading="lazy"></div><div class="detail-caption"><span>The same scene. A closer look.</span><span>Code when you need it.</span></div></section>
-<section id="demo" class="demo-section"><div class="section-intro centered"><p class="eyebrow">MADE IN MOTION LAB</p><h2>Different scenes.<br>One workspace.</h2><p>Six explorations of form, rhythm and movement.<br>Watch the finished films. Open the source. Make something different.</p></div><div class="demo-tabs" role="tablist" aria-label="Film examples"><button id="film-pulse" role="tab" aria-selected="true" aria-controls="film-panel" tabindex="0" data-film="pulse">PULSE <span>3D</span></button><button id="film-camera" role="tab" aria-selected="false" aria-controls="film-panel" tabindex="-1" data-film="camera">CAMERA <span>3D</span></button><button id="film-dot" role="tab" aria-selected="false" aria-controls="film-panel" tabindex="-1" data-film="dot">DOT <span>2D + 3D</span></button><button id="film-pop" role="tab" aria-selected="false" aria-controls="film-panel" tabindex="-1" data-film="pop">PLAY.EXE <span>2D + 3D</span></button><button id="film-replay" role="tab" aria-selected="false" aria-controls="film-panel" tabindex="-1" data-film="replay">REPLAY <span>2D + 3D</span></button><button id="film-bax" role="tab" aria-selected="false" aria-controls="film-panel" tabindex="-1" data-film="bax">Objects in play <span>3D</span></button></div><div id="film-panel" role="tabpanel" aria-labelledby="film-pulse"><video id="demo-player" controls playsinline preload="metadata" data-asset="demo/pulse-1080.mp4" src="../demo/pulse-1080.mp4" data-poster="demo/pulse-poster.jpg" poster="../demo/pulse-poster.jpg" aria-label="PULSE rendered film"></video><p id="video-status" role="status" hidden></p><div class="film-details"><div><h3 id="film-title">PULSE</h3><p id="film-description">Sound objects, tactile materials and cinematic movement in a rhythmic 3D studio.</p></div><div class="film-meta"><span id="film-specs">1080p · 30 fps · 13.9 s</span><a id="film-source" href="https://github.com/AndreXes03/motion-lab/blob/main/src/scenes/pulse-demo.js">Explore this scene ↗</a><a id="film-download" href="../demo/pulse-1080.mp4" download>Download film ↓</a></div></div></div></section>
-<section class="photoreal-section" id="photorealism" aria-labelledby="photoreal-title">
-<div class="section-intro"><p class="eyebrow">RENDER RESEARCH / 01</p><h2 id="photoreal-title">Photorealism.</h2><p>Up close. Way beyond a normal lens. Ceramic, leather, rubber, brushed metal and a glowing subpixel display meet in a 114° macro study, against a black-to-blue gradient, with light bouncing between the surfaces.</p></div>
-<figure class="photoreal-hero"><a href="https://andrexes03.github.io/motion-lab/demo/photorealism.png" aria-label="Open the full resolution Photorealism image"><img src="./demo/photorealism.jpg" data-asset="demo/photorealism.jpg" alt="Extreme wide-angle close-up of a perforated ceramic headphone grille, gold rim, black rubber gasket and leather shell" width="1440" height="1080" loading="lazy"></a><figcaption><span>PATH TRACED · 2048 SAMPLES · 8 LIGHT BOUNCES</span><span>2880 × 2160 / STILL STUDY</span></figcaption></figure>
-<details class="photo-comparison"><summary>Compare the rendering methods</summary><p>Same model, surfaces, camera and lights. Plain raster on the left; path tracing on the right. No post effects. This compares two test renders, not the finished film.</p><div class="photo-grid"><figure><img data-asset="demo/photorealism-raster.jpg" src="./demo/photorealism-raster.jpg" alt="Same headphone scene rendered with plain rasterization" width="1440" height="1080" loading="lazy"><figcaption>RASTER / NO POST</figcaption></figure><figure><img data-asset="demo/photorealism.jpg" src="./demo/photorealism.jpg" alt="Same headphone scene rendered with path tracing, including reflected light and shadows between components" width="1440" height="1080" loading="lazy"><figcaption>PATH TRACED / NO POST</figcaption></figure></div></details>
-<div class="photo-notes"><p>A new detail pass on the existing PULSE model, with real grille openings, seam stitching, a subpixel display and layered finishes. The experimental adapter disables clearcoat in both views; the film materials stay intact. Available as an optional local still export.</p><a class="text-link" href="https://github.com/AndreXes03/motion-lab/blob/main/docs/PHOTOREALISM.md">Reproduce the render ↗</a></div><a class="text-link" href="https://andrexes03.github.io/motion-lab/demo/photorealism-detail.jpg">Inspect the display at native resolution ↗</a>
-</section>
-<section class="craft-section" id="craft" aria-labelledby="craft-title"><div class="section-intro"><p class="eyebrow">THE WORK BEHIND THE FRAME</p><h2 id="craft-title">Built piece by piece.<br>Shared in full.</h2><p>Motion Lab grew through repeated passes on geometry, materials, lighting and timing. The useful parts now live in a reusable product kit, ready for the next scene.</p></div><div class="craft-grid"><article><span class="feature-index">01 / SURFACE</span><h3>Materials with a purpose.</h3><p>Rubber grips, matte housings, brushed metal and curved optics. Distinct surfaces, shaped by studio reflections.</p></article><article><span class="feature-index">02 / CONSTRUCTION</span><h3>Details you can get close to.</h3><p>Layered controls, open lens sleeves and real panel openings. Reuse components or start with a model from the films.</p></article><article><span class="feature-index">03 / MOVEMENT</span><h3>Timing you can direct.</h3><p>Camera travel, accelerating approaches and controlled recoil. Every pose remains editable at any point in time.</p></article></div><div class="kit-callout"><div><span class="kit-label">INCLUDED IN THE REPOSITORY</span><h3>A better starting point.</h3><p>Open the product starter and adjust its materials, lights and lens. Build your next scene from the same kit.</p></div><div class="kit-actions"><a class="button primary" href="./studio/?scene=starter">Open product starter ↗</a><a class="text-link" href="https://github.com/AndreXes03/motion-lab/blob/main/docs/PRODUCT_KIT.md">Read the kit guide ↗</a></div></div></section>
-<section class="faq-section" aria-labelledby="faq-title"><div><p class="eyebrow">BEFORE YOU START</p><h2 id="faq-title">A few useful details.</h2></div><div><details><summary>Is Motion Lab free?</summary><p>The source code is free under the MIT license. Coding assistants and separately licensed music may have their own costs. Local rendering does not spend AI generation credits.</p></details><details><summary>What can I do in the browser?</summary><p>Preview scenes, use their available controls, save browser versions and download PNG frames or project recipes. Install the local app to manage project files and export full videos.</p></details><details><summary>How does the AI fit in?</summary><p>Use Codex or Claude to edit the scene code and its recipe. Motion Lab renders those instructions locally; the app itself does not generate a video from a text prompt.</p></details><details><summary>What do I need to render?</summary><p>The current setup is tested on macOS with Google Chrome and Node.js 22.12 or newer. It uses Three.js for 3D and FFmpeg for video export. Windows and Linux are not yet validated.</p></details></div></section>
-<section id="start" class="start-section"><div><p class="eyebrow">YOUR WORKSPACE, LOCALLY</p><h2>Ready when you are.</h2><p>Work with an agent on the scene and its recipe.<br>Refine in the studio. Render locally.</p><a class="button primary" href="https://github.com/AndreXes03/motion-lab">Get Motion Lab <span>↗</span></a><p class="setup-note">Tested on macOS · Node.js 22.12+ · Google Chrome<br>Internet required for the first installation.</p></div><div class="setup-card"><div class="setup-heading"><span>Start the studio</span><button id="copy-setup" aria-label="Copy installation commands">Copy</button></div><pre id="setup-code">git clone https://github.com/AndreXes03/motion-lab.git
+  <a class="skip-link" href="#demo">Skip to the films</a>
+  <canvas id="site-ambient" width="240" height="135" aria-hidden="true"></canvas>
+  <header class="site-header">
+    <a class="wordmark" href="#top" aria-label="Motion Lab home"><span class="mark" aria-hidden="true">M</span><span>Motion Lab</span><small>LOCAL STUDIO</small></a>
+    <nav aria-label="Main navigation"><a href="#workflow">Workflow</a><a href="#demo">Films</a><a href="#controls">Controls</a><a href="#rendering">Rendering</a></nav>
+    <a class="nav-cta" href="./studio/">Open the studio <span aria-hidden="true">↗</span></a>
+  </header>
+
+  <main id="top">
+    <section class="hero" aria-labelledby="hero-title">
+      <div class="hero-copy">
+        <p class="eyebrow"><span class="live-dot"></span> CODE MOTION LAB</p>
+        <h1 id="hero-title">Make motion.<br><span>Keep control.</span></h1>
+        <p class="hero-description">Build a scene with a coding agent. Shape the details in the studio. Render the film on your own machine.</p>
+        <div class="hero-actions">
+          <a class="button primary" href="./studio/">Open the studio <span aria-hidden="true">↗</span></a>
+          <a class="text-link" href="#demo">Watch the films <span aria-hidden="true">↓</span></a>
+        </div>
+        <p class="hero-note"><span class="live-dot"></span> Editable 2D, hybrid and 3D scenes. Your code and timing stay yours.</p>
+      </div>
+      <a class="hero-film" href="#demo" aria-label="Watch PULSE, a 3D film made in Motion Lab">
+        <img class="hero-film-poster" data-asset="demo/pulse-poster.jpg" src="./demo/pulse-poster.jpg" alt="PULSE: a close-up product film with sculptural sound hardware and reflected studio light" width="1920" height="1080" fetchpriority="high">
+        <video class="hero-film-loop" data-hero-motion data-asset="demo/pulse-1080.mp4" data-poster="demo/pulse-poster.jpg" poster="./demo/pulse-poster.jpg" autoplay muted loop playsinline preload="none" aria-hidden="true" tabindex="-1"></video>
+        <span class="hero-film-top"><span>01 / PULSE</span><span>CYCLES · 3D PRODUCT FILM</span></span>
+        <span class="hero-film-bottom"><span><strong>PULSE</strong><small>Sound, shaped into motion.</small></span><span class="play-mark" aria-hidden="true">▶</span></span>
+      </a>
+      <div class="hero-caption"><span>Editable scenes</span><span>2D · hybrid · 3D</span><span>Local video export</span><span>Open source</span></div>
+    </section>
+
+    <section id="workflow" class="workflow-section section-rule" aria-labelledby="workflow-title">
+      <div class="section-intro">
+        <p class="eyebrow">ONE CONTINUOUS WORKFLOW</p>
+        <h2 id="workflow-title">The agent builds.<br>You direct the scene.</h2>
+        <p>Ask your coding agent to shape the code and scene recipe. Open the same scene in Motion Lab to refine its controls, timing and finish.</p>
+      </div>
+      <div class="workflow-grid">
+        <figure class="ui-shot">
+          <img data-asset="demo/ui-tools.jpg" src="../demo/ui-tools.jpg" alt="Motion Lab studio with scene-specific tool groups for motion, lens, lighting and compositing" width="1600" height="1000" loading="lazy">
+          <figcaption><span>01</span><span>Choose the controls that matter for this scene.</span></figcaption>
+        </figure>
+        <figure class="ui-shot motion-shot">
+          <img data-asset="demo/ui-motion-groups.jpg" src="../demo/ui-motion-groups.jpg" alt="Motion Lab motion panel with independent curves for a camera and an object" width="1600" height="1000" loading="lazy">
+          <figcaption><span>02</span><span>See original movement. Shape each part’s timing.</span></figcaption>
+        </figure>
+      </div>
+      <div class="workflow-footer">
+        <p>Useful controls stay close. Deeper settings stay available when you need them.</p>
+        <div class="inline-actions"><a class="button secondary" href="./studio/?scene=bax&amp;panel=look">Open scene controls</a><a class="button secondary" href="./studio/?scene=bax&amp;panel=motion">Open motion curves</a></div>
+      </div>
+    </section>
+
+    <section id="demo" class="demo-section section-rule" aria-labelledby="demo-title">
+      <div class="section-intro centered">
+        <p class="eyebrow">MADE IN MOTION LAB</p>
+        <h2 id="demo-title">Different scenes.<br>One workspace.</h2>
+        <p>Finished films made from editable scene code, controls, camera moves and sound.</p>
+      </div>
+      <div class="demo-tabs" role="tablist" aria-label="Film examples">
+        <button id="film-pulse" role="tab" aria-selected="true" aria-controls="film-panel" tabindex="0" data-film="pulse">PULSE <span>3D</span></button>
+        <button id="film-camera" role="tab" aria-selected="false" aria-controls="film-panel" tabindex="-1" data-film="camera">CAMERA <span>3D</span></button>
+        <button id="film-dot" role="tab" aria-selected="false" aria-controls="film-panel" tabindex="-1" data-film="dot">DOT <span>2D + 3D</span></button>
+        <button id="film-pop" role="tab" aria-selected="false" aria-controls="film-panel" tabindex="-1" data-film="pop">PLAY.EXE <span>2D + 3D</span></button>
+        <button id="film-replay" role="tab" aria-selected="false" aria-controls="film-panel" tabindex="-1" data-film="replay">REPLAY <span>2D + 3D</span></button>
+        <button id="film-bax" role="tab" aria-selected="false" aria-controls="film-panel" tabindex="-1" data-film="bax">Objects in play <span>3D</span></button>
+      </div>
+      <div id="film-panel" role="tabpanel" aria-labelledby="film-pulse">
+        <video id="demo-player" controls playsinline preload="metadata" poster="../demo/pulse-poster.jpg" aria-label="PULSE rendered film"></video>
+        <p id="video-status" role="status" hidden></p>
+        <div class="film-details">
+          <div><p class="eyebrow">SCENE FILM</p><h3 id="film-title">PULSE</h3><p id="film-description">Sound objects, tactile materials and cinematic movement in a rhythmic 3D studio.</p></div>
+          <div class="film-meta"><span id="film-specs">Cycles · 1080p · 30 fps · 12.9 s</span><a id="film-source" href="https://github.com/AndreXes03/motion-lab/blob/main/src/scenes/pulse-demo.js">Explore this scene ↗</a><a id="film-download" href="../demo/pulse-1080.mp4" download>Download film ↓</a></div>
+        </div>
+      </div>
+    </section>
+
+    <section id="controls" class="controls-section section-rule" aria-labelledby="controls-title">
+      <div class="section-intro">
+        <p class="eyebrow">TOOLS THAT FOLLOW THE SCENE</p>
+        <h2 id="controls-title">One subject.<br>Separate controls.</h2>
+        <p>Each scene opens with tools chosen for its content. Original keyframes and evaluated camera paths are visible before you adjust the timing. The full catalog stays available for deeper changes.</p>
+      </div>
+      <div class="tool-groups" aria-label="Scene tool groups">
+        <article class="tool-group"><span class="tool-symbol" aria-hidden="true">↗</span><h3>Motion</h3><p>Scene-specific camera and object groups with separate shot windows.</p></article>
+        <article class="tool-group"><span class="tool-symbol" aria-hidden="true">◉</span><h3>Lens</h3><p>Framing, focus, distortion and authored optical effects.</p></article>
+        <article class="tool-group"><span class="tool-symbol" aria-hidden="true">✳</span><h3>Lights</h3><p>Agent-selected light presets, then direct control of key, fill and rim.</p></article>
+        <article class="tool-group"><span class="tool-symbol" aria-hidden="true">◌</span><h3>Compositing</h3><p>Exposure, contrast, saturation, grain and finishing effects.</p></article>
+      </div>
+      <div class="motion-explainer">
+        <div><p class="eyebrow">INDEPENDENT TARGETS</p><h3>Move the radio.<br>Keep the camera on its path.</h3><p>Choose a camera or object group, then shape it inside one shot window. Other groups, captions, cuts and film duration keep their own timing.</p><a class="text-link" href="./studio/?scene=bax&amp;panel=motion">Explore motion curves ↗</a></div>
+        <div class="curve-visual" aria-hidden="true"><svg viewBox="0 0 620 280" role="presentation"><path class="grid-line" d="M38 30V248H596M38 190H596M38 130H596M38 70H596"/><path class="curve curve-camera" d="M38 218 C132 215 159 73 268 83 S412 202 596 40"/><path class="curve curve-object" d="M38 190 C104 190 130 183 180 180 S284 56 340 54 S439 162 596 160"/><circle class="curve-dot camera-dot" cx="268" cy="83" r="6"/><circle class="curve-dot object-dot" cx="340" cy="54" r="6"/><text x="42" y="270">CAMERA</text><text x="490" y="270">OBJECT</text></svg><div class="curve-legend"><span><i class="legend-camera"></i> Camera</span><span><i class="legend-object"></i> Object</span><span>Source time →</span></div></div>
+      </div>
+      <div class="control-facts"><span>One scene recipe</span><span>Absolute keyframe values</span><span>Independent targets</span><span>Original cuts preserved</span></div>
+      <div class="version-strip"><div><p class="eyebrow">SAFE TO EXPLORE</p><h3>Try a change. Compare it. Undo it.</h3><p>Save named versions, compare a direction with your current scene, and step through edits with undo and redo. Curated light, compositing and easing recipes stay scene-specific, with up to four choices in each palette.</p></div><a class="button secondary" href="./studio/?scene=bax&amp;panel=look">Explore a scene</a></div>
+    </section>
+
+    <section id="rendering" class="render-section section-rule" aria-labelledby="render-title">
+      <div class="section-intro">
+        <p class="eyebrow">PREVIEW HERE. RENDER LOCALLY.</p>
+        <h2 id="render-title">Keep the whole pass.</h2>
+        <p>Motion Lab renders the scene recipe at each requested time. Review a frame, listen to the sound design, then choose the delivery path that fits.</p>
+      </div>
+      <div class="render-grid">
+        <article class="render-card"><span class="render-label">IN THE BROWSER</span><h3>Preview and direct.</h3><p>3D previews use Three.js; procedural 2D uses Canvas. Auto adapts while you work; Fast, Balanced and Sharp are there when you choose.</p><span class="render-pills"><i>Auto</i><i>Fast</i><i>Balanced</i><i>Sharp</i></span></article>
+        <article class="render-card featured"><span class="render-label">IN THE LOCAL APP</span><h3>Render the film.</h3><p>Export videos with Three.js, or choose the local Cycles adapter for PULSE. Cycles delivers MP4 and PNG; Three.js also offers WebM and ProRes.</p><span class="render-pills"><i>MP4</i><i>WebM</i><i>ProRes</i></span></article>
+        <article class="render-card"><span class="render-label">SOUND</span><h3>Movement has a voice.</h3><p>Build procedural music and movement-driven 2D or 3D effects alongside the scene.</p><a class="text-link" href="https://github.com/AndreXes03/motion-lab/blob/main/docs/SOUND_DESIGN.md">Sound design guide ↗</a></article>
+      </div>
+      <p class="local-note">The browser studio downloads PNG frames and JSON recipes. Cycles and file-based compositing run locally; mixed shots require prepared render inputs and a compositing plan.</p>
+    </section>
+
+    <section class="nerd-section section-rule" aria-labelledby="nerd-title">
+      <div class="nerd-copy"><p class="eyebrow">FOR THE CURIOUS</p><h2 id="nerd-title">A recipe you can read.</h2><p>Scenes are parameterized code and JSON, sampled at an exact time. Motion curves can be grouped by camera or object, with one chosen shot window at a time. The source stays open when you want to go beyond the controls.</p><div class="nerd-links"><a href="https://github.com/AndreXes03/motion-lab/tree/main/src/scenes">Browse scene source ↗</a><a href="https://github.com/AndreXes03/motion-lab/tree/main/project">Browse project recipes ↗</a></div></div>
+      <pre class="recipe-card" aria-label="Example scene recipe"><code><span class="code-muted">// A value at any time</span>
+{
+  <span class="code-key">"scene"</span>: <span class="code-string">"bax"</span>,
+  <span class="code-key">"animation"</span>: {
+    <span class="code-key">"version"</span>: <span class="code-number">1</span>,
+    <span class="code-key">"enabled"</span>: <span class="code-boolean">true</span>,
+    <span class="code-key">"rate"</span>: <span class="code-number">1</span>,
+    <span class="code-key">"groups"</span>: {
+      <span class="code-key">"camera"</span>: {
+        <span class="code-key">"start"</span>: <span class="code-number">0</span>, <span class="code-key">"end"</span>: <span class="code-number">2.2</span>,
+        <span class="code-key">"rate"</span>: <span class="code-number">1</span>,
+        <span class="code-key">"keys"</span>: [
+          { <span class="code-key">"t"</span>: <span class="code-number">0</span>, <span class="code-key">"value"</span>: <span class="code-number">0</span>, <span class="code-key">"ease"</span>: <span class="code-string">"linear"</span> },
+          { <span class="code-key">"t"</span>: <span class="code-number">2.2</span>, <span class="code-key">"value"</span>: <span class="code-number">1</span>, <span class="code-key">"ease"</span>: <span class="code-string">"linear"</span> }
+        ]
+      }
+    }
+  }
+}</code></pre>
+    </section>
+
+    <section id="photorealism" class="photoreal-section section-rule" aria-labelledby="photoreal-title">
+      <div class="section-intro"><p class="eyebrow">SEPARATE STILL EXPERIMENT</p><h2 id="photoreal-title">One more way to study a surface.</h2><p>An optional path-traced still of the PULSE model explores reflected light, ceramic, rubber, leather and metal. It is a separate experiment from the motion-film renderer.</p></div>
+      <figure class="photoreal-hero"><a href="https://andrexes03.github.io/motion-lab/demo/photorealism.png" aria-label="Open the full-resolution path-traced still"><img data-asset="demo/photorealism.jpg" src="./demo/photorealism.jpg" alt="Extreme wide-angle close-up of a perforated ceramic grille, gold rim, rubber gasket and leather shell" width="1440" height="1080" loading="lazy"></a><figcaption><span>PATH TRACED · 2048 SAMPLES · 8 LIGHT BOUNCES</span><span>2880 × 2160 · STILL</span></figcaption></figure>
+      <div class="photo-notes"><p>The experiment uses an adapter for this model and exports an image. It does not replace the standard studio renderer or create a video.</p><a class="text-link" href="https://github.com/AndreXes03/motion-lab/blob/main/docs/PHOTOREALISM.md">Read the still-render guide ↗</a></div>
+    </section>
+
+    <section id="start" class="start-section section-rule" aria-labelledby="start-title">
+      <div class="start-copy"><p class="eyebrow">TAKE THE SCENE HOME</p><h2 id="start-title">Make the next pass yours.</h2><p>Open the studio to explore a scene, or clone the project to render video and manage project files locally.</p><div class="start-actions"><a class="button primary" href="./studio/">Open the studio <span aria-hidden="true">↗</span></a><a class="text-link" href="https://github.com/AndreXes03/motion-lab">View the repository ↗</a></div><p class="setup-note">Tested on macOS · Node.js 22.12+ · Google Chrome. Internet is needed for the first installation.</p></div>
+      <div class="setup-card"><div class="setup-heading"><span>Start the local studio</span><button id="copy-setup" aria-label="Copy installation commands">Copy</button></div><pre id="setup-code">git clone https://github.com/AndreXes03/motion-lab.git
 cd motion-lab
 npm ci
-npm run viewer</pre><p id="copy-status" role="status">Your files and renders stay on your Mac.</p><a href="https://github.com/AndreXes03/motion-lab/blob/main/docs/VALIDATION.md">Checks & supported setup ↗</a></div></section>
-</main><footer><a class="wordmark" href="#top">Motion Lab</a><span>Made by Andrea Salvo · Open source, MIT</span><div><a href="https://github.com/AndreXes03/motion-lab/tree/main/docs">Documentation ↗</a><a href="https://github.com/AndreXes03/motion-lab/blob/main/THIRD_PARTY.md">Asset licenses</a></div></footer><script src="./site.js?v=product-kit-v1"></script>
-</body></html>
+npm run viewer</pre><p id="copy-status" role="status">The app renders on your machine.</p><a href="https://github.com/AndreXes03/motion-lab/blob/main/docs/USAGE.md">Setup and usage ↗</a></div>
+    </section>
+  </main>
+
+  <footer><a class="wordmark" href="#top"><span class="mark" aria-hidden="true">M</span><span>Motion Lab</span></a><span>Created by Andrea Salvo · Open source, MIT</span><div><a href="https://github.com/AndreXes03/motion-lab/tree/main/docs">Documentation ↗</a><a href="https://github.com/AndreXes03/motion-lab/blob/main/THIRD_PARTY.md">Asset licenses</a></div></footer>
+  <script src="./site.js?v=product-story-v2"></script>
+</body>
+</html>

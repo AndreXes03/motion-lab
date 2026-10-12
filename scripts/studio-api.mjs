@@ -1,3 +1,9 @@
+import {studyControlDefinitions} from '../src/engine/scene-capabilities.js';
+import {resolveControlManifest} from '../src/engine/control-catalog.js';
+import {validateParameterAnimation} from '../src/engine/parameter-animation.js';
+import {validateRenderPlan,resolveRenderPlan} from '../src/engine/render-policy.js';
+import {getCyclesCapabilities,buildCyclesCommand} from './cycles/studio.mjs';
+import {getMixedCapabilities,preflightMixed,buildMixedCommand} from './mixed/studio.mjs';
 import {sceneConfig,sceneIds,isNewScene} from '../src/scene-registry.js';
 import { spawn as nodeSpawn } from 'node:child_process';
 import { createHash, randomUUID } from 'node:crypto';
@@ -26,17 +32,23 @@ async function publishDownload(job) {
 }
 const MAX_BODY = 2 * 1024 * 1024;
 const MAX_JSON_DEPTH = 32;
-const ALLOWED_PARAMETERS = new Set(['scene', 'look', 'motion', 'graphics', 'studio', 'display', 'shell', 'knob', 'objectMotion', 'objectEdits', 'review', 'inspect', 'sound']);
+const ALLOWED_PARAMETERS = new Set(['scene', 'look', 'motion', 'graphics', 'studio', 'display', 'shell', 'knob', 'objectMotion', 'objectEdits', 'review', 'inspect', 'sound', 'animation', 'product', 'sceneControls', 'renderPolicy']);
 const LOOK_SECTIONS = {
   camera: new Set(['fov']),
   lighting: new Set(['preset', 'key', 'fill', 'rim', 'environment', 'keyPosition', 'keyTarget', 'rimPosition', 'keyAngle', 'keyPenumbra', 'keyColor', 'rimColor']),
   surface: new Set(['shellRoughness', 'grainScale']),
-  post: new Set(['dofEnabled','dofAuto','dofFocus','dofStrength','dofMaxBlur','exposure', 'bloomStrength', 'bloomThreshold', 'bloomRadius', 'aberrationPx', 'grain', 'grainSize', 'vignette', 'lensDistortion', 'aoIntensity', 'shutterAngle', 'antialias']),
+  post: new Set(['dofEnabled','dofAuto','dofFocus','dofStrength','dofMaxBlur','exposure', 'bloomStrength', 'bloomThreshold', 'bloomRadius', 'aberrationPx', 'grain', 'grainSize', 'vignette', 'lensDistortion', 'aoIntensity', 'shutterAngle', 'antialias','colorContrast','colorSaturation']),
   motion: new Set(['amount'])
 };
 const jobs = new Map();
 let activeRenderId = null;
 let persistedJobsLoaded = false;
+let cyclesProbe,cyclesProbeAt=0;
+async function rendererCapabilities(){
+  if(!cyclesProbe||Date.now()-cyclesProbeAt>60000){cyclesProbeAt=Date.now();cyclesProbe=getCyclesCapabilities({root:ROOT});}
+  const [cycles,mixed]=await Promise.all([cyclesProbe,getMixedCapabilities({root:ROOT})]);
+  return {threejs:{available:true},cycles,mixed};
+}
 
 function apiError(status, message) { const error = new Error(message); error.status = status; return error; }
 function isRecord(value) { return value !== null && typeof value === 'object' && !Array.isArray(value); }
@@ -44,7 +56,7 @@ function finiteTree(value, label = 'value', depth = 0) {
   if (depth > MAX_JSON_DEPTH) throw new Error(`${label} exceeds the maximum nesting depth`);
   if (typeof value === 'number' && !Number.isFinite(value)) throw new Error(`${label} must contain only finite numbers`);
   if (Array.isArray(value)) { if (value.length > 10000) throw new Error(`${label} is too large`); value.forEach((item, i) => finiteTree(item, `${label}[${i}]`, depth + 1)); }
-  else if (isRecord(value)) { for (const [key, item] of Object.entries(value)) { if (key.length > 120) throw new Error(`${label} has an oversized key`); finiteTree(item, `${label}.${key}`, depth + 1); } }
+  else if (isRecord(value)) { for (const [key, item] of Object.entries(value)) { if (['__proto__','constructor','prototype'].includes(key)) throw new Error(`${label} contains an unsafe key`); if (key.length > 120) throw new Error(`${label} has an oversized key`); finiteTree(item, `${label}.${key}`, depth + 1); } }
   else if (value !== null && !['string', 'number', 'boolean'].includes(typeof value)) throw new Error(`${label} contains an unsupported value`);
 }
 function merge(base, patch) {
@@ -84,7 +96,7 @@ function validateMotion(motion, allowedTracks, duration=config.duration) {
 
 function validateStudioMeta(studio, scene, look) {
   if (studio === undefined) return undefined;
-  if (!isRecord(studio) || Object.keys(studio).some(k => !['values', 'preset', 'lookOverrides'].includes(k))) throw new Error('studio must contain only values and preset');
+  if (!isRecord(studio) || Object.keys(studio).some(k => !['values', 'preset', 'lookOverrides', 'controlManifest'].includes(k))) throw new Error('studio contains unsupported fields');
   const project = studioProjects.find(p => p.id === scene);
   if (!project) throw new Error(`Unsupported scene: ${scene}`);
   const presetId = studio.preset ?? 'original';
@@ -102,7 +114,7 @@ function validateStudioMeta(studio, scene, look) {
   const overrides=studio.lookOverrides??{};
   if(!isRecord(overrides)||Object.entries(overrides).some(([section,fields])=>!LOOK_SECTIONS[section]||!isRecord(fields)||Object.keys(fields).some(key=>!LOOK_SECTIONS[section].has(key))))throw new Error('Unsupported look override');
   validateLook(merge(look,overrides));
-  return { values: structuredClone(values), preset: presetId, lookOverrides:structuredClone(overrides) };
+  return { values: structuredClone(values), preset: presetId, lookOverrides:structuredClone(overrides), ...(studio.controlManifest===undefined?{}:{controlManifest:resolveControlManifest(studio.controlManifest,scene)}) };
 }
 
 export async function validateStudioParameters(input) {
@@ -119,6 +131,20 @@ export async function validateStudioParameters(input) {
   validateMotion(motion, new Set(Object.keys(defaults[1].tracks)),sceneConfig(scene).duration);
 
   const normalized = { ...structuredClone(input), scene, look, motion };
+  if(input.animation!==undefined)normalized.animation=validateParameterAnimation(input.animation,scene);
+  if(input.renderPolicy!==undefined)normalized.renderPolicy=validateRenderPlan(input.renderPolicy);
+  if(input.sceneControls!==undefined){
+    const definitions=studyControlDefinitions[scene];if(!definitions||!isRecord(input.sceneControls))throw new Error('sceneControls is unsupported for this scene');
+    for(const [id,value]of Object.entries(input.sceneControls)){const c=definitions.find(c=>c.id===id);if(!c||!Number.isFinite(value)||value<c.min||value>c.max)throw new Error('Invalid scene control: '+id);}
+  }
+  if(input.product!==undefined){
+    if(scene!=='starter'||!isRecord(input.product))throw new Error('product is only supported for starter');
+    const ranges={fov:[45,95],fisheye:[0,.6],keyStrength:[.3,2],fill:[0,.4]};
+    for(const [key,value]of Object.entries(input.product)){
+      if(['accent','shell'].includes(key)){if(typeof value!=='string'||!/^#[0-9a-f]{6}$/i.test(value))throw new Error('Invalid product color: '+key);}
+      else{const bounds=ranges[key];if(!bounds||!Number.isFinite(value)||value<bounds[0]||value>bounds[1])throw new Error('Invalid product parameter: '+key);}
+    }
+  }
   if(input.sound !== undefined)normalized.sound=normalizeSound(input.sound);
   if (input.graphics !== undefined) {
     if (!['procedural','pop'].includes(scene) || !isRecord(input.graphics) || Object.keys(input.graphics).some(k => !['title', 'accent', 'density', 'speed', ...(scene==='pop'?['cameraMotion','fisheye']:[])].includes(k))) throw new Error('graphics is only supported for procedural and pop scenes');
@@ -230,7 +256,10 @@ async function sourceFingerprint() {
     }
   };
   for (const dir of ['src', 'project']) await walk(path.join(ROOT, dir));
-  for (const file of ['index.html', 'package.json', 'package-lock.json', 'vite.config.js', 'scripts/cli.mjs', 'scripts/project-store.mjs']) await addFile(path.join(ROOT, file));
+  await walk(path.join(ROOT,'scripts','cycles'));
+  await walk(path.join(ROOT,'scripts','mixed'));
+  await walk(path.join(ROOT,'scripts','lib'));
+  for (const file of ['index.html', 'package.json', 'package-lock.json', 'vite.config.js', 'scripts/cli.mjs', 'scripts/project-store.mjs','scripts/cycles.mjs','scripts/mixed-studio.mjs']) await addFile(path.join(ROOT, file));
   return hash.digest('hex');
 }
 
@@ -241,7 +270,7 @@ function jobManifest(job) {
     createdAt: job.createdAt, startedAt: job.startedAt,
     finishedAt: job.finishedAt, time: job.time, sourceHash: job.sourceHash,
     sourceHashAfter: job.sourceHashAfter ?? null, error: job.error,
-    parameters: job.parameters, settings: job.settings ?? null, destination: job.destination
+    parameters: job.parameters, settings: job.settings ?? null, destination: job.destination, engine:job.engine??'threejs', rendererSelection:job.rendererSelection??null
   };
 }
 
@@ -260,7 +289,7 @@ async function loadPersistedJobs() {
     try {
       const record = JSON.parse(await readFile(path.join(RENDER_DIR, entry.name), 'utf8'));
       if (record.id !== id || !['frame', 'preview', 'export'].includes(record.kind) || !['completed', 'failed', 'running'].includes(record.status)) continue;
-      const outputPath = record.destination === 'downloads' ? downloadPath(id, `.${ext}`) : path.join(RENDER_DIR, `${id}.${ext}`);
+      const outputPath = record.destination === 'downloads' ? downloadPath(id, `.${ext}`) : path.join(RENDER_DIR,...(record.engine==='cycles'?['cycles']:[]), `${id}.${ext}`);
       const output = await stat(outputPath).catch(() => null);
       let status = record.status;
       let error = record.error ?? null;
@@ -286,7 +315,7 @@ async function loadPersistedJobs() {
         error, extension: `.${ext}`, outputPath, destination: record.destination,
         manifestPath: path.join(RENDER_DIR, entry.name),
         sourceHash: record.sourceHash ?? null, sourceHashAfter: record.sourceHashAfter ?? null,
-        parameters: record.parameters ?? {}, settings: record.settings ?? null
+        parameters: record.parameters ?? {}, settings: record.settings ?? null, engine:record.engine??'threejs', rendererSelection:record.rendererSelection??null
       };
       if (job.status === 'completed' && job.destination !== 'downloads') {
         try { await publishDownload(job); await writeJobManifest(job); }
@@ -317,23 +346,24 @@ function revealWithFinder(job, spawnFn = nodeSpawn) {
   });
 }
 
-function launchJob(job, snapshotFile, args, spawnFn) {
+function launchJob(job, invocation, spawnFn) {
   job.status = 'running'; job.progress = 0; job.phase = 'rendering'; job.startedAt = new Date().toISOString(); activeRenderId = job.id;
-  const child = spawnFn(process.execPath, [CLI, ...args, '--snapshot', snapshotFile], { cwd: ROOT, shell: false, windowsHide: true, stdio: ['ignore', 'pipe', 'pipe'] });
+  const child = spawnFn(invocation.command, invocation.args, { cwd: invocation.cwd??ROOT, shell: false, windowsHide: true, stdio: ['ignore', 'pipe', 'pipe'] });
   job.pid = child.pid;
   let stdout = '', stderr = '', buffer = '';
   const consumeLine = line => {
     if (!line.trim()) return;
     try {
       const event = JSON.parse(line);
-      if (event.type === 'progress') {
+      if (['progress','frame'].includes(event.type)) {
         if (Number.isFinite(event.percent)) job.progress = Math.max(0, Math.min(99, event.percent));
         if (Number.isFinite(event.frames)) job.frames = Math.max(job.frames ?? 0, Math.min(job.total, event.frames));
         if (Number.isFinite(event.total)) job.total = Math.max(1, event.total);
         if (Number.isInteger(event.previewFrame)) job.previewFrame = event.previewFrame;
+        if(job.engine==='cycles'&&event.type==='frame'&&Number.isInteger(event.frame)&&event.frame>0&&event.frame<=job.total)job.previewFrame=event.frame;
         if (Number.isFinite(event.sample)) job.samples = Math.max(job.samples ?? 0, Math.min(job.totalSamples ?? event.totalSamples ?? 1, event.sample));
         if (Number.isFinite(event.totalSamples)) job.totalSamples = Math.max(1, event.totalSamples);
-        if (['sampling', 'rendering', 'encoding'].includes(event.phase)) job.phase = event.phase;
+        if (['sampling', 'rendering', 'encoding','baking','freezing'].includes(event.phase)) job.phase = event.phase;
       }
       if (event.type === 'error') job.error = event.message || 'Render failed';
     } catch { /* CLI diagnostics can include non-JSON lines; retain as logs. */ }
@@ -378,7 +408,7 @@ function launchJob(job, snapshotFile, args, spawnFn) {
   });
 }
 
-export function createStudioApi({ spawnFn = nodeSpawn, revealFn = revealWithFinder } = {}) {
+export function createStudioApi({ spawnFn = nodeSpawn, revealFn = revealWithFinder, capabilitiesFn=rendererCapabilities } = {}) {
   return async function studioApi(req, res, next) {
     const route = new URL(req.url ?? '/', 'http://127.0.0.1').pathname;
     if (!route.startsWith('/studio')) return next();
@@ -394,6 +424,7 @@ export function createStudioApi({ spawnFn = nodeSpawn, revealFn = revealWithFind
         const currentJobs = [...jobs.values()].sort((a, b) => String(b.createdAt).localeCompare(String(a.createdAt))).map(publicJob);
         return send(res, 200, { versions, jobs: currentJobs, outputDirectory: DOWNLOAD_DIR });
       }
+      if(req.method==='GET'&&route==='/studio/capabilities')return send(res,200,{capabilities:await capabilitiesFn()});
       if (req.method === 'GET' && route.startsWith('/studio/versions/')) {
         const id = decodeURIComponent(route.slice('/studio/versions/'.length));
         if (!safeId(id)) return send(res, 400, { error: 'Invalid version id' });
@@ -423,11 +454,13 @@ export function createStudioApi({ spawnFn = nodeSpawn, revealFn = revealWithFind
         const job = jobs.get(previewMatch[1]);
         if (!job) return send(res, 404, { error: 'Job not found' });
         const fullFrame = job.kind === 'frame' && job.status === 'completed';
-        const previewPath = fullFrame ? job.outputPath : path.join(RENDER_DIR, `${job.id}${job.extension}.progress.jpg`);
+        const cyclesPreview=job.engine==='cycles'&&Number.isInteger(job.previewFrame);
+        const mixedPreview=job.engine==='mixed'&&Number.isInteger(job.previewFrame);
+        const previewPath = fullFrame ? job.outputPath : mixedPreview?path.join(RENDER_DIR,`${job.id}${job.extension}.mixed`,`frame-${String(job.previewFrame).padStart(6,'0')}.png`):cyclesPreview?path.join(RENDER_DIR,'cycles',`${job.id}${job.extension}.cycles`,'frames',`frame-${String(job.previewFrame).padStart(6,'0')}.png`):path.join(RENDER_DIR, `${job.id}${job.extension}.progress.jpg`);
         const info = await stat(previewPath).catch(() => null);
         if (!info?.isFile()) return send(res, 404, { error: 'Render preview not ready' });
         res.statusCode = 200;
-        res.setHeader('Content-Type', fullFrame ? 'image/png' : 'image/jpeg');
+        res.setHeader('Content-Type', fullFrame||cyclesPreview||mixedPreview ? 'image/png' : 'image/jpeg');
         res.setHeader('Content-Length', info.size);
         res.setHeader('Cache-Control', 'no-store, max-age=0');
         createReadStream(previewPath).pipe(res);
@@ -476,10 +509,21 @@ export function createStudioApi({ spawnFn = nodeSpawn, revealFn = revealWithFind
         activeRenderId = reservation;
         const parameters = await validateStudioParameters(body.parameters);
         const settings = validateRenderSettings(body.kind, body.settings);if(['dot','replay'].includes(parameters.scene))settings.temporalSamples=1;else if(['pulse','camera'].includes(parameters.scene)&&body.settings?.temporalSamples===undefined)settings.temporalSamples=4;
+        const plan=validateRenderPlan(parameters.renderPolicy);
+        const needsProbe=plan.renderer!=='threejs'&&(plan.renderer!=='auto'||plan.preferredRenderer!=='threejs'||plan.intent==='photoreal');
+        const selection=resolveRenderPlan(plan,{scene:parameters.scene,kind:body.kind,...settings,duration:selectedConfig.duration,capabilities:needsProbe?await capabilitiesFn():{threejs:{available:true}}});
+        if(!selection.runnable)throw Error(selection.availability);
+        if(selection.selectedRenderer==='cycles'){
+          if(body.kind!=='frame'&&settings.format!=='mp4')throw Error('Cycles currently exports MP4 video and PNG frames. Select MP4 or Three.js for WebM/ProRes.');
+          if(settings.width<64||settings.height<64)throw Error('Cycles frames require at least 64 × 64 pixels.');
+        }
+        if(['cycles','mixed'].includes(selection.selectedRenderer)&&body.kind!=='frame')settings.bitrateMbps=null;
+        if(selection.selectedRenderer==='mixed')await preflightMixed({root:ROOT,policy:plan,settings,kind:body.kind,time,duration:selectedConfig.duration});
         const id = randomUUID();
         const extension = outputExtension(body.kind, settings);
-        await mkdir(RENDER_DIR, { recursive: true });
-        const outputPath = path.join(RENDER_DIR, `${id}${extension}`);
+        const outputDir=path.join(RENDER_DIR,...(selection.selectedRenderer==='cycles'?['cycles']:[]));
+        await mkdir(outputDir, { recursive: true });
+        const outputPath = path.join(outputDir, `${id}${extension}`);
         const snapshotPath = path.join(RENDER_DIR, `.${id}.snapshot.json`);
         const width = settings?.width ?? config.width;
         const height = settings?.height ?? config.height;
@@ -489,16 +533,15 @@ export function createStudioApi({ spawnFn = nodeSpawn, revealFn = revealWithFind
         const sourceHash = await sourceFingerprint();
         await writeFile(snapshotPath, `${JSON.stringify(snapshot, null, 2)}\n`, { flag: 'wx' });
         const total = body.kind === 'frame' ? 1 : Math.round(selectedConfig.duration * fps);
-        const totalSamples = body.kind === 'frame' ? settings.temporalSamples : 0;
-        const job = { id, kind: body.kind, scene: parameters.scene, status: 'running', progress: 0, frames: 0, total, samples: 0, totalSamples, phase: 'rendering', createdAt: new Date().toISOString(), time, url: null, downloadUrl: null, error: null, extension, settings, sourceHash, outputPath, snapshotPath, manifestPath: `${outputPath}.job.json`, parameters };
+        const totalSamples = body.kind === 'frame'&&selection.selectedRenderer==='threejs' ? settings.temporalSamples : 0;
+        const job = { id, kind: body.kind, scene: parameters.scene, status: 'running', progress: 0, frames: 0, total, samples: 0, totalSamples, phase: 'rendering', createdAt: new Date().toISOString(), time, url: null, downloadUrl: null, error: null, extension, settings, sourceHash, outputPath, snapshotPath, manifestPath: path.join(RENDER_DIR,`${id}${extension}.job.json`), parameters,engine:selection.selectedRenderer,rendererSelection:selection };
         jobs.set(id, job);
         await writeJobManifest(job);
         const args = [body.kind, '--out', outputPath, '--snapshot', snapshotPath];
         if (body.kind === 'frame') args.push('--time', String(time), '--width', String(width), '--height', String(height), '--fps', String(fps), '--temporal-samples', String(temporalSamples));
         else args.push('--temporal-samples', String(snapshot.temporalSamples), '--fps', String(fps), '--format', settings.format, ...(settings.bitrateMbps === null ? [] : ['--bitrate-mbps', String(settings.bitrateMbps)]));
-        // launchJob appends --snapshot, so pass all other fixed arguments only.
-        args.splice(args.indexOf('--snapshot'), 2);
-        launchJob(job, snapshotPath, args, spawnFn);
+        const invocation=selection.selectedRenderer==='mixed'?buildMixedCommand({kind:body.kind,snapshotPath,outputPath,root:ROOT,audioPath:plan.composite.audioFile??undefined,audioOffset:plan.composite.audioOffset}):selection.selectedRenderer==='cycles'?buildCyclesCommand({kind:body.kind,snapshotPath,outputPath,root:ROOT,settings:{width,height,fps,cyclesSamples:plan.cycles.samples,device:plan.cycles.device,workers:plan.cycles.workers,denoise:plan.cycles.denoise,motionBlur:temporalSamples>1,shutter:Math.max(0,Math.min(1,(parameters.look?.post?.shutterAngle??180)/360)),composite:'titles'}}):{command:process.execPath,args:[CLI,...args],cwd:ROOT};
+        launchJob(job, invocation, spawnFn);
         reservation = null;
         return send(res, 202, { id });
       }

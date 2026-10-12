@@ -13,7 +13,8 @@ const validParameters = {
   scene: 'procedural',
   look: { post: { grain: 0.012, grainSize: 1.4, antialias: true } },
   graphics: { title: 'MOTION', accent: '#ff5a24', density: 6, speed: 1 },
-  studio: { values: { title: 'MOTION', accent: '#ff5a24', density: 6, speed: 1 }, preset: 'original' }
+  animation: {version:1,enabled:true,rate:1,tracks:{speed:[{t:0,value:.5,ease:'linear'},{t:4,value:2,ease:'linear'}]}},
+  studio: { values: { title: 'MOTION', accent: '#ff5a24', density: 6, speed: 1 }, preset: 'original', controlManifest:{version:1,scene:'procedural',controls:['title','accent','density','speed']} }
 };
 
 const normalized = await validateStudioParameters(validParameters);
@@ -69,6 +70,8 @@ try {
   const versionResponse = await response.json();
   assert.equal(versionResponse.snapshot.parameters.scene, 'procedural');
   assert.ok(versionResponse.snapshot.parameters.look);
+  assert.deepEqual(versionResponse.snapshot.parameters.animation,normalized.animation);
+  assert.deepEqual(versionResponse.snapshot.parameters.studio.controlManifest,normalized.studio.controlManifest);
 
   response = await request('/render', { kind: 'frame', time: 2, parameters: validParameters });
   assert.equal(response.status, 202);
@@ -102,6 +105,7 @@ try {
   assert.equal(manifest.status, 'completed');
   assert.deepEqual(manifest.settings, validateRenderSettings('frame'));
   assert.equal(manifest.sourceHash, manifest.sourceHashAfter);
+  assert.deepEqual(JSON.parse(await readFile(sidecarPath,'utf8')).parameters.animation,normalized.animation);
   const fileResponse = await fetch(`${base}${job.url}`);
   assert.equal(fileResponse.status, 200, `render output is served by Vite: ${await fileResponse.text()}`);
   assert.match(fileResponse.headers.get('content-disposition'), /^inline;/);

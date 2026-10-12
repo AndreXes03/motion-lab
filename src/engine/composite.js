@@ -163,7 +163,7 @@ export function createComposite(renderer, scene, camera, config) {
       for(const key of ['aberrationPx','vignette','lensDistortion','fisheye','edgeSoftness'])finishPass.uniforms[key].value=next[key]??LOOK[key];
     },
     setReview(mode) {
-      const clean=mode&&mode!=='beauty';bloomPass.enabled=!clean;finishPass.enabled=!clean;highlights.enabled=!clean;if(clean){aoPass.enabled=false;dofPass.enabled=false;}
+      const clean=mode&&mode!=='beauty';bloomPass.enabled=!clean&&dofSettings.bloomEnabled!==false;finishPass.enabled=!clean;highlights.enabled=!clean;if(clean){aoPass.enabled=false;dofPass.enabled=false;}
     },
     render() {
       if(dofPass.enabled){

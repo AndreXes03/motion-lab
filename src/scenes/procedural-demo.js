@@ -1,4 +1,5 @@
 import {renderProcedural,progress} from '../engine/procedural.js';
+import {sampleAnimationGroupTime} from '../engine/animation-groups.js';
 import recipe from '../../project/graphics.json';
 const W=1920,H=1080,TAU=Math.PI*2,INK='#090b10',WHITE='#eceee5';
 const clamp=(x,a=0,b=1)=>Math.max(a,Math.min(b,x)),mix=(a,b,t)=>a+(b-a)*t;
@@ -10,7 +11,8 @@ export const proceduralCuts=[1,2,3,4,5].map(i=>i*20/11);
 export function proceduralShutter(time,requested=210){return Math.min(5,Math.floor(Math.max(0,time)/(20/11)))===4?requested:0;}
 export function proceduralTempo(parameters={}){return parameters.sound?.tempo==='manual'?clamp(Number(parameters.sound.bpm)||132,60,180):132;}
 function buildNodes(t,parameters={}){
- const g={...recipe.defaults,...parameters.graphics},accent=/^#[0-9a-f]{6}$/i.test(g.accent)?g.accent:'#c2ff38',speed=clamp(Number(g.speed)||1,.25,2.5),density=clamp(Number(g.density)||10,4,18),bpm=proceduralTempo(parameters),beat=t*bpm/60,pulse=Math.exp(-(beat%1)*9),u=t*speed;
+ const graphicsTime=sampleAnimationGroupTime(parameters,'graphics',t);
+ const g={...recipe.defaults,...parameters.graphics},accent=/^#[0-9a-f]{6}$/i.test(g.accent)?g.accent:'#c2ff38',speed=clamp(Number(g.speed)||1,.25,2.5),density=clamp(Number(g.density)||10,4,18),bpm=proceduralTempo(parameters),beat=t*bpm/60,pulse=Math.exp(-(beat%1)*9),u=graphicsTime*speed;
  const chapter=Math.min(5,Math.floor(t/(20/11))),local=t-chapter*20/11,kick=1+.035*pulse,light=chapter===2,bg=light?WHITE:INK,fg=light?INK:WHITE;
  const nodes=[node('background','rect',{width:W,height:H,fill:bg,sound:false})],push=n=>nodes.push(n);
  const labels=['VECTOR FIELD','TOROIDAL ENGINE','ORDER / DISORDER','INTERFERENCE','KINETIC SYSTEM','MOTION LAB'];
@@ -31,7 +33,7 @@ function buildNodes(t,parameters={}){
   for(let i=0;i<6;i++)push(node('torus.orbit.'+i,'circle',{x:1000+Math.cos(u*1.8+i*TAU/6)*510,y:530+Math.sin(u*1.8+i*TAU/6)*275,radius:5,fill:accent}));
  }
  if(chapter===2){
-  const cols=Math.round(30+density),rows=18,morph=.5+.5*Math.sin(local*3.5-1.5),angle=u*.8;
+  const cols=Math.round(30+density),rows=18,morph=.5+.5*Math.sin((graphicsTime-chapter*20/11)*3.5-1.5),angle=u*.8;
   for(let j=0;j<rows;j++)for(let i=0;i<cols;i++){const id=j*cols+i,a=id*.381966*TAU+angle,r=Math.sqrt(id/(rows*cols))*490;let x=mix(220+i*1480/(cols-1),960+Math.cos(a)*r*1.35,morph),y=mix(230+j*610/(rows-1),545+Math.sin(a)*r*.8,morph);const size=5+6*(.5+.5*Math.sin(i*.25+j*.3-u*5));push(node('swarm.'+id,'rect',{x,y,width:size*1.8,height:size*1.8,rotation:angle+id*.12*morph,fill:id%17===0?'#255cff':INK,opacity:.6+.4*hash(id),sound:id%90===0}));}
   push(text('swarm.title','ORDER → CHAOS',110,145,80,INK,{maxWidth:1400}));
   push(text('swarm.count',`${cols*rows} ELEMENTS / ONE RULE`,110,928,24,INK));

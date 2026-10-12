@@ -1,0 +1,315 @@
+{
+  "version": 1,
+  "compositing": [
+    {
+      "id": "clean",
+      "label": "Clean",
+      "description": "Neutral color and full detail for a clear product read.",
+      "values": {
+        "colorContrast": 1,
+        "colorSaturation": 1
+      }
+    },
+    {
+      "id": "film",
+      "label": "Film",
+      "description": "Softer color with modest contrast for a restrained film finish.",
+      "values": {
+        "colorContrast": 1.08,
+        "colorSaturation": 0.88
+      }
+    },
+    {
+      "id": "vivid",
+      "label": "Vivid",
+      "description": "More separation and color for a graphic presentation.",
+      "values": {
+        "colorContrast": 1.2,
+        "colorSaturation": 1.25
+      }
+    }
+  ],
+  "scenes": {
+    "bax": {
+      "lights": [
+        {
+          "id": "original",
+          "label": "Original",
+          "description": "Authored warm key and cool rim balance.",
+          "values": {
+            "key": 340,
+            "fill": 0.015,
+            "rim": 4.8,
+            "environment": 0.5
+          }
+        },
+        {
+          "id": "soft",
+          "label": "Soft studio",
+          "description": "More fill and reflections reveal material detail with softer shadows.",
+          "values": {
+            "key": 290,
+            "fill": 0.12,
+            "rim": 3.2,
+            "environment": 0.78
+          }
+        },
+        {
+          "id": "sculpted",
+          "label": "Sculpted",
+          "description": "A stronger key and restrained fill shape the silhouettes.",
+          "values": {
+            "key": 390,
+            "fill": 0.01,
+            "rim": 5.5,
+            "environment": 0.4
+          }
+        }
+      ],
+      "compositing": [
+        {
+          "id": "clean",
+          "label": "Clean",
+          "description": "Neutral color and full detail for a clear product read.",
+          "values": {
+            "colorContrast": 1,
+            "colorSaturation": 1,
+            "exposure": 1.03,
+            "bloomStrength": 0.0,
+            "grain": 0.0
+          }
+        },
+        {
+          "id": "film",
+          "label": "Film",
+          "description": "Softer color with modest contrast for a restrained film finish.",
+          "values": {
+            "colorContrast": 1.08,
+            "colorSaturation": 0.88,
+            "exposure": 1.03,
+            "bloomStrength": 0.08,
+            "grain": 0.018
+          }
+        },
+        {
+          "id": "vivid",
+          "label": "Vivid",
+          "description": "More separation and color for a graphic presentation.",
+          "values": {
+            "colorContrast": 1.2,
+            "colorSaturation": 1.25,
+            "exposure": 1.03,
+            "bloomStrength": 0.18,
+            "grain": 0.008
+          }
+        }
+      ]
+    },
+    "starter": {
+      "lights": [
+        {
+          "id": "original",
+          "label": "Original",
+          "description": "Authored product-stage key and shadow fill.",
+          "values": {
+            "keyStrength": 1,
+            "fill": 0.1
+          }
+        },
+        {
+          "id": "soft",
+          "label": "Soft studio",
+          "description": "Raise the fill and lower the key to reveal housing detail.",
+          "values": {
+            "keyStrength": 0.85,
+            "fill": 0.22
+          }
+        },
+        {
+          "id": "sculpted",
+          "label": "Sculpted",
+          "description": "A firmer key with less fill shapes the rotary controls.",
+          "values": {
+            "keyStrength": 1.25,
+            "fill": 0.04
+          }
+        }
+      ]
+    },
+    "pulse": {
+      "lights": [
+        {
+          "id": "original",
+          "label": "Original",
+          "description": "Retain the authored mechanical-film light balance.",
+          "values": {
+            "keyLight": 1,
+            "fillLight": 1
+          }
+        },
+        {
+          "id": "soft",
+          "label": "Soft studio",
+          "description": "More supporting light gives rubber and molded surfaces a gentler read.",
+          "values": {
+            "keyLight": 0.85,
+            "fillLight": 1.35
+          }
+        },
+        {
+          "id": "sculpted",
+          "label": "Sculpted",
+          "description": "Stronger key highlights with darker supporting reflections.",
+          "values": {
+            "keyLight": 1.25,
+            "fillLight": 0.7
+          }
+        }
+      ],
+      "compositing": [
+        {
+          "id": "clean",
+          "label": "Clean",
+          "description": "Neutral color and full detail for a clear product read.",
+          "values": {
+            "colorContrast": 1,
+            "colorSaturation": 1,
+            "exposure": 1,
+            "bloomStrength": 0
+          }
+        },
+        {
+          "id": "film",
+          "label": "Film",
+          "description": "Softer color with modest contrast for a restrained film finish.",
+          "values": {
+            "colorContrast": 1.08,
+            "colorSaturation": 0.88,
+            "exposure": 1,
+            "bloomStrength": 0.8
+          }
+        },
+        {
+          "id": "vivid",
+          "label": "Vivid",
+          "description": "More separation and color for a graphic presentation.",
+          "values": {
+            "colorContrast": 1.2,
+            "colorSaturation": 1.25,
+            "exposure": 1,
+            "bloomStrength": 1.6
+          }
+        }
+      ]
+    },
+    "camera": {
+      "lights": [
+        {
+          "id": "original",
+          "label": "Original",
+          "description": "Retain each authored shot’s key and supporting light balance.",
+          "values": {
+            "keyLight": 1,
+            "fillLight": 1
+          }
+        },
+        {
+          "id": "soft",
+          "label": "Soft studio",
+          "description": "More fill opens miniature detail while protecting key reflections.",
+          "values": {
+            "keyLight": 0.85,
+            "fillLight": 1.3
+          }
+        },
+        {
+          "id": "sculpted",
+          "label": "Sculpted",
+          "description": "A firmer key and lower fill add separation to mechanical surfaces.",
+          "values": {
+            "keyLight": 1.2,
+            "fillLight": 0.75
+          }
+        }
+      ],
+      "compositing": [
+        {
+          "id": "clean",
+          "label": "Clean",
+          "description": "Neutral color and full detail for a clear product read.",
+          "values": {
+            "colorContrast": 1,
+            "colorSaturation": 1,
+            "exposure": 1,
+            "bloomStrength": 0,
+            "grainStrength": 0
+          }
+        },
+        {
+          "id": "film",
+          "label": "Film",
+          "description": "Softer color with modest contrast for a restrained film finish.",
+          "values": {
+            "colorContrast": 1.08,
+            "colorSaturation": 0.88,
+            "exposure": 1,
+            "bloomStrength": 0.8,
+            "grainStrength": 1
+          }
+        },
+        {
+          "id": "vivid",
+          "label": "Vivid",
+          "description": "More separation and color for a graphic presentation.",
+          "values": {
+            "colorContrast": 1.2,
+            "colorSaturation": 1.25,
+            "exposure": 1,
+            "bloomStrength": 1.6,
+            "grainStrength": 0.4
+          }
+        }
+      ]
+    }
+  },
+  "interpolation": [
+    {
+      "id": "linear",
+      "label": "Linear",
+      "ease": "linear"
+    },
+    {
+      "id": "balanced",
+      "label": "Balanced",
+      "ease": "bezier",
+      "bezier": [
+        0.42,
+        0,
+        0.58,
+        1
+      ]
+    },
+    {
+      "id": "soft",
+      "label": "Soft arrival",
+      "ease": "bezier",
+      "bezier": [
+        0.25,
+        0.1,
+        0.25,
+        1
+      ]
+    },
+    {
+      "id": "snap",
+      "label": "Late acceleration",
+      "ease": "bezier",
+      "bezier": [
+        0.7,
+        0,
+        0.85,
+        1
+      ]
+    }
+  ]
+}

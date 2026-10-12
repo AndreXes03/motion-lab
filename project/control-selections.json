@@ -1,0 +1,445 @@
+{
+  "version": 1,
+  "scenes": {
+    "bax": {
+      "controls": [
+        "energy",
+        "fov",
+        "lensDistortion",
+        "key",
+        "fill",
+        "rim",
+        "shell",
+        "knob",
+        "display",
+        "exposure",
+        "grain",
+        "bloomStrength",
+        "aoIntensity",
+        "colorContrast",
+        "colorSaturation"
+      ],
+      "panels": [
+        {
+          "id": "motion",
+          "title": "Object performance",
+          "category": "motion",
+          "controls": [
+            "energy"
+          ],
+          "advanced": false
+        },
+        {
+          "id": "lens",
+          "title": "Film lens",
+          "category": "lens",
+          "controls": [
+            "fov",
+            "lensDistortion"
+          ],
+          "advanced": false
+        },
+        {
+          "id": "lights",
+          "title": "Studio lights",
+          "category": "lights",
+          "controls": [
+            "key",
+            "fill",
+            "rim"
+          ],
+          "advanced": false
+        },
+        {
+          "id": "appearance",
+          "title": "Radio finishes",
+          "category": "appearance",
+          "controls": [
+            "shell",
+            "knob",
+            "display"
+          ],
+          "advanced": false
+        },
+        {
+          "id": "finishing",
+          "title": "Image finishing",
+          "category": "compositing",
+          "controls": [
+            "exposure",
+            "grain",
+            "bloomStrength",
+            "aoIntensity",
+            "colorContrast",
+            "colorSaturation"
+          ],
+          "advanced": true
+        }
+      ],
+      "rationale": "Prioritize object energy, optical framing, studio lights and radio finishes. Keep raw transforms and detailed compositing in the complete tool catalog."
+    },
+    "procedural": {
+      "controls": [
+        "title",
+        "accent",
+        "density",
+        "speed",
+        "grain",
+        "grainSize",
+        "colorContrast",
+        "colorSaturation"
+      ],
+      "panels": [
+        {
+          "id": "graphics",
+          "title": "Graphic system",
+          "category": "graphics",
+          "controls": [
+            "title",
+            "accent",
+            "density"
+          ],
+          "advanced": false
+        },
+        {
+          "id": "motion",
+          "title": "Procedural motion",
+          "category": "motion",
+          "controls": [
+            "speed"
+          ],
+          "advanced": false
+        },
+        {
+          "id": "finishing",
+          "title": "Film texture",
+          "category": "compositing",
+          "controls": [
+            "grain",
+            "grainSize",
+            "colorContrast",
+            "colorSaturation"
+          ],
+          "advanced": true
+        }
+      ],
+      "rationale": "Expose typography, element density and motion pace for the graphic sequence. Keep grain finishing in an advanced panel."
+    },
+    "pop": {
+      "controls": [
+        "speed",
+        "cameraMotion",
+        "fisheye",
+        "accent",
+        "grain",
+        "colorContrast",
+        "colorSaturation"
+      ],
+      "panels": [
+        {
+          "id": "motion",
+          "title": "Lettering and camera",
+          "category": "motion",
+          "controls": [
+            "speed",
+            "cameraMotion"
+          ],
+          "advanced": false
+        },
+        {
+          "id": "lens",
+          "title": "Pop lens",
+          "category": "lens",
+          "controls": [
+            "fisheye"
+          ],
+          "advanced": false
+        },
+        {
+          "id": "appearance",
+          "title": "Sticker palette",
+          "category": "appearance",
+          "controls": [
+            "accent"
+          ],
+          "advanced": false
+        },
+        {
+          "id": "finishing",
+          "title": "Film texture",
+          "category": "compositing",
+          "controls": [
+            "grain",
+            "colorContrast",
+            "colorSaturation"
+          ],
+          "advanced": true
+        }
+      ],
+      "rationale": "Focus on lettering energy, 2D camera intensity, lens curvature and sticker accent. Grain remains an optional finishing tool."
+    },
+    "starter": {
+      "controls": [
+        "accent",
+        "shell",
+        "fov",
+        "fisheye",
+        "keyStrength",
+        "fill",
+        "colorContrast",
+        "colorSaturation"
+      ],
+      "panels": [
+        {
+          "id": "appearance",
+          "title": "Product materials",
+          "category": "appearance",
+          "controls": [
+            "accent",
+            "shell"
+          ],
+          "advanced": false
+        },
+        {
+          "id": "lens",
+          "title": "Product lens",
+          "category": "lens",
+          "controls": [
+            "fov",
+            "fisheye"
+          ],
+          "advanced": false
+        },
+        {
+          "id": "lights",
+          "title": "Product lighting",
+          "category": "lights",
+          "controls": [
+            "keyStrength",
+            "fill"
+          ],
+          "advanced": false
+        },
+        {
+          "id": "finishing",
+          "title": "Image finishing",
+          "category": "compositing",
+          "controls": [
+            "colorContrast",
+            "colorSaturation"
+          ],
+          "advanced": true
+        }
+      ],
+      "rationale": "Expose reusable product colors, the actual lens and key/fill lighting for a compact product starting point."
+    },
+    "pulse": {
+      "controls": [
+        "mechanismMotion",
+        "lensStrength",
+        "focusBlur",
+        "keyLight",
+        "fillLight",
+        "exposure",
+        "bloomStrength",
+        "colorContrast",
+        "colorSaturation"
+      ],
+      "panels": [
+        {
+          "id": "motion",
+          "title": "Speaker and platter",
+          "category": "motion",
+          "controls": [
+            "mechanismMotion"
+          ],
+          "advanced": false
+        },
+        {
+          "id": "lens",
+          "title": "Macro lens",
+          "category": "lens",
+          "controls": [
+            "lensStrength",
+            "focusBlur"
+          ],
+          "advanced": false
+        },
+        {
+          "id": "lights",
+          "title": "Studio lighting",
+          "category": "lights",
+          "controls": [
+            "keyLight",
+            "fillLight"
+          ],
+          "advanced": false
+        },
+        {
+          "id": "finishing",
+          "title": "Highlight finishing",
+          "category": "compositing",
+          "controls": [
+            "exposure",
+            "bloomStrength",
+            "colorContrast",
+            "colorSaturation"
+          ],
+          "advanced": true
+        }
+      ],
+      "rationale": "Expose the speaker/platter mechanism, authored lens and focus, and studio lights. Keep exposure and highlight finishing together in an advanced panel."
+    },
+    "camera": {
+      "controls": [
+        "cityMotion",
+        "lensStrength",
+        "focusBlur",
+        "keyLight",
+        "fillLight",
+        "exposure",
+        "grainStrength",
+        "colorContrast",
+        "colorSaturation"
+      ],
+      "panels": [
+        {
+          "id": "motion",
+          "title": "Miniature city",
+          "category": "motion",
+          "controls": [
+            "cityMotion"
+          ],
+          "advanced": false
+        },
+        {
+          "id": "lens",
+          "title": "Optical treatment",
+          "category": "lens",
+          "controls": [
+            "lensStrength",
+            "focusBlur"
+          ],
+          "advanced": false
+        },
+        {
+          "id": "lights",
+          "title": "Miniature lighting",
+          "category": "lights",
+          "controls": [
+            "keyLight",
+            "fillLight"
+          ],
+          "advanced": false
+        },
+        {
+          "id": "finishing",
+          "title": "Film finishing",
+          "category": "compositing",
+          "controls": [
+            "exposure",
+            "grainStrength",
+            "colorContrast",
+            "colorSaturation"
+          ],
+          "advanced": true
+        }
+      ],
+      "rationale": "Expose miniature vehicle motion, optical treatment and studio lights while preserving the film cuts. Offer exposure and grain as advanced finishing; bloom is available in the complete catalog."
+    },
+    "dot": {
+      "controls": [
+        "actingStrength",
+        "lensMotion",
+        "characterScale",
+        "glowStrength",
+        "colorContrast",
+        "colorSaturation"
+      ],
+      "panels": [
+        {
+          "id": "character",
+          "title": "Character acting",
+          "category": "character",
+          "controls": [
+            "actingStrength"
+          ],
+          "advanced": false
+        },
+        {
+          "id": "lens",
+          "title": "Character camera",
+          "category": "lens",
+          "controls": [
+            "lensMotion"
+          ],
+          "advanced": false
+        },
+        {
+          "id": "character-size",
+          "title": "Character framing",
+          "category": "character",
+          "controls": [
+            "characterScale"
+          ],
+          "advanced": true
+        },
+        {
+          "id": "finishing",
+          "title": "Character glow",
+          "category": "compositing",
+          "controls": [
+            "glowStrength",
+            "colorContrast",
+            "colorSaturation"
+          ],
+          "advanced": true
+        }
+      ],
+      "rationale": "Prioritize character acting and camera motion. Character size and glow are optional advanced adjustments for the existing composition."
+    },
+    "replay": {
+      "controls": [
+        "cardSpread",
+        "cardTilt",
+        "finishPush",
+        "threadStrength",
+        "colorContrast",
+        "colorSaturation"
+      ],
+      "panels": [
+        {
+          "id": "graphics",
+          "title": "Editorial cards",
+          "category": "graphics",
+          "controls": [
+            "cardSpread",
+            "cardTilt"
+          ],
+          "advanced": false
+        },
+        {
+          "id": "lens",
+          "title": "Final composition",
+          "category": "lens",
+          "controls": [
+            "finishPush"
+          ],
+          "advanced": false
+        },
+        {
+          "id": "connections",
+          "title": "Connecting threads",
+          "category": "compositing",
+          "controls": [
+            "threadStrength",
+            "colorContrast",
+            "colorSaturation"
+          ],
+          "advanced": true
+        }
+      ],
+      "rationale": "Prioritize card spacing/tilt and the final composition push. Keep connecting threads advanced and leave card size in the complete catalog to protect the editorial lockup."
+    }
+  }
+}

@@ -4,18 +4,37 @@
       "film": "PULSE",
       "file": "demo/pulse-1080.mp4",
       "poster": "demo/pulse-poster.jpg",
-      "sha256": "806955894dc4443eff0eb548cb66c2561a15f8c76c886b0476d508c23a5b6688",
-      "bytes": 11061674,
+      "sha256": "4ac3d5f87e28515400d768898c8d925a73d04b81e7e3f6eb533fcabe4055dc7e",
+      "bytes": 11419849,
       "width": 1920,
       "height": 1080,
       "fps": 30,
-      "duration": 13.9,
-      "framecount": 417,
+      "duration": 12.9,
+      "framecount": 387,
       "videoCodec": "h264",
       "audioCodec": "aac",
-      "temporalSamples": 48,
-      "version": "cinematic-v15-soft-sfx",
-      "posterTime": 10.45
+      "version": "cycles-v1-opening-revised",
+      "posterTime": 2.53,
+      "engine": "Blender Cycles",
+      "samples": 96,
+      "denoising": true,
+      "motionBlurShutter": 0.5,
+      "sourceRanges": [
+        {
+          "start": 6.7,
+          "end": 12.9
+        },
+        {
+          "start": 0,
+          "end": 6.7
+        }
+      ],
+      "adaptations": [
+        "Native camera/animation/material geometry; shader adaptations and native material translation",
+        "PULSE LED per-instance color/emission preserved",
+        "Filmic vs original AgX; custom fisheye/chromatic aberration/DOF compositing not reproduced",
+        "Existing audio reused; Three.js video not re-rendered"
+      ]
     },
     {
       "film": "CAMERA",

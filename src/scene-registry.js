@@ -1,3 +1,4 @@
+import {studyControlDefinitions} from './engine/scene-capabilities.js';
 import {config} from './config.js';
 /** Browser/Node-safe scene metadata shared by viewer, CLI and export service. */
 export const sceneRegistry={
@@ -11,7 +12,7 @@ export const sceneRegistry={
 export const sceneIds=Object.keys(sceneRegistry);
 export const isNewScene=id=>['dot','pulse','camera','replay','starter'].includes(id);
 export function sceneConfig(id='bax'){if(!sceneRegistry[id])throw Error('Unknown scene: '+id);return {...config,...sceneRegistry[id],scene:id,id};}
-export const newStudioProjects=Object.entries(sceneRegistry).filter(([id])=>isNewScene(id)).map(([id,s])=>({id,title:s.title,kind:s.kind,subtitle:'Editable reference study',duration:s.duration,controls:[],presets:[{id:'original',label:'Original',values:{}}],moments:s.cuts.filter(t=>t<s.duration).map((time,i)=>({time,label:String(i+1).padStart(2,'0')}))}));
+export const newStudioProjects=Object.entries(sceneRegistry).filter(([id])=>isNewScene(id)).map(([id,s])=>({id,title:s.title,kind:s.kind,subtitle:'Editable reference study',duration:s.duration,controls:studyControlDefinitions[id]??[],presets:[{id:'original',label:'Original',values:{}}],moments:s.cuts.filter(t=>t<s.duration).map((time,i)=>({time,label:String(i+1).padStart(2,'0')}))}));
 
 const starter=newStudioProjects.find(p=>p.id==='starter');
 starter.subtitle='Reusable materials, lighting, hardware and motion';

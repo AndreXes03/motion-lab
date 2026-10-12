@@ -2,103 +2,60 @@
 
 # Motion Lab
 
-**Code-driven rendering for vibe motion.**
+**Make motion. Keep control.**
 
-2D motion graphics and 3D scenes: code, preview and local rendering.
+An open-source studio for making editable 2D, hybrid and 3D motion with code, scene-specific tools and local rendering.
 
-![Three.js](https://img.shields.io/badge/Three.js-WebGL-111111?style=flat-square)
-![Procedural motion](https://img.shields.io/badge/Motion-procedural-173bd5?style=flat-square)
-![MIT](https://img.shields.io/badge/Code-MIT-f34a13?style=flat-square)
-
-[Demo](https://andrexes03.github.io/motion-lab/) · [Try the studio](https://andrexes03.github.io/motion-lab/studio/) · [Setup](#setup) · [Architecture](docs/ARCHITECTURE.md) · [Docs](docs/README.md)
+[See the films](https://andrexes03.github.io/motion-lab/) · [Open the browser studio](https://andrexes03.github.io/motion-lab/studio/) · [Setup](#run-motion-lab-locally) · [Guides](docs/README.md)
 
 </div>
 
-Work with Codex or Claude on scenes, formulas and JSON recipes, then inspect the result in the viewer. Camera, materials and timing remain editable: precise changes do not require another prompt-based video generation.
+Build a scene with your coding agent. Shape its motion, lens, materials, lighting and grade in Motion Lab. The agent works on the same scene code and recipe; the studio gives you a visual way to direct the next pass.
 
-## Four final films
+[![PULSE — Blender Cycles](demo/pulse-poster.jpg)](https://andrexes03.github.io/motion-lab/demo/pulse-1080.mp4)
 
-Free, open-source Motion Lab: editable scenes, camera and sound, rendered locally from code.
+PULSE · Blender Cycles · 1080p · 30 fps · 12.9 seconds. Click the frame to watch the film.
 
-| PULSE · 3D · 13.9 s | CAMERA · 3D · 15.4 s |
-| --- | --- |
-| [![PULSE](demo/pulse-poster.jpg)](https://andrexes03.github.io/motion-lab/#pulse) | [![CAMERA](demo/camera-poster.jpg)](https://andrexes03.github.io/motion-lab/#camera) |
-| [Watch](https://andrexes03.github.io/motion-lab/#pulse) · [1080p MP4](demo/pulse-1080.mp4) | [Watch](https://andrexes03.github.io/motion-lab/#camera) · [1080p MP4](demo/camera-1080.mp4) |
+## Made in Motion Lab
 
-| DOT · Hybrid · 16 s | REPLAY · Hybrid · 15 s |
-| --- | --- |
-| [![DOT](demo/dot-poster.jpg)](https://andrexes03.github.io/motion-lab/#dot) | [![REPLAY](demo/replay-poster.jpg)](https://andrexes03.github.io/motion-lab/#replay) |
-| [Watch](https://andrexes03.github.io/motion-lab/#dot) · [1080p MP4](demo/dot-1080.mp4) | [Watch](https://andrexes03.github.io/motion-lab/#replay) · [1080p MP4](demo/replay-1080.mp4) |
+Six films show 2D graphics, hybrid compositions and detailed 3D scenes. Each one has its own source and editable recipe.
 
-All four films: **1920 × 1080 · 30 fps · sound design**. Hybrid combines 3D objects with 2D graphics and typography. PULSE/CAMERA include separately licensed music; see [credits](THIRD_PARTY.md).
+| Film | Scene | Watch | Source |
+| --- | --- | --- | --- |
+| PULSE | Sculptural sound objects, tactile materials and rhythmic 3D motion | [Film](https://andrexes03.github.io/motion-lab/#pulse) · [1080p MP4](demo/pulse-1080.mp4) | [Scene](src/scenes/pulse-demo.js) |
+| CAMERA | Miniature worlds, optical hardware and an assembling diaphragm | [Film](https://andrexes03.github.io/motion-lab/#camera) · [1080p MP4](demo/camera-1080.mp4) | [Scene](src/scenes/afterhours-demo.js) |
+| DOT | Character performance across 2D layouts and 3D forms | [Film](https://andrexes03.github.io/motion-lab/#dot) · [1080p MP4](demo/dot-1080.mp4) | [Scene](src/scenes/mascot-demo.js) |
+| PLAY.EXE | A floating player, extruded lettering and a rhythmic city | [Film](https://andrexes03.github.io/motion-lab/#pop) · [1080p MP4](demo/pop-motion.mp4) | [Scene](src/scenes/pop-demo.js) |
+| REPLAY | Editorial illustration, typography and spatial movement | [Film](https://andrexes03.github.io/motion-lab/#replay) · [1080p MP4](demo/replay-1080.mp4) | [Scene](src/scenes/replay-demo.js) |
+| Objects in play | A radio, gyroscope and emblem in a cinematic 3D studio | [Film](https://andrexes03.github.io/motion-lab/#bax) · [MP4](demo/objects-in-play.mp4) | [Scene](src/scenes/bax.js) |
 
-## Pop Motion / 2D + 3D
+The PULSE, CAMERA, DOT and REPLAY films are 1920 × 1080 at 30 fps with sound design. PULSE and CAMERA include separately licensed music; see [credits](THIRD_PARTY.md).
 
-[![PLAY.EXE](demo/pop-hero.jpg)](https://andrexes03.github.io/motion-lab/?film=pop#demo)
+## Shape the scene
 
-A floating player, extruded lettering, comic halftones and a rhythmic city. **10 s · 1080p · 30 fps · 120 BPM.** Select PLAY.EXE in the viewer. [Video](demo/pop-motion.mp4) · [Recipe](demo/pop-motion.project.json) · [Tools and limitations](docs/POP_MOTION.md).
+Every registered scene has an agent-selected set of controls and panel layout, chosen for its actual motion, lens, lights, materials or compositing needs. A complete control catalog remains available for deeper adjustments. The editor displays original BAX keyframes and evaluated camera paths for procedural scenes, without changing the scene on opening. Curated light, compositing and interpolation presets are scene-specific and limited to four choices per palette.
 
-## Procedural motion
+Motion groups let you adjust a camera or object within one chosen shot window. Each target keeps its own curve and local timing; other groups, captions, cuts and total duration remain intact. Save versions, compare changes against a reference and undo or redo edits as you refine the scene.
 
-![Procedural motion graphics](demo/procedural-showcase.gif)
+The [product starter](https://andrexes03.github.io/motion-lab/studio/?scene=starter) includes reusable materials, lights, hardware and camera motion. See the [product kit guide](docs/PRODUCT_KIT.md) to build on those parts.
 
-Flow fields, a parametric torus, 720 transforming elements, waves and tunnels. Original techno at 132 BPM, with movement-driven SFX.
+## Preview, render and sound
 
-[MP4](demo/procedural-techno.mp4) · [Live example](https://andrexes03.github.io/motion-lab/examples/procedural-field.html) · [Code and formulas](src/scenes/procedural-demo.js)
+The interactive browser preview uses Three.js for 3D and Canvas for procedural 2D. Auto adjusts preview resolution as you work; Fast, Balanced and Sharp are available when you want a manual choice. These settings affect the preview only. The public studio downloads PNG frames and JSON recipes; it does not render videos.
 
-After Effects and Cinema 4D have procedural tools too. Here, the logic lives directly in source code, readable and editable by you and your coding agent.
+The local app renders videos with Three.js as its standard route. Blender Cycles is an optional local path currently supported for PULSE; it is scene-specific and requires a successful local capability check. Other scenes need their own conversion and visual review. Mixed-render jobs combine prepared local image or frame-sequence inputs through an explicit compositing plan in Studio; choosing “mixed” alone does not create those inputs. See [renderer selection](docs/RENDERER_SELECTION.md) and [compositing](docs/COMPOSITING.md).
 
-## Start your next scene
+Motion Lab also supports procedural music and movement-driven 2D or 3D sound effects. Read the [sound design guide](docs/SOUND_DESIGN.md).
 
-[Open the product starter](https://andrexes03.github.io/motion-lab/studio/?scene=starter) · [Product kit guide](docs/PRODUCT_KIT.md)
+## For the curious
 
-Reusable studio materials and lights, existing CAMERA/PULSE models, configurable optical/mechanical parts, camera travel and contact recoil. The starter includes editable colors, lighting and lens controls. Import from `src/product-kit/index.js`; keep your own subject, timing and art direction.
+Scenes are source code plus project parameters. The renderer samples a requested absolute time, making a frame inspectable and repeatable. Browse [scene modules](src/scenes/), [engine code](src/engine/) and [project recipes](project/).
 
-## Reusable 3D baseline
+An optional [path-traced still experiment](docs/PHOTOREALISM.md) studies PULSE materials with reflected light. It is a separate image-render path, not the motion-film renderer or a native After Effects or Cinema 4D project conversion.
 
-The PULSE and CAMERA studio look is available as a [studio baseline](docs/3d-lookdev.md): wide optics, neutral shadows, rim lighting, restrained bloom, matte plastic/rubber/metal materials and temporal motion blur. Start new scenes from these helpers and preview before rendering at 1080p.
+## Run Motion Lab locally
 
-For detailed 3D exports, `--quality premium` selects 1080p, 48 temporal samples and resumable frames. For finer edges, `--quality supersampled` renders at 1440p for 1080p delivery. Use the clean/clay boards before a full render; see the [iteration workflow](docs/3d-lookdev.md#shorter-iteration-loop).
-
-The repository includes a [product-film skill](.agents/skills/motion-lab-product-film/SKILL.md) for coding agents: model construction, lens choreography, impact recoil, efficient review and verified export. Codex discovers it from `.agents/skills`; other agents can read the same guide directly.
-
-## Photorealism / experimental
-
-[![Photorealism: PULSE headphones rendered with path tracing](demo/photorealism.jpg)](https://andrexes03.github.io/motion-lab/#photorealism)
-
-An optional still renderer: multi-bounce light and reflections, using the PULSE model with a detailed ceramic grille, rubber, leather and metal. A 114° macro view brings the finishes forward. **2880 × 2160 · 2048 samples · 8 bounces.** Includes a same-scene raster comparison and a reproducible export command. Clearcoat is disabled in this experiment due to a compatibility issue; the current films and studio renderer are unchanged.
-
-[Render your own still](docs/PHOTOREALISM.md) · [Compare the images](https://andrexes03.github.io/motion-lab/#photorealism) · [Full PNG](demo/photorealism.png)
-
-## Studio
-
-![Scene, timeline and controls](demo/ui-studio-v2.jpg)
-
-Dark translucent panels with the current scene blurred behind the workspace. Contextual object, camera and lighting controls, undo/redo and a before/after comparison. Expand the Code panel to inspect live parameters or scene source.
-
-[Try the English browser studio](https://andrexes03.github.io/motion-lab/studio/): preview scenes, adjust controls, save versions in your browser, download PNG frames and JSON recipes. Video rendering and project-file management require the local app.
-
-![Export settings](demo/ui-export.png)
-
-MP4, WebM and ProRes export with adjustable resolution, frame rate, samples and bitrate.
-
-**Compositing:** 3D depth of field, ambient occlusion, bloom, highlight control, chromatic aberration, vignette and lens distortion. Grain is applied after motion blur; 2D overlays stay above the render. [Source](src/engine/composite.js).
-
-**Sound design:** movement-driven 2D/3D SFX, separate modules and procedural music with automatic or manual BPM. [Guide](docs/SOUND_DESIGN.md).
-
-## 3D demo
-
-[![Objects in play](demo/hero.jpg)](https://andrexes03.github.io/motion-lab/)
-
-Objects in play tests lighting, camera movement and kinematics.
-
-**1080p · 25 fps · 24 samples · target 6 Mb/s · modular SFX.**
-
-[Watch in browser](https://andrexes03.github.io/motion-lab/) · [MP4](demo/objects-in-play.mp4) · [Recipe](demo/objects-in-play.project.json) · [More demos](demo/README.md)
-
-## Setup
-
-Tested on **macOS, Node.js 22.12+ and Google Chrome**. Internet is needed for the first installation.
+The current setup is tested on macOS with Node.js 22.12 or newer and Google Chrome. Internet access is needed for the first installation.
 
 ```sh
 git clone https://github.com/AndreXes03/motion-lab.git
@@ -107,27 +64,18 @@ npm ci
 npm run viewer
 ```
 
-Open **http://127.0.0.1:4173/**. Viewer exports go to Downloads. The static build has fewer features; Windows and Linux require adaptation and are untested. [Usage and export](docs/USAGE.md).
+Open <http://127.0.0.1:4173/>. Video renders go to Downloads. Windows and Linux have not been validated. Read [usage and export details](docs/USAGE.md) and [supported setup](docs/VALIDATION.md).
 
-Render the demo:
+## Project guides
 
-```sh
-npm run export -- --snapshot demo/objects-in-play.project.json --out renders/film.mp4 --width 1920 --height 1080 --fps 25 --temporal-samples 24 --bitrate-mbps 6
-```
-
-## Explore
-
-| Area | Source / guide |
+| Topic | Guide |
 | --- | --- |
-| Rendering, time and camera | [Engine](src/engine/) · [Architecture](docs/ARCHITECTURE.md) |
-| Compositions and objects | [Scenes](src/scenes/) · [Components](src/components/) |
-| Interface and parameters | [Viewer](src/viewer/) · [JSON recipes](project/README.md) |
-| Rendering and checks | [Scripts](scripts/README.md) |
-| Working with agents | [Workflow](docs/AGENT_WORKFLOW.md) |
-| All guides | [Documentation](docs/README.md) |
+| Scene architecture and renderer | [Architecture](docs/ARCHITECTURE.md) · [Renderer selection](docs/RENDERER_SELECTION.md) |
+| Product scenes and reusable parts | [Product kit](docs/PRODUCT_KIT.md) · [Scene source](src/scenes/) |
+| Render and compositing workflow | [Usage](docs/USAGE.md) · [Compositing](docs/COMPOSITING.md) · [Scripts](scripts/README.md) |
+| Sound | [Sound design](docs/SOUND_DESIGN.md) |
+| Coding-agent workflow | [Agent workflow](docs/AGENT_WORKFLOW.md) · [Product-film skill](.agents/skills/motion-lab-product-film/SKILL.md) |
+| Checks and limitations | [Validation](docs/VALIDATION.md) |
+| Licenses | [Third-party assets](THIRD_PARTY.md) |
 
-## Status and licenses
-
-In development. glTF import is not implemented. Pixel differences were found after switching 2D → 3D → 2D: reopen the scene before comparisons. [Checks and limits](docs/VALIDATION.md).
-
-Code by Andrea Salvo, [MIT](LICENSE). Demo trademarks and assets retain their respective rights. FFmpeg binaries are not included. [Dependencies and notices](THIRD_PARTY.md).
+Created by Andrea Salvo. Source code is available under the [MIT License](LICENSE). Demo trademarks and third-party assets retain their respective rights. FFmpeg binaries are not included.

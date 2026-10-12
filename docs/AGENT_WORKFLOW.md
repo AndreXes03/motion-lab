@@ -27,3 +27,10 @@ Keep sources, recipes and tracks. Personal references, local versions, intermedi
 ## Default for new 3D work
 
 Start from the approved wide/contrast baseline in [3d-lookdev.md](3d-lookdev.md), using `studio-baseline.js` and `createStudioMaterials`. Use matte plastic, rubber and metal deliberately, neutral shadow fill, restrained scene bloom, and temporal motion blur. Preserve existing approved scenes. Render a few frames and a 540p preview before a final export; require the user's creative approval before replacing approved films.
+
+
+## Required scene authoring contract
+
+Every new or revised video needs implemented controls, agent-selected category panels and rationale, independent camera/object motion groups, and a supported renderer intent. Follow [AGENTS.md](../AGENTS.md) and [Scene controls and motion curves](ADAPTIVE_CONTROLS.md). Inspect with `controls.mjs catalog`, validate selections with `plan` and profiles with `preset-plan`, then save only the chosen scene through `set` or `preset-set`. Keep at most four preset variants per scene/category and at most 15 native values in a lighting/compositing profile. Preserve unrelated scenes and the approved default picture.
+
+Preview quality never changes final output or renderer choice. Select a final-render recommendation within implemented adapter support, verify local preflight separately, and record native-frame evidence before claiming a working conversion. [Renderer selection](RENDERER_SELECTION.md) owns the policy/capability contract; Cycles currently supports PULSE, while Mixed requires prepared local inputs. Run the browser-free prebuild contracts, focused browser checks and any real native proof independently. Technical success and creative approval remain distinct.

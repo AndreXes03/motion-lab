@@ -18,3 +18,7 @@ project/references/
 
 # Also ignore a local dependency symlink used by isolated checkouts.
 /node_modules
+
+# Local review outputs and the internal task plan.
+outputs/
+/project/next-task.json

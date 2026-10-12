@@ -3,6 +3,8 @@ import {replayPaperFormat} from './replay-paper-format.js';
 import {createReplayIllustrations} from './replay-illustrations.js';
 import {replayCardPose,replayHeroCue,replayHeadlineWeight,replayPosterLine} from './replay-motion-direction.js';
 import {createReplayCardWorld} from './replay-card-world.js';
+import {replayCameraPose} from './replay-camera-rail.js';
+import {sampleAnimationGroupTime} from '../engine/animation-groups.js';
 // Editable editorial nostalgia film. Absolute-time animation; no motion blur.
 export const replayConfig={duration:15,fps:30,width:1920,height:1080,seed:16};
 export const replayCuts=[0,2.4,5.4,7.7,9.4,11.4,13.2];
@@ -69,22 +71,57 @@ const smoothGlyph=smoother;
 const cardImages=new Map();
 function cardImage(id){if(!cardImages.has(id)){const image=document.createElement('canvas');const [w,h]=replayPaperFormat(id).map(x=>x*250);image.width=Math.round(w*3);image.height=Math.round(h*3);const ctx=image.getContext('2d');ctx.scale(3,3);ctx.translate(w/2,h/2);art(ctx,id,false,[w,h]);cardImages.set(id,image);}return cardImages.get(id);}
 let cardWorld;
-function drawCards(c,chapter,u,t){
- const poses=Array.from({length:21},(_,id)=>replayCardPose(id,t));
+const replayControlDefaults={cardSpread:1,cardTilt:1,cardScale:1,threadStrength:1,finishPush:1};
+function replayControls(parameters){
+ const source=parameters.sceneControls??{},bounds={cardSpread:[.75,1.25],cardTilt:[0,1.5],cardScale:[.8,1.2],threadStrength:[0,1.5],finishPush:[0,1.5]};
+ return Object.fromEntries(Object.entries(replayControlDefaults).map(([key,fallback])=>[key,Number.isFinite(source[key])?Math.max(bounds[key][0],Math.min(bounds[key][1],source[key])):fallback]));
+}
+function controlledCardPose(id,t,controls){
+ const pose=replayCardPose(id,t);
+ if(controls.cardSpread!==1){pose.x=960+(pose.x-960)*controls.cardSpread;pose.y=540+(pose.y-540)*controls.cardSpread;}
+ if(controls.cardTilt!==1){pose.rotation*=controls.cardTilt;pose.yaw*=controls.cardTilt;pose.pitch*=controls.cardTilt;}
+ if(controls.cardScale!==1)pose.scale*=controls.cardScale;
+ return pose;
+}
+function finishingTravel(t,strength=1){const finish=Math.max(0,t-11.4),ramp=smoother(finish/.32);return finish*ramp*strength;}
+function cameraPoseAt(time,parameters={}){
+ const outputTime=replayEditTime(time),cameraTime=replayEditTime(sampleAnimationGroupTime(parameters,'camera',time));
+ return {pose:replayCameraPose(cameraTime),outputTime,cameraTime,travel:outputTime>=11.4?finishingTravel(cameraTime,replayControls(parameters).finishPush):0};
+}
+const cameraChannels=[
+ ...['x','y','z'].map(axis=>({id:`camera.position.${axis}`,label:`Camera position ${axis.toUpperCase()}`,unit:'scene units'})),
+ ...['x','y','z'].map(axis=>({id:`camera.target.${axis}`,label:`Camera target ${axis.toUpperCase()}`,unit:'scene units'})),
+ {id:'camera.roll',label:'Camera roll',unit:'rad'},
+ {id:'composition.center.x',label:'Final composition center X',unit:'px'},
+ {id:'composition.center.y',label:'Final composition center Y',unit:'px'},
+ {id:'composition.zoom',label:'Final composition scale',unit:'scale'}
+];
+function drawCards(c,chapter,u,t,controls,cameraTime=t,outputTime=t){
+ const poses=Array.from({length:21},(_,id)=>controlledCardPose(id,t,controls));
  cardWorld??=createReplayCardWorld(cardImage,id=>illustrations.getModel(id));
- cardWorld.render(c,poses,t,replayHeadlineWeight(1,t));
+ cardWorld.render(c,poses,t,replayHeadlineWeight(1,outputTime)*controls.threadStrength,cameraTime);
 }
 function reveal(c,u,draw,weight=1){const previous=textReveal;textReveal=smoother(u/.45)*weight;draw();textReveal=previous;}
-export function createReplayDemo(){illustrations??=createReplayIllustrations();return {config:replayConfig,nodesAt(t){return [{id:'record',type:'circle',x:960+Math.sin(t)*300,y:540,radius:120,fill:C.red,sound:true}]},render(c,t,p={},w=1920,h=1080){
- t=replayEditTime(t);artTime=t;c.save();if(w!==1920||h!==1080)c.scale(w/1920,h/1080);
+export function createReplayDemo(){illustrations??=createReplayIllustrations();return {config:replayConfig,animationChannels(groupId){return groupId==='camera'?cameraChannels.map(channel=>({...channel})):[];},animationState(groupId,time,parameters={}){if(groupId!=='camera')return{};const {pose,travel}=cameraPoseAt(time,parameters);return{'camera.position.x':pose.position[0],'camera.position.y':pose.position[1],'camera.position.z':pose.position[2],'camera.target.x':pose.target[0],'camera.target.y':pose.target[1],'camera.target.z':pose.target[2],'camera.roll':pose.roll,'composition.center.x':960-22*travel,'composition.center.y':540-7*travel,'composition.zoom':1+.10*travel};},nodesAt(t,p={}){
+ const controls=replayControls(p),cardsTime=sampleAnimationGroupTime(p,'cards',t),cameraTime=sampleAnimationGroupTime(p,'camera',t),node={id:'record',type:'circle',x:960+Math.sin(cardsTime)*300,y:540,radius:120,fill:C.red,sound:true};
+ // Retain the established sound proxy at defaults; expose layout edits using the
+ // same centre and scale gains as the rendered collection.
+ if(controls.cardSpread!==1)node.x=960+(node.x-960)*controls.cardSpread;
+ if(controls.cardScale!==1)node.radius*=controls.cardScale;
+ if(controls.finishPush!==1||cameraTime!==t){const original=finishingTravel(replayEditTime(t)),edited=finishingTravel(replayEditTime(cameraTime),controls.finishPush),relative=(1+.1*edited)/(1+.1*original);node.x=960-22*(edited-original)+(node.x-960)*relative;node.y=540-7*(edited-original);node.radius*=relative;}
+ return [node];
+},render(c,t,p={},w=1920,h=1080){
+ const controls=replayControls(p);
+ const cardsTime=replayEditTime(sampleAnimationGroupTime(p,'cards',t)),cameraTime=cameraPoseAt(t,p).cameraTime;
+ t=replayEditTime(t);artTime=cardsTime;c.save();if(w!==1920||h!==1080)c.scale(w/1920,h/1080);
  // A continuous finishing push carries the complete composition, including
  // its type and record, so the final lockup keeps travelling as one unit.
- const finish=Math.max(0,t-11.4),ramp=smoother(finish/.32),travel=finish*ramp,push=1+.10*travel;
+ const finish=Math.max(0,t-11.4),travel=finishingTravel(cameraTime,controls.finishPush),push=1+.10*travel;
  if(finish>0){c.translate(960-22*travel,540-7*travel);c.scale(push,push);c.translate(-960,-540);}
  const chapter=Math.max(0,replayCuts.findLastIndex(x=>t>=x)),u=t-replayCuts[chapter];
- rect(c,0,0,1920,1080,C.cream);const hero=replayHeroCue(t);if(t>=11.4){disc(c,hero.iris.x,hero.iris.y,hero.iris.radius,C.red);if(t>=13.2)disc(c,hero.creamIris.x,hero.creamIris.y,hero.creamIris.radius,C.cream);}
+ rect(c,0,0,1920,1080,C.cream);const hero=replayHeroCue(cardsTime);if(t>=11.4){const mask=replayHeroCue(t);disc(c,mask.iris.x,mask.iris.y,mask.iris.radius,C.red);if(t>=13.2)disc(c,mask.creamIris.x,mask.creamIris.y,mask.creamIris.radius,C.cream);}
  // All cards survive the edit: a shared scene graph reflows them between layouts.
- drawCards(c,chapter,u,t);
+ drawCards(c,chapter,u,cardsTime,controls,cameraTime,t);
  if(replayHeadlineWeight(0,t)>0)reveal(c,t,()=>{type(c,'2016',960,490,250,C.red,'Arial','900','center');type(c,'to 2026',960,720,160,C.ink,'Georgia','italic','center')},replayHeadlineWeight(0,t));
  if(replayHeadlineWeight(1,t)>0)reveal(c,t-2.4,()=>{headline(c,'Ten years,',115,905,142);type(c,'one thread.',115,1035,142,C.ink,'"Bodoni 72", Georgia','italic')},replayHeadlineWeight(1,t));
  if(replayHeadlineWeight(2,t)>0)reveal(c,t-5.4,()=>type(c,"Summer ’16",890,580,96,'#76736d','"Bodoni 72", Georgia','italic','center'),replayHeadlineWeight(2,t));
@@ -98,14 +135,14 @@ export function createReplayDemo(){illustrations??=createReplayIllustrations();r
   const start=7.7+j*.045,duration=.82+j*.04;
   // Preserve the entire card-relative object transform at the exact instant
   // of extraction. Different owners follow independent, tangent-matched paths.
-  const pose=spliceMotion(tt=>replayCardPose(id,tt),target,t,start,duration);
-  const arc=arcEnvelope((t-start)/duration);
+  const pose=spliceMotion(tt=>controlledCardPose(id,tt,controls),target,cardsTime,start,duration);
+  const arc=arcEnvelope((cardsTime-start)/duration);
   if(id===8){pose.x-=35*arc;pose.y-=55*arc;}
   if(id===3){pose.x-=150*arc;pose.y+=85*arc;pose.z+=80*arc;}
   if(id===11){pose.x+=160*arc;pose.y-=30*arc;pose.z-=25*arc;}
-  pose.screenX=hole.x;pose.screenY=hole.y+dy;pose.screenScale=targetScale;pose.screenLock=smoother((t-start)/duration);
+  pose.screenX=hole.x;pose.screenY=hole.y+dy;pose.screenScale=targetScale;pose.screenLock=smoother((cardsTime-start)/duration);
   extracted.push(pose);
- }cardWorld.renderObjects(c,extracted,t);c.restore();
+ }cardWorld.renderObjects(c,extracted,cardsTime);c.restore();
  }
  if(t>=9.4&&t<11.7){
   c.save();c.translate(-950*smoother((t-11.35)/.3),-14*smoother((t-11.35)/.3));
@@ -116,10 +153,10 @@ export function createReplayDemo(){illustrations??=createReplayIllustrations();r
  if(t>=11.4){
   const rec=hero.record;
   // Grooves and orbit shrink physically into the label. No broad ghost dissolve.
-  const projected=cardWorld.renderRecord(c,hero,t);
+  const projected=cardWorld.renderRecord(c,hero,cardsTime);
   if(projected){hero.record={...hero.record,x:projected.x,y:projected.y};hero.labelRadius*=projected.radius/Math.max(.001,hero.blackRadius);}
 
-  if(t<13.95){c.save();c.translate(rec.x,rec.y);c.rotate((t-11.4)*.18);for(let j=0;j<7;j++){c.save();c.rotate(j*TAU/7);type(c,'replay',0,-hero.orbitRadius,Math.max(.01,hero.orbitTypeSize*smoother((t-11.6)/.42)),C.ink,'Arial','900','center');c.restore()}c.restore();}
+  if(t<13.95){c.save();c.translate(rec.x,rec.y);c.rotate((cardsTime-11.4)*.18);for(let j=0;j<7;j++){c.save();c.rotate(j*TAU/7);type(c,'replay',0,-hero.orbitRadius,Math.max(.01,hero.orbitTypeSize*smoother((cardsTime-11.6)/.42)),C.ink,'Arial','900','center');c.restore()}c.restore();}
  }
  if(t>=13.2){
   c.font='900 240px Arial';const word='replay',whole=c.measureText(word).width;let cursor=960-whole/2;

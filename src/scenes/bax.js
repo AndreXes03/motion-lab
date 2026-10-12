@@ -1,3 +1,4 @@
+import {sampleAnimationGroupTime} from '../engine/animation-groups.js';
 import {createObjectEditor} from '../engine/object-editor.js';
 import * as T from 'three';
 import {createStudio} from '../engine/studio.js';
@@ -21,7 +22,8 @@ export function createScene(renderer,config){
  editObjects.restore();
  const t=clamp(time,0,config.duration),look=parameters.look;studio.applyLook(look);camera.fov=look.camera.fov;camera.updateProjectionMatrix();
  const activeMotion=parameters.motion||motion;
- applyTracks(scene,camera,activeMotion,t,look.motion.amount);
+ const clockForTarget=target=>sampleAnimationGroupTime(parameters,target.startsWith('camera.')?'camera':target.startsWith('bax.gyro.')||target.startsWith('bax.kinetic')?'gyro':target.startsWith('bax.emblem')||target.startsWith('bax.cover.')?'emblem':'radio',t);
+ applyTracks(scene,camera,activeMotion,t,look.motion.amount,clockForTarget);
  // Energy affects object tracks only. Camera tracks keep the authored look.
  const objectMotion=Number.isFinite(parameters.objectMotion)?clamp(parameters.objectMotion,0,1.8):look.motion.amount;
  if(parameters.objectMotion!==undefined)for(const [target,keys] of Object.entries(activeMotion.tracks)){
@@ -30,14 +32,14 @@ export function createScene(renderer,config){
   const suffix=rotationZ?'.rotation.z':target.endsWith('.rotation')?'.rotation':'.position';
   const object=scene.getObjectByName(target.slice(0,-suffix.length));
   if(!object)throw new Error(`Unknown object motion target: ${target}`);
-  const sampled=sampleTrack(keys,t,objectMotion);
+  const sampled=sampleTrack(keys,clockForTarget(target),objectMotion);
   if(rotationZ)object.rotation.z=sampled;else object[suffix.slice(1)].set(...sampled);
  }
  device.plastic.color.set(parameters.shell||config.palette.shell);device.plastic.roughness=look.surface.shellRoughness;device.plastic.bumpScale=look.surface.grainScale;device.orange.color.set(parameters.knob||config.palette.knob);
  device.setDisplay(parameters.display??(t<1.15?'MAKE.':t<2.2?'PLAY.':'BAX.'));
  sign.setText(t<7.5?'IDEAS\nIN PLAY.':'@brand');
- plush.userData.update?.(t,{amount:objectMotion});
- keys.userData.update?.(t,{motion:activeMotion,amount:objectMotion});
+ plush.userData.update?.(sampleAnimationGroupTime(parameters,'emblem',t),{amount:objectMotion});
+ keys.userData.update?.(sampleAnimationGroupTime(parameters,'gyro',t),{motion:activeMotion,amount:objectMotion});
  editObjects.apply(parameters.objectEdits);
  const roots=[device.group,plush,keys,sign.root];for(const root of roots)root.visible=true;
  if(parameters.inspect){
