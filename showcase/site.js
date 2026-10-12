@@ -1,7 +1,9 @@
 const assetPrefix = location.pathname.includes('/showcase/') ? '../' : '';
 const reducedMotion = matchMedia('(prefers-reduced-motion: reduce)');
 const asset = file => {
-  const version = /(?:camera|pulse)-1080\.mp4$/.test(file) || /(?:camera|pulse)-poster\.jpg$/.test(file)
+  const version = /pulse-1080\.mp4$/.test(file)
+    ? '?v=pulse-continuous-audio-blue-end-v2'
+    : /(?:camera|pulse)-1080\.mp4$/.test(file) || /(?:camera|pulse)-poster\.jpg$/.test(file)
     ? '?v=cycles-motion-tools-v1'
     : /ui-(?:tools|motion-groups)\.jpg$/.test(file)
       ? '?v=adaptive-controls-v1'

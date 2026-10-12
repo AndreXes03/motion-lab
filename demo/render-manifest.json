@@ -4,8 +4,8 @@
       "film": "PULSE",
       "file": "demo/pulse-1080.mp4",
       "poster": "demo/pulse-poster.jpg",
-      "sha256": "4ac3d5f87e28515400d768898c8d925a73d04b81e7e3f6eb533fcabe4055dc7e",
-      "bytes": 11419849,
+      "sha256": "1235082db061254bc3f32366dfb364c8bbcc9cedb14937eb9a0dcbb714c4c092",
+      "bytes": 11411541,
       "width": 1920,
       "height": 1080,
       "fps": 30,
@@ -13,7 +13,7 @@
       "framecount": 387,
       "videoCodec": "h264",
       "audioCodec": "aac",
-      "version": "cycles-v1-opening-revised",
+      "version": "cycles-v2-continuous-music-blue-end",
       "posterTime": 2.53,
       "engine": "Blender Cycles",
       "samples": 96,
@@ -33,8 +33,23 @@
         "Native camera/animation/material geometry; shader adaptations and native material translation",
         "PULSE LED per-instance color/emission preserved",
         "Filmic vs original AgX; custom fisheye/chromatic aberration/DOF compositing not reproduced",
-        "Existing audio reused; Three.js video not re-rendered"
-      ]
+        "Existing music and contact stems reused; music continuous, contacts follow the revised scene order; Three.js video not re-rendered"
+      ],
+      "audioRevision": {
+        "musicContinuous": true,
+        "musicSourceRange": [
+          1,
+          13.9
+        ],
+        "internalMusicCuts": 0,
+        "originalClosingHitAndDecayPreserved": true,
+        "contactEffectsFollowSceneOrder": true
+      },
+      "pictureRevision": {
+        "correctedFrame": 387,
+        "sourceFrame": 201,
+        "background": "Original blue stage preserved through the final frame"
+      }
     },
     {
       "film": "CAMERA",
