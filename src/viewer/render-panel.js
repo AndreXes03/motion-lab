@@ -71,7 +71,7 @@ export function mountRenderPanel({container, getScene, getParameters = () => ({}
     status.textContent = `${RENDERER_LABELS[resolved.selectedRenderer]} · ${resolved.runnable ? 'ready locally' : 'local setup required'}`;
     rationale.textContent = [resolved.reason, resolved.availability, ...resolved.warnings.filter(note => note !== resolved.availability)].filter(Boolean).join(' ');
     cost.textContent = resolved.estimateSeconds !== null ? `Estimated render: ${timeLabel(resolved.estimateSeconds)}. ${resolved.estimateNote}` : resolved.estimateNote;
-    if (publicDemo) {status.textContent = 'Local video renderer'; cost.textContent = 'Download PNG frames and JSON recipes here. Render video with the local app.';}
+    if (publicDemo) {status.textContent = 'Browser video · Three.js / Canvas'; cost.textContent = 'Cycles and Mixed final renders require the local app. Those renderer choices can be saved in recipes, but are not run on this site.';}
     const mixed = renderer.querySelector('option[value="mixed"]');
     mixed.textContent = plan.composite.enabled && plan.composite.planFile ? 'Mixed · prepared compositing plan' : 'Mixed · requires a compositing plan';
   }

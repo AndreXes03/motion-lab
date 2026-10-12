@@ -11,5 +11,5 @@ export function createGraphicLens(canvas){
  #include <colorspace_fragment>
  }`});
  const scene=new T.Scene();scene.add(new T.Mesh(new T.PlaneGeometry(2,2),material));const camera=new T.Camera();let width=0,height=0;
- return {apply(ctx,amount=.3){if(!Number.isFinite(amount)||amount<0||amount>.6)throw Error('Fish-eye must be 0..0.6');if(amount===0)return;const w=canvas.width,h=canvas.height;if(w!==width||h!==height){width=w;height=h;renderer.setSize(w,h,false);}texture.needsUpdate=true;material.uniforms.strength.value=amount;material.uniforms.aspect.value=w/h;renderer.render(scene,camera);ctx.save();ctx.setTransform(1,0,0,1,0,0);ctx.drawImage(renderer.domElement,0,0,w,h);ctx.restore();}};
+ return {dispose(){texture.dispose();material.dispose();scene.children[0].geometry.dispose();renderer.dispose();renderer.forceContextLoss();},apply(ctx,amount=.3){if(!Number.isFinite(amount)||amount<0||amount>.6)throw Error('Fish-eye must be 0..0.6');if(amount===0)return;const w=canvas.width,h=canvas.height;if(w!==width||h!==height){width=w;height=h;renderer.setSize(w,h,false);}texture.needsUpdate=true;material.uniforms.strength.value=amount;material.uniforms.aspect.value=w/h;renderer.render(scene,camera);ctx.save();ctx.setTransform(1,0,0,1,0,0);ctx.drawImage(renderer.domElement,0,0,w,h);ctx.restore();}};
 }

@@ -41,7 +41,7 @@ The [product starter](https://andrexes03.github.io/motion-lab/studio/?scene=star
 
 ## Preview, render and sound
 
-The interactive browser preview uses Three.js for 3D and Canvas for procedural 2D. Auto adjusts preview resolution as you work; Fast, Balanced and Sharp are available when you want a manual choice. These settings affect the preview only. The public studio downloads PNG frames and JSON recipes; it does not render videos.
+The interactive browser preview uses Three.js for 3D and Canvas for procedural 2D. Auto adjusts preview resolution as you work; Fast, Balanced and Sharp are available when you want a manual choice. These settings affect the preview only. In browsers with canvas recording support, the public Studio exports browser-rendered video at 720p or 1080p, plus PNG frames and JSON recipes. MP4 is offered when the browser supports its encoder; otherwise the Studio offers WebM. Browser video uses the real-time Three.js/Canvas path. Blender Cycles and prepared Mixed renders remain local-only; those renderer choices can be preserved in a recipe but are not executed on the public site.
 
 The local app renders videos with Three.js as its standard route. Blender Cycles is an optional local path currently supported for PULSE; it is scene-specific and requires a successful local capability check. Other scenes need their own conversion and visual review. Mixed-render jobs combine prepared local image or frame-sequence inputs through an explicit compositing plan in Studio; choosing “mixed” alone does not create those inputs. See [renderer selection](docs/RENDERER_SELECTION.md) and [compositing](docs/COMPOSITING.md).
 

@@ -5,6 +5,7 @@ import {getControlCatalog,readControlValue} from '../src/engine/control-catalog.
 import {getControlPresets,getInterpolationPresets} from '../src/engine/control-presets.js';
 import {validateStudioParameters} from './studio-api.mjs';
 
+const openAdvanced=async page=>{const detail=page.locator('#motion-advanced');if(!await detail.evaluate(node=>node.open))await detail.locator(':scope > summary').click();};
 const output=new URL('../outputs/adaptive-controls-draft/',import.meta.url);
 await mkdir(output,{recursive:true});
 const browser=await chromium.launch({executablePath:'/Applications/Google Chrome.app/Contents/MacOS/Google Chrome',headless:true,args:['--disable-gpu-sandbox']});
@@ -51,13 +52,13 @@ try{
  assert.equal(film.parameters.animation,undefined);
  await page.locator('#motion-create-curve').click();
  await page.locator('#motion-control').selectOption('group:lettering');await page.locator('#motion-create-curve').click();
- await page.locator('#motion-new-key').click();await page.locator('#motion-key-time').fill('.8');await page.locator('#motion-key-value').fill('.3');
+ await openAdvanced(page);await page.locator('#motion-new-key').click();await page.locator('#motion-key-time').fill('.8');await page.locator('#motion-key-value').fill('.3');
  const suggested=getInterpolationPresets('pop').find(preset=>preset.bezier);
  await page.locator('#motion-easing-preset').selectOption(suggested.id);
  const preSave=await recipe();assert.equal(preSave.parameters.animation.groups.lettering.keys.length,2);
  await motion();await page.locator('#motion-save-key').click();await page.locator('#motion-rate').fill('2');await page.locator('#motion-rate').press('Tab');
  let animated=await recipe();assert.equal(animated.parameters.animation.groups.lettering.keys.length,3);assert.equal(animated.parameters.animation.groups.lettering.rate,2);assert.equal(animated.parameters.animation.groups.camera.rate,1);
- await motion();await page.locator('#motion-control').selectOption('group:camera');await page.locator('.motion-key').first().click();await page.locator('#motion-key-ease').selectOption('hold');await page.locator('#motion-save-key').click();
+ await motion();await page.locator('#motion-control').selectOption('group:camera');await page.locator('.motion-key').first().click();await openAdvanced(page);await page.locator('#motion-key-ease').selectOption('hold');await page.locator('#motion-save-key').click();
  animated=await recipe();await validateStudioParameters(animated.parameters);
  const clocks=await page.evaluate(async p=>{const{sampleAnimationGroupTime}=await import('/src/engine/animation-groups.js');const full={camera:sampleAnimationGroupTime(p,'camera',1),lettering:sampleAnimationGroupTime(p,'lettering',1)};delete p.animation.groups.camera;return{full,withoutCamera:{camera:sampleAnimationGroupTime(p,'camera',1),lettering:sampleAnimationGroupTime(p,'lettering',1)}};},structuredClone(animated.parameters));
  assert.equal(clocks.full.camera,0);assert.equal(clocks.withoutCamera.camera,1);assert.equal(clocks.full.lettering,clocks.withoutCamera.lettering);assert.notEqual(clocks.full.lettering,1);

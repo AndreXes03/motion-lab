@@ -35,29 +35,6 @@ select,input[type=text],input:not([type]),input[type=number]{background:#28282d;
 .studio-status{background:#1b1b1e;border-color:#303034}.studio-status>span:nth-child(2){color:#9a9aad}#export-dock,#export-dock>summary{background:#1b1b1e;color:#9e9eb1;border-color:#303034}.delivery p,#export-folder,.empty-exports,.export-row small{color:#9595a8}.export-row{border-color:#303034}.export-row a,#render-result{color:#74b8ff}#render-live small{color:#a0a0b5}.export-popover{background:#28282df7;border-color:#4a4a56;box-shadow:0 12px 45px #0007}.export-popover label{color:#b6b6c8}.export-popover p,.export-popover small{color:#9696aa}
 #advanced-container{background:#25252a;border-color:#454550;box-shadow:0 16px 60px #0008}#advanced-container input,#advanced-container select{background:#1c1c21;color:#e7e7f0}#render-dialog{background:#222226;border-color:#484854;color:#e7e7f0}.render-dialog-head small{color:#9c9caf}.render-dialog-stage{background:#101013}.render-dialog-stage p{color:#9b9bad}.render-dialog-actions a{color:#74b8ff}#code-content{background:#17171c;border-color:#33333e;color:#a3bfdc}#code-description,#code-status{color:#9393aa}#comparison-layer>span,#comparison-current{background:#16161cde;color:#d6d6e6}#comparison-line{background:#d7d7e6}#comparison-line:after{background:#262633;border-color:#8585a0;box-shadow:0 2px 7px #0006}
 
-/* Live scene glass: the preview remains visible across the whole workspace. */
-body{background:#08080b;isolation:isolate}
-#ui-backdrop{display:block;position:fixed;inset:-8%;width:116%;height:116%;z-index:-1;pointer-events:none;filter:blur(48px) saturate(1.25) brightness(.7);opacity:.95;object-fit:cover}
-#app{position:relative;background:linear-gradient(130deg,#09090d33,#09090d55)}
-.app-header{background:#15151b9c;backdrop-filter:blur(22px) saturate(1.2);-webkit-backdrop-filter:blur(22px) saturate(1.2);border-color:#ffffff12}
-.scene-browser{background:#12121885;border-color:#ffffff12}
-.stage-column{background:#08080b25}
-.direction{background:#17171d9c;border-color:#ffffff15}
-.playback{background:#13131980;border-color:#ffffff15}
-.inspector-tabs{background:#17171d96;backdrop-filter:blur(22px);-webkit-backdrop-filter:blur(22px);border-color:#ffffff16}
-.studio-status,#export-dock,#export-dock>summary{background:#11111799;border-color:#ffffff12}
-#panel-divider{background:#ffffff08}
-.viewport{background:#050508c9;border-color:#ffffff1b;box-shadow:0 8px 36px #0005}
-.layout-picker,.presets{background:#07070c55;border-color:#ffffff18}
-button,input[type=number],select,.control output,.scene-glyph,.moments button{background-color:#2828328f;border-color:#ffffff1c}
-.scene-item,.quiet,.text-button,.project-switch select,.layout-picker button,.inspector-tabs button,.presets button{background:transparent}
-.scene-item[aria-pressed=true]{background:#639aff27;border:1px solid #96c7ff22;padding:10px 8px}
-.scene-item:hover{background:#ffffff0b}.scene-item[aria-pressed=true] .scene-glyph{background:#6da7ff22}
-.primary{background:#0a84ff;border-color:#0a84ff}.primary:hover{background:#329aff;border-color:#329aff}
-#code-content{background:#0d1019a6;border-color:#ffffff16}
-.direction{scrollbar-color:#ffffff25 transparent}
-@media(prefers-reduced-transparency:reduce){.app-header,.scene-browser,.direction,.playback,.inspector-tabs,.studio-status{background:#17171def}}
-
 /* Extensible controls and draft motion editor. */
 .inspector-tabs{gap:0}.inspector-tabs button{padding-left:9px;padding-right:9px;white-space:nowrap;font-size:11px}
 .catalog-toolbar{display:grid;gap:8px;margin:18px 0 10px}.catalog-toolbar select,.catalog-toolbar input{width:100%;min-width:0}.catalog-toolbar input[type=search]{background:#2828328f;color:var(--text);border:1px solid #ffffff1c;border-radius:6px;padding:8px;font:11px inherit}.catalog-toolbar small{font-size:10px;color:var(--muted)}
@@ -72,3 +49,22 @@ button,input[type=number],select,.control output,.scene-glyph,.moments button{ba
 #preview-badge{position:absolute;top:14px;left:14px;z-index:2;padding:5px 8px;border:1px solid #ffffff24;border-radius:5px;background:#17191dc9;color:#d3d7de;font-size:9px;letter-spacing:.15px;pointer-events:auto}#preview-badge[hidden]{display:none}
 
 #native-blur-label input{display:inline;width:auto;margin:0 7px 0 0}#preview-badge:focus-visible{outline:2px solid #88c8ff;outline-offset:3px}
+
+/* One clean image; the frame and comparison share the same aspect ratio. */
+.preview-space{container-type:size;flex:1;min-width:0;min-height:0;display:grid;place-items:center;margin:0 24px 24px}
+.preview-space .viewport{flex:none;width:min(100cqw,177.777777cqh);height:auto;aspect-ratio:16/9;margin:0;border:0;border-radius:6px;box-shadow:0 4px 22px #0004}
+.preview-space canvas{width:100%;height:100%;object-fit:contain}
+body.single-composition:not([data-layout=focus]) .workspace{grid-template-columns:minmax(0,1fr) 5px var(--inspector-width)}
+body.single-composition .scene-browser,body.single-composition .mobile-selection-label{display:none}
+body.single-composition[data-layout=controls] .workspace{grid-template-columns:minmax(0,1fr)}
+body.single-composition[data-layout=controls] #panel-divider,body.single-composition[data-layout=controls] .direction{grid-column:1}
+body.single-composition.code-open:not([data-layout=focus]):not([data-layout=controls]) .workspace{grid-template-columns:minmax(0,1fr) 5px min(440px,38vw)}
+.panel-title{height:48px}.panel-title .eyebrow{display:none}.panel-title h2{font-size:12px;margin:0}
+.inspector-tabs{margin-bottom:12px}.inspector-tabs button{padding:10px 5px}.inspector-tabs svg{display:block;margin:auto;width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:1.6;stroke-linecap:round;stroke-linejoin:round}
+.stage-tools #undo-edit,.stage-tools #redo-edit,.stage-tools #compare-toggle,#reset{font-size:19px;width:30px;height:30px;padding:0}
+body[data-panel=motion] .direction{padding-bottom:8px}
+#control-catalog-count,#control-selection-note{display:none}
+#browser-export-cancel{font-size:20px;padding:0;width:28px;height:28px}
+@media(max-width:1100px){.preview-space{margin:0 18px 18px}}
+@media(max-width:850px){body.single-composition:not([data-layout=focus]) .workspace{grid-template-columns:minmax(0,1fr) 5px 285px}body.single-composition[data-layout=controls] .workspace{grid-template-columns:minmax(0,1fr)}}
+@media(max-width:620px){.preview-space{flex:none;height:calc((100vw - 32px)*.5625);margin:0 16px 16px}.stage-column,body[data-layout=controls] .stage-column{min-height:0}.panel-title{height:44px}body.single-composition:not([data-layout=focus]) .workspace{display:flex}body[data-layout=focus] .preview-space{flex:1;min-height:180px}.inspector-tabs{margin-bottom:10px}}

@@ -22,7 +22,7 @@ To capture the studio views from a running preview on port 4194, start Vite with
 
 ## Rendering copy
 
-3D previews use Three.js and procedural 2D uses Canvas, with Auto, Fast, Balanced and Sharp quality settings. The public studio downloads PNG frames and JSON recipes; video, Blender Cycles and file-based compositing run locally. The optional Cycles path is currently scene-specific to PULSE. A mixed render requires prepared image or frame-sequence inputs and a compositing plan.
+3D previews use Three.js and procedural 2D uses Canvas, with Auto, Fast, Balanced and Sharp quality settings. In browsers with canvas recording support, the public Studio exports browser-rendered 720p or 1080p video, PNG frames and JSON recipes. MP4 is offered when the browser supports its encoder; otherwise the Studio offers WebM. Browser video uses the real-time Three.js/Canvas path. Blender Cycles and prepared Mixed renders remain local-only; renderer choices for those paths may be stored in recipes but are not executed on the public site. The optional Cycles path is currently scene-specific to PULSE. A mixed render requires prepared image or frame-sequence inputs and a compositing plan.
 
 ## Publication
 

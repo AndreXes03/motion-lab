@@ -1,0 +1,50 @@
+.motion-panel.motion-interactive .motion-target-row,.motion-panel.motion-interactive .motion-fine-row{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.motion-panel.motion-interactive .motion-target-row .control{min-width:0;margin:0}
+.motion-panel.motion-interactive .motion-target-row label,.motion-panel.motion-interactive .motion-fine-row label{font-size:10px;margin-bottom:4px}
+.motion-panel.motion-interactive .motion-target-row select{font-size:11px;padding:6px 4px}
+.motion-panel.motion-interactive #motion-timing-title{font-size:12px;margin:12px 0 0}
+.motion-panel.motion-interactive #motion-timing-graph{touch-action:none;user-select:none;margin:7px 0 0;overflow:visible}
+.motion-panel.motion-interactive .motion-curve-key{stroke-width:2;cursor:grab}
+.motion-panel.motion-interactive .motion-curve-handle{cursor:move}
+.motion-panel.motion-interactive .motion-curve-key:focus,.motion-panel.motion-interactive .motion-curve-handle:focus{stroke:#fff;stroke-width:3;outline:none}
+.motion-panel.motion-interactive .motion-actions{margin:4px 0;gap:5px}
+.motion-panel.motion-interactive .motion-actions button{flex:1;padding:6px 5px;font-size:10px;white-space:nowrap}
+.motion-panel.motion-interactive .motion-selection{font-size:10px;color:#cdd0df;margin:5px 0}
+.motion-panel.motion-interactive .motion-fine-row{grid-template-columns:1fr 1fr auto;align-items:end;margin:6px 0}
+.motion-panel.motion-interactive .motion-fine-row .control{min-width:0}
+.motion-panel.motion-interactive .motion-fine-row input{padding:6px 5px;font-size:11px}
+.motion-panel.motion-interactive .motion-fine-row button{font-size:10px;padding:7px 6px}
+.motion-panel.motion-interactive .motion-preset-row{display:flex;gap:6px;align-items:end;margin:6px 0}
+.motion-panel.motion-interactive .motion-preset-row .control{flex:1;min-width:0}
+.motion-panel.motion-interactive .motion-preset-row label{font-size:10px;margin-bottom:4px}
+.motion-panel.motion-interactive .motion-preset-row select{font-size:10px;padding:6px 4px}
+.motion-panel.motion-interactive .motion-preset-row button{font-size:10px;padding:7px 6px}
+.motion-panel.motion-interactive>.motion-key-list{display:flex;flex-wrap:wrap;gap:4px;margin:6px 0;max-height:74px}
+.motion-panel.motion-interactive>.motion-key-list .motion-key{font-size:10px;padding:5px 7px}
+.motion-panel.motion-interactive>.motion-empty{font-size:10px;padding:0;margin:7px 0}
+.motion-panel.motion-interactive>small{font-size:10px;margin:7px 0}
+.motion-panel.motion-interactive #motion-create-curve,.motion-panel.motion-interactive #motion-new-key{font-size:10px;padding:6px 7px;margin:0 4px 7px 0}
+.motion-panel.motion-interactive .motion-details{border-top:1px solid var(--line);margin-top:8px;padding-top:8px}
+.motion-panel.motion-interactive .motion-details>summary{cursor:pointer;font-size:11px;padding:4px 0;color:#bcc3d5}
+.motion-panel.motion-interactive .motion-details .motion-key-editor{margin:6px 0;padding:0;border:0}
+.motion-panel.motion-interactive>.control{margin:10px 0}
+.motion-panel.motion-interactive>.context-note{font-size:10px;margin:8px 0}
+.motion-panel.motion-interactive .motion-native-section h3{display:none}
+@media(max-width:620px){.motion-panel.motion-interactive #motion-timing-graph{max-height:200px}.motion-panel.motion-interactive .motion-target-row{gap:6px}.motion-panel.motion-interactive .motion-curve-key{r:5}.motion-panel.motion-interactive .motion-curve-handle{r:8}}
+.motion-panel.motion-interactive .motion-quick-actions button{font-size:19px;line-height:20px;padding:4px 8px}
+.motion-panel.motion-interactive .motion-details>.control{margin:12px 0}
+.motion-panel.motion-interactive .motion-details>.control:has(input[type=checkbox]){display:flex;align-items:center;justify-content:space-between}
+.motion-panel.motion-interactive .motion-details>.control:has(input[type=checkbox]) label{margin:0}
+.motion-panel.motion-interactive .motion-details input[type=checkbox]{width:auto}
+.motion-panel.motion-interactive .motion-target-row .control,.motion-panel.motion-interactive .motion-fine-row .control{grid-column:auto;margin:0}
+.motion-panel.motion-interactive .motion-fine-row label{font-size:10px;margin:0 0 4px}
+.motion-panel.motion-interactive .motion-preset-row .control{margin:0}
+.motion-panel.motion-interactive .motion-actions:has(.motion-selection){align-items:center;gap:8px}
+.motion-panel.motion-interactive .motion-actions:has(.motion-selection) button{flex:0 0 34px;font-size:15px;padding:4px}
+.motion-panel.motion-interactive .motion-selection{flex:1;text-align:center;margin:0;font-size:10px;white-space:nowrap}
+.motion-panel.motion-interactive .motion-details{padding:8px 0 0}
+
+.motion-panel.motion-interactive .motion-quick-actions #motion-create-curve{font-size:19px;line-height:20px;padding:4px 8px;margin:0}
+.motion-panel.motion-interactive .motion-fine-row #motion-save-key{font-size:16px;line-height:17px;min-width:30px;padding:5px 6px}
+.motion-panel.motion-interactive .motion-details{margin-top:4px;padding:4px 0 0}
+.motion-panel.motion-interactive .motion-details>summary{padding:2px 0;line-height:16px}

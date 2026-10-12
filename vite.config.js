@@ -6,6 +6,10 @@ import path from 'node:path';
 import { randomUUID } from 'node:crypto';
 
 export default defineConfig({
+  resolve: { dedupe: ['three'] },
+  // Experimental renderers have their own dependencies. The Studio must use
+  // one Three.js version for both scene matrices and renderer add-ons.
+  optimizeDeps: { entries: ['index.html'] },
   plugins: [{
     name: 'motion-local-project',
     configureServer(server) {

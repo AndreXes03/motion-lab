@@ -22,7 +22,7 @@
     "test:controls:browser": "node scripts/test-adaptive-controls-browser.mjs",
     "test:controls:contract": "node scripts/test-scene-control-contract.mjs",
     "controls": "node scripts/controls.mjs",
-    "prebuild": "node scripts/test-scene-control-contract.mjs && node scripts/test-motion-workflow.mjs && node scripts/test-render-policy.mjs && node scripts/cycles/test.mjs",
+    "prebuild": "node scripts/test-scene-control-contract.mjs && node scripts/test-motion-workflow.mjs && node scripts/test-render-policy.mjs && node scripts/cycles/test.mjs && node scripts/test-browser-export.mjs",
     "test:controls:scenes": "node scripts/test-scene-tools-browser.mjs",
     "test:motion:workflow": "node scripts/test-motion-workflow.mjs",
     "test:render-policy": "node scripts/test-render-policy.mjs",
@@ -33,7 +33,10 @@
     "test:mixed:studio": "node scripts/test-mixed-studio.mjs",
     "test:workflow:browser": "node scripts/test-workflow-browser.mjs",
     "test:public:studio": "node scripts/test-public-studio.mjs",
-    "test:renderer:api": "node scripts/test-renderer-studio-api.mjs"
+    "test:renderer:api": "node scripts/test-renderer-studio-api.mjs",
+    "test:motion:interaction": "node scripts/test-motion-interaction-browser.mjs",
+    "test:export:browser": "node scripts/test-browser-export.mjs",
+    "test:export:browser:recording": "node scripts/test-browser-export-recording.mjs"
   },
   "keywords": [
     "threejs",

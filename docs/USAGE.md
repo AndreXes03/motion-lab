@@ -54,7 +54,7 @@ node scripts/cli.mjs verify --time 2.8 --out renders/film.mp4
 
 `verify` checks the same frame after different seeks and, with `--out`, video metadata. Enable modular 2D/3D audio with `--sound on`; `--sound off` produces silent video. See [Sound design](SOUND_DESIGN.md).
 
-The public Studio downloads PNG frames and JSON recipes; it does not run local video, Blender or compositing jobs. Public versions stay in that browser.
+In browsers with canvas recording support, the public Studio exports browser-rendered video at 720p or 1080p, PNG frames and JSON recipes. MP4 is offered when the browser supports its encoder; otherwise it offers WebM. Browser video uses the real-time Three.js/Canvas path. Cycles and prepared Mixed renders run locally, and renderer choices for those paths can be stored in recipes without running on the public site. Public versions stay in that browser.
 
 Only one Studio render job can run at a time. The export panel shows history, errors, file paths and open/download/Finder actions. Viewer exports go to Downloads; history persists after restart. The CLI's Chrome path is configured in `scripts/cli.mjs`.
 

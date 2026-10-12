@@ -7,7 +7,7 @@ Motion Lab keeps its interactive 3D preview in Three.js and its procedural 2D pr
 - **Cycles** uses the local Blender path for a supported scene. The first supported scene is PULSE; other scenes require an explicit converter and a quality check. Blender installation, available devices and scene support must be checked locally before exporting.
 - **Mixed** records a strategy for rendered layers or shots from different engines. It requires a prepared local compositing plan and verified inputs. Metadata by itself never starts a mixed render.
 
-The public Studio provides PNG frames and JSON recipes. Video rendering, Blender/Cycles and file-based compositing run in the local app. The selector may still preserve a requested local renderer in a downloaded recipe. It must not claim that the public site executes a Cycles job.
+In browsers with canvas recording support, the public Studio exports browser-rendered video at 720p or 1080p, PNG frames and JSON recipes. MP4 is offered when the browser supports its encoder; otherwise it offers WebM. Public video uses the real-time Three.js/Canvas path. Blender/Cycles and prepared file-based compositing run in the local app. The selector may preserve a requested local renderer in a downloaded recipe, but the public site does not execute Cycles or Mixed jobs.
 
 ## Recipe contract
 
@@ -64,7 +64,7 @@ The renderer panel lives in `src/viewer/render-panel.js`, imports its own CSS, a
 
 `mountRenderPanel({container, getScene, getParameters, getExportSettings, publicDemo, onChange})` exposes `getPlan`, `setPlan`, `getSelection`, `refresh`, and `setCapabilities`. `getParameters` reads the authored source recipe, without recursively attaching the panel's current plan. The panel remembers each scene's user preference during the open session; explicit recipe imports and resets call `setPlan`. Export-setting changes refresh any available time estimate.
 
-The viewer fetches `/api/studio/capabilities` locally, unwraps `data.capabilities`, and supplies it to the panel. The public site does not probe local Blender. Its visible renderer section explains that PNG/JSON downloads are browser features and video rendering runs in the local app.
+The viewer fetches `/api/studio/capabilities` locally, unwraps `data.capabilities`, and supplies it to the panel. The public site does not probe local Blender. It offers browser-rendered Three.js/Canvas video when recording is supported, plus PNG frames and JSON recipes; Cycles and prepared Mixed jobs remain local-only.
 
 The server normalizes `parameters.renderPolicy` with `validateRenderPlan`, resolves it against local capabilities, and rejects unavailable explicit requests. It records the actual engine and resolved selection in each job. Three.js uses the established renderer; verified Cycles jobs use `scripts/cycles.mjs` with the canonical plan's samples, device, bounded workers and denoising settings. Cycles currently produces PNG frames and MP4 videos; WebM/ProRes require the existing Three.js route. All unrelated scene controls, animation groups/rates, and numeric tracks remain in the snapshot.
 

@@ -25,14 +25,22 @@ try{
  assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth>innerWidth),false);await page.locator('#workflow').scrollIntoViewIfNeeded();await page.screenshot({path:path.join(ROOT,'outputs/public-workflow-desktop.png')});
  await page.locator('#film-camera').click();assert.match(await page.locator('#film-download').getAttribute('href'),/camera-1080/);
  await page.goto(base+'studio/?scene=pulse&panel=look');await page.waitForFunction(()=>window.motionPreview&&window.motionRender);await page.evaluate(()=>window.motionPreview.whenIdle());
- assert.equal(await page.locator('#scene').inputValue(),'pulse');assert.equal(await page.locator('#render-final').isDisabled(),true);assert.equal(await page.locator('#export-settings').isVisible(),false);
- await page.locator('#export-dock').evaluate(el=>el.open=true);assert.equal(await page.locator('.render-policy-panel').isVisible(),true);assert.match(await page.locator('.render-policy-status').textContent(),/Local video/);
+ assert.equal(await page.locator('#scene').inputValue(),'pulse');assert.equal(await page.locator('#render-final').isDisabled(),false,'Browser video export should be enabled when a supported MediaRecorder is available');
+ assert.match(await page.locator('#render-final').textContent(),/^Export (MP4|WEBM)/i);assert.equal(await page.locator('#export-settings').isVisible(),true);
+ assert.equal(await page.locator('#render-preview').isHidden(),true);assert.equal(await page.locator('#render-frame').isHidden(),true);
+ await page.locator('#export-settings summary').click();
+ const resolutions=await page.locator('#export-resolution option').evaluateAll(options=>options.map(option=>option.value));assert.deepEqual(resolutions,['1280x720','1920x1080']);
+ assert.equal(await page.locator('#export-format').isDisabled(),true,'The public format reflects browser recorder capability');assert.ok(['mp4','webm'].includes(await page.locator('#export-format').inputValue()));assert.equal(await page.locator('#export-format option').count(),1,'Public export must not offer local-only ProRes');
+ await page.locator('#export-resolution').selectOption('1920x1080');assert.match(await page.locator('#export-settings-note').textContent(),/1920 × 1080/);
+ await page.locator('#export-settings summary').click();
+ await page.locator('#export-dock').evaluate(el=>el.open=true);assert.equal(await page.locator('.render-policy-panel').isVisible(),true);
  await page.getByLabel('Renderer',{exact:true}).selectOption('cycles');await page.locator('#tab-code').click();const recipe=JSON.parse(await page.locator('#code-content').textContent());assert.equal(recipe.parameters.renderPolicy.renderer,'cycles');
  assert.equal(recipe.parameters.previewQuality,undefined);assert.equal(await page.locator('#preview-quality').isVisible(),true);
+ assert.equal(await page.locator('#render-final').isDisabled(),false,'A local renderer recipe selection must not disable the separate browser renderer');
  await page.locator('#export-dock').evaluate(el=>el.open=false);await page.locator('#tab-motion').click();assert.ok((await page.locator('#motion-control option').allTextContents()).some(x=>x.includes('Camera')));
  await page.locator('#tab-look').click();assert.ok(await page.locator('.panel-preset').count()>0);
  await page.setViewportSize({width:390,height:844});await page.evaluate(()=>window.motionPreview.whenIdle());assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth>innerWidth),false);
  await page.goto(base);await page.screenshot({path:path.join(ROOT,'outputs/public-home-mobile.png'),fullPage:true});assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth>innerWidth),false);
  assert.deepEqual(apiCalls,[],'Public build must never call a local API');assert.deepEqual(errors,[]);
- console.log(JSON.stringify({passed:true,publicBasePath:true,localRenderHonest:true,rendererRecipe:true,groups:true,presets:true,mobile:true,noLocalAPI:true}));
+ console.log(JSON.stringify({passed:true,publicBasePath:true,browserVideoExport:true,resolutions:'720p+1080p',rendererRecipePreserved:true,localCyclesNotRunOnSite:true,groups:true,presets:true,mobile:true,noLocalAPI:true}));
 }finally{await browser.close();await new Promise(resolve=>server.close(resolve));}

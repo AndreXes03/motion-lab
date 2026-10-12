@@ -114,7 +114,7 @@ function supported(capability, scene) {
   return capability?.available === true && (!Array.isArray(capability.scenes) || capability.scenes.includes(scene));
 }
 function availability(engine, plan, context) {
-  if (context.publicDemo) return {available: false, reason: 'Video rendering runs in the local app. The public Studio exports PNG frames and JSON recipes.'};
+  if (context.publicDemo) return {available: false, reason: 'Final renderer jobs run in the local app. Browser video uses the real-time Three.js/Canvas path; Cycles and prepared Mixed renders are not executed on this site.'};
   const caps = context.capabilities ?? {};
   if (engine === 'threejs') return {available: caps.threejs?.available !== false, reason: caps.threejs?.reason ?? 'Available in the local app.'};
   if (engine === 'cycles') {
