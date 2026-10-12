@@ -18,7 +18,7 @@ PULSE · Blender Cycles · 1080p · 30 fps · 12.9 seconds. Click the frame to w
 
 ## Made in Motion Lab
 
-Six films show 2D graphics, hybrid compositions and detailed 3D scenes. Each one has its own source and editable recipe.
+Five films show 2D graphics, hybrid compositions and detailed 3D scenes. Each one has its own source and editable recipe.
 
 | Film | Scene | Watch | Source |
 | --- | --- | --- | --- |
@@ -27,7 +27,6 @@ Six films show 2D graphics, hybrid compositions and detailed 3D scenes. Each one
 | DOT | Character performance across 2D layouts and 3D forms | [Film](https://andrexes03.github.io/motion-lab/#dot) · [1080p MP4](demo/dot-1080.mp4) | [Scene](src/scenes/mascot-demo.js) |
 | PLAY.EXE | A floating player, extruded lettering and a rhythmic city | [Film](https://andrexes03.github.io/motion-lab/#pop) · [1080p MP4](demo/pop-motion.mp4) | [Scene](src/scenes/pop-demo.js) |
 | REPLAY | Editorial illustration, typography and spatial movement | [Film](https://andrexes03.github.io/motion-lab/#replay) · [1080p MP4](demo/replay-1080.mp4) | [Scene](src/scenes/replay-demo.js) |
-| Objects in play | A radio, gyroscope and emblem in a cinematic 3D studio | [Film](https://andrexes03.github.io/motion-lab/#bax) · [MP4](demo/objects-in-play.mp4) | [Scene](src/scenes/bax.js) |
 
 The PULSE, CAMERA, DOT and REPLAY films are 1920 × 1080 at 30 fps with sound design. PULSE and CAMERA include separately licensed music; see [credits](THIRD_PARTY.md).
 

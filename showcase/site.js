@@ -77,11 +77,6 @@ const films = {
     title: 'REPLAY',
     description: 'An editorial collage of illustration, type and spatial movement, combining 2D and 3D.',
     file: 'replay-1080.mp4', poster: 'replay-poster.jpg', specs: '1080p · 30 fps · 15 s', source: 'replay-demo.js'
-  },
-  bax: {
-    title: 'Objects in play',
-    description: 'A study in studio lighting, cinematic camera movement and mechanical forms.',
-    file: 'objects-in-play.mp4', poster: 'hero.jpg', specs: '1080p · 25 fps · 10 s', source: 'bax.js'
   }
 };
 
