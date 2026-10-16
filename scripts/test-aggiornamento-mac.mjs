@@ -163,3 +163,27 @@ test('fetch fallito lascia HEAD, file e installazione invariati', t => {
   assert.equal(f.git(f.repo, 'rev-parse', 'HEAD'), before); assert.equal(f.calls(), 0);
   assert.equal(existsSync(path.join(f.repo, '.git', 'motion-lab-update.lock')), false);
 });
+
+test('launcher Mac: aggiorna prima di avviare; nessun viewer se update fallisce', t => {
+  const root = mkdtempSync(path.join(os.tmpdir(), 'motion-lab-launch-'));
+  t.after(() => rmSync(root, { recursive: true, force: true }));
+  const bin = path.join(root, 'bin'); mkdirSync(bin);
+  const trace = path.join(root, 'trace');
+  for (const command of ['node', 'npm']) {
+    const file = path.join(bin, command);
+    writeFileSync(file, `#!/bin/sh\nprintf '%s\\n' '${command}' >> "$MOTION_LAB_LAUNCH_LOG"\nexit ${command === 'node' ? '"${MOTION_LAB_UPDATE_STATUS:-0}"' : '0'}\n`);
+    chmodSync(file, 0o755);
+  }
+  for (const name of ['Aggiorna Motion Lab.command', 'Avvia Motion Lab.command']) {
+    const file = path.join(root, name);
+    writeFileSync(file, readFileSync(new URL(`../${name}`, import.meta.url)));
+    assert.equal(spawnSync('bash', ['-n', file]).status, 0);
+    for (const status of ['0', '7']) {
+      rmSync(trace, { force: true });
+      const result = spawnSync('bash', [file], { cwd: os.tmpdir(), encoding: 'utf8', env: { ...baseEnv, PATH: `${bin}${path.delimiter}${process.env.PATH}`, MOTION_LAB_LAUNCH_LOG: trace, MOTION_LAB_UPDATE_STATUS: status } });
+      assert.equal(result.status, Number(status), result.stderr);
+      assert.equal(readFileSync(trace, 'utf8'), name.startsWith('Avvia') && status === '0' ? 'node\nnpm\n' : 'node\n');
+      if (name.startsWith('Avvia') && status !== '0') assert.match(result.stdout, /Studio non avviato/);
+    }
+  }
+});

@@ -1,6 +1,6 @@
 #!/bin/bash
 # Finder può avere un PATH diverso dal Terminale.
-export PATH="/opt/homebrew/bin:/usr/local/bin:$HOME/.local/share/mise/shims:$HOME/.asdf/shims:$PATH"
+export PATH="$PATH:/opt/homebrew/bin:/usr/local/bin:$HOME/.local/share/mise/shims:$HOME/.asdf/shims"
 cd -- "$(dirname -- "$0")" || exit 1
 if ! command -v node >/dev/null 2>&1 && [ -s "$HOME/.nvm/nvm.sh" ]; then
   . "$HOME/.nvm/nvm.sh" --no-use

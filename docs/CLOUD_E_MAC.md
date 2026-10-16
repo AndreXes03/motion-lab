@@ -8,13 +8,13 @@ Una PR aperta non aggiorna main. Il cloud non sincronizza automaticamente le car
 
 Servono Git, Node.js **22.12 o successivo**, accesso al repository GitHub e rete per le dipendenze npm quando necessarie. Chiudi Studio e i render locali prima dell'aggiornamento.
 
-Dopo il primo aggiornamento che include questi file, fai doppio clic su **Aggiorna Motion Lab.command** nella radice della copia locale. In alternativa, dal Terminale nella repo:
+Dopo il primo aggiornamento che include questi file, fai doppio clic su **Avvia Motion Lab.command** nella radice della copia locale: esegue l'aggiornamento sicuro e poi `npm run viewer`, solo se aggiornamento e installazione riescono. Non installa pianificazioni né processi persistenti. Se vuoi soltanto aggiornare, usa **Aggiorna Motion Lab.command**. In alternativa, dal Terminale nella repo:
 
 ```sh
 npm run aggiorna
 ```
 
-Il launcher cerca Node anche nei percorsi Homebrew, mise e asdf; se manca prova il default di nvm. Se Finder non trova la versione Node corretta, attivala nel Terminale ed esegui `npm run aggiorna`. Se il launcher ha perso il permesso di esecuzione, usa `chmod +x "Aggiorna Motion Lab.command"`.
+I launcher cercano Node anche nei percorsi Homebrew, mise e asdf; se manca provano il default di nvm. Se Finder non trova la versione Node corretta, attivala nel Terminale ed esegui `npm run aggiorna`. Se i launcher hanno perso il permesso di esecuzione, usa `chmod +x "Aggiorna Motion Lab.command" "Avvia Motion Lab.command"`.
 
 L'aggiornatore verifica la radice Git, il remote `origin` di `AndreXes03/motion-lab`, il branch **main**, l'assenza di modifiche e file non tracciati (anche nei submodule). Blocca operazioni Git in corso e due aggiornamenti contemporanei. Scarica solo main, senza altri branch o tag, e applica soltanto un fast-forward. Non esegue push, merge remoto, stash, reset o pulizie.
 
