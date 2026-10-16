@@ -54,6 +54,8 @@ An optional [path-traced still experiment](docs/PHOTOREALISM.md) studies PULSE m
 
 ## Run Motion Lab locally
 
+Per lavorare nel cloud e aggiornare la copia Mac in sicurezza, leggi [Cloud e aggiornamento Mac](docs/CLOUD_E_MAC.md). Dopo il merge dell'aggiornatore, usa **Aggiorna Motion Lab.command** nella radice della copia locale oppure `npm run aggiorna`.
+
 The current setup is tested on macOS with Node.js 22.12 or newer and Google Chrome. Internet access is needed for the first installation.
 
 ```sh
