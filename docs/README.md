@@ -4,6 +4,7 @@
 | --- | --- |
 | Understand the engine | [Architecture](ARCHITECTURE.md) |
 | Run the viewer and render | [Usage](USAGE.md) |
+| Build and preview the static landing + Studio | [Demo statica](DEMO_STATICA.md) |
 | Work with a coding agent | [Agent workflow](AGENT_WORKFLOW.md) |
 | Explore the procedural demo | [Example and formulas](PROCEDURAL-EXAMPLE.md) |
 | Build procedural 2D graphics | [Procedural graphics](PROCEDURAL.md) |
