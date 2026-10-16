@@ -26,4 +26,6 @@ To capture the studio views from a running preview on port 4194, start Vite with
 
 ## Publication
 
+For a provider-independent package with the same landing and Studio, run `npm run build:demo`, then `npm run preview:demo`. See [Demo statica](../docs/DEMO_STATICA.md) for optional canonical/media configuration, the selected assets and local Blender requirements. The original Pages workflow below remains unchanged.
+
 The [GitHub Pages workflow](../.github/workflows/demo-pages.yml) copies this page and its referenced demo assets to the publication root. Keep internal notes out of the public page. Preserve the distinction between the browser preview, standard Three.js rendering and optional local renderer paths; do not imply runtime AI, native After Effects or Cinema 4D support, or general scene conversion.

@@ -46,10 +46,12 @@ export function mountRenderPanel({container, getScene, getParameters = () => ({}
   const rationale = document.createElement('p'); rationale.className = 'render-policy-note';
   const cost = document.createElement('p'); cost.className = 'render-policy-note';
   const preview = document.createElement('small'); preview.className = 'render-policy-note'; preview.textContent = 'Interactive preview uses Three.js for 3D and Canvas for procedural 2D. The chosen renderer applies to local exports.';
+  const localRequirement = document.createElement('small'); localRequirement.className = 'render-policy-note render-policy-local-requirement';
+  localRequirement.textContent = 'Blender Cycles requires Motion Lab running on your computer with Blender installed. ' + (publicDemo ? 'Browser video export uses Three.js / Canvas when supported by your browser. This website does not run Cycles or server-side renders.' : 'Use the local capability check before choosing Cycles for a supported scene.');
   const adaptation = document.createElement('small'); adaptation.className = 'render-policy-note render-policy-adaptation';
   adaptation.textContent = 'Cycles supports PULSE only. Color contrast and saturation carry over; materials and lighting are adapted. Preview depth of field, fisheye, bloom and ambient occlusion do not carry over.';
   const mixedNote = document.createElement('small'); mixedNote.className = 'render-policy-note render-policy-mixed-note';
-  root.append(status, rationale, cost, preview, adaptation, mixedNote); container.append(root);
+  root.append(status, rationale, cost, preview, localRequirement, adaptation, mixedNote); container.append(root);
 
   function context() {
     return {scene: sceneId(getScene()), publicDemo, capabilities: capState, ...getExportSettings()};

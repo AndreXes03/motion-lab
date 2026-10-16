@@ -1,4 +1,6 @@
 const assetPrefix = location.pathname.includes('/showcase/') ? '../' : '';
+// Optional static-package configuration. Without it, showcase and Pages keep local media.
+const galleryMediaBase = document.querySelector('meta[name="motion-lab-gallery-media-base"]')?.content;
 const reducedMotion = matchMedia('(prefers-reduced-motion: reduce)');
 const asset = file => {
   const version = /pulse-1080\.mp4$/.test(file)
@@ -8,7 +10,9 @@ const asset = file => {
     : /ui-(?:tools|motion-groups)\.jpg$/.test(file)
       ? '?v=adaptive-controls-v1'
       : '';
-  return assetPrefix + file + version;
+  return galleryMediaBase && /^demo\/[^/]+\.mp4$/.test(file)
+    ? new URL(file.slice('demo/'.length), galleryMediaBase).href + version
+    : assetPrefix + file + version;
 };
 
 let heroVideo;
