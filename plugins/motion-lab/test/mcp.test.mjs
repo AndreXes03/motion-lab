@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import { execFileSync, spawnSync } from 'node:child_process';
-import { mkdtemp, mkdir, readFile, writeFile, chmod, rm } from 'node:fs/promises';
+import { mkdtemp, mkdir, readFile, writeFile, chmod, rm, realpath } from 'node:fs/promises';
 import net from 'node:net';
 import os from 'node:os';
 import path from 'node:path';
@@ -17,7 +17,7 @@ const git=(root,...args)=>execFileSync(realGit,args,{cwd:root,encoding:'utf8',en
 async function port(){const s=net.createServer();await new Promise(r=>s.listen(0,'127.0.0.1',r));const p=s.address().port;await new Promise(r=>s.close(r));return p;}
 
 async function fixture(t){
-  const base=await mkdtemp(path.join(os.tmpdir(),'motion-mcp-')),root=path.join(base,'repo con spazi'),bin=path.join(base,'bin');
+  const base=await realpath(await mkdtemp(path.join(os.tmpdir(),'motion-mcp-'))),root=path.join(base,'repo con spazi'),bin=path.join(base,'bin');
   await mkdir(root);await mkdir(bin);await mkdir(path.join(root,'node_modules/vite'),{recursive:true});await mkdir(path.join(root,'project'),{recursive:true});
   await writeFile(path.join(root,'package.json'),' {"name":"motion-lab","type":"module"}');
   await writeFile(path.join(root,'index.html'),'<h1>Mock Studio</h1>');await writeFile(path.join(root,'vite.config.js'),'export default {}');
