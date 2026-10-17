@@ -20,6 +20,14 @@ node "/percorso/strumenti/install-mac-launcher.mjs" --repo "/percorso/assoluto/m
 
 Destinazione alternativa: aggiungi `--destination "/percorso/assoluto/Motion Lab.app"`. Nei test Linux è obbligatoria: non si scrive la cartella Applications del sistema. L'installer copia l'helper dalla propria cartella, quindi non occorre scaricare né eseguire codice remoto non revisionato. Se cambi percorso di Node, repo o bundle, reinstalla il launcher scegliendo una nuova destinazione o rimuovendo manualmente solo il vecchio bundle.
 
+Se 4173 è già occupata, puoi fissare una porta dedicata nell'icona con `--port 4198` (valori ammessi 1024–65535, default 4173). L'installer la registra nella shell e in `Contents/Resources/installation.json`:
+
+```sh
+node "/percorso/strumenti/install-mac-launcher.mjs" --repo "/percorso/assoluto/motion-lab" --port 4198
+```
+
+Per controllare o fermare questa istanza usa poi `--port 4198` anche con l'helper `status` / `stop`, senza toccare gli altri servizi.
+
 ## Uso e aggiornamenti
 
 L'avvio usa Vite locale su `127.0.0.1:4173`, apre il browser predefinito e riusa l'istanza solo se il controllo di salute conferma repository, processo e identificativo del launcher. Se la porta appartiene a un altro servizio (anche uno Studio avviato con il vecchio comando), si ferma con un messaggio: chiudi quel servizio o usa una porta diversa dalla CLI. Non termina processi estranei.

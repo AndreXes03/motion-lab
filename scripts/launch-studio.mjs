@@ -180,7 +180,7 @@ export async function launch(options) {
   return { running: true, reused, pid: running.pid, url };
 }
 
-if (process.argv[1] && path.resolve(process.argv[1]) === SELF) {
+if (process.argv[1] && await realpath(process.argv[1]) === await realpath(SELF)) {
   try { await launch(parseArgs(process.argv.slice(2))); }
   catch (error) { console.error(`Motion Lab: ${error.message}`); process.exitCode = 1; }
 }

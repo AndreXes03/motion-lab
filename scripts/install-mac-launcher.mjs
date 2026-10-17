@@ -3,17 +3,18 @@ import { access, chmod, copyFile, mkdir, realpath, rename, rm, writeFile } from 
 import os from 'node:os';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { validateRepo } from './launch-studio.mjs';
+import { parseArgs, validateRepo } from './launch-studio.mjs';
 
 const SELF = fileURLToPath(import.meta.url);
 const quote = text => "'" + text.replaceAll("'", "'\\''") + "'";
 
 export function installerArgs(args) {
-  const options = { root: path.resolve(path.dirname(SELF), '..'), destination: path.join(os.homedir(), 'Applications/Motion Lab.app') };
+  const options = { root: path.resolve(path.dirname(SELF), '..'), destination: path.join(os.homedir(), 'Applications/Motion Lab.app'), port: 4173 };
   let explicitDestination = false;
   for (let i = 0; i < args.length; i++) {
     const arg = args[i], value = args[++i];
-    if (!['--repo', '--destination'].includes(arg) || !value || !path.isAbsolute(value)) throw Error('Uso: install-mac-launcher.mjs [--repo /repo/assoluta] [--destination /cartella/Motion Lab.app]');
+    if (arg === '--port') { options.port = parseArgs(['--port', value]).port; continue; }
+    if (!['--repo', '--destination'].includes(arg) || !value || !path.isAbsolute(value)) throw Error('Uso: install-mac-launcher.mjs [--repo /repo/assoluta] [--destination /cartella/Motion Lab.app] [--port 4173]');
     if (arg === '--repo') options.root = value;
     else { options.destination = value; explicitDestination = true; }
   }
@@ -21,7 +22,8 @@ export function installerArgs(args) {
   return options;
 }
 
-export async function installLauncher({ root, destination }) {
+export async function installLauncher({ root, destination, port = 4173 }) {
+  port = parseArgs(['--port', String(port)]).port;
   root = await validateRepo(root, true);
   if (!path.isAbsolute(destination) || path.extname(destination) !== '.app') throw Error('--destination deve essere un percorso assoluto che termina con .app.');
   try { await access(destination); throw Error(`Esiste già ${destination}. Conserva o rimuovi manualmente il vecchio launcher, oppure scegli un'altra --destination.`); }
@@ -35,16 +37,16 @@ export async function installLauncher({ root, destination }) {
     await mkdir(resources, { recursive: true }); await mkdir(path.dirname(executable), { recursive: true });
     await copyFile(helper, path.join(resources, 'launch-studio.mjs'));
     await writeFile(path.join(temporary, 'Contents/Info.plist'), `<?xml version="1.0" encoding="UTF-8"?>\n<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">\n<plist version="1.0"><dict><key>CFBundleName</key><string>Motion Lab</string><key>CFBundleIdentifier</key><string>org.motionlab.local-launcher</string><key>CFBundleExecutable</key><string>MotionLabLauncher</string><key>CFBundlePackageType</key><string>APPL</string><key>CFBundleVersion</key><string>1</string><key>LSUIElement</key><true/></dict></plist>\n`);
-    const shell = `#!/bin/sh\n/bin/mkdir -p ${quote(cache)} || exit 1\n${quote(node)} ${quote(installedHelper)} --repo ${quote(root)} >> ${quote(log)} 2>&1\nresult=$?\nif [ "$result" -ne 0 ]; then\n  detail=$(/usr/bin/tail -n 8 ${quote(log)})\n  /usr/bin/osascript - "$detail" <<'APPLESCRIPT'\non run argv\n  display alert "Motion Lab non avviato" message (item 1 of argv) as critical\nend run\nAPPLESCRIPT\nfi\nexit "$result"\n`;
+    const shell = `#!/bin/sh\n/bin/mkdir -p ${quote(cache)} || exit 1\n${quote(node)} ${quote(installedHelper)} --repo ${quote(root)} --port ${port} >> ${quote(log)} 2>&1\nresult=$?\nif [ "$result" -ne 0 ]; then\n  detail=$(/usr/bin/tail -n 8 ${quote(log)})\n  /usr/bin/osascript - "$detail" <<'APPLESCRIPT'\non run argv\n  display alert "Motion Lab non avviato" message (item 1 of argv) as critical\nend run\nAPPLESCRIPT\nfi\nexit "$result"\n`;
     await writeFile(executable, shell); await chmod(executable, 0o755);
-    await writeFile(path.join(resources, 'installation.json'), JSON.stringify({ schemaVersion: 1, repository: root, node, helper: installedHelper, log, installedAt: new Date().toISOString() }, null, 2) + '\n');
+    await writeFile(path.join(resources, 'installation.json'), JSON.stringify({ schemaVersion: 1, repository: root, node, helper: installedHelper, port, log, installedAt: new Date().toISOString() }, null, 2) + '\n');
     await rename(temporary, destination);
   } finally { await rm(temporary, { recursive: true, force: true }); }
-  console.log(`Launcher installato: ${destination}\nRepo: ${root}\nNode: ${node}\nFai doppio clic per aprire Studio. Aggiornamento Git e npm ci restano separati.`);
-  return { destination, root, node };
+  console.log(`Launcher installato: ${destination}\nRepo: ${root}\nNode: ${node}\nStudio: http://127.0.0.1:${port}/\nFai doppio clic per aprire Studio. Aggiornamento Git e npm ci restano separati.`);
+  return { destination, root, node, port };
 }
 
-if (process.argv[1] && path.resolve(process.argv[1]) === SELF) {
+if (process.argv[1] && await realpath(process.argv[1]) === await realpath(SELF)) {
   try { await installLauncher(installerArgs(process.argv.slice(2))); }
   catch (error) { console.error(`Installazione interrotta: ${error.message}`); process.exitCode = 1; }
 }

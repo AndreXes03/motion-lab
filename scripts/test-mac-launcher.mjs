@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import { spawn, spawnSync } from 'node:child_process';
-import { mkdtemp, mkdir, readFile, writeFile, rm, stat } from 'node:fs/promises';
+import { mkdtemp, mkdir, readFile, writeFile, rm, stat, realpath, symlink } from 'node:fs/promises';
 import http from 'node:http';
 import os from 'node:os';
 import path from 'node:path';
@@ -26,7 +26,7 @@ async function command(root, port, action = 'start', source = helper) {
 }
 
 async function fixture(t) {
-  const base = await mkdtemp(path.join(os.tmpdir(), 'motion-launch-'));
+  const base = await realpath(await mkdtemp(path.join(os.tmpdir(), 'motion-launch-')));
   const root = path.join(base, "Repo Mac con spazi e 'apostrofo'");
   await mkdir(path.join(root, 'node_modules/vite'), { recursive: true });
   await writeFile(path.join(root, 'package.json'), '{"name":"motion-lab","type":"module"}');
@@ -57,6 +57,10 @@ test('Node e argomenti: requisiti espliciti, percorsi assoluti e nessun update i
   assert.equal(parseArgs(['status', '--port', '4194']).action, 'status');
   for (const args of [['--repo', 'relativa'], ['--port', '0'], ['--port', 'abc'], ['--update']]) assert.throws(() => parseArgs(args));
   assert.throws(() => installerArgs(['--destination', 'relativa']));
+  const destination = path.join(os.tmpdir(), 'Motion Lab.app');
+  assert.equal(installerArgs(['--destination', destination]).port, 4173);
+  assert.equal(installerArgs(['--destination', destination, '--port', '4198']).port, 4198);
+  for (const port of ['0', '65536', 'abc', '4198.5']) assert.throws(() => installerArgs(['--destination', destination, '--port', port]));
   if (process.platform !== 'darwin') assert.throws(() => installerArgs([]), /Applications di Linux/);
 });
 
@@ -108,15 +112,38 @@ test('installer esterno: bundle con spazi, Node/repo assoluti, shell valida e ne
   const f = await fixture(t), destination = path.join(f.base, "Applications con spazi e 'quote'", 'Motion Lab.app');
   const external = path.join(f.base, 'strumenti revisionati'); await mkdir(external);
   for (const name of ['launch-studio.mjs', 'install-mac-launcher.mjs']) await writeFile(path.join(external, name), await readFile(new URL(name, import.meta.url)));
-  const result = spawnSync(process.execPath, [path.join(external, 'install-mac-launcher.mjs'), '--repo', f.root, '--destination', destination], { env, encoding: 'utf8' });
+  const result = spawnSync(process.execPath, [path.join(external, 'install-mac-launcher.mjs'), '--repo', f.root, '--destination', destination, '--port', String(f.port)], { env, encoding: 'utf8' });
   assert.equal(result.status, 0, result.stderr);
   const executable = path.join(destination, 'Contents/MacOS/MotionLabLauncher');
   assert.equal((await stat(executable)).mode & 0o111, 0o111); assert.equal(spawnSync('/bin/sh', ['-n', executable]).status, 0);
   const config = JSON.parse(await readFile(path.join(destination, 'Contents/Resources/installation.json')));
   assert.equal(config.repository, f.root); assert.equal(path.isAbsolute(config.node), true);
+  assert.equal(config.port, f.port);
   const shell = await readFile(executable, 'utf8'); assert.equal(shell.includes('Terminal.app'), false); assert.equal(shell.includes('npm ci'), false); assert.equal(shell.includes('git fetch'), false);
+  assert.equal(shell.includes(`--port ${f.port} >>`), true);
   assert.match(await readFile(path.join(destination, 'Contents/Info.plist'), 'utf8'), /<string>APPL<\/string>/);
   const copied = path.join(destination, 'Contents/Resources/launch-studio.mjs');
   const launch = await command(f.root, f.port, 'start', copied); assert.equal(launch.code, 0, launch.stderr);
   await assert.rejects(installLauncher({root:f.root,destination}), /Esiste già/);
+});
+
+test('entry CLI tramite symlink e directory alias: avvio e installazione realmente eseguiti', async t => {
+  const f = await fixture(t);
+  const launcherAlias = path.join(f.base, 'launcher alias.mjs');
+  const scriptsAlias = path.join(f.base, 'directory alias');
+  const repoAlias = path.join(f.base, 'repo alias');
+  await symlink(helper, launcherAlias);
+  await symlink(path.dirname(helper), scriptsAlias, 'dir');
+  await symlink(f.root, repoAlias, 'dir');
+  const started = await command(repoAlias, f.port, 'start', launcherAlias);
+  assert.equal(started.code, 0, started.stderr); assert.match(started.stdout, /Studio avviato/);
+  assert.equal(JSON.parse(await readFile(paths(f.root, f.port).state)).root, f.root);
+  const destination = path.join(f.base, 'Applications alias test', 'Motion Lab.app');
+  const installed = spawnSync(process.execPath, [path.join(scriptsAlias, 'install-mac-launcher.mjs'), '--repo', repoAlias, '--destination', destination, '--port', String(f.port)], { env, encoding: 'utf8' });
+  assert.equal(installed.status, 0, installed.stderr); assert.match(installed.stdout, /Launcher installato/);
+  const info = JSON.parse(await readFile(path.join(destination, 'Contents/Resources/installation.json')));
+  assert.equal(info.repository, f.root);
+  assert.equal(info.port, f.port);
+  const stopped = await command(repoAlias, f.port, 'stop', path.join(scriptsAlias, 'launch-studio.mjs'));
+  assert.equal(stopped.code, 0, stopped.stderr); assert.match(stopped.stdout, /Studio fermato/);
 });
