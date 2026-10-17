@@ -1,0 +1,23 @@
+/* Original Flaticon Uicons, one local SVG sprite; no icon fonts or network dependency. */
+.studio-icon {
+  display: inline-block;
+  inline-size: var(--studio-icon-size, 16px);
+  block-size: var(--studio-icon-size, 16px);
+  flex: 0 0 auto;
+  fill: currentColor;
+  stroke: none;
+  vertical-align: -0.15em;
+  pointer-events: none;
+  overflow: visible;
+}
+.studio-icon-slot { display: inline-flex; align-items: center; justify-content: center; flex: 0 0 auto; }
+.studio-has-icon { display: inline-flex; align-items: center; justify-content: center; gap: 7px; }
+.studio-icon-only { min-inline-size: 30px; min-block-size: 30px; padding-inline: 6px; }
+.studio-icon--large { --studio-icon-size: 18px; }
+.studio-icon--scene { color: var(--studio-scene-color, #9dbaf3); }
+.studio-icon--motion { color: var(--studio-motion-color, #c5a7ee); }
+.studio-icon--compositing { color: var(--studio-compositing-color, #91c6b9); }
+.studio-icon--audio { color: var(--studio-audio-color, #e2bb87); }
+.studio-icon--versions { color: var(--studio-versions-color, #acb7ca); }
+.studio-icon-credit { font: inherit; font-size: 10px; color: inherit; opacity: .65; text-decoration: none; }
+.studio-icon-credit:hover, .studio-icon-credit:focus-visible { opacity: 1; text-decoration: underline; }
