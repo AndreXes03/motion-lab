@@ -1,3 +1,22 @@
+// Short visual labels keep parameter rows scannable. The complete authored label
+// and help remain attached to the inputs for assistive technology and tooltips.
+const conciseLabels = {
+  'Camera field of view': 'Field of view',
+  'Authored motion gain': 'Motion amount',
+  'Depth of field strength': 'Focus strength',
+  'Maximum focus blur': 'Maximum blur',
+  'Motion blur shutter': 'Shutter angle',
+  'Speaker and record motion': 'Speaker & record',
+  'City vehicle motion': 'Vehicle motion'
+};
+function controlUnit(def) {
+  if (def.unit) return def.unit;
+  if (['fov', 'shutterAngle'].includes(def.id) || def.path?.at(-1) === 'yaw') return '°';
+  if (def.id === 'aberrationPx') return 'px';
+  if (def.id === 'dofMaxBlur') return 'px at HD';
+  return '';
+}
+
 /** Shared, accessible control renderer. Values are emitted as their native type. */
 export function renderControl(def, {value, onInput = () => {}, onCommit = () => {}, prefix = 'control-'} = {}) {
   const wrap = document.createElement('div');
@@ -7,7 +26,11 @@ export function renderControl(def, {value, onInput = () => {}, onCommit = () => 
   top.className = 'control-top';
   const label = document.createElement('label');
   label.htmlFor = prefix + def.id;
-  label.textContent = def.label ?? def.id;
+  const fullLabel = def.label ?? def.id;
+  const shortLabel = conciseLabels[fullLabel] ?? fullLabel;
+  const unit = controlUnit(def);
+  label.textContent = shortLabel + (unit ? ` · ${unit}` : '');
+  const accessibleLabel = label.textContent + (shortLabel !== fullLabel ? ` (${fullLabel})` : '');
   top.append(label);
   wrap.append(top);
   const numeric = ['range', 'number'].includes(def.type);
@@ -29,13 +52,15 @@ export function renderControl(def, {value, onInput = () => {}, onCommit = () => 
   };
   let current = value ?? def.default;
   let input;
+  let numericInput;
   if (numeric) {
     const output = document.createElement('output');
     output.className = 'control-number';
     const number = document.createElement('input');
+    numericInput = number;
     number.type = 'number';
     number.id = prefix + def.id + (def.type === 'range' ? '-number' : '');
-    number.setAttribute('aria-label', (def.label ?? def.id) + ' value');
+    number.setAttribute('aria-label', accessibleLabel + ' value');
     number.style.width = '76px';
     for (const key of ['min', 'max', 'step']) if (def[key] !== undefined) number[key] = String(def[key]);
     current = sanitize(current) ?? sanitize(def.default) ?? 0;
@@ -103,11 +128,21 @@ export function renderControl(def, {value, onInput = () => {}, onCommit = () => 
     });
     wrap.append(input);
   }
+  input.setAttribute('aria-label', accessibleLabel);
   if (def.help) {
     const help = document.createElement('small');
     help.id = prefix + def.id + '-help';
     help.textContent = def.help;
+    // Keep constraints in the authored schema without repeating a paragraph
+    // beneath every slider. Native tooltips are also available on the label.
+    help.hidden = true;
+    label.title = def.help;
+    input.title = def.help;
     input.setAttribute('aria-describedby', help.id);
+    if (numericInput && numericInput !== input) {
+      numericInput.title = def.help;
+      numericInput.setAttribute('aria-describedby', help.id);
+    }
     wrap.append(help);
   }
   return wrap;

@@ -1,36 +1,78 @@
 import './sound-panel.css';
 import {soundDefaults,soundKits,normalizeSound,planSound,renderSound,encodeWav} from '../engine/sound-design.js';
-const timbres={air:'Air',silk:'Silk',deep:'Deep',grain:'Grainy',swirl:'Swirl',reverse:'Reverse',bright:'Bright',riser:'Riser',mechanical:'Mechanical',metal:'Metal',plastic:'Plastic',glass:'Glass',rubber:'Rubber',wood:'Wood',electric:'Electric',ceramic:'Ceramic',soft:'Soft',click:'Clickk',knock:'Knock',snap:'Snap',ping:'Ping',sub:'Sub',chime:'Chime',pop:'Pop'};
-const labels={camera:'Camera · whoosh',objects:'Objects · motion',accents:'Accents · stops',music:'Music',master:'Master volume',density:'SFX density',dial:'Dial · detents',hinge:'Hinge · open and close',gyro:'Gyroscope · joints'};
+const timbres={air:'Air',silk:'Silk',deep:'Deep',grain:'Grainy',swirl:'Swirl',reverse:'Reverse',bright:'Bright',riser:'Riser',mechanical:'Mechanical',metal:'Metal',plastic:'Plastic',glass:'Glass',rubber:'Rubber',wood:'Wood',electric:'Electric',ceramic:'Ceramic',soft:'Soft',click:'Click',knock:'Knock',snap:'Snap',ping:'Ping',sub:'Sub',chime:'Chime',pop:'Pop'};
+const labels={camera:'Camera movement',objects:'Object movement',accents:'Accents',music:'Music volume',master:'Master volume',density:'Effect frequency',dial:'Dial clicks',hinge:'Hinge movement',gyro:'Gyroscope movement'};
 export function mountSoundPanel({runtime,parameters,onChange,onPause,getTime}){
- const panel=document.createElement('details');panel.className='finish-tools';panel.id='sound-tools';panel.open=true;
- panel.innerHTML='<summary>Sound design <span>♫</span></summary><label class="finish-checkbox"><input id="sound-enabled" type="checkbox" checked> Enable audio</label><p>Subtle SFX · wind and mechanical detail</p>';
+ const panel=document.createElement('details');panel.className='finish-tools sound-panel';panel.id='sound-tools';panel.open=true;
+ panel.innerHTML='<summary>Sound design</summary><div class="sound-heading"><h3>Sound design</h3><label class="finish-checkbox sound-enable"><input id="sound-enabled" type="checkbox" checked> Enable audio</label></div>';
  let settings={...soundDefaults},context,source,buffer,cacheKey='',generation=0,startTime=0,offset=0,building=null;
  const fields={};
- function edit(){stop();cacheKey='';settings=normalizeSound(settings);onPause();onChange();status.textContent='Audio updated · press Play';}
- for(const [key,label] of Object.entries(labels)){
-  const row=document.createElement('div');row.className='finish-control';const title=document.createElement('label');title.textContent=label;title.htmlFor='sound-'+key;const out=document.createElement('output');const input=document.createElement('input');input.id='sound-'+key;input.type='range';input.min=0;input.max=1;input.step=.01;title.append(out);row.append(title,input);panel.append(row);fields[key]={input,out};input.onchange=()=>{settings[key]=Number(input.value);edit();};input.oninput=()=>out.textContent=Math.round(Number(input.value)*100)+'%';
+ function section(title,{advanced=false}={}){
+  const group=document.createElement(advanced?'details':'section');group.className=advanced?'sound-section sound-disclosure':'sound-section';
+  const heading=document.createElement(advanced?'summary':'h4');heading.textContent=title;group.append(heading);panel.append(group);return group;
  }
- for(const [module,kits] of Object.entries(soundKits)){const key=module==='objects'?'objectKit':module==='accents'?'accentKit':'cameraKit';const row=document.createElement('label');row.textContent=labels[module]+' · timbre';const select=document.createElement('select');select.id='sound-'+key;for(const kit of kits)select.add(new Option(timbres[kit],kit));row.append(select);panel.append(row);fields[key]={input:select};select.onchange=()=>{settings[key]=select.value;edit();};}
- const musicLabel=document.createElement('label');musicLabel.textContent='Music';const musicStyle=document.createElement('select');musicStyle.id='sound-musicStyle';for(const [v,label] of [['scene','Scene music · techno in 2D'],['techno','Techno · kick, bass and sequencer'],['ambient','Soft electronic']])musicStyle.add(new Option(label,v));musicLabel.append(musicStyle);panel.append(musicLabel);fields.musicStyle={input:musicStyle};musicStyle.onchange=()=>{settings.musicStyle=musicStyle.value;edit();};
- const tempoLabel=document.createElement('label');tempoLabel.textContent='Music tempo';const tempo=document.createElement('select');tempo.id='sound-tempo';tempo.add(new Option('Automatic · follows accents','auto'));tempo.add(new Option('Manual BPM','manual'));tempoLabel.append(tempo);panel.append(tempoLabel);fields.tempo={input:tempo};tempo.onchange=()=>{settings.tempo=tempo.value;sync();edit();};
- const bpmLabel=document.createElement('label');bpmLabel.textContent='BPM';const bpm=document.createElement('input');bpm.id='sound-bpm';bpm.type='number';bpm.min=60;bpm.max=180;bpmLabel.append(bpm);panel.append(bpmLabel);fields.bpm={input:bpm};bpm.onchange=()=>{settings.bpm=Math.max(60,Math.min(180,Number(bpm.value)||112));sync();edit();};
- const status=document.createElement('p');status.id='sound-status';status.setAttribute('role','status');status.textContent='Ready · press Play to listen';panel.append(status);
- const buttons=document.createElement('div');buttons.className='output-links';const variation=document.createElement('button');variation.textContent='New variation';variation.onclick=()=>{settings.seed=(settings.seed+1)%1000000;edit();};const download=document.createElement('button');download.textContent='Download WAV';download.onclick=async()=>{try{onPause();await prepare();if(!buffer)return;const bytes=encodeWav([buffer.getChannelData(0),buffer.getChannelData(1)],buffer.sampleRate);const url=URL.createObjectURL(new Blob([bytes],{type:'audio/wav'}));const a=document.createElement('a');a.href=url;a.download='motion-lab-sound-design.wav';a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);}catch(e){status.textContent=e.message;}};const subtle=document.createElement('button');subtle.textContent='Subtle mix';subtle.onclick=()=>{for(const k of ['camera','objects','accents','dial','hinge','gyro'])settings[k]=soundDefaults[k];sync();edit();};buttons.append(subtle,variation,download);panel.append(buttons);
+ const mix=section('Mix');
+ const sfx=section('Motion effects');
+ const music=section('Music settings',{advanced:true});
+ const mechanics=section('Mechanical detail',{advanced:true});
+ function edit(){stop();cacheKey='';settings=normalizeSound(settings);onPause();onChange();status.textContent='Audio updated · press Play';}
+ for(const key of ['master','music','camera','objects','accents','density','dial','hinge','gyro']){
+  const label=labels[key];
+  const row=document.createElement('div');row.className='finish-control sound-control';
+  const head=document.createElement('div');head.className='sound-control-head';
+  const title=document.createElement('label');title.textContent=label;title.htmlFor='sound-'+key;
+  const value=document.createElement('span');value.className='sound-value';
+  const out=document.createElement('input');out.type='number';out.min=0;out.max=100;out.step=1;out.id='sound-'+key+'-value';out.setAttribute('aria-label',label+' percent');
+  const unit=document.createElement('span');unit.textContent='%';unit.setAttribute('aria-hidden','true');value.append(out,unit);head.append(title,value);
+  const input=document.createElement('input');input.id='sound-'+key;input.type='range';input.min=0;input.max=1;input.step=.01;row.append(head,input);
+  (['master','music'].includes(key)?mix:['dial','hinge','gyro'].includes(key)?mechanics:sfx).append(row);
+  fields[key]={input,out,row};input.onchange=()=>{settings[key]=Number(input.value);edit();};input.oninput=()=>{out.value=Math.round(Number(input.value)*100);out.setCustomValidity('');};
+  function applyNumber(report=false){const value=out.valueAsNumber;if(!Number.isInteger(value)||value<0||value>100){out.setCustomValidity('Enter a whole number from 0 to 100.');if(report)out.reportValidity();return;}out.setCustomValidity('');input.value=value/100;if(settings[key]!==value/100){settings[key]=value/100;edit();}}
+  out.oninput=()=>applyNumber();out.onchange=()=>applyNumber(true);
+
+ }
+ for(const [module,kits] of Object.entries(soundKits)){
+  const key=module==='objects'?'objectKit':module==='accents'?'accentKit':'cameraKit';const row=document.createElement('label');row.className='sound-timbre';row.textContent='Sound';const select=document.createElement('select');select.id='sound-'+key;select.setAttribute('aria-label',labels[module]+' sound');for(const kit of kits)select.add(new Option(timbres[kit],kit));row.append(select);fields[module].row.append(row);fields[key]={input:select};select.onchange=()=>{settings[key]=select.value;edit();};
+ }
+ function choice(parent,label,id){const row=document.createElement('label');row.className='sound-field';const text=document.createElement('span');text.textContent=label;const input=document.createElement('select');input.id=id;row.append(text,input);parent.append(row);return input;}
+ const musicStyle=choice(music,'Music style','sound-musicStyle');for(const [v,label] of [['scene','Scene default'],['techno','Techno'],['ambient','Soft electronic']])musicStyle.add(new Option(label,v));fields.musicStyle={input:musicStyle};musicStyle.onchange=()=>{settings.musicStyle=musicStyle.value;edit();};
+ const tempo=choice(music,'Tempo','sound-tempo');tempo.add(new Option('Automatic','auto'));tempo.add(new Option('Manual','manual'));fields.tempo={input:tempo};tempo.onchange=()=>{settings.tempo=tempo.value;sync();edit();};
+ const bpmLabel=document.createElement('label');bpmLabel.className='sound-field sound-bpm';bpmLabel.textContent='Beats per minute';const bpm=document.createElement('input');bpm.id='sound-bpm';bpm.type='number';bpm.min=60;bpm.max=180;bpmLabel.append(bpm);music.append(bpmLabel);fields.bpm={input:bpm};bpm.onchange=()=>{settings.bpm=Math.max(60,Math.min(180,Number(bpm.value)||112));sync();edit();};
+ const status=document.createElement('p');status.id='sound-status';status.setAttribute('role','status');status.setAttribute('aria-live','polite');status.textContent='Ready · press Play to listen';panel.append(status);
+ const buttons=document.createElement('div');buttons.className='output-links sound-actions';const variation=document.createElement('button');variation.type='button';variation.textContent='New variation';variation.title='Generate a new sound variation with the current mix';variation.onclick=()=>{settings.seed=(settings.seed+1)%1000000;edit();};const download=document.createElement('button');download.type='button';download.textContent='Download WAV';download.className='sound-download';download.onclick=async()=>{try{onPause();await prepare();if(!buffer)return;const bytes=encodeWav([buffer.getChannelData(0),buffer.getChannelData(1)],buffer.sampleRate);const url=URL.createObjectURL(new Blob([bytes],{type:'audio/wav'}));const a=document.createElement('a');a.href=url;a.download='motion-lab-sound-design.wav';a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);}catch(e){status.textContent=e.message;}};const subtle=document.createElement('button');subtle.type='button';subtle.textContent='Subtle mix';subtle.title='Reset movement and mechanical levels to the authored subtle mix';subtle.onclick=()=>{for(const k of ['camera','objects','accents','dial','hinge','gyro'])settings[k]=soundDefaults[k];sync();edit();};buttons.append(subtle,variation,download);panel.append(buttons);
  document.querySelector('.property-panel').append(panel);
  panel.querySelector('#sound-enabled').onchange=e=>{settings.enabled=e.target.checked;edit();};
- function sync(){for(const [key,f] of Object.entries(fields)){f.input.value=settings[key];if(f.out)f.out.textContent=Math.round(settings[key]*100)+'%';}bpm.disabled=settings.tempo==='auto';panel.querySelector('#sound-enabled').checked=settings.enabled;}
+ function sync(){for(const [key,f] of Object.entries(fields)){f.input.value=settings[key];if(f.out){f.out.value=Math.round(settings[key]*100);f.out.setCustomValidity('');}}bpm.disabled=settings.tempo==='auto';bpmLabel.hidden=settings.tempo==='auto';panel.querySelector('#sound-enabled').checked=settings.enabled;}
  function stop(){generation++;if(source){source.onended=null;source.stop();source.disconnect();source=null;}}
  async function prepare(){
   if(!context)context=new AudioContext({sampleRate:48000});await context.resume();
   const p=parameters();
   const key=JSON.stringify(p);if(cacheKey===key&&buffer)return;
-  status.textContent='Analyzing movement and preparing audio…';await new Promise(r=>setTimeout(r,20));
+  status.textContent='Preparing audio…';await new Promise(r=>setTimeout(r,20));
   const telemetry=runtime.sampleMotion(p),plan=planSound(telemetry,p.sound),rendered=renderSound(plan);
   buffer=context.createBuffer(2,rendered.channels[0].length,rendered.sampleRate);for(let c=0;c<2;c++)buffer.copyToChannel(rendered.channels[c],c);cacheKey=key;
-  status.textContent=`${plan.bpm} BPM · ${plan.events.length} adaptive events · ${settings.tempo==='auto'?'automatic tempo':'manual tempo'}`;
+  status.textContent=`${plan.bpm} BPM · ${plan.events.length} sound effects`;
  }
  async function play(time){stop();const token=generation;if(!settings.enabled)return false;building=prepare();await building;if(token!==generation||!buffer)return false;source=context.createBufferSource();source.buffer=buffer;source.connect(context.destination);offset=time;startTime=context.currentTime;source.start(0,Math.min(time,buffer.duration-.001));return true;}
  async function exportBuffer(p){await new Promise(resolve=>setTimeout(resolve,0));const rendered=renderSound(planSound(runtime.sampleMotion(p),p.sound));const result=new AudioBuffer({numberOfChannels:2,length:rendered.channels[0].length,sampleRate:rendered.sampleRate});for(let c=0;c<2;c++)result.copyToChannel(rendered.channels[c],c);return result;}
- sync();return {exportBuffer,setScene(scene){panel.hidden=false;for(const key of ['dial','hinge','gyro'])fields[key].input.closest('.finish-control').hidden=['procedural','pop'].includes(scene);const is2d=['procedural','pop'].includes(scene);for(const [key,label]of Object.entries(is2d?{camera:'Transitions · whoosh',objects:'Shapes and text · motion',accents:'Entrances and settling'}:{camera:labels.camera,objects:labels.objects,accents:labels.accents})){fields[key].input.closest('.finish-control').querySelector('label').firstChild.textContent=label;}panel.querySelector('p').textContent=is2d?'Subtle SFX · shapes, text and transitions':'Subtle SFX · wind and mechanical detail';},getSettings:()=>({...settings}),setSettings(value){stop();settings=normalizeSound(value??soundDefaults);cacheKey='';sync();},play,stop,currentTime:()=>source?offset+context.currentTime-startTime:null};
+ function setScene(scene){
+  panel.hidden=false;
+  // Mirrors runtime.sampleMotion: only BAX emits local mechanical profiles;
+  // DOT has fixed authored cues; these study adapters currently emit no SFX.
+  const is2d=['procedural','pop','dot','replay'].includes(scene);
+  const hasMotionEffects=!['starter','pulse','camera'].includes(scene);
+  const authoredCues=scene==='dot';
+  mechanics.hidden=scene!=='bax';sfx.hidden=!hasMotionEffects;subtle.hidden=!hasMotionEffects;
+  for(const key of ['dial','hinge','gyro'])fields[key].row.hidden=scene!=='bax';
+  fields.objects.row.hidden=authoredCues;fields.density.row.hidden=authoredCues;
+  const sceneLabels=is2d?{camera:'Transitions',objects:'Shapes and text',accents:'Entrances and stops'}:{camera:labels.camera,objects:labels.objects,accents:labels.accents};
+  for(const [key,label]of Object.entries(sceneLabels)){
+   fields[key].row.querySelector('label').textContent=label;
+   fields[key].out.setAttribute('aria-label',label+' percent');
+   const kitKey=key==='objects'?'objectKit':key==='accents'?'accentKit':'cameraKit';
+   fields[kitKey].input.setAttribute('aria-label',label+' sound');
+   fields[kitKey].input.closest('label').hidden=authoredCues;
+  }
+ }
+ sync();return {exportBuffer,setScene,getSettings:()=>({...settings}),setSettings(value){stop();settings=normalizeSound(value??soundDefaults);cacheKey='';sync();},play,stop,currentTime:()=>source?offset+context.currentTime-startTime:null};
 }

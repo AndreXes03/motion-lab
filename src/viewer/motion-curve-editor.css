@@ -1,50 +1,127 @@
-.motion-panel.motion-interactive .motion-target-row,.motion-panel.motion-interactive .motion-fine-row{display:grid;grid-template-columns:1fr 1fr;gap:8px}
-.motion-panel.motion-interactive .motion-target-row .control{min-width:0;margin:0}
-.motion-panel.motion-interactive .motion-target-row label,.motion-panel.motion-interactive .motion-fine-row label{font-size:10px;margin-bottom:4px}
-.motion-panel.motion-interactive .motion-target-row select{font-size:11px;padding:6px 4px}
-.motion-panel.motion-interactive #motion-timing-title{font-size:12px;margin:12px 0 0}
-.motion-panel.motion-interactive #motion-timing-graph{touch-action:none;user-select:none;margin:7px 0 0;overflow:visible}
-.motion-panel.motion-interactive .motion-curve-key{stroke-width:2;cursor:grab}
-.motion-panel.motion-interactive .motion-curve-handle{cursor:move}
-.motion-panel.motion-interactive .motion-curve-key:focus,.motion-panel.motion-interactive .motion-curve-handle:focus{stroke:#fff;stroke-width:3;outline:none}
-.motion-panel.motion-interactive .motion-actions{margin:4px 0;gap:5px}
-.motion-panel.motion-interactive .motion-actions button{flex:1;padding:6px 5px;font-size:10px;white-space:nowrap}
-.motion-panel.motion-interactive .motion-selection{font-size:10px;color:#cdd0df;margin:5px 0}
-.motion-panel.motion-interactive .motion-fine-row{grid-template-columns:1fr 1fr auto;align-items:end;margin:6px 0}
-.motion-panel.motion-interactive .motion-fine-row .control{min-width:0}
-.motion-panel.motion-interactive .motion-fine-row input{padding:6px 5px;font-size:11px}
-.motion-panel.motion-interactive .motion-fine-row button{font-size:10px;padding:7px 6px}
-.motion-panel.motion-interactive .motion-preset-row{display:flex;gap:6px;align-items:end;margin:6px 0}
-.motion-panel.motion-interactive .motion-preset-row .control{flex:1;min-width:0}
-.motion-panel.motion-interactive .motion-preset-row label{font-size:10px;margin-bottom:4px}
-.motion-panel.motion-interactive .motion-preset-row select{font-size:10px;padding:6px 4px}
-.motion-panel.motion-interactive .motion-preset-row button{font-size:10px;padding:7px 6px}
-.motion-panel.motion-interactive>.motion-key-list{display:flex;flex-wrap:wrap;gap:4px;margin:6px 0;max-height:74px}
-.motion-panel.motion-interactive>.motion-key-list .motion-key{font-size:10px;padding:5px 7px}
-.motion-panel.motion-interactive>.motion-empty{font-size:10px;padding:0;margin:7px 0}
-.motion-panel.motion-interactive>small{font-size:10px;margin:7px 0}
-.motion-panel.motion-interactive #motion-create-curve,.motion-panel.motion-interactive #motion-new-key{font-size:10px;padding:6px 7px;margin:0 4px 7px 0}
-.motion-panel.motion-interactive .motion-details{border-top:1px solid var(--line);margin-top:8px;padding-top:8px}
-.motion-panel.motion-interactive .motion-details>summary{cursor:pointer;font-size:11px;padding:4px 0;color:#bcc3d5}
-.motion-panel.motion-interactive .motion-details .motion-key-editor{margin:6px 0;padding:0;border:0}
-.motion-panel.motion-interactive>.control{margin:10px 0}
-.motion-panel.motion-interactive>.context-note{font-size:10px;margin:8px 0}
-.motion-panel.motion-interactive .motion-native-section h3{display:none}
-@media(max-width:620px){.motion-panel.motion-interactive #motion-timing-graph{max-height:200px}.motion-panel.motion-interactive .motion-target-row{gap:6px}.motion-panel.motion-interactive .motion-curve-key{r:5}.motion-panel.motion-interactive .motion-curve-handle{r:8}}
-.motion-panel.motion-interactive .motion-quick-actions button{font-size:19px;line-height:20px;padding:4px 8px}
-.motion-panel.motion-interactive .motion-details>.control{margin:12px 0}
-.motion-panel.motion-interactive .motion-details>.control:has(input[type=checkbox]){display:flex;align-items:center;justify-content:space-between}
-.motion-panel.motion-interactive .motion-details>.control:has(input[type=checkbox]) label{margin:0}
-.motion-panel.motion-interactive .motion-details input[type=checkbox]{width:auto}
-.motion-panel.motion-interactive .motion-target-row .control,.motion-panel.motion-interactive .motion-fine-row .control{grid-column:auto;margin:0}
-.motion-panel.motion-interactive .motion-fine-row label{font-size:10px;margin:0 0 4px}
-.motion-panel.motion-interactive .motion-preset-row .control{margin:0}
-.motion-panel.motion-interactive .motion-actions:has(.motion-selection){align-items:center;gap:8px}
-.motion-panel.motion-interactive .motion-actions:has(.motion-selection) button{flex:0 0 34px;font-size:15px;padding:4px}
-.motion-panel.motion-interactive .motion-selection{flex:1;text-align:center;margin:0;font-size:10px;white-space:nowrap}
-.motion-panel.motion-interactive .motion-details{padding:8px 0 0}
-
-.motion-panel.motion-interactive .motion-quick-actions #motion-create-curve{font-size:19px;line-height:20px;padding:4px 8px;margin:0}
-.motion-panel.motion-interactive .motion-fine-row #motion-save-key{font-size:16px;line-height:17px;min-width:30px;padding:5px 6px}
-.motion-panel.motion-interactive .motion-details{margin-top:4px;padding:4px 0 0}
-.motion-panel.motion-interactive .motion-details>summary{padding:2px 0;line-height:16px}
+/* Motion workspace: target context, curve canvas, then keyframe detail. */
+.motion-panel.motion-interactive {
+  --motion-accent: #b49aef;
+  --motion-surface: var(--studio-surface, #171a1e);
+  --motion-input: var(--studio-raised, #20242a);
+  --motion-line: var(--studio-line, #30363e);
+  --motion-text: var(--studio-text, #eef0f3);
+  --motion-muted: var(--studio-muted, #929ba8);
+  min-width: 0;
+  max-width: none;
+  padding: 0 0 12px;
+  color: var(--motion-text);
+  font-size: 12px;
+}
+.motion-panel.motion-interactive h3 { margin: 0; font-size: 12px; line-height: 18px; font-weight: 600; letter-spacing: 0; text-transform: none; }
+.motion-panel.motion-interactive .motion-context-heading,
+.motion-panel.motion-interactive .motion-graph-header { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin: 0 0 10px; }
+.motion-panel.motion-interactive .motion-state { padding: 3px 7px; border-radius: 4px; background: #20242a; color: var(--motion-muted); font-size: 10px; font-weight: 500; white-space: nowrap; }
+.motion-panel.motion-interactive .motion-state[data-edited=true] { color: var(--motion-accent); background: #b49aef14; }
+.motion-panel.motion-interactive[data-animation-enabled=false] .motion-state { color: #ddbd88; background: #ddbd8812; }
+.motion-panel.motion-interactive .motion-target-row { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 10px; }
+.motion-panel.motion-interactive .control { min-width: 0; }
+.motion-panel.motion-interactive .motion-target-row .control,
+.motion-panel.motion-interactive .motion-fine-row .control,
+.motion-panel.motion-interactive .motion-preset-row .control { grid-column: auto; margin: 0; }
+.motion-panel.motion-interactive .control > label { display: block; color: var(--motion-muted); font-size: 11px; line-height: 15px; margin: 0 0 5px; font-weight: 450; }
+.motion-panel.motion-interactive input[type=number],
+.motion-panel.motion-interactive select { width: 100%; min-width: 0; height: 32px; padding: 6px 9px; border: 1px solid var(--motion-line); border-radius: 5px; background: var(--motion-input); color: var(--motion-text); font: inherit; font-size: 12px; box-shadow: none; }
+.motion-panel.motion-interactive input:focus-visible,
+.motion-panel.motion-interactive select:focus-visible,
+.motion-panel.motion-interactive button:focus-visible,
+.motion-panel.motion-interactive summary:focus-visible,
+.motion-panel.motion-interactive .motion-curve:focus-visible { outline: 2px solid var(--motion-accent); outline-offset: 2px; }
+.motion-panel.motion-interactive button { min-height: 29px; border: 1px solid var(--motion-line); border-radius: 5px; background: var(--motion-input); color: var(--motion-text); font: inherit; font-size: 11px; line-height: 16px; padding: 5px 9px; cursor: pointer; box-shadow: none; }
+.motion-panel.motion-interactive button:hover:not(:disabled) { border-color: #646074; background: #292830; }
+.motion-panel.motion-interactive button:disabled { opacity: .36; cursor: default; }
+.motion-panel.motion-interactive .context-note { color: var(--motion-muted); font-size: 11px; line-height: 1.5; }
+.motion-panel.motion-interactive .motion-scope-note { margin: 8px 0 12px; }
+.motion-panel.motion-interactive .motion-scope-note[data-warning=true] { color: #ddbd88; }
+.motion-panel.motion-interactive .motion-graph-section { min-width: 0; border-top: 1px solid var(--motion-line); padding-top: 12px; }
+.motion-panel.motion-interactive .motion-graph-header { margin-bottom: 8px; }
+.motion-panel.motion-interactive .motion-curve-type { color: var(--motion-muted); font-size: 10px; }
+.motion-panel.motion-interactive .motion-curve { display: block; width: 100%; max-height: none; border: 1px solid var(--motion-line); border-radius: 6px; background: #0d0f11; color: #838c99; }
+.motion-panel.motion-interactive #motion-timing-graph { touch-action: none; user-select: none; margin: 0; overflow: hidden; }
+.motion-panel.motion-interactive .motion-curve-key { stroke-width: 2; cursor: grab; }
+.motion-panel.motion-interactive .motion-curve-handle { cursor: move; }
+.motion-panel.motion-interactive .motion-curve-key:focus,
+.motion-panel.motion-interactive .motion-curve-handle:focus { stroke: #fff; stroke-width: 3; outline: none; }
+.motion-panel.motion-interactive .motion-clock { font-size: 10px; font-variant-numeric: tabular-nums; line-height: 16px; margin: 5px 0; text-align: right; }
+.motion-panel.motion-interactive .motion-actions { display: flex; align-items: center; gap: 6px; margin: 6px 0; }
+.motion-panel.motion-interactive .motion-actions button { flex: 1; white-space: nowrap; }
+.motion-panel.motion-interactive .motion-actions:has(.motion-selection) { margin-top: 0; }
+.motion-panel.motion-interactive .motion-actions:has(.motion-selection) button { flex: 0 0 30px; min-height: 26px; padding: 2px 5px; font-size: 15px; }
+.motion-panel.motion-interactive .motion-selection { flex: 1; min-width: 0; margin: 0; color: var(--motion-text); font-size: 11px; text-align: center; font-variant-numeric: tabular-nums; }
+.motion-panel.motion-interactive .motion-quick-actions #motion-add-key { color: var(--motion-accent); border-color: #b49aef40; background: #b49aef12; }
+.motion-panel.motion-interactive .motion-quick-actions #motion-create-curve { flex: 0 1 auto; color: var(--motion-muted); }
+.motion-panel.motion-interactive .motion-graph-hint { display: block; color: var(--motion-muted); font-size: 10px; margin: 7px 0; line-height: 16px; }
+.motion-panel.motion-interactive .motion-key-list { display: flex; flex-wrap: wrap; gap: 5px; max-height: 76px; overflow: auto; margin: 8px 0; }
+.motion-panel.motion-interactive .motion-key-list .motion-key { min-height: 25px; padding: 3px 7px; font-size: 10px; color: var(--motion-muted); font-variant-numeric: tabular-nums; }
+.motion-panel.motion-interactive .motion-key[aria-pressed=true] { background: #b49aef18; border-color: #b49aef60; color: var(--motion-accent); }
+.motion-panel.motion-interactive .motion-empty { padding: 0; margin: 8px 0; font-size: 11px; }
+.motion-panel.motion-interactive .motion-selected-key { margin-top: 12px; border-top: 1px solid var(--motion-line); padding-top: 10px; }
+.motion-panel.motion-interactive .motion-selected-key > h3 { margin-bottom: 8px; }
+.motion-panel.motion-interactive .motion-fine-row { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) auto; gap: 8px; align-items: end; }
+.motion-panel.motion-interactive .motion-fine-row button { min-height: 32px; }
+.motion-panel.motion-interactive .motion-preset-row { display: flex; gap: 8px; align-items: end; margin: 9px 0 0; }
+.motion-panel.motion-interactive .motion-preset-row .control { flex: 1; }
+.motion-panel.motion-interactive .motion-preset-row button { min-height: 32px; }
+.motion-panel.motion-interactive .motion-selected-key > [role=status] { margin: 8px 0 0; color: #efad9a; }
+.motion-panel.motion-interactive .motion-selected-key > [role=status]:empty { display: none; }
+.motion-panel.motion-interactive .motion-details { border-top: 1px solid var(--motion-line); margin-top: 12px; padding: 0; }
+.motion-panel.motion-interactive .motion-details + .motion-details { margin-top: 0; }
+.motion-panel.motion-interactive .motion-details > summary { cursor: pointer; font-size: 11px; color: #bbc1cb; padding: 10px 0; line-height: 18px; font-weight: 500; }
+.motion-panel.motion-interactive .motion-details > summary::marker { color: var(--motion-muted); font-size: 9px; }
+.motion-panel.motion-interactive .motion-details[open] > summary { color: var(--motion-text); }
+.motion-panel.motion-interactive .motion-details > .control { margin: 12px 0; }
+.motion-panel.motion-interactive .motion-details > .control:has(input[type=checkbox]) { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.motion-panel.motion-interactive .motion-details > .control:has(input[type=checkbox]) label { margin: 0; color: #bbc1cb; }
+.motion-panel.motion-interactive .motion-details input[type=checkbox] { width: 15px; height: 15px; accent-color: var(--motion-accent); }
+.motion-panel.motion-interactive .motion-details .motion-key-editor { margin: 12px 0; padding: 12px 0 0; border-top: 1px solid var(--motion-line); }
+.motion-panel.motion-interactive .motion-key-editor .control { margin: 10px 0; }
+.motion-panel.motion-interactive .motion-key-editor > small,
+.motion-panel.motion-interactive .control small { display: block; color: var(--motion-muted); font-size: 10px; line-height: 1.5; margin-top: 6px; }
+.motion-panel.motion-interactive .motion-key-editor .motion-bezier .control { margin: 0; }
+.motion-panel.motion-interactive .motion-key-editor .motion-actions button { color: #d7aba3; }
+.motion-panel.motion-interactive .motion-native-section { margin: 0; padding: 0 0 10px; border: 0; }
+.motion-panel.motion-interactive .motion-native-section h3 { display: none; }
+.motion-panel.motion-interactive .motion-native-section .motion-curve { margin: 8px 0; }
+.motion-panel.motion-interactive .motion-native-key { font-size: 10px; padding: 4px 7px; min-height: 25px; }
+.motion-panel.motion-interactive [hidden] { display: none !important; }
+@media (max-height: 800px) and (min-width: 900px) {
+  .motion-panel.motion-interactive .motion-scope-note { margin-bottom: 9px; }
+  .motion-panel.motion-interactive .motion-selected-key { margin-top: 8px; padding-top: 8px; }
+  .motion-panel.motion-interactive .motion-graph-hint { display: none; }
+  .motion-panel.motion-interactive .motion-details { margin-top: 8px; }
+  .motion-panel.motion-interactive .motion-details + .motion-details { margin-top: 0; }
+  .motion-panel.motion-interactive .motion-details > summary { padding: 7px 0; }
+}
+@media (max-width: 620px) {
+  .motion-panel.motion-interactive .motion-target-row { gap: 8px; }
+  .motion-panel.motion-interactive .motion-state { font-size: 9px; }
+  .motion-panel.motion-interactive .motion-curve-key { r: 6; }
+  .motion-panel.motion-interactive .motion-curve-handle { r: 9; }
+  .motion-panel.motion-interactive .motion-quick-actions button { padding-inline: 7px; }
+}
+/* Source curves are the primary view. Retime is a separate clock mapping. */
+.motion-panel.motion-interactive .motion-view-picker { display: flex; gap: 3px; padding: 3px; margin: 12px 0; border: 1px solid var(--motion-line); border-radius: 5px; background: #101214; }
+.motion-panel.motion-interactive .motion-view-picker button { flex: 1; border-color: transparent; background: transparent; color: var(--motion-muted); }
+.motion-panel.motion-interactive .motion-view-picker button[aria-pressed=true] { background: #29272e; color: var(--motion-accent); border-color: #b49aef35; }
+.motion-panel.motion-interactive .motion-source-panel { padding: 0; border: 0; margin: 0; }
+.motion-panel.motion-interactive .motion-source-panel > summary { display: none; }
+.motion-panel.motion-interactive #motion-native-status { font-size: 10px; margin: 7px 0; }
+.motion-panel.motion-interactive #motion-native-graph { touch-action: none; user-select: none; overflow: hidden; }
+.motion-panel.motion-interactive #motion-native-graph[data-editable=true] .motion-source-key { cursor: grab; }
+.motion-panel.motion-interactive #motion-native-graph [data-native-handle] { cursor: move; }
+.motion-panel.motion-interactive #motion-native-graph [role=button]:focus { outline: none; stroke: #eef0f3; stroke-width: 3; }
+.motion-panel.motion-interactive .motion-native-key[aria-pressed=true] { background: #b49aef18; border-color: #b49aef60; color: var(--motion-accent); }
+.motion-panel.motion-interactive .motion-native-editor { margin: 12px 0; padding-top: 12px; border-top: 1px solid var(--motion-line); }
+.motion-panel.motion-interactive .motion-native-editor > .control { margin: 10px 0; }
+.motion-panel.motion-interactive .motion-source-handles { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; }
+.motion-panel.motion-interactive .motion-source-shared { display: block; color: var(--motion-muted); font-size: 10px; line-height: 1.5; margin: 8px 0; }
+.motion-panel.motion-interactive .motion-native-editor [role=status] { color: #efad9a; }
+.motion-panel.motion-interactive .motion-native-editor [role=status]:empty { display: none; }
+.motion-panel.motion-interactive .motion-parameter-toggle { display: flex; align-items: center; justify-content: space-between; margin-top: 12px; padding-top: 12px; border-top: 1px solid var(--motion-line); }
+.motion-panel.motion-interactive .motion-parameter-toggle label { margin: 0; }
+.motion-panel.motion-interactive .motion-parameter-toggle input { width: 15px; height: 15px; accent-color: var(--motion-accent); }
+body[data-experience=easy] .motion-panel.motion-interactive #motion-advanced { display: none; }

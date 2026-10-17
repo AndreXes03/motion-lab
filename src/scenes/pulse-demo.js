@@ -1,3 +1,4 @@
+import {createReviewMaterials} from '../engine/preview-review.js';
 import {sampleAnimationGroupTime} from '../engine/animation-groups.js';
 import {refineTurntableArm} from './pulse-hardware-detail.js';
 import {pulseImpactCues} from '../engine/impact-motion.js';
@@ -30,7 +31,7 @@ const ease=x=>{x=Math.max(0,Math.min(1,x));return x*x*(3-2*x);};
 // Public gains leave the authored film intact at one and never retime its cuts.
 const controlGain=(controls,key,min,max)=>Number.isFinite(controls?.[key])?Math.max(min,Math.min(max,controls[key])):1;
 export function createDemo(){
- const clayMaterial=new THREE.MeshStandardMaterial({color:'#a9adb1',roughness:.72,metalness:0});
+ const reviews=createReviewMaterials();
  const scene=new THREE.Scene(),camera=new THREE.PerspectiveCamera(34,16/9,.1,100);scene.background=new THREE.Color('#08277b');
  const sky=document.createElement('canvas');sky.width=512;sky.height=512;const sk=sky.getContext('2d'),g=sk.createRadialGradient(256,230,20,256,256,390);g.addColorStop(0,'#164db4');g.addColorStop(1,'#030e3c');sk.fillStyle=g;sk.fillRect(0,0,512,512);scene.background=canvasTexture(sky);const rig=new THREE.Group();scene.add(rig);
  const mats={orange:new THREE.MeshPhysicalMaterial({color:'#ff681c',metalness:.6,roughness:.2}),black:new THREE.MeshStandardMaterial({color:'#111523',metalness:.2,roughness:.3}),silver:new THREE.MeshStandardMaterial({color:'#d3dfea',metalness:.95,roughness:.19}),lime:new THREE.MeshStandardMaterial({color:'#d8ff43',metalness:.15,roughness:.28}),purple:new THREE.MeshStandardMaterial({color:'#806bff',metalness:.4,roughness:.2})};
@@ -167,10 +168,11 @@ const glossEnv=glossStudio(renderer);
  if(p.previewQuality==='fast'){post.dofEnabled=false;post.aoIntensity=0;post.bloomStrength=0;post.bloomEnabled=false;post.antialias=false;}
  composite.applyLook(post);
  composite.setReview(p.review);
- scene.overrideMaterial=p.review==='clay'?clayMaterial:null;
- if(p.review==='clay'||p.review==='clean')renderer.render(scene,camera);else composite.render();ctx.drawImage(renderer.domElement,0,0,w,h);
+ scene.overrideMaterial=reviews.materialFor(p.review);
+ const diagnostic=reviews.isDiagnostic(p.review);
+ if(diagnostic||p.review==='clean')renderer.render(scene,camera);else composite.render();ctx.drawImage(renderer.domElement,0,0,w,h);
  // Deliberately crisp vector graphics, rendered after 3D: zero temporal blur.
- ctx.save();ctx.scale(w/1920,h/1080);if(t>12.7){ctx.globalAlpha=ease((t-12.7)/.5);ctx.fillStyle='#f4f3df';ctx.textAlign='center';ctx.font='600 25px Arial';ctx.fillText('MOTION LAB',960,978);ctx.font='400 16px Arial';ctx.fillText('OPEN SOURCE. FULL VOLUME.',960,1014);}
+ ctx.save();ctx.scale(w/1920,h/1080);if(!diagnostic&&t>12.7){ctx.globalAlpha=ease((t-12.7)/.5);ctx.fillStyle='#f4f3df';ctx.textAlign='center';ctx.font='600 25px Arial';ctx.fillText('MOTION LAB',960,978);ctx.font='400 16px Arial';ctx.fillText('OPEN SOURCE. FULL VOLUME.',960,1014);}
  ctx.restore();}
  const cameraChannels=[
   ...['x','y','z'].map(axis=>({id:`camera.position.${axis}`,label:`Camera position ${axis.toUpperCase()}`,unit:'scene units'})),
@@ -191,5 +193,5 @@ const glossEnv=glossStudio(renderer);
   if(groupId==='mechanisms')return{channels:mechanismChannels.map(channel=>({...channel})),values:{'pulse.device.rotation.z':rig.rotation.z,'pulse.record.rotation.z':platter.rotation.z,'pulse.speaker.cone.scale.y':cone.scale.y,'pulse.dome.position.z':dome.position.z,'pulse.mixer.rotation.y':instruments.mixer.rotation.y,'pulse.mixer.rotation.z':instruments.mixer.rotation.z,'pulse.headphones.rotation.y':headphones.rotation.y}};
   return{channels:[],values:{}};
  }
- return {render,scene,camera,renderer,shutterAngleAt,state:()=>({camera:camera.position.toArray(),direction:camera.getWorldDirection(new THREE.Vector3()).toArray(),fov:camera.fov,rigEuler:[rig.rotation.x,rig.rotation.y,rig.rotation.z],impactCues:pulseImpactCues}),animationChannels(groupId){return(groupId==='camera'?cameraChannels:groupId==='mechanisms'?mechanismChannels:[]).map(channel=>({...channel}));},captureAuthoredAnimation,actualState:captureAuthoredAnimation,dispose:()=>renderer.dispose()};
+ return {render,scene,camera,renderer,shutterAngleAt,state:()=>({camera:camera.position.toArray(),direction:camera.getWorldDirection(new THREE.Vector3()).toArray(),fov:camera.fov,rigEuler:[rig.rotation.x,rig.rotation.y,rig.rotation.z],impactCues:pulseImpactCues}),animationChannels(groupId){return(groupId==='camera'?cameraChannels:groupId==='mechanisms'?mechanismChannels:[]).map(channel=>({...channel}));},captureAuthoredAnimation,actualState:captureAuthoredAnimation,dispose:()=>{reviews.dispose();renderer.dispose();}};
 }

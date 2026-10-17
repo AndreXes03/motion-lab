@@ -5,12 +5,12 @@ import {sceneIds} from '../src/scene-registry.js';
 import {createControlManifest,getControlCatalog} from '../src/engine/control-catalog.js';
 import {getAnimationGroups} from '../src/engine/animation-groups.js';
 import {validateStudioParameters} from './studio-api.mjs';
-const openAdvanced=async page=>{const detail=page.locator('#motion-advanced');if(!await detail.evaluate(node=>node.open))await detail.locator(':scope > summary').click();};
+const openAdvanced=async page=>{await page.locator('#experience-pro').click();const retime=page.locator('#motion-view-retime');if(await retime.isVisible())await retime.click();const detail=page.locator('#motion-advanced');if(!await detail.evaluate(node=>node.open))await detail.locator(':scope > summary').click();};
 const output=new URL('../outputs/adaptive-controls-draft/',import.meta.url);await mkdir(output,{recursive:true});
 const browser=await chromium.launch({executablePath:'/Applications/Google Chrome.app/Contents/MacOS/Google Chrome',headless:true,args:['--disable-gpu-sandbox']});
 const page=await browser.newPage({viewport:{width:1440,height:1000}}),errors=[],checks=[];page.on('pageerror',e=>errors.push(e.message));
 async function idle(){await page.evaluate(()=>window.motionPreview.whenIdle());}
-async function recipe(){await idle();await page.locator('#tab-code').click();return JSON.parse(await page.locator('#code-content').textContent());}
+async function recipe(){await idle();await page.locator('#experience-pro').click();await page.locator('#tab-code').click();return JSON.parse(await page.locator('#code-content').textContent());}
 try{
  await page.goto('http://127.0.0.1:4194/?scene=procedural&render=1');await page.waitForFunction(()=>window.motion?.ready);await page.evaluate(()=>window.motion.ready);await page.locator('#preview-quality').selectOption('sharp');await idle();
  for(const scene of sceneIds){
@@ -20,11 +20,16 @@ try{
   assert.equal(await page.locator('.catalog-group').count(),manifest.panels.length);
   assert.ok(await page.locator('#project-controls .control:visible').count());
   for(const category of [...new Set(manifest.panels.map(p=>p.category))]){
+   const tab=category==='compositing'?'compositing':'look';
+   await page.locator(`#tab-${tab}`).click();
+   assert.equal(await page.locator(`#inspector-${tab} #workspace-catalog`).count(),1,'The active workspace owns the shared catalog');
    assert.ok(await page.locator(`#tool-categories button[data-category="${category}"]`).count(),JSON.stringify({scene,missingCategory:category,actualCategories:await page.locator('#tool-categories button').evaluateAll(nodes=>nodes.map(node=>node.dataset.category)),errors}));
-   await page.locator(`#tool-categories button[data-category="${category}"]`).click();
+   // A workspace with one category hides the redundant category rail.
+   const categoryButton=page.locator(`#tool-categories button[data-category="${category}"]`);
+   if(await categoryButton.isVisible())await categoryButton.click();
    const categories=await page.locator('#project-controls .control:visible').evaluateAll(nodes=>nodes.map(n=>n.dataset.category));assert.ok(categories.length);assert.ok(categories.every(c=>c===category));
   }
-  await page.locator('#tool-categories button[data-category="all"]').click();
+  await page.locator('#tab-look').click();
   const saved=await recipe();await validateStudioParameters(saved.parameters);assert.deepEqual(saved.parameters.studio.controlManifest,manifest);
   await page.locator('#tab-motion').click();const selectedNumeric=catalog.filter(c=>c.animatable&&manifest.controls.includes(c.id)).map(c=>c.id);
   const options=await page.locator('#motion-control option').evaluateAll(nodes=>nodes.map(n=>n.value));const groupIds=getAnimationGroups(scene).map(g=>'group:'+g.id);assert.deepEqual(options,groupIds);
