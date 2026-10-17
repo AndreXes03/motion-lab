@@ -65,6 +65,8 @@ npm run viewer
 
 Open <http://127.0.0.1:4173/>. Video renders go to Downloads. Windows and Linux have not been validated. Read [usage and export details](docs/USAGE.md) and [supported setup](docs/VALIDATION.md).
 
+For a one-click Mac icon that starts or reuses Studio in your default browser, see [Avvio rapido Mac](docs/AVVIO_RAPIDO_MAC.md). This local launcher keeps installation and updates separate.
+
 ## Project guides
 
 | Topic | Guide |
