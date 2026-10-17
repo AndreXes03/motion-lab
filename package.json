@@ -36,7 +36,12 @@
     "test:renderer:api": "node scripts/test-renderer-studio-api.mjs",
     "test:motion:interaction": "node scripts/test-motion-interaction-browser.mjs",
     "test:export:browser": "node scripts/test-browser-export.mjs",
-    "test:export:browser:recording": "node scripts/test-browser-export-recording.mjs"
+    "test:export:browser:recording": "node scripts/test-browser-export-recording.mjs",
+    "studio:launch": "node scripts/launch-studio.mjs",
+    "studio:status": "node scripts/launch-studio.mjs status",
+    "studio:stop": "node scripts/launch-studio.mjs stop",
+    "install:mac": "node scripts/install-mac-launcher.mjs",
+    "test:launcher": "node --test scripts/test-mac-launcher.mjs"
   },
   "keywords": [
     "threejs",

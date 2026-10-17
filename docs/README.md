@@ -4,6 +4,7 @@
 | --- | --- |
 | Understand the engine | [Architecture](ARCHITECTURE.md) |
 | Run the viewer and render | [Usage](USAGE.md) |
+| Install the one-click Mac launcher | [Avvio rapido Mac](AVVIO_RAPIDO_MAC.md) |
 | Work with a coding agent | [Agent workflow](AGENT_WORKFLOW.md) |
 | Explore the procedural demo | [Example and formulas](PROCEDURAL-EXAMPLE.md) |
 | Build procedural 2D graphics | [Procedural graphics](PROCEDURAL.md) |
