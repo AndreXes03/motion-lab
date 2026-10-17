@@ -1,0 +1,10 @@
+{
+  "name": "motion-lab-mcp",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Local tool-only MCP bridge for Motion Lab",
+  "engines": { "node": ">=22.12.0" },
+  "scripts": { "start": "node server.mjs", "configure": "node scripts/configure.mjs", "test": "node --test test/*.test.mjs" },
+  "dependencies": { "@modelcontextprotocol/sdk": "1.32.1", "zod": "4.6.7" }
+}

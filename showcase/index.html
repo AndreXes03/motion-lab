@@ -126,6 +126,16 @@
       <p class="local-note">In supported browsers, the public Studio exports browser-rendered video at 720p or 1080p, PNG frames and JSON recipes. MP4 is available when the browser supports its encoder; otherwise it offers WebM. This uses the real-time Three.js/Canvas path. Cycles and file-based compositing run locally; mixed shots require prepared render inputs and a compositing plan.</p>
     </section>
 
+    <section id="agent-plugin" class="render-section section-rule" aria-labelledby="agent-plugin-title">
+      <div class="section-intro"><p class="eyebrow">LOCAL AGENT PLUGIN · BETA</p><h2 id="agent-plugin-title">Direct the local Studio<br>from your agent.</h2><p>A local MCP plugin connects Codex or Claude to your Motion Lab checkout. Discover real controls, save named directions and inspect local render jobs.</p></div>
+      <div class="render-grid">
+        <article class="render-card"><span class="render-label">DISCOVER</span><h3>Use the scene's real tools.</h3><p>Read available scenes, control catalogs and saved versions. Parameter changes create a new named version; the original stays available.</p></article>
+        <article class="render-card"><span class="render-label">PREVIEW AND RENDER</span><h3>Inspect the next pass.</h3><p>Request small preview frames and asynchronous local render jobs. Retrieve completed images and original output files through the agent.</p></article>
+        <article class="render-card"><span class="render-label">STAY INFORMED</span><h3>Check before each call.</h3><p>Every tool call checks GitHub main for updates, including calls with invalid input. Offline checks do not block local work; updates are never installed automatically.</p></article>
+      </div>
+      <p class="local-note">The beta runs locally over MCP stdio for Codex or Claude and requires local Node.js, installed dependencies and Chrome for rendering. Save a version in Studio to share it with the agent; unsaved browser edits are not read or overwritten, and new versions require manual selection. Cycles needs local Blender and a supported scene. This website does not provide MCP access to your Mac or run its render jobs. <a href="https://github.com/AndreXes03/motion-lab/blob/codex/mcp-plugin-v1/docs/MCP_PLUGIN.md">Local plugin setup and limits ↗</a></p>
+    </section>
+
     <section class="nerd-section section-rule" aria-labelledby="nerd-title">
       <div class="nerd-copy"><p class="eyebrow">FOR THE CURIOUS</p><h2 id="nerd-title">A recipe you can read.</h2><p>Scenes are parameterized code and JSON, sampled at an exact time. Motion curves can be grouped by camera or object, with one chosen shot window at a time. The source stays open when you want to go beyond the controls.</p><div class="nerd-links"><a href="https://github.com/AndreXes03/motion-lab/tree/main/src/scenes">Browse scene source ↗</a><a href="https://github.com/AndreXes03/motion-lab/tree/main/project">Browse project recipes ↗</a></div></div>
       <pre class="recipe-card" aria-label="Example scene recipe"><code><span class="code-muted">// A value at any time</span>

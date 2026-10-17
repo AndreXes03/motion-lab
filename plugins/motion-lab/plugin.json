@@ -1,0 +1,6 @@
+{
+  "name": "motion-lab",
+  "version": "0.1.0",
+  "description": "Local agent tools for immutable Motion Lab versions, previews and render jobs. Requires a configured local checkout.",
+  "mcpServers": "./mcp.json"
+}

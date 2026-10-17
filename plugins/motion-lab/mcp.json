@@ -1,0 +1,9 @@
+{
+  "mcpServers": {
+    "motion-lab": {
+      "type": "stdio",
+      "command": "node",
+      "args": ["${PLUGIN_ROOT}/server.mjs", "--repo", "/ABSOLUTE/PATH/TO/motion-lab", "--port", "4198"]
+    }
+  }
+}
