@@ -26,9 +26,12 @@ export class Bridge {
   async ensure() { await launch({ root:this.root, port:this.port, action:'start', open:false }); }
   async api(route, body) {
     const response = await fetch(this.base + '/api/studio' + route, { ...(body ? { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(body) } : {}), redirect:'error', signal:AbortSignal.timeout(8000) });
-    const data = JSON.parse((await limitedBody(response,MAX_JSON)).toString('utf8'));
-    if (!response.ok) throw Error(`Studio API ${response.status}: ${String(data.error ?? 'request failed').slice(0,400)}`);
-    return data;
+    if (!response.ok) {
+      let detail='request failed';
+      try { detail=JSON.parse((await limitedBody(response,MAX_JSON)).toString('utf8')).error??detail; } catch { /* HTTP status still proves rejection even if its body is unavailable. */ }
+      const error=Error(`Studio API ${response.status}: ${String(detail).slice(0,400)}`);error.status=response.status;throw error;
+    }
+    return JSON.parse((await limitedBody(response,MAX_JSON)).toString('utf8'));
   }
   async version(id, scene, expectedRevision) {
     if (!UUID.test(id)) throw Error('Invalid versionId.');
@@ -93,9 +96,9 @@ export class Bridge {
       if(!UUID.test(response.id))throw Error('Unexpected job response.');
       record.jobId=response.id;record.state='accepted';await this.persist(record);
     }catch(error){
-      record.state='submission_unknown';record.note=String(error.message).slice(0,500);await this.persist(record);
+      record.state=error.status>=400&&error.status<500?'rejected':'submission_unknown';record.note=String(error.message).slice(0,500);await this.persist(record);
       // Never automatically resubmit an uncertain request, even across a server restart.
-      return {data:{...record,note:'No retry was sent. Inspect Studio jobs before using another requestId. '+record.note},content:[]};
+      return {isError:record.state==='rejected',data:{...record,note:'No retry was sent. Inspect Studio jobs before using another requestId. '+record.note},content:[]};
     }
     if(preview){
       const until=Date.now()+6500;
@@ -104,7 +107,7 @@ export class Bridge {
     return this.result(record);
   }
   async result(record) {
-    if(!record.jobId)return{data:{...record,note:record.note??'Submission may still be in progress or its response was lost. Inspect Studio jobs; this request will not be resent.'},content:[]};
+    if(!record.jobId)return{isError:record.state==='rejected',data:{...record,note:record.note??'Submission may still be in progress or its response was lost. Inspect Studio jobs; this request will not be resent.'},content:[]};
     if(!UUID.test(record.jobId))throw Error('Invalid recorded job.');
     const job=await this.api('/jobs/'+record.jobId);
     if(job.id!==record.jobId||job.scene!==record.scene)throw Error('Job identity mismatch.');

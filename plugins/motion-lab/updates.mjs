@@ -1,7 +1,7 @@
 import { execFile } from 'node:child_process';
 
 function git(root, args, timeout = 500) {
-  return new Promise(resolve => execFile('git', args, { cwd: root, timeout, maxBuffer: 1024 * 1024, encoding: 'utf8', env: { ...process.env, GIT_TERMINAL_PROMPT: '0' } }, (error, stdout) => resolve({ code: error ? error.code ?? 'failed' : 0, output: stdout?.trim() ?? '' })));
+  return new Promise(resolve => execFile('git', args, { cwd: root, timeout, maxBuffer: 1024 * 1024, encoding: 'utf8', env: { ...process.env, GIT_TERMINAL_PROMPT: '0', GIT_OPTIONAL_LOCKS:'0' } }, (error, stdout) => resolve({ code: error ? error.code ?? 'failed' : 0, output: stdout?.trim() ?? '' })));
 }
 
 function expectedOrigin(value) {

@@ -14,6 +14,19 @@ function changedLeaves(target, before, after) {
   }
 }
 
+// Translate only leaves actually changed by the native composite resolver.
+// A stable authored reference avoids repeatedly transforming an already modified look.
+function compositeDelta(target, before, after) {
+  for (const [key,value] of Object.entries(after)) {
+    if (stable(before?.[key])===stable(value)) continue;
+    if (value&&typeof value==='object'&&!Array.isArray(value)) compositeDelta(target[key],before?.[key],value);
+    else {
+      if (![target[key],before?.[key],value].every(Number.isFinite)) throw Error('Composite control has an unsupported nonnumeric change.');
+      target[key]=Number((target[key]+value-before[key]).toPrecision(15));
+    }
+  }
+}
+
 export async function loadRuntime(root) {
   const load = relative => import(pathToFileURL(path.join(root, relative)).href);
   const [api, catalog, projects, store, scenes, policy] = await Promise.all([
@@ -47,10 +60,11 @@ export async function loadRuntime(root) {
         const def = definitions.get(patch.id); if (!def || seen.has(patch.id)) throw Error('Unknown or duplicate catalog control: ' + patch.id); seen.add(patch.id);
         if (def.id === 'contrast') {
           if (typeof patch.value !== 'number' || patch.value < def.min || patch.value > def.max) throw Error('Invalid contrast value.');
-          const before = projects.resolveParameters(scene, next.studio.values, next.studio.preset, next.look);
+          const referenceLook = await store.readProject('look');
+          const before = projects.resolveParameters(scene, next.studio.values, next.studio.preset, referenceLook);
           next.studio.values[def.valueId] = patch.value;
-          const after = projects.resolveParameters(scene, next.studio.values, next.studio.preset, next.look);
-          changedLeaves(next.look, before.look, after.look);
+          const after = projects.resolveParameters(scene, next.studio.values, next.studio.preset, referenceLook);
+          compositeDelta(next.look, before.look, after.look);
         } else {
           catalog.writeControlValue(next, def, patch.value);
           if (def.binding === 'value') next.studio.values[def.valueId] = patch.value;

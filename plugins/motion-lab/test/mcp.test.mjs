@@ -38,7 +38,7 @@ export async function createServer(options){
   if(req.method==='GET'&&route.startsWith('/versions/')){const version=versions.get(route.slice(10));return send(res,version?200:404,version?{snapshot:version}:{error:'missing'});}
   if(req.method==='POST'){let raw='';for await(const chunk of req)raw+=chunk;const body=JSON.parse(raw);appendFileSync(events,JSON.stringify({route,body})+'\\n');
    if(route==='/versions'){const version={id:randomUUID(),name:body.name,scene:body.parameters.scene,parameters:body.parameters};versions.set(version.id,version);return send(res,201,version);}
-   if(route==='/render'){const id=randomUUID(),job={id,scene:body.parameters.scene,kind:body.kind,status:'running',engine:body.parameters.renderPolicy.renderer,settings:body.settings,outputPath:path.join(options.root,'.motion-cache',id+(body.kind==='frame'?'.png':'.mp4'))};jobs.set(id,job);if(existsSync(path.join(options.root,'drop-response'))){req.socket.destroy();return;}return send(res,202,{id});}
+   if(route==='/render'){if(existsSync(path.join(options.root,'reject-render'))){const status=Number(readFileSync(path.join(options.root,'reject-render'),'utf8'));if(!status){res.statusCode=409;return res.end('Conflict');}return send(res,status,{error:'unsupported renderer'});}const id=randomUUID(),job={id,scene:body.parameters.scene,kind:body.kind,status:'running',engine:body.parameters.renderPolicy.renderer,settings:body.settings,outputPath:path.join(options.root,'.motion-cache',id+(body.kind==='frame'?'.png':'.mp4'))};jobs.set(id,job);if(existsSync(path.join(options.root,'drop-response'))){req.socket.destroy();return;}return send(res,202,{id});}
   }
   if(req.method==='GET'&&route.startsWith('/jobs/')){const parts=route.split('/'),job=jobs.get(parts[2]);if(!job)return send(res,404,{error:'missing'});
    if(parts[3]==='file'){res.setHeader('Content-Type','image/png');res.end(png);return;}
@@ -92,6 +92,15 @@ test('real runtime baseline and patch: native versions, immutable base, preserva
   const runtime=await loadRuntime(f.root),bax=await runtime.baseline('bax');bax.animation={version:1,enabled:true,groups:{}};
   const {validateStudioParameters}=await import(pathToFileURL(path.join(repo,'scripts/studio-api.mjs')).href);const normalized=await validateStudioParameters(bax);
   const patched=await runtime.patch(normalized,'bax',[{id:'contrast',value:.5}]);assert.deepEqual(patched.motion,normalized.motion);assert.deepEqual(patched.animation,normalized.animation);assert.equal(patched.shell,normalized.shell);assert.notDeepEqual(patched.look.lighting,normalized.look.lighting);
+  const original=(await f.call('get_project',{scene:'bax'})).structuredContent;
+  const modify=async(base,patches)=>(await f.call('set_parameters',{scene:'bax',baseVersionId:base.versionId,revision:base.revision,patches})).structuredContent;
+  const manual=await modify(original,[{id:'key',value:42},{id:'fill',value:.06},{id:'exposure',value:1.7}]);
+  const contrastA=manual.parameters.studio.values.contrast;
+  const b=await modify(manual,[{id:'contrast',value:.5}]);
+  const same=await modify(b,[{id:'contrast',value:.5}]);assert.deepEqual(same.parameters,b.parameters);assert.equal(same.revision,b.revision);
+  const a=await modify(b,[{id:'contrast',value:contrastA}]);
+  for(const field of ['fill','rim','environment'])assert.ok(Math.abs(a.parameters.look.lighting[field]-manual.parameters.look.lighting[field])<1e-12,field+' must return to the manual baseline');
+  assert.equal(a.parameters.look.lighting.key,42);assert.equal(b.parameters.look.lighting.key,42);assert.equal(a.parameters.look.post.exposure,1.7);assert.deepEqual(a.parameters.motion,manual.parameters.motion);assert.deepEqual(a.parameters.sound,manual.parameters.sound);
 });
 
 test('preview PNG, native render lifecycle, requestId retry across restart, uncertain submission never resubmitted',async t=>{
@@ -99,10 +108,28 @@ test('preview PNG, native render lifecycle, requestId retry across restart, unce
   const preview=await f.call('preview_frame',args);assert.equal(preview.isError,undefined);assert.equal(preview.structuredContent.job.status,'completed');assert.ok(preview.content.some(c=>c.type==='image'));assert.ok(preview.content.some(c=>c.type==='resource_link'));
   await f.call('preview_frame',args);assert.equal((await f.events()).filter(e=>e.route==='/render').length,1);
   await f.close();await f.connect();await f.call('preview_frame',args);assert.equal((await f.events()).filter(e=>e.route==='/render').length,1);
+  await writeFile(path.join(f.root,'slow-job'),'slow');const began=Date.now();const slow=await f.call('preview_frame',{...args,requestId:'slow-preview'});assert.equal(slow.structuredContent.job.status,'running');assert.ok(Date.now()-began<8000);await rm(path.join(f.root,'slow-job'));assert.ok((await f.call('get_job',{requestId:'slow-preview'})).content.some(c=>c.type==='image'));
   await writeFile(path.join(f.root,'slow-job'),'slow');const job=await f.call('render_local',{...args,requestId:'video-A',kind:'export',renderer:'threejs'});assert.equal(job.structuredContent.job.status,'running');
   await rm(path.join(f.root,'slow-job'));const complete=await f.call('get_job',{requestId:'video-A'});assert.equal(complete.structuredContent.job.status,'completed');assert.ok(complete.content.some(c=>c.type==='resource_link'));assert.equal(complete.content.some(c=>c.type==='image'),false);
   await writeFile(path.join(f.root,'drop-response'),'drop');const uncertain={...args,requestId:'uncertain',kind:'preview'};assert.equal((await f.call('render_local',uncertain)).structuredContent.state,'submission_unknown');const renders=(await f.events()).filter(e=>e.route==='/render').length;await f.call('render_local',uncertain);assert.equal((await f.events()).filter(e=>e.route==='/render').length,renders);
   assert.equal((await f.call('render_local',{...uncertain,time:2})).isError,true);
+  await rm(path.join(f.root,'drop-response'));
+  for(const status of ['400','409','non-json']){
+    await writeFile(path.join(f.root,'reject-render'),status);const rejected={...args,requestId:'rejected-'+status,kind:'frame'};
+    const rejection=await f.call('render_local',rejected);assert.equal(rejection.isError,true);assert.equal(rejection.structuredContent.state,'rejected');
+    const beforeRetry=(await f.events()).length;assert.equal((await f.call('render_local',rejected)).isError,true);assert.equal((await f.events()).length,beforeRetry);
+  }
   assert.equal((await f.call('get_job',{requestId:'../../escape'})).isError,true);
   const open=await f.call('open_studio',{scene:'procedural',versionId:base.versionId,open:false});assert.equal(open.structuredContent.opened,false);assert.match(open.structuredContent.note,/manually/);
+});
+
+test('configuration generator: absolute snippets only, no overwrite or client config mutation',async t=>{
+  const f=await fixture(t),destination=path.join(f.base,'reviewed snippets');
+  const before=git(f.root,'status','--porcelain');
+  const args=[path.join(plugin,'scripts/configure.mjs'),'--repo',f.root,'--port','4198','--destination',destination];
+  const generated=spawnSync(process.execPath,args,{env:realEnv,encoding:'utf8'});assert.equal(generated.status,0,generated.stderr);
+  const config=JSON.parse(await readFile(path.join(destination,'mcp.json'),'utf8'));assert.equal(config.mcpServers['motion-lab'].type,'stdio');assert.equal(path.isAbsolute(config.mcpServers['motion-lab'].command),true);assert.equal(config.mcpServers['motion-lab'].args.includes(f.root),true);
+  assert.match(await readFile(path.join(destination,'codex-command.txt'),'utf8'),/^codex mcp add motion-lab -- /);
+  assert.equal(spawnSync(process.execPath,args,{env:realEnv,encoding:'utf8'}).status,1);assert.equal(git(f.root,'status','--porcelain'),before);
+  for(const name of ['plugin.json','mcp.json','.codex-plugin/plugin.json','.claude-plugin/plugin.json','.mcp.json'])assert.ok(JSON.parse(await readFile(path.join(plugin,name),'utf8')));
 });

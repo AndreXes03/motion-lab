@@ -12,7 +12,7 @@ import { Bridge } from './bridge.mjs';
 import { validateRepo } from './runtime/launch-studio.mjs';
 
 // Repository and launcher diagnostics must never enter the stdio protocol stream.
-console.log=(...args)=>console.error(...args);
+for(const method of ['log','info','debug','dir','table'])console[method]=(...args)=>console.error(...args);
 const args=process.argv.slice(2);let root,port=4198;
 for(let i=0;i<args.length;i++){if(args[i]==='--repo')root=args[++i];else if(args[i]==='--port')port=Number(args[++i]);else throw Error('Usage: server.mjs --repo /absolute/motion-lab [--port 4198]');}
 if(!root||!path.isAbsolute(root)||!Number.isInteger(port)||port<1024||port>65535)throw Error('An absolute --repo and a port from 1024 to 65535 are required.');
@@ -58,7 +58,7 @@ server.setRequestHandler(CallToolRequestSchema,async request=>{
     }
     const data={updates,...result.data};const json=JSON.stringify(data);
     if(Buffer.byteLength(json)>128*1024)throw Error('Tool JSON exceeds 128 KiB; request one scene/version or inspect native files.');
-    return{content:[{type:'text',text:json},...(result.content??[])],structuredContent:data};
+    return{...(result.isError?{isError:true}:{}),content:[{type:'text',text:json},...(result.content??[])],structuredContent:data};
   }catch(error){
     const data={updates,error:String(error.message).slice(0,1500)};
     return{isError:true,content:[{type:'text',text:JSON.stringify(data)}],structuredContent:data};
