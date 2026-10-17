@@ -4,6 +4,8 @@
   "description": "Code-driven 2D and 3D rendering for vibe motion",
   "main": "index.js",
   "scripts": {
+    "aggiorna": "node scripts/aggiorna-motion-lab.mjs",
+    "test:aggiornamento": "node --test scripts/test-aggiornamento-mac.mjs",
     "viewer": "node scripts/cli.mjs viewer",
     "frame": "node scripts/cli.mjs frame",
     "contact": "node scripts/cli.mjs contact",

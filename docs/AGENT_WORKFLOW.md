@@ -1,5 +1,7 @@
 # Agent workflow
 
+For cloud tasks and safe Mac updates, follow [Cloud e aggiornamento Mac](CLOUD_E_MAC.md), including its instructions for agents. Keep the existing visual and scene contracts below.
+
 The agent edits code and JSON. References guide visual choices; they are not automatically converted into scenes.
 
 1. **Read the brief and references.** Inspect images and videos for camera, lighting, palette and movement.
