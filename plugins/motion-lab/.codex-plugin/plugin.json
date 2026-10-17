@@ -1,0 +1,5 @@
+{
+  "name": "motion-lab",
+  "version": "0.1.0",
+  "description": "Tool-only MCP for a local Motion Lab checkout. Configure the absolute repository path before enabling."
+}
