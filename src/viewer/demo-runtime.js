@@ -1,3 +1,4 @@
+import {applyCameraLens,resolveCameraLens} from '../engine/camera-lens.js';
 import * as T from 'three';
 import {sampleAnimationGroupTime} from '../engine/animation-groups.js';
 import defaultLook from '../../project/look.json';
@@ -34,7 +35,7 @@ export function createDemoRuntime(canvas) {
   const palette=palettes[parameters.demo?.palette]??palettes.electric;
   scene.background??=new T.Color();scene.background.set(palette[3]);floor.color.set(palette[3]);lime.color.set(palette[0]);pink.color.set(palette[1]);cyan.color.set(palette[2]);
   shell.color.set(p.shell??'#6864ff');accent.color.set(p.accent??'#ff7142');
-  camera.aspect=width/height;camera.fov=p.fov??65;camera.position.set(c['camera.position.x'],c['camera.position.y'],c['camera.position.z']);camera.lookAt(0,-.1,0);camera.updateProjectionMatrix();
+  camera.aspect=width/height;camera.fov=p.fov??65;camera.position.set(c['camera.position.x'],c['camera.position.y'],c['camera.position.z']);camera.lookAt(0,-.1,0);applyCameraLens(camera,parameters,{target:[0,-.1,0],referenceFov:65,fov:p.fov??65});camera.updateProjectionMatrix();
   root.position.y=o['product.position.y'];root.rotation.z=o['product.rotation.z'];
   ring.rotation.set(.55+Math.sin(phase)*.55*energy,o['product.rotation.y'],.35);
   core.rotation.set(phase+Math.sin(phase)*(energy-1)*.5,-phase,.2);core.scale.setScalar(1+Math.sin(phase*2)*.08*energy);
@@ -47,7 +48,8 @@ export function createDemoRuntime(canvas) {
   return {time,width,height,drawCalls:renderer.info.render.calls,triangles:renderer.info.render.triangles};
  }
  function sampleAuthoredAnimation(parameters,group,{start=0,end=6,count=25}={}) {
-  return Object.keys(pose(group,0)).map(id=>({id,label:id.split('.').slice(1).join(' '),source:'samples',editable:false,keys:Array.from({length:count+1},(_,i)=>{const t=start+(end-start)*i/count;return {t,value:pose(group,t,{...parameters,animation:undefined})[id],ease:'linear'};})}));
+  const sourcePose=time=>{const values=pose(group,time,{...parameters,animation:undefined});if(group!=='camera')return values;const lens=resolveCameraLens(['x','y','z'].map(axis=>values['camera.position.'+axis]),[0,-.1,0],65,parameters,parameters.product?.fov??65);return {...Object.fromEntries(lens.position.map((value,i)=>['camera.position.'+['x','y','z'][i],value])),'camera.fov':lens.fov};};
+  return Object.keys(sourcePose(0)).map(id=>({id,label:id.split('.').slice(1).join(' '),source:'samples',editable:false,keys:Array.from({length:count+1},(_,i)=>{const t=start+(end-start)*i/count;return {t,value:sourcePose(t)[id],ease:'linear'};})}));
  }
  return {render,sampleAuthoredAnimation,getLook:()=>structuredClone(defaultLook),dispose(){const resources=new Set();scene.traverse(node=>{if(node.geometry)resources.add(node.geometry);for(const material of [node.material].flat())if(material)resources.add(material);});for(const resource of resources)resource.dispose();renderer.dispose();}};
 }

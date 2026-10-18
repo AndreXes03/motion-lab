@@ -5,6 +5,8 @@ export const ROOT=path.resolve(path.dirname(fileURLToPath(import.meta.url)),'..'
 const ranges={camera:{fov:[20,100]},lighting:{key:[0,500],fill:[0,2],rim:[0,8],environment:[0,3]},surface:{shellRoughness:[.05,1],grainScale:[0,.1]},post:{exposure:[.1,3],bloomStrength:[0,1],bloomThreshold:[0,10],bloomRadius:[0,1],aberrationPx:[0,12],grain:[0,.08],vignette:[0,.6]},motion:{amount:[0,2]}};
 export async function readProject(name){return JSON.parse(await readFile(path.join(ROOT,'project',name+'.json'),'utf8'))}
 export function validateLook(look){
+for(const [key,min,max] of [['distance',.35,2.5],['fovScale',.6,1.5]])if(look?.camera?.[key]!==undefined&&(!Number.isFinite(look.camera[key])||look.camera[key]<min||look.camera[key]>max))throw Error('Invalid camera.'+key);
+if(look?.camera?.keepSubjectSize!==undefined&&typeof look.camera.keepSubjectSize!=='boolean')throw Error('Invalid camera.keepSubjectSize');
 for(const [key,min,max] of [['colorContrast',.5,1.8],['colorSaturation',0,2.5]])if(look?.post?.[key]!==undefined&&(!Number.isFinite(look.post[key])||look.post[key]<min||look.post[key]>max))throw Error('Invalid post.'+key);
 for(const key of ['dofEnabled','dofAuto'])if(look?.post?.[key]!==undefined&&typeof look.post[key]!=='boolean')throw Error('Invalid post.'+key);
 for(const [key,min,max] of [['dofFocus',.1,1000],['dofStrength',0,1],['dofMaxBlur',0,30]])if(look?.post?.[key]!==undefined&&(!Number.isFinite(look.post[key])||look.post[key]<min||look.post[key]>max))throw Error('Invalid post.'+key);

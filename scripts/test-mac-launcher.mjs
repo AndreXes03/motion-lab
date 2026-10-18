@@ -45,6 +45,7 @@ export async function createServer(options) {
 }
 `);
   await mkdir(path.join(root,'public/brand'),{recursive:true});await writeFile(path.join(root,'public/brand/framevolve.icns'),'test-icon');
+  await mkdir(path.join(root,'licenses/legacy'),{recursive:true});await writeFile(path.join(root,'LICENSE'),'Framevolve Free Use License');await writeFile(path.join(root,'licenses/legacy/MIT.txt'),'Legacy MIT notice');
   const port = await freePort();
   t.after(async () => {
     try { await command(root, port, 'stop'); } finally { await rm(base, { recursive: true, force: true }); }
@@ -123,6 +124,8 @@ test('installer esterno: bundle con spazi, Node/repo assoluti, shell valida e ne
   const shell = await readFile(executable, 'utf8'); assert.equal(shell.includes('Terminal.app'), false); assert.equal(shell.includes('npm ci'), false); assert.equal(shell.includes('git fetch'), false);
   assert.equal(shell.includes(`--port ${f.port} >>`), true);
   assert.match(await readFile(path.join(destination, 'Contents/Info.plist'), 'utf8'), /<string>APPL<\/string>/);
+  assert.equal(await readFile(path.join(destination,'Contents/Resources/LICENSE'),'utf8'),'Framevolve Free Use License');
+  assert.equal(await readFile(path.join(destination,'Contents/Resources/LEGACY-MIT.txt'),'utf8'),'Legacy MIT notice');
   const copied = path.join(destination, 'Contents/Resources/launch-studio.mjs');
   const launch = await command(f.root, f.port, 'start', copied); assert.equal(launch.code, 0, launch.stderr);
   await assert.rejects(installLauncher({root:f.root,destination}), /Esiste già/);

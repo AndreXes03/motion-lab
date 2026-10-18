@@ -9,6 +9,9 @@ on:
       - 'project/**'
       - 'index.html'
       - 'package*.json'
+      - 'LICENSE'
+      - 'THIRD_PARTY.md'
+      - 'licenses/**'
       - 'vite.config.*'
       - 'showcase/**'
       - 'demo/**'
@@ -47,6 +50,9 @@ jobs:
           cp -R public/brand _site/brand
           cp showcase/index.html _site/index.html
           cp showcase/site.css showcase/site.js _site/
+          cp LICENSE THIRD_PARTY.md _site/
+          mkdir -p _site/licenses/legacy
+          cp licenses/legacy/MIT.txt _site/licenses/legacy/
           cp examples/procedural-field.html examples/procedural-live.js _site/examples/
           cp demo/*.mp4 demo/*.gif demo/*.jpg demo/*.png _site/demo/
           cp demo/render-manifest.json _site/demo/

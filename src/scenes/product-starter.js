@@ -1,3 +1,4 @@
+import {applyCameraLens} from '../engine/camera-lens.js';
 import {sampleAnimationGroupTime} from '../engine/animation-groups.js';
 import * as T from 'three';
 import {createProductStage,createRotaryControl,createOpticalCell,createHousingPanel,createImpactMotion,createProductCameraMove} from '../product-kit/index.js';
@@ -33,7 +34,7 @@ export function createProductStarter(){
       stage.lights.key.intensity=12*(p.keyStrength??1);stage.lights.fill.intensity=p.fill??.10;
       assembly.rotation.set(.05*Math.sin(productTime*.65),.12*Math.sin(productTime*.7),-.055);
       optic.root.position.z=.2+impact(productTime);dial.root.rotation.z=-.25+productTime*.45;dial2.root.rotation.z=.3-productTime*.32;
-      move.apply(stage.camera,cameraTime);stage.camera.fov=p.fov??65;stage.camera.updateProjectionMatrix();
+      const pose=move.apply(stage.camera,cameraTime);applyCameraLens(stage.camera,parameters,{target:pose.target,referenceFov:65,fov:p.fov??65});
       stage.camera.updateMatrixWorld(true);const focus=-new T.Vector3(-.55,0,.55).applyMatrix4(stage.camera.matrixWorldInverse).z;
       const canvas=stage.render(time,{width,height,review:parameters.review,look:{fisheye:p.fisheye??.08,dofFocus:focus,...(parameters.previewQuality==='fast'?{dofEnabled:false,aoIntensity:0,bloomStrength:0,bloomEnabled:false,antialias:false}:{})}});ctx.drawImage(canvas,0,0,width,height);
     },animationChannels(groupId){return(groupId==='camera'?cameraChannels:groupId==='product'?productChannels:[]).map(channel=>({...channel}));},captureAuthoredAnimation(groupId){

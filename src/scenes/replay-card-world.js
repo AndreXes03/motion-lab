@@ -1,3 +1,4 @@
+import {applyCameraLens} from '../engine/camera-lens.js';
 import {smoother} from './replay-motion-curves.js';
 import {replayCameraPose} from './replay-camera-rail.js';
 import {replayPaperFormat} from './replay-paper-format.js';
@@ -34,13 +35,13 @@ export function createReplayCardWorld(getImage,getModel){
  extractedScene.add(fill.clone());
  let sw=0,sh=0;
  return {
-  render(ctx,poses,t,wireAlpha,cameraTime=t){
+  render(ctx,poses,t,wireAlpha,cameraTime=t,parameters={}){
    const w=ctx.canvas.width,h=ctx.canvas.height;
    if(w!==sw||h!==sh){renderer.setSize(w,h);camera.aspect=w/h;camera.updateProjectionMatrix();sw=w;sh=h;}
    // A camera moving through the same world: dolly, lateral track and a shallow
    // crane. The rhythm follows objects, rather than scaling each chapter canvas.
    const lens=replayCameraPose(cameraTime);
-   camera.position.fromArray(lens.position);camera.lookAt(new T.Vector3(...lens.target));camera.rotation.z=lens.roll;
+   camera.position.fromArray(lens.position);camera.lookAt(new T.Vector3(...lens.target));camera.rotation.z=lens.roll;applyCameraLens(camera,parameters,{target:lens.target,referenceFov:33.398});
    ground.visible=false;
    for(let id=0;id<21;id++){
     const a=poses[id],b=poses[(id+1)%21],line=threads[id];line.visible=wireAlpha>.01;

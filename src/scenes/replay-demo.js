@@ -94,13 +94,13 @@ const cameraChannels=[
  {id:'composition.center.y',label:'Final composition center Y',unit:'px'},
  {id:'composition.zoom',label:'Final composition scale',unit:'scale'}
 ];
-function drawCards(c,chapter,u,t,controls,cameraTime=t,outputTime=t){
+function drawCards(c,chapter,u,t,controls,cameraTime=t,outputTime=t,parameters={}){
  const poses=Array.from({length:21},(_,id)=>controlledCardPose(id,t,controls));
  cardWorld??=createReplayCardWorld(cardImage,id=>illustrations.getModel(id));
- cardWorld.render(c,poses,t,replayHeadlineWeight(1,outputTime)*controls.threadStrength,cameraTime);
+ cardWorld.render(c,poses,t,replayHeadlineWeight(1,outputTime)*controls.threadStrength,cameraTime,parameters);
 }
 function reveal(c,u,draw,weight=1){const previous=textReveal;textReveal=smoother(u/.45)*weight;draw();textReveal=previous;}
-export function createReplayDemo(){illustrations??=createReplayIllustrations();return {config:replayConfig,animationChannels(groupId){return groupId==='camera'?cameraChannels.map(channel=>({...channel})):[];},animationState(groupId,time,parameters={}){if(groupId!=='camera')return{};const {pose,travel}=cameraPoseAt(time,parameters);return{'camera.position.x':pose.position[0],'camera.position.y':pose.position[1],'camera.position.z':pose.position[2],'camera.target.x':pose.target[0],'camera.target.y':pose.target[1],'camera.target.z':pose.target[2],'camera.roll':pose.roll,'composition.center.x':960-22*travel,'composition.center.y':540-7*travel,'composition.zoom':1+.10*travel};},nodesAt(t,p={}){
+export function createReplayDemo(){illustrations??=createReplayIllustrations();return {config:replayConfig,get camera(){return cardWorld?.camera;},animationChannels(groupId){return groupId==='camera'?cameraChannels.map(channel=>({...channel})):[];},animationState(groupId,time,parameters={}){if(groupId!=='camera')return{};const {pose,travel}=cameraPoseAt(time,parameters);return{'camera.position.x':pose.position[0],'camera.position.y':pose.position[1],'camera.position.z':pose.position[2],'camera.target.x':pose.target[0],'camera.target.y':pose.target[1],'camera.target.z':pose.target[2],'camera.roll':pose.roll,'composition.center.x':960-22*travel,'composition.center.y':540-7*travel,'composition.zoom':1+.10*travel};},nodesAt(t,p={}){
  const controls=replayControls(p),cardsTime=sampleAnimationGroupTime(p,'cards',t),cameraTime=sampleAnimationGroupTime(p,'camera',t),node={id:'record',type:'circle',x:960+Math.sin(cardsTime)*300,y:540,radius:120,fill:C.red,sound:true};
  // Retain the established sound proxy at defaults; expose layout edits using the
  // same centre and scale gains as the rendered collection.
@@ -119,7 +119,7 @@ export function createReplayDemo(){illustrations??=createReplayIllustrations();r
  const chapter=Math.max(0,replayCuts.findLastIndex(x=>t>=x)),u=t-replayCuts[chapter];
  rect(c,0,0,1920,1080,C.cream);const hero=replayHeroCue(cardsTime);hero.orbitRadius*=controls.orbitScale;if(t>=11.4){const mask=replayHeroCue(t);disc(c,mask.iris.x,mask.iris.y,mask.iris.radius,C.red);if(t>=13.2)disc(c,mask.creamIris.x,mask.creamIris.y,mask.creamIris.radius,C.cream);}
  // All cards survive the edit: a shared scene graph reflows them between layouts.
- drawCards(c,chapter,u,cardsTime,controls,cameraTime,t);
+ drawCards(c,chapter,u,cardsTime,controls,cameraTime,t,p);
  if(replayHeadlineWeight(0,t)>0)reveal(c,t*controls.revealSpeed,()=>{type(c,'2016',960,490,250*controls.editorialScale,C.red,'Arial','900','center');type(c,'to 2026',960,720,160*controls.editorialScale,C.ink,'Georgia','italic','center')},replayHeadlineWeight(0,t));
  if(replayHeadlineWeight(1,t)>0)reveal(c,(t-2.4)*controls.revealSpeed,()=>{headline(c,'Ten years,',115,905,142*controls.editorialScale);type(c,'one thread.',115,1035,142*controls.editorialScale,C.ink,'"Bodoni 72", Georgia','italic')},replayHeadlineWeight(1,t));
  if(replayHeadlineWeight(2,t)>0)reveal(c,(t-5.4)*controls.revealSpeed,()=>type(c,"Summer ’16",890,580,96*controls.editorialScale,'#76736d','"Bodoni 72", Georgia','italic','center'),replayHeadlineWeight(2,t));

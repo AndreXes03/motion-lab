@@ -55,7 +55,7 @@ For premium delivery use `--quality premium`: 1920×1080, 48 temporal samples, 4
 
 Run `node scripts/quality.mjs --scene pulse --width 640 --height 360 --out renders/pulse-quality.png` (or `camera`) for clean/clay boards of critical macro and assembly poses. Beauty and quality boards are distinct checks. CAMERA's final lamellae follow separate parallel planes; this is a constrained assembly animation, not rigid-body dynamics.
 
-Public film soundtracks can use separately licensed stock music. The local procedural audio fallback stays reproducible; stock WAVs are not part of the MIT source and must never be committed. See THIRD_PARTY.md for film credits.
+Public film soundtracks can use separately licensed stock music. The local procedural audio fallback stays reproducible; stock WAVs are not part of the application source and must never be committed. See THIRD_PARTY.md for film credits.
 
 ### Shorter iteration loop
 

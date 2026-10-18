@@ -1,3 +1,4 @@
+import {perspectiveScenes} from './camera-lens.js';
 import selections from '../../project/control-selections.json' with {type:'json'};
 import {controlCategory,controlCategories} from './scene-capabilities.js';
 import {studioProjects} from './project-controls.js';
@@ -65,6 +66,11 @@ export function getControlCatalog(scene) {
     controls.push(range('shellRoughness','Shell roughness',['look','surface','shellRoughness'],.05,1,.01,defaultLook.surface.shellRoughness,'Appearance',['device.root'],'Roughness of the radio shell material.'),range('motionAmount','Authored motion gain',['look','motion','amount'],0,2,.05,defaultLook.motion.amount,'Motion',['camera'],'Gain of the authored camera and object tracks.'));
   }
   if(['procedural','pop'].includes(scene))for(const [id,label,min,max,step,fallback]of [['grain','Film grain',0,.06,.001,.018],['grainSize','Grain size',.5,3,.1,1.1]])controls.push(range(id,label,['look','post',id],min,max,step,defaultLook.post[id]??fallback,'Compositing',['composition'],'Display grain applied after frame integration.'));
+  if(perspectiveScenes.includes(scene)) {
+    if(!controls.some(control=>control.id==='fov')) controls.push(range('fovScale','Wide lens',['look','camera','fovScale'],.6,1.5,.01,1,'Lens',['camera'],'Lens angle relative to each authored shot. Pair with Camera distance; Keep subject size automatically compensates framing.'));
+    controls.push(range('cameraDistance','Camera distance',['look','camera','distance'],.35,2.5,.01,1,'Lens',['camera'],'Real camera distance to the shot target. Below 1 moves closer; above 1 moves away. Pair with the wide lens to shape perspective.'));
+    controls.push({id:'keepSubjectSize',label:'Keep subject size',type:'toggle',path:['look','camera','keepSubjectSize'],default:true,group:'Lens',contexts:['camera'],binding:'parameter',animatable:false,help:'Move the camera as the lens angle changes to keep the subject at approximately the same size. Camera distance remains independently adjustable.'});
+  }
   controls.push(range('colorContrast','Color contrast',['look','post','colorContrast'],.5,1.8,.01,1,'Compositing',['composition'],'Contrast of the finished image. One preserves the original.'),range('colorSaturation','Color saturation',['look','post','colorSaturation'],0,2.5,.01,1,'Compositing',['composition'],'Zero is monochrome; one preserves the original color.'));
   return controls.map(control=>({...control,category:controlCategory(control)}));
 }
@@ -143,5 +149,11 @@ export function validateControlManifest(manifest,scene){
 export function resolveControlManifest(manifest,scene){
   if(manifest===undefined)return createControlManifest(scene);
   if(manifest?.version===1&&manifest.scene===scene&&Array.isArray(manifest.controls)&&!manifest.controls.length)return createControlManifest(scene);
-  return validateControlManifest(manifest,scene);
+  const result=validateControlManifest(manifest,scene);
+  if(!perspectiveScenes.includes(scene))return result;
+  const lensIds=['fov','fovScale','fisheye','lensStrength','lensDistortion'];
+  const panel=result.panels.find(panel=>panel.controls.some(id=>lensIds.includes(id)));
+  if(!panel)return result;
+  for(const id of ['cameraDistance','keepSubjectSize'])if(!result.controls.includes(id)){result.controls.push(id);panel.controls.push(id);}
+  return validateControlManifest(result,scene);
 }
