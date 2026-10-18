@@ -22,9 +22,13 @@ Local changes, a work branch or local commits preserve the local copy. Network f
 
 ## Web trial
 
-The public build has its own small entry point and kinetic 3D sculpture built from shared primitive geometry, no textures, no shadow maps and no multipass compositor. It does not load the desktop runtime or full films. Motion templates load only when the Motion panel is opened. The preview runs at 640 × 360 and pauses when the tab is hidden. Color palettes, motion energy and camera travel are editable. Automatic playback respects reduced-motion preferences.
+The public build has its own small entry point and kinetic 3D bloom built from shared geometry and instanced petals/sparks, two tiny generated background/softbox textures, no downloaded textures, one 256px soft key-light shadow map and no multipass compositor. It does not load the desktop runtime or full films. Motion templates load only when the Motion panel is opened. The preview runs at 640 × 360 and pauses when the tab is hidden. Color palettes, motion energy and camera travel are editable. Automatic playback respects reduced-motion preferences.
 
 The web trial includes material, lens and light controls, timeline scrubbing, basic undo/redo and PNG capture. Pro opens an explanatory download dialog. Full scenes, keyframe editing, code, sound and video exports are available in the downloaded Studio. The homepage uses a compressed 5-second silent loop; full films remain available on request. Reduced-motion and data-saving preferences suppress the automatic loop.
+
+The lightweight sculpture transforms between a compact gyro and an expanded flower, with three independently rotating arcs, a knotted center and a close orbital camera. Geometry is shared and repeated petals/sparks are instanced; the scene keeps one color pass, a small key-light shadow map and a bounded draw/triangle budget. All motion is absolute-time and loops in six seconds, including camera motion.
+
+The demo lighting uses a warm key, cool rim, restrained pink bounce and generated softbox reflections. The contact plane and docking stage receive real key-light shadows. No HDRI, model, texture file or post-processing library is downloaded; the softbox environment is generated once from a 128 × 64 canvas. Soft shadows blur only the small shadow map, avoiding full-frame blur passes. Key strength and shadow fill remain live controls.
 
 ## Wide lenses and camera distance
 
