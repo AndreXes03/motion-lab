@@ -30,7 +30,7 @@
     }
   ],
   "scenes": {
-    "bax": {
+    "objects": {
       "lights": [
         {
           "id": "original",

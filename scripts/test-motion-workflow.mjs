@@ -23,19 +23,19 @@ for(const scene of sceneIds){
 const independent=validateParameterAnimation({version:1,rate:2,tracks:{speed:[{t:0,value:.5,ease:'linear'},{t:4,value:2.5}],density:[{t:0,value:4,ease:'linear'},{t:4,value:12}]},rates:{density:.5},groups:{graphics:{start:0,end:4,keys:[{t:0,value:0},{t:4,value:1}]}}},'procedural');
 assert.equal(independent.rate,1);assert.equal(independent.rates.speed,2);assert.equal(independent.rates.density,.5);
 const p={scene:'procedural',graphics:{speed:1,density:8},animation:independent};assert.equal(evaluateParameterAnimation(p,1).graphics.speed,1.5);assert.equal(evaluateParameterAnimation(p,1).graphics.density,5);assert.equal(sampleAnimationGroupTime(p,'graphics',1),1);
-for(const value of [{version:1,groups:null},{version:1,tracks:null},{version:1,rates:null},{version:1,groups:{unknown:{start:0,end:1,keys:[]}}},{version:1,groups:{camera:{start:0,end:2,keys:[{t:0,value:2}]}}}])assert.throws(()=>validateParameterAnimation(value,'bax'));
+for(const value of [{version:1,groups:null},{version:1,tracks:null},{version:1,rates:null},{version:1,groups:{unknown:{start:0,end:1,keys:[]}}},{version:1,groups:{camera:{start:0,end:2,keys:[{t:0,value:2}]}}}])assert.throws(()=>validateParameterAnimation(value,'objects'));
 assert.throws(()=>validatePresetSelection('pulse','lights',{id:'bad',label:'Bad',description:'Unsupported',values:{colorContrast:1}}),/does not belong/);
 assert.throws(()=>validateInterpolationPreset('pulse',{id:'bad',label:'Bad',ease:'bezier',bezier:[2,0,0,1]}));
 let reads=0,writes=0;const rgba=new Uint8ClampedArray([100,50,10,255]),ctx={getImageData(){reads++;return{data:rgba}},putImageData(){writes++}};
 applyDisplayGrade(ctx,1,1,{});assert.equal(reads,0);applyDisplayGrade(ctx,1,1,{colorSaturation:0});assert.equal(rgba[0],rgba[1]);assert.equal(rgba[1],rgba[2]);assert.equal(writes,1);
 // Native source channels stay distinct from editable progress/timing curves.
-const nativeCamera=getAuthoredAnimationTracks('bax','camera');
+const nativeCamera=getAuthoredAnimationTracks('objects','camera');
 assert.deepEqual(nativeCamera.find(track=>track.id==='camera.position.x').keys.map(key=>key.value),nativeMotion.tracks['camera.position'].map(key=>key.value[0]));
 assert.deepEqual(nativeCamera.find(track=>track.id==='camera.position.x').keys.map(key=>key.t),nativeMotion.tracks['camera.position'].map(key=>key.t));
 assert.ok(nativeCamera.every(track=>track.source==='keys'&&track.keys.every(key=>key.ease==='smooth'||typeof key.ease==='string')));
 nativeCamera[0].keys[0].value=10000;
-assert.notEqual(getAuthoredAnimationTracks('bax','camera')[0].keys[0].value,10000,'inspecting native keys never mutates the saved authored motion');
-for(const scene of sceneIds.filter(scene=>scene!=='bax'))for(const group of getAnimationGroups(scene))assert.deepEqual(getAuthoredAnimationTracks(scene,group.id),[],'function-authored motion requires actual evaluated samples, never invented native keys');
+assert.notEqual(getAuthoredAnimationTracks('objects','camera')[0].keys[0].value,10000,'inspecting native keys never mutates the saved authored motion');
+for(const scene of sceneIds.filter(scene=>scene!=='objects'))for(const group of getAnimationGroups(scene))assert.deepEqual(getAuthoredAnimationTracks(scene,group.id),[],'function-authored motion requires actual evaluated samples, never invented native keys');
 const channels=getAuthoredCameraChannels();
 const observations=[0,.5,1].map(t=>({t,values:Object.fromEntries(channels.map((channel,index)=>[channel.id,t*(index+1)]))}));
 const samples=buildSampledAuthoredTracks('pulse','camera',observations,channels);

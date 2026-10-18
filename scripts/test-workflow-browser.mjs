@@ -31,11 +31,11 @@ function values(parameters,profile){const catalog=getControlCatalog(parameters.s
 const pass=(name,details={})=>checks.push({name,passed:true,...details});
 
 try{
- await page.goto('http://127.0.0.1:4194/?scene=bax&render=1');
+ await page.goto('http://127.0.0.1:4194/?scene=objects&render=1');
  await page.waitForFunction(()=>window.motionPreview&&window.motion?.ready);await page.evaluate(()=>window.motion.ready);await mode('sharp');
  const original=await recipe();
  for(const category of ['lights','compositing']){
-  const profiles=getControlPresets('bax',category),profile=profiles.find(profile=>profile.id!=='original'&&profile.id!=='clean')??profiles[0];
+  const profiles=getControlPresets('objects',category),profile=profiles.find(profile=>profile.id!=='original'&&profile.id!=='clean')??profiles[0];
   assert.ok(profile,'Preset must exist');
   await tools(category);
   const selector=page.locator(`.panel-preset[data-preset-category="${category}"]`).first();
@@ -45,7 +45,7 @@ try{
   await page.locator('#undo-edit').click();assert.deepEqual(values((await recipe()).parameters,profile),values(before.parameters,profile));
   await page.locator('#redo-edit').click();assert.deepEqual(values((await recipe()).parameters,profile),profile.values);
   await tools(category);
-  const def=getControlCatalog('bax').find(control=>Object.hasOwn(profile.values,control.id)&&control.type==='range');
+  const def=getControlCatalog('objects').find(control=>Object.hasOwn(profile.values,control.id)&&control.type==='range');
   const custom=Number((Math.min(def.max,profile.values[def.id]+def.step*2)).toFixed(8));
   assert.notEqual(custom,profile.values[def.id]);
   await page.locator(`#control-${def.id}-number`).fill(String(custom));await page.locator(`#control-${def.id}-number`).press('Tab');await idle();

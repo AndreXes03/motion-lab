@@ -1,7 +1,7 @@
 {
   "version": 1,
   "scenes": {
-    "bax": {
+    "objects": {
       "controls": [
         "energy",
         "fov",

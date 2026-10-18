@@ -2,7 +2,7 @@ import {icon} from './studio-icons.js';
 import {sceneConfig} from '../scene-registry.js';
 import {getAuthoredAnimationProtocol} from '../engine/authored-animation.js';
 import {resolveControlManifest} from '../engine/control-catalog.js';
-const sceneSources={starter:'product-starter.js',dot:'mascot-demo.js',pulse:'pulse-demo.js',camera:'afterhours-demo.js',replay:'replay-demo.js',bax:'bax.js',pop:'pop-demo.js',procedural:'procedural-demo.js'};
+const sceneSources={starter:'product-starter.js',dot:'mascot-demo.js',pulse:'pulse-demo.js',camera:'afterhours-demo.js',replay:'replay-demo.js',objects:'objects.js',pop:'pop-demo.js',procedural:'procedural-demo.js'};
 /** A focused view of the live recipe. Native values appear once, in their actual write shape. */
 export function buildAnimationHandoff(scene,parameters,config=sceneConfig(scene)){
   const protocol=getAuthoredAnimationProtocol(scene,{motion:parameters.motion,animation:parameters.animation});
@@ -32,7 +32,7 @@ export function buildAnimationHandoff(scene,parameters,config=sceneConfig(scene)
 }
 const $=id=>document.getElementById(id);
 export function mergeLook(base,patch){const result=structuredClone(base);for(const [key,value] of Object.entries(patch??{}))result[key]=value&&typeof value==='object'&&!Array.isArray(value)?mergeLook(result[key]??{},value):value;return result;}
-const objects=[['device.root','Radio','Material · display'],['bax.kinetic','Gyroscope','Shape · motion'],['bax.emblem','Emblem','Shape · motion']];
+const objects=[['device.root','Radio','Material · display'],['objects.kinetic','Gyroscope','Shape · motion'],['objects.emblem','Emblem','Shape · motion']];
 export function mountInspector({runtime,getScene,getState,getParameters,getTime,getPreviewOptions,pause,draw,restore,onEdit,onSeek,onWorkspaceChange=()=>{},onSelectionChange=()=>{}}){
   let selection='composition',tab='look',reference=structuredClone(getState()),comparing=false,previous=structuredClone(getState()),history=[],future=[],pending=null,replaying=false,sourceRequest=0;
   const image=$('comparison-image'),canvas=$('renderCanvas');
@@ -62,7 +62,7 @@ export function mountInspector({runtime,getScene,getState,getParameters,getTime,
     $('code-toggle').setAttribute('aria-pressed',String(tab==='code'));
     document.body.classList.toggle('code-open',tab==='code');
     if(document.body.dataset.layout==='focus')$('layout-balanced').click();
-    $('review-tools').hidden=tab!=='look'||getScene()!=='bax';
+    $('review-tools').hidden=tab!=='look'||getScene()!=='objects';
     $('presets').hidden=tab!=='look'||(selection!=='composition'&&selection!=='lighting');
     document.querySelector('.property-panel .section-caption').hidden=$('presets').hidden;
     // Catalog controls keep the same DOM nodes, handlers and saved values.
@@ -91,8 +91,8 @@ export function mountInspector({runtime,getScene,getState,getParameters,getTime,
   $('redo-edit').onclick=()=>{if(!future.length)return;history.push(structuredClone(getState()));replay(future.pop());};
   document.addEventListener('keydown',e=>{if(!(e.metaKey||e.ctrlKey)||e.key.toLowerCase()!=='z'||e.target.closest('input,textarea'))return;e.preventDefault();$(e.shiftKey?'redo-edit':'undo-edit').click();});
   function select(id){selection=id;setTab('look');sync();}
-  function buildTree(){const list=$('scene-tree');list.replaceChildren();$('mobile-selection').replaceChildren();const is3d=getScene()==='bax';$('scene-count').textContent=is3d?'06':'01';const items=[['composition','Composition','Full sequence'],...(is3d?objects:[]),...(is3d?[['camera','Camera','Framing'],['lighting','Lights','Studio']]:[])];for(const [id,title,description]of items){const option=new Option(title,id);option.selected=selection===id;$('mobile-selection').add(option);const button=document.createElement('button');button.className='scene-item';button.dataset.object=id;button.setAttribute('aria-pressed',String(selection===id));const glyph=document.createElement('span');glyph.className='scene-glyph';glyph.innerHTML=icon(id==='composition'?'scene':id==='camera'?'camera':id==='lighting'?'lights':'object');const info=document.createElement('span');const label=document.createElement('strong');label.textContent=title;const detail=document.createElement('small');detail.textContent=description;info.append(label,detail);button.append(glyph,info);button.onclick=()=>select(id);list.append(button);}}
-  function sync(){const cfg=sceneConfig(getScene());$('timeline-meta').textContent=`${cfg.duration} s · ${cfg.fps} fps · 1920 × 1080`;$('timeline-ruler').replaceChildren();for(let i=0;i<=cfg.duration;i++){const tick=document.createElement('span');tick.textContent=String(i).padStart(2,'0');$('timeline-ruler').append(tick);}const is3d=getScene()==='bax';document.body.classList.toggle('single-composition',!is3d);if(!is3d)selection='composition';buildTree();$('selection-title').textContent=names[selection];$('selection-hint').hidden=!is3d;$('selection-hint').textContent=selection==='composition'?'Select an object in the scene':({camera:'Camera selected',lighting:'Lights selected','device.root':'Radio selected','bax.kinetic':'Gyroscope selected','bax.emblem':'Emblem selected'}[selection]);$('context-controls').replaceChildren();const p=getParameters();const showAll=selection==='composition';
+  function buildTree(){const list=$('scene-tree');list.replaceChildren();$('mobile-selection').replaceChildren();const is3d=getScene()==='objects';$('scene-count').textContent=is3d?'06':'01';const items=[['composition','Composition','Full sequence'],...(is3d?objects:[]),...(is3d?[['camera','Camera','Framing'],['lighting','Lights','Studio']]:[])];for(const [id,title,description]of items){const option=new Option(title,id);option.selected=selection===id;$('mobile-selection').add(option);const button=document.createElement('button');button.className='scene-item';button.dataset.object=id;button.setAttribute('aria-pressed',String(selection===id));const glyph=document.createElement('span');glyph.className='scene-glyph';glyph.innerHTML=icon(id==='composition'?'scene':id==='camera'?'camera':id==='lighting'?'lights':'object');const info=document.createElement('span');const label=document.createElement('strong');label.textContent=title;const detail=document.createElement('small');detail.textContent=description;info.append(label,detail);button.append(glyph,info);button.onclick=()=>select(id);list.append(button);}}
+  function sync(){const cfg=sceneConfig(getScene());$('timeline-meta').textContent=`${cfg.duration} s · ${cfg.fps} fps · 1920 × 1080`;$('timeline-ruler').replaceChildren();for(let i=0;i<=cfg.duration;i++){const tick=document.createElement('span');tick.textContent=String(i).padStart(2,'0');$('timeline-ruler').append(tick);}const is3d=getScene()==='objects';document.body.classList.toggle('single-composition',!is3d);if(!is3d)selection='composition';buildTree();$('selection-title').textContent=names[selection];$('selection-hint').hidden=!is3d;$('selection-hint').textContent=selection==='composition'?'Select an object in the scene':({camera:'Camera selected',lighting:'Lights selected','device.root':'Radio selected','objects.kinetic':'Gyroscope selected','objects.emblem':'Emblem selected'}[selection]);$('context-controls').replaceChildren();const p=getParameters();const showAll=selection==='composition';
     $('presets').hidden=tab!=='look'||(!showAll&&selection!=='lighting');
     document.querySelector('.property-panel .section-caption').hidden=$('presets').hidden;
     $('dof-tools').hidden=true;$('finish-tools').hidden=true;$('review-tools').hidden=!is3d||tab!=='look';
@@ -101,7 +101,7 @@ export function mountInspector({runtime,getScene,getState,getParameters,getTime,
     if(tab==='code')updateCode();
   }
   $('mobile-selection').onchange=()=>select($('mobile-selection').value);
-  canvas.addEventListener('click',e=>{if(getScene()!=='bax'||comparing)return;pause();const r=canvas.getBoundingClientRect(),ratio=16/9;const w=Math.min(r.width,r.height*ratio),h=w/ratio,x=(e.clientX-r.left-(r.width-w)/2)/w,y=(e.clientY-r.top-(r.height-h)/2)/h;if(x<0||x>1||y<0||y>1)return;const id=runtime.pickObject(x,y);if(id)select(id);});
+  canvas.addEventListener('click',e=>{if(getScene()!=='objects'||comparing)return;pause();const r=canvas.getBoundingClientRect(),ratio=16/9;const w=Math.min(r.width,r.height*ratio),h=w/ratio,x=(e.clientX-r.left-(r.width-w)/2)/w,y=(e.clientY-r.top-(r.height-h)/2)/h;if(x<0||x>1||y<0||y>1)return;const id=runtime.pickObject(x,y);if(id)select(id);});
   $('pin-reference').onclick=()=>{pause();reference=structuredClone(getState());$('edit-status').textContent='Reference updated';$('pin-reference').textContent='Reference pinned';draw();};
   function stopCompare(){comparing=false;$('compare-toggle').setAttribute('aria-pressed','false');for(const id of ['comparison-layer','comparison-current','comparison-divider','comparison-line'])$(id).hidden=true;}
   $('compare-toggle').onclick=()=>{pause();comparing=!comparing;if(comparing){$('compare-toggle').setAttribute('aria-pressed','true');for(const id of ['comparison-layer','comparison-current','comparison-divider','comparison-line'])$(id).hidden=false;draw();}else{stopCompare();draw();}};
@@ -125,7 +125,7 @@ export function mountInspector({runtime,getScene,getState,getParameters,getTime,
     }
     $('code-description').textContent='Scene source · read only';
     try{
-      const module=await (getScene()==='starter'?import('../scenes/product-starter.js?raw'):getScene()==='dot'?import('../scenes/mascot-demo.js?raw'):getScene()==='pulse'?import('../scenes/pulse-demo.js?raw'):getScene()==='camera'?import('../scenes/afterhours-demo.js?raw'):getScene()==='replay'?import('../scenes/replay-demo.js?raw'):getScene()==='bax'?import('../scenes/bax.js?raw'):getScene()==='pop'?import('../scenes/pop-demo.js?raw'):import('../scenes/procedural-demo.js?raw'));
+      const module=await (getScene()==='starter'?import('../scenes/product-starter.js?raw'):getScene()==='dot'?import('../scenes/mascot-demo.js?raw'):getScene()==='pulse'?import('../scenes/pulse-demo.js?raw'):getScene()==='camera'?import('../scenes/afterhours-demo.js?raw'):getScene()==='replay'?import('../scenes/replay-demo.js?raw'):getScene()==='objects'?import('../scenes/objects.js?raw'):getScene()==='pop'?import('../scenes/pop-demo.js?raw'):import('../scenes/procedural-demo.js?raw'));
       if(request===sourceRequest)$('code-content').textContent=module.default;
     }catch(error){if(request===sourceRequest){$('code-content').textContent='';$('code-status').textContent=error.message;}}
   }

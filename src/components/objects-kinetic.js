@@ -79,91 +79,91 @@ function makeScale(parent, name, radius, count, z) {
 
 function makeOuterGimbal() {
   const pivot = new T.Group();
-  pivot.name = 'bax.gyro.outer-gimbal-pivot';
-  const hoop = mesh(pivot, 'bax.gyro.outer-machined-hoop', new T.TorusGeometry(1.49, 0.078, 20, 160), chrome);
-  hoop.name = 'bax.gyro.outer-machined-hoop';
-  const innerBead = mesh(pivot, 'bax.gyro.outer-inner-bead', new T.TorusGeometry(1.36, 0.018, 10, 128), steel, [0, 0, 0.035]);
-  makeScale(pivot, 'bax.gyro.outer-scale', 1.405, 64, 0.092);
-  addBolts(pivot, 'bax.gyro.outer-fastener', 1.49, 10, 0.055, 0.094);
+  pivot.name = 'objects.gyro.outer-gimbal-pivot';
+  const hoop = mesh(pivot, 'objects.gyro.outer-machined-hoop', new T.TorusGeometry(1.49, 0.078, 20, 160), chrome);
+  hoop.name = 'objects.gyro.outer-machined-hoop';
+  const innerBead = mesh(pivot, 'objects.gyro.outer-inner-bead', new T.TorusGeometry(1.36, 0.018, 10, 128), steel, [0, 0, 0.035]);
+  makeScale(pivot, 'objects.gyro.outer-scale', 1.405, 64, 0.092);
+  addBolts(pivot, 'objects.gyro.outer-fastener', 1.49, 10, 0.055, 0.094);
   // Short radial bridges terminate at the hoop and center on the axle bosses.
-  cylinderAxis(pivot, 'bax.gyro.outer-axle-left', [-1.62, 0, 0], [-1.30, 0, 0], 0.105, chrome);
-  cylinderAxis(pivot, 'bax.gyro.outer-axle-right', [1.30, 0, 0], [1.62, 0, 0], 0.105, chrome);
+  cylinderAxis(pivot, 'objects.gyro.outer-axle-left', [-1.62, 0, 0], [-1.30, 0, 0], 0.105, chrome);
+  cylinderAxis(pivot, 'objects.gyro.outer-axle-right', [1.30, 0, 0], [1.62, 0, 0], 0.105, chrome);
   return pivot;
 }
 
 function makeInnerGimbal(parent) {
   const pivot = new T.Group();
-  pivot.name = 'bax.gyro.inner-gimbal-pivot';
+  pivot.name = 'objects.gyro.inner-gimbal-pivot';
   parent.add(pivot);
-  for(const side of [-1,1])cylinderAxis(parent,`bax.gyro.inner-bearing-bridge-${side}`,[side*1.49,0,0],[side*.98,0,0],.07,steel);
-  mesh(pivot, 'bax.gyro.inner-enamel-hoop', new T.TorusGeometry(0.98, 0.066, 18, 128), cobalt);
-  mesh(pivot, 'bax.gyro.inner-machined-lip', new T.TorusGeometry(0.875, 0.019, 10, 128), chrome, [0, 0, 0.045]);
-  makeScale(pivot, 'bax.gyro.inner-index', 0.92, 40, 0.079);
-  addBolts(pivot, 'bax.gyro.inner-fastener', 0.98, 8, 0.045, 0.08);
-  cylinderAxis(pivot, 'bax.gyro.inner-axle-left', [-1.08, 0, 0], [-0.86, 0, 0], 0.082, chrome);
-  cylinderAxis(pivot, 'bax.gyro.inner-axle-right', [0.86, 0, 0], [1.08, 0, 0], 0.082, chrome);
+  for(const side of [-1,1])cylinderAxis(parent,`objects.gyro.inner-bearing-bridge-${side}`,[side*1.49,0,0],[side*.98,0,0],.07,steel);
+  mesh(pivot, 'objects.gyro.inner-enamel-hoop', new T.TorusGeometry(0.98, 0.066, 18, 128), cobalt);
+  mesh(pivot, 'objects.gyro.inner-machined-lip', new T.TorusGeometry(0.875, 0.019, 10, 128), chrome, [0, 0, 0.045]);
+  makeScale(pivot, 'objects.gyro.inner-index', 0.92, 40, 0.079);
+  addBolts(pivot, 'objects.gyro.inner-fastener', 0.98, 8, 0.045, 0.08);
+  cylinderAxis(pivot, 'objects.gyro.inner-axle-left', [-1.08, 0, 0], [-0.86, 0, 0], 0.082, chrome);
+  cylinderAxis(pivot, 'objects.gyro.inner-axle-right', [0.86, 0, 0], [1.08, 0, 0], 0.082, chrome);
 
-  // An enamel bridge carries the supplied, isolated BAX wordmark inside the hoop.
-  mesh(pivot, 'bax.gyro.brand-bridge', new RoundedBoxGeometry(0.70, 0.15, 0.09, 6, 0.04), cobalt, [0, 0.91, 0.015]);
+  // An enamel bridge carries the vector FV mark inside the hoop.
+  mesh(pivot, 'objects.gyro.brand-bridge', new RoundedBoxGeometry(0.70, 0.15, 0.09, 6, 0.04), cobalt, [0, 0.91, 0.015]);
   const texture = createBrandTexture({ color: '#ffffff' });
-  const logoWidth = 0.52, logoHeight = logoWidth / texture.userData.aspect;
-  mesh(pivot, 'bax.gyro.brand-wordmark', new T.PlaneGeometry(logoWidth, logoHeight),
+  const logoWidth = 0.44, logoHeight = logoWidth / texture.userData.aspect;
+  mesh(pivot, 'objects.gyro.brand-wordmark', new T.PlaneGeometry(logoWidth, logoHeight),
     new T.MeshStandardMaterial({ color: '#ffffff', map: texture, transparent: true, roughness: 0.42, metalness: 0.04, depthWrite: false }), [0, 0.91, 0.066]);
   return pivot;
 }
 
 function makeRotor(parent) {
   const rotor = new T.Group();
-  rotor.name = 'bax.gyro.rotor';
+  rotor.name = 'objects.gyro.rotor';
   parent.add(rotor);
 
   // Deep cobalt hub, orange annular flywheel, and visible radial vanes make the
   // spinning axis legible in a still frame as well as in motion.
-  beveledCylinderZ(rotor, 'bax.gyro.cobalt-housing', 0.49, 0.48, cobalt, [0, 0, 0]);
-  cylinderZ(rotor, 'bax.gyro.rear-collar', 0.55, 0.105, steel, [0, 0, -0.27]);
-  mesh(rotor, 'bax.gyro.front-bezel', new T.TorusGeometry(0.46, 0.055, 16, 96), chrome, [0, 0, 0.265]);
+  beveledCylinderZ(rotor, 'objects.gyro.cobalt-housing', 0.49, 0.48, cobalt, [0, 0, 0]);
+  cylinderZ(rotor, 'objects.gyro.rear-collar', 0.55, 0.105, steel, [0, 0, -0.27]);
+  mesh(rotor, 'objects.gyro.front-bezel', new T.TorusGeometry(0.46, 0.055, 16, 96), chrome, [0, 0, 0.265]);
 
-  beveledCylinderZ(rotor, 'bax.gyro.flywheel-core', 0.69, 0.12, blueDark, [0, 0, 0.34]);
-  mesh(rotor, 'bax.gyro.orange-flywheel-rim', new T.TorusGeometry(0.635, 0.082, 18, 128), orange, [0, 0, 0.42]);
-  mesh(rotor, 'bax.gyro.orange-inner-race', new T.TorusGeometry(0.48, 0.024, 12, 96), orange, [0, 0, 0.43]);
+  beveledCylinderZ(rotor, 'objects.gyro.flywheel-core', 0.69, 0.12, blueDark, [0, 0, 0.34]);
+  mesh(rotor, 'objects.gyro.orange-flywheel-rim', new T.TorusGeometry(0.635, 0.082, 18, 128), orange, [0, 0, 0.42]);
+  mesh(rotor, 'objects.gyro.orange-inner-race', new T.TorusGeometry(0.48, 0.024, 12, 96), orange, [0, 0, 0.43]);
   for (let i = 0; i < 8; i++) {
     const angle = i * Math.PI / 4;
-    const vane = mesh(rotor, `bax.gyro.flywheel-vane-${i + 1}`, new RoundedBoxGeometry(0.14, 0.31, 0.065, 4, 0.025), orange,
+    const vane = mesh(rotor, `objects.gyro.flywheel-vane-${i + 1}`, new RoundedBoxGeometry(0.14, 0.31, 0.065, 4, 0.025), orange,
       [Math.cos(angle) * 0.555, Math.sin(angle) * 0.555, 0.40]);
     vane.rotation.z = angle + Math.PI / 2;
   }
-  addBolts(rotor, 'bax.gyro.flywheel-rivet', 0.57, 8, 0.028, 0.493, chrome);
+  addBolts(rotor, 'objects.gyro.flywheel-rivet', 0.57, 8, 0.028, 0.493, chrome);
 
-  cylinderZ(rotor, 'bax.gyro.lens-seat', 0.365, 0.12, chrome, [0, 0, 0.49]);
-  const lens = mesh(rotor, 'bax.gyro.central-optic', new T.SphereGeometry(0.30, 64, 48), glass, [0, 0, 0.56]);
+  cylinderZ(rotor, 'objects.gyro.lens-seat', 0.365, 0.12, chrome, [0, 0, 0.49]);
+  const lens = mesh(rotor, 'objects.gyro.central-optic', new T.SphereGeometry(0.30, 64, 48), glass, [0, 0, 0.56]);
   lens.scale.z = 0.48;
-  mesh(rotor, 'bax.gyro.optic-aperture', new T.TorusGeometry(0.205, 0.018, 12, 64), cobalt, [0, 0, 0.695]);
-  cylinderZ(rotor, 'bax.gyro.optic-center', 0.065, 0.018, blueDark, [0, 0, 0.70], 48);
+  mesh(rotor, 'objects.gyro.optic-aperture', new T.TorusGeometry(0.205, 0.018, 12, 64), cobalt, [0, 0, 0.695]);
+  cylinderZ(rotor, 'objects.gyro.optic-center', 0.065, 0.018, blueDark, [0, 0, 0.70], 48);
   return rotor;
 }
 
-export function createBaxKinetic() {
+export function createObjectsKinetic() {
   const root = new T.Group();
-  root.name = 'bax.kinetic';
+  root.name = 'objects.kinetic';
 
   const center = new T.Group();
-  center.name = 'bax.gyro.center';
+  center.name = 'objects.gyro.center';
   root.add(center);
 
   const outer = makeOuterGimbal();
   center.add(outer);
   const inner = makeInnerGimbal(outer);
   const rotor = makeRotor(inner);
-  for(const side of [-1,1])cylinderAxis(inner,`bax.gyro.motor-support-${side}`,[side*.92,0,-.16],[0,0,-.16],.045,steel);
-  cylinderZ(inner,'bax.gyro.motor-bearing',.19,.18,steel,[0,0,-.1]);
+  for(const side of [-1,1])cylinderAxis(inner,`objects.gyro.motor-support-${side}`,[side*.92,0,-.16],[0,0,-.16],.045,steel);
+  cylinderZ(inner,'objects.gyro.motor-bearing',.19,.18,steel,[0,0,-.1]);
 
   // External hinge stacks sit precisely on the outer hoop's X axis and connect
   // the two moving ring assemblies through visible, aligned pivot hardware.
   for (const side of [-1, 1]) {
     const x = side * 1.49;
-    cylinderAxis(outer, `bax.gyro.external-pivot-${side < 0 ? 'left' : 'right'}`, [x - 0.11, 0, 0], [x + 0.11, 0, 0], 0.11, chrome);
-    cylinderZ(outer, `bax.gyro.external-cap-${side < 0 ? 'left' : 'right'}`, 0.14, 0.10, steel, [x, 0, 0.10], 48);
-    cylinderZ(outer, `bax.gyro.external-cap-screw-${side < 0 ? 'left' : 'right'}`, 0.05, 0.025, chrome, [x, 0, 0.16], 24);
+    cylinderAxis(outer, `objects.gyro.external-pivot-${side < 0 ? 'left' : 'right'}`, [x - 0.11, 0, 0], [x + 0.11, 0, 0], 0.11, chrome);
+    cylinderZ(outer, `objects.gyro.external-cap-${side < 0 ? 'left' : 'right'}`, 0.14, 0.10, steel, [x, 0, 0.10], 48);
+    cylinderZ(outer, `objects.gyro.external-cap-screw-${side < 0 ? 'left' : 'right'}`, 0.05, 0.025, chrome, [x, 0, 0.16], 24);
   }
 
   root.userData.update = (time,{amount=1}={}) => {

@@ -140,7 +140,7 @@ try {
   await page.screenshot({path: new URL('interactive-timing-mobile.png', output).pathname});
   // The source editor modifies the same native keys consumed by the renderer.
   await page.setViewportSize({width: 1440, height: 1000});
-  await page.locator('#scene').selectOption('bax'); await idle();
+  await page.locator('#scene').selectOption('objects'); await idle();
   const sourceBaseline = await recipe(); await motion();
   await page.waitForFunction(() => document.getElementById('motion-native-graph')?.dataset.source === 'keys');
   assert.equal(await page.locator('#motion-edit-mode').inputValue(), 'original', 'Native channels open directly on editable source keys');

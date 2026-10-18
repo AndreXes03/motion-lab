@@ -16,7 +16,7 @@ try{
   const pcm=buffer.getChannelData(0);for(let i=0;i<pcm.length;i++)pcm[i]=Math.sin(i*2*Math.PI*440/context.sampleRate)*.1;await context.close();
   const parameters={scene:'procedural',sceneControls:{colorContrast:1}},before=JSON.stringify(parameters),progress=[];
   const pending=exportBrowserVideo({scene:'procedural',parameters,settings:{width:640,height:360,fps:24,duration:1.5},audioBuffer:buffer,onProgress:p=>progress.push(p.phase)});
-  parameters.scene='bax'; // The in-flight exporter must preserve its snapshot.
+  parameters.scene='objects'; // The in-flight exporter must preserve its snapshot.
   const result=await pending;
   const bytes=new Uint8Array(await result.blob.arrayBuffer()),base64=btoa(Array.from(bytes,byte=>String.fromCharCode(byte)).join(''));
   const audioContext=new Context(),destination=audioContext.createMediaStreamDestination(),oscillator=audioContext.createOscillator();
@@ -34,7 +34,7 @@ try{
   return {...result,blob:undefined,base64,capabilities,progress,cancelled,callerScene:parameters.scene,before,
    allCaptureTracksStopped,callerAudioPreserved,fallback:{extension:fallback.extension,mimeType:fallback.mimeType,size:fallback.blob.size,hasAudio:fallback.hasAudio}};
  });
- assert.equal(proof.cancelled,true);assert.equal(proof.callerScene,'bax');assert.equal(proof.hasAudio,true);assert.ok(proof.framesRendered>1);assert.equal(proof.progress.at(-1),'complete');
+ assert.equal(proof.cancelled,true);assert.equal(proof.callerScene,'objects');assert.equal(proof.hasAudio,true);assert.ok(proof.framesRendered>1);assert.equal(proof.progress.at(-1),'complete');
  assert.equal(proof.filename,`motion-lab-procedural.${proof.extension}`);assert.equal(proof.allCaptureTracksStopped,true);assert.equal(proof.callerAudioPreserved,true);
  assert.equal(proof.fallback.extension,'webm');assert.ok(proof.fallback.mimeType.startsWith('video/webm'));assert.ok(proof.fallback.size>0);assert.equal(proof.fallback.hasAudio,true);
  const file=new URL(`procedural-audio.${proof.extension}`,output);await writeFile(file,Buffer.from(proof.base64,'base64'));delete proof.base64;
