@@ -70,7 +70,7 @@ export async function readRecordedVideoMetadata(blob) {
 export async function exportBrowserVideo({scene,parameters={},settings={},onProgress=()=>{},signal,audioBuffer,audioStream}={}) {
  const capabilities=getBrowserExportCapabilities();
  if(!capabilities.available)throw new Error(capabilities.reason);
- const chosen=scene ?? parameters.scene ?? 'bax',options=normalizeBrowserExportSettings(chosen,settings);
+ const chosen=scene ?? parameters.scene ?? 'objects',options=normalizeBrowserExportSettings(chosen,settings);
  const snapshot=structuredClone(parameters);
  snapshot.scene=chosen;delete snapshot.previewQuality;
  checkAbort(signal);

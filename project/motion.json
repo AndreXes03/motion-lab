@@ -1,5 +1,5 @@
 {
-  "name": "BAX / macro tour / 10 seconds",
+  "name": "OBJECTS / macro tour / 10 seconds",
   "cuts": [],
   "tracks": {
     "camera.position": [
@@ -348,7 +348,7 @@
         "value": -2.5
       }
     ],
-    "bax.kinetic.position": [
+    "objects.kinetic.position": [
       {
         "t": 0,
         "value": [
@@ -366,7 +366,7 @@
         ]
       }
     ],
-    "bax.kinetic.rotation": [
+    "objects.kinetic.rotation": [
       {
         "t": 0,
         "value": [
@@ -408,7 +408,7 @@
         ]
       }
     ],
-    "bax.emblem.position": [
+    "objects.emblem.position": [
       {
         "t": 0,
         "value": [
@@ -426,7 +426,7 @@
         ]
       }
     ],
-    "bax.emblem.rotation": [
+    "objects.emblem.rotation": [
       {
         "t": 0,
         "value": [

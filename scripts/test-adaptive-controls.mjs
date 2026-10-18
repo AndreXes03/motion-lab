@@ -15,24 +15,24 @@ import {
 import { sampleTrack } from '../src/engine/animation.js';
 import { validateStudioParameters } from './studio-api.mjs';
 
-const baxManifest = createControlManifest('bax', 'all');
+const objectsManifest = createControlManifest('objects', 'all');
 const proceduralManifest = createControlManifest('procedural', 'all');
-const baxEssentialManifest = createControlManifest('bax');
-assert.deepEqual(validateControlManifest(baxManifest, 'bax'), baxManifest);
+const objectsEssentialManifest = createControlManifest('objects');
+assert.deepEqual(validateControlManifest(objectsManifest, 'objects'), objectsManifest);
 assert.deepEqual(validateControlManifest(proceduralManifest, 'procedural'), proceduralManifest);
-assert.ok(!baxEssentialManifest.controls.includes('device.root.x'), 'essential visibility omits object transforms');
-assert.ok(getControlCatalog('bax').some(control => control.id === 'device.root.x'));
+assert.ok(!objectsEssentialManifest.controls.includes('device.root.x'), 'essential visibility omits object transforms');
+assert.ok(getControlCatalog('objects').some(control => control.id === 'device.root.x'));
 assert.ok(getControlCatalog('procedural').some(control => control.id === 'speed'));
 assert.throws(() => createControlManifest('not-a-scene'), /Unknown control scene/);
 
-const baxTrack = 'device.root.x';
+const objectsTrack = 'device.root.x';
 const proceduralTrack = 'speed';
-const baxAnimation = {
+const objectsAnimation = {
   version: 1,
   enabled: true,
   rate: 1,
   tracks: {
-    [baxTrack]: [
+    [objectsTrack]: [
       { t: 0, value: -2, ease: 'linear' },
       { t: 2, value: 2, ease: 'hold' },
       { t: 4, value: 4, ease: 'linear' }
@@ -51,22 +51,22 @@ const proceduralAnimation = {
   }
 };
 
-assert.deepEqual(validateParameterAnimation(baxAnimation, 'bax').tracks,baxAnimation.tracks);
+assert.deepEqual(validateParameterAnimation(objectsAnimation, 'objects').tracks,objectsAnimation.tracks);
 assert.deepEqual(validateParameterAnimation(proceduralAnimation, 'procedural').tracks,proceduralAnimation.tracks);
 
-const baxParameters = { scene: 'bax', objectEdits: { 'device.root': { yaw: 12 } }, animation: baxAnimation };
-const baxBefore = structuredClone(baxParameters);
-assert.equal(evaluateParameterAnimation(baxParameters, -1).objectEdits['device.root'].x, -2, 'samples before the first key clamp to the first value');
-assert.equal(evaluateParameterAnimation(baxParameters, 0).objectEdits['device.root'].x, -2);
-assert.equal(evaluateParameterAnimation(baxParameters, 1).objectEdits['device.root'].x, 0, 'linear easing interpolates between keys');
-assert.equal(evaluateParameterAnimation(baxParameters, 2).objectEdits['device.root'].x, 2);
-assert.equal(evaluateParameterAnimation(baxParameters, 3).objectEdits['device.root'].x, 2, 'hold easing retains the value until the next key');
-assert.equal(evaluateParameterAnimation(baxParameters, 4).objectEdits['device.root'].x, 4);
-assert.equal(evaluateParameterAnimation(baxParameters, 99).objectEdits['device.root'].x, 4, 'samples after the last key clamp to the last value');
-assert.equal(evaluateParameterAnimation(baxParameters, 1).objectEdits['device.root'].yaw, 12, 'unanimated values survive');
-assert.deepEqual(baxParameters, baxBefore, 'evaluation leaves caller-owned parameters unchanged');
-assert.deepEqual(evaluateParameterAnimation(baxParameters, 1).objectEdits['device.root'], { yaw: 12, x: 0 }, 'dotted object IDs remain a single path segment');
-assert.equal(evaluateParameterAnimation({ ...baxParameters, animation: { ...baxAnimation, rate: 2 } }, 1).objectEdits['device.root'].x, 2, 'rate scales sample time');
+const objectsParameters = { scene: 'objects', objectEdits: { 'device.root': { yaw: 12 } }, animation: objectsAnimation };
+const objectsBefore = structuredClone(objectsParameters);
+assert.equal(evaluateParameterAnimation(objectsParameters, -1).objectEdits['device.root'].x, -2, 'samples before the first key clamp to the first value');
+assert.equal(evaluateParameterAnimation(objectsParameters, 0).objectEdits['device.root'].x, -2);
+assert.equal(evaluateParameterAnimation(objectsParameters, 1).objectEdits['device.root'].x, 0, 'linear easing interpolates between keys');
+assert.equal(evaluateParameterAnimation(objectsParameters, 2).objectEdits['device.root'].x, 2);
+assert.equal(evaluateParameterAnimation(objectsParameters, 3).objectEdits['device.root'].x, 2, 'hold easing retains the value until the next key');
+assert.equal(evaluateParameterAnimation(objectsParameters, 4).objectEdits['device.root'].x, 4);
+assert.equal(evaluateParameterAnimation(objectsParameters, 99).objectEdits['device.root'].x, 4, 'samples after the last key clamp to the last value');
+assert.equal(evaluateParameterAnimation(objectsParameters, 1).objectEdits['device.root'].yaw, 12, 'unanimated values survive');
+assert.deepEqual(objectsParameters, objectsBefore, 'evaluation leaves caller-owned parameters unchanged');
+assert.deepEqual(evaluateParameterAnimation(objectsParameters, 1).objectEdits['device.root'], { yaw: 12, x: 0 }, 'dotted object IDs remain a single path segment');
+assert.equal(evaluateParameterAnimation({ ...objectsParameters, animation: { ...objectsAnimation, rate: 2 } }, 1).objectEdits['device.root'].x, 2, 'rate scales sample time');
 
 const proceduralParameters = { scene: 'procedural', graphics: { title: 'MOTION', speed: 1 }, animation: proceduralAnimation };
 assert.equal(evaluateParameterAnimation(proceduralParameters, 0).graphics.speed, .5, 'procedural tracks clamp to their first key');
@@ -77,9 +77,9 @@ const disabled = { ...proceduralParameters, animation: { ...proceduralAnimation,
 assert.equal(evaluateParameterAnimation(disabled, 2), disabled, 'disabled animation preserves legacy parameter behavior');
 assert.equal(evaluateParameterAnimation({ scene: 'procedural', graphics: { speed: 1 } }, 2).graphics.speed, 1, 'missing animation is a no-op');
 
-const baxDefinition = getControlCatalog('bax').find(control => control.id === baxTrack);
-assert.equal(readControlValue(baxDefinition, evaluateParameterAnimation(baxParameters, 1)), 0);
-const written = writeControlValue({ scene: 'bax', objectEdits: {} }, baxDefinition, 1.25);
+const objectsDefinition = getControlCatalog('objects').find(control => control.id === objectsTrack);
+assert.equal(readControlValue(objectsDefinition, evaluateParameterAnimation(objectsParameters, 1)), 0);
+const written = writeControlValue({ scene: 'objects', objectEdits: {} }, objectsDefinition, 1.25);
 assert.equal(written.objectEdits['device.root'].x, 1.25);
 assert.equal(Object.hasOwn(written.objectEdits, 'device'), false, 'object ID dots are not split into nested keys');
 
@@ -92,35 +92,35 @@ assert.equal(sampleTrack([{ t: 0, value: 0, ease: 'hold' }, { t: 2, value: 10 }]
 assert.equal(sampleTrack([{ t: 0, value: 0 }, { t: 2, value: 10 }], 0), 0);
 assert.equal(sampleTrack([{ t: 0, value: [0, 0, 0] }, { t: 2, value: [10, 20, 30] }], 1).length, 3);
 
-assert.throws(() => validateParameterAnimation(baxAnimation, 'procedural'), /Control cannot be animated/);
-assert.throws(() => validateParameterAnimation(baxAnimation, 'missing-scene'), /Unknown control scene/);
-assert.throws(() => evaluateParameterAnimation({ scene: 'missing-scene', animation: baxAnimation }, 0), /Unknown animation scene/);
+assert.throws(() => validateParameterAnimation(objectsAnimation, 'procedural'), /Control cannot be animated/);
+assert.throws(() => validateParameterAnimation(objectsAnimation, 'missing-scene'), /Unknown control scene/);
+assert.throws(() => evaluateParameterAnimation({ scene: 'missing-scene', animation: objectsAnimation }, 0), /Unknown animation scene/);
 assert.throws(() => validateParameterAnimation({ ...proceduralAnimation, tracks: { unknown: [{ t: 0, value: 1 }] } }, 'procedural'), /Control cannot be animated/);
-assert.throws(() => validateParameterAnimation({ ...baxAnimation, tracks: { [baxTrack]: [{ t: 0, value: 0 }, { t: 0, value: 1 }] } }, 'bax'), /times must increase/);
-assert.throws(() => validateParameterAnimation({ ...baxAnimation, tracks: { [baxTrack]: [{ t: 0, value: 0 }, { t: 11, value: 1 }] } }, 'bax'), /scene duration/);
-assert.throws(() => validateParameterAnimation({ ...baxAnimation, tracks: { [baxTrack]: [{ t: 0, value: 6 }] } }, 'bax'), /outside control bounds/);
-assert.throws(() => validateParameterAnimation({ ...baxAnimation, rate: 3 }, 'bax'), /rate/);
-assert.throws(() => validateParameterAnimation({ ...baxAnimation, tracks: { [baxTrack]: [{ t: 0, value: Number.NaN }] } }, 'bax'), /finite|bounds/);
-assert.throws(() => evaluateParameterAnimation(baxParameters, Number.NaN), /finite/);
-assert.throws(() => validateControlManifest({ ...baxManifest, controls: [...baxManifest.controls, baxTrack] }, 'bax'), /Duplicate manifest control/);
-assert.throws(() => validateControlManifest({ ...baxManifest, scene: 'procedural' }, 'bax'), /does not match/);
+assert.throws(() => validateParameterAnimation({ ...objectsAnimation, tracks: { [objectsTrack]: [{ t: 0, value: 0 }, { t: 0, value: 1 }] } }, 'objects'), /times must increase/);
+assert.throws(() => validateParameterAnimation({ ...objectsAnimation, tracks: { [objectsTrack]: [{ t: 0, value: 0 }, { t: 11, value: 1 }] } }, 'objects'), /scene duration/);
+assert.throws(() => validateParameterAnimation({ ...objectsAnimation, tracks: { [objectsTrack]: [{ t: 0, value: 6 }] } }, 'objects'), /outside control bounds/);
+assert.throws(() => validateParameterAnimation({ ...objectsAnimation, rate: 3 }, 'objects'), /rate/);
+assert.throws(() => validateParameterAnimation({ ...objectsAnimation, tracks: { [objectsTrack]: [{ t: 0, value: Number.NaN }] } }, 'objects'), /finite|bounds/);
+assert.throws(() => evaluateParameterAnimation(objectsParameters, Number.NaN), /finite/);
+assert.throws(() => validateControlManifest({ ...objectsManifest, controls: [...objectsManifest.controls, objectsTrack] }, 'objects'), /Duplicate manifest control/);
+assert.throws(() => validateControlManifest({ ...objectsManifest, scene: 'procedural' }, 'objects'), /does not match/);
 const polluted = JSON.parse('{"version":1,"enabled":true,"rate":1,"tracks":{"__proto__":[]}}');
-assert.throws(() => validateParameterAnimation(polluted, 'bax'), /Unsafe control key/);
-assert.throws(() => validateParameterAnimation(Object.assign(Object.create({ inherited: true }), baxAnimation), 'bax'), /plain objects/);
+assert.throws(() => validateParameterAnimation(polluted, 'objects'), /Unsafe control key/);
+assert.throws(() => validateParameterAnimation(Object.assign(Object.create({ inherited: true }), objectsAnimation), 'objects'), /plain objects/);
 
-const baxNormalized = await validateStudioParameters({
-  scene: 'bax',
-  animation: baxAnimation,
-  studio: { values: { energy: 1 }, preset: 'original', controlManifest: baxManifest }
+const objectsNormalized = await validateStudioParameters({
+  scene: 'objects',
+  animation: objectsAnimation,
+  studio: { values: { energy: 1 }, preset: 'original', controlManifest: objectsManifest }
 });
-assert.deepEqual(baxNormalized.animation, validateParameterAnimation(baxAnimation,'bax'));
-assert.deepEqual(baxNormalized.studio.controlManifest, baxManifest);
+assert.deepEqual(objectsNormalized.animation, validateParameterAnimation(objectsAnimation,'objects'));
+assert.deepEqual(objectsNormalized.studio.controlManifest, objectsManifest);
 const hiddenTrackNormalized = await validateStudioParameters({
-  scene: 'bax',
-  animation: baxAnimation,
-  studio: { values: { energy: 1 }, preset: 'original', controlManifest: baxEssentialManifest }
+  scene: 'objects',
+  animation: objectsAnimation,
+  studio: { values: { energy: 1 }, preset: 'original', controlManifest: objectsEssentialManifest }
 });
-assert.deepEqual(hiddenTrackNormalized.animation, validateParameterAnimation(baxAnimation,'bax'), 'changing visible controls does not discard an existing transform track');
+assert.deepEqual(hiddenTrackNormalized.animation, validateParameterAnimation(objectsAnimation,'objects'), 'changing visible controls does not discard an existing transform track');
 assert.equal(evaluateParameterAnimation({ ...hiddenTrackNormalized, objectEdits: {} }, 1).objectEdits['device.root'].x, 0);
 const proceduralNormalized = await validateStudioParameters({
   scene: 'procedural',
@@ -140,8 +140,8 @@ assert.equal(starterNormalized.scene, 'starter');
 assert.deepEqual(starterNormalized.product, { fov: 70, fisheye: .12, keyStrength: 1.2, fill: .15, accent: '#d7f56b', shell: '#d2d3c8' });
 assert.deepEqual(starterNormalized.studio.controlManifest, starterManifest);
 await assert.rejects(() => validateStudioParameters({
-  scene: 'bax', animation: baxAnimation,
-  studio: { values: {}, preset: 'original', controlManifest: { ...baxManifest, controls: [...baxManifest.controls, baxTrack] } }
+  scene: 'objects', animation: objectsAnimation,
+  studio: { values: {}, preset: 'original', controlManifest: { ...objectsManifest, controls: [...objectsManifest.controls, objectsTrack] } }
 }), /Duplicate manifest control/);
 
-console.log(JSON.stringify({ type: 'test-result', controlCatalog: 'passed', parameterAnimation: 'passed', studioRoundTrip: 'passed', scenes: ['bax', 'procedural', 'starter'] }));
+console.log(JSON.stringify({ type: 'test-result', controlCatalog: 'passed', parameterAnimation: 'passed', studioRoundTrip: 'passed', scenes: ['objects', 'procedural', 'starter'] }));

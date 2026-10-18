@@ -1,3 +1,4 @@
+import {migrateLegacyScene,canonicalScene} from './legacy-scene.js';
 import {createReviewMaterials,resolvePreviewReview} from './preview-review.js';
 import {getAuthoredAnimationTracks,getAuthoredCameraChannels,buildSampledAuthoredTracks} from './authored-animation.js';
 import {sampleTrack} from './animation.js';
@@ -17,18 +18,19 @@ import * as T from 'three';
 import {config} from '../config.js';
 import savedLook from '../../project/look.json';
 import {createScene as createSignal} from '../scenes/signal.js';
-import {createScene as createBax} from '../scenes/bax.js';
+import {createScene as createObjects} from '../scenes/objects.js';
 import {createComposite} from './composite.js';
 import {applyFilmGrain} from './film-grain.js';
 import {smooth} from './timeline.js';
-export function createRuntime(canvas,{initialScene="bax"}={}){
+export function createRuntime(canvas,{initialScene="objects"}={}){initialScene=canonicalScene(initialScene);
  let activeScene=initialScene;const studies={};const studyFactories={starter:createProductStarter,dot:createMascotDemo,pulse:createPulseDemo,camera:createAfterhoursDemo,replay:createReplayDemo};
  const graphics=createProceduralDemo(config); let pop;
  let renderer,scene,camera,update,drawOverlay,composite,proceduralCanvas,proceduralContext;
  let look=structuredClone(savedLook);const ctx=canvas.getContext('2d',{willReadFrequently:true});let width=0,height=0;const diagnosticHidden=[];const reviews=createReviewMaterials();
- function init3d(){if(renderer)return;renderer=new T.WebGLRenderer({antialias:true,alpha:false,preserveDrawingBuffer:true,powerPreference:'high-performance'});renderer.setPixelRatio(1);renderer.shadowMap.enabled=true;renderer.shadowMap.type=T.PCFSoftShadowMap;renderer.toneMapping=T.ACESFilmicToneMapping;renderer.outputColorSpace=T.SRGBColorSpace;const createScene=config.scene==='bax'?createBax:createSignal;({scene,camera,update,drawOverlay}=createScene(renderer,config));composite=createComposite(renderer,scene,camera,{...config,look:savedLook.post});}
+ function init3d(){if(renderer)return;renderer=new T.WebGLRenderer({antialias:true,alpha:false,preserveDrawingBuffer:true,powerPreference:'high-performance'});renderer.setPixelRatio(1);renderer.shadowMap.enabled=true;renderer.shadowMap.type=T.PCFSoftShadowMap;renderer.toneMapping=T.ACESFilmicToneMapping;renderer.outputColorSpace=T.SRGBColorSpace;const createScene=config.scene==='objects'?createObjects:createSignal;({scene,camera,update,drawOverlay}=createScene(renderer,config));composite=createComposite(renderer,scene,camera,{...config,look:savedLook.post});}
  function finishFrame(targetCtx,time,w,h,parameters={}){parameters=evaluateParameterAnimation({...parameters,scene:parameters.scene??activeScene},time);const id=parameters.scene??activeScene;if(!parameters.review||parameters.review==='beauty')applyDisplayGrade(targetCtx,w,h,parameters.look?.post);if(id==='camera'){const study=studies.camera??=studyFactories.camera();study.finishFrame?.(targetCtx,time,w,h,parameters);return;}if(isNewScene(id)&&id!=='replay')return;const activeLook=parameters.look||look;if(parameters.review&&parameters.review!=='beauty')return;applyFilmGrain(targetCtx,time,w,h,{amount:id==='replay'?.018:activeLook.post.grain??0,size:id==='replay'?1.1:activeLook.post.grainSize??1.1,fps:parameters.renderSample?.fps??config.fps});}
  function render(time,{width:w=config.width,height:h=config.height,parameters={},previewQuality='full',previewReview}={}){
+ if(canonicalScene(parameters.scene)!==parameters.scene)parameters=migrateLegacyScene(parameters);
  if(!Number.isFinite(time))throw new Error('Render time must be finite');
  if(parameters.scene && !sceneIds.includes(parameters.scene))throw new Error('Unknown scene: '+parameters.scene);
  activeScene=parameters.scene??activeScene;if(previewReview!==undefined)parameters={...parameters,review:resolvePreviewReview(activeScene,previewReview)};parameters=evaluateParameterAnimation({...parameters,scene:activeScene},time);if(previewQuality==='fast'){parameters=structuredClone(parameters);parameters.previewQuality='fast';if(parameters.look?.post)Object.assign(parameters.look.post,{dofEnabled:false,bloomStrength:0,bloomEnabled:false,aoIntensity:0,antialias:false});if(parameters.sceneControls)Object.assign(parameters.sceneControls,{focusBlur:0,bloomStrength:0});}
@@ -57,7 +59,7 @@ export function createRuntime(canvas,{initialScene="bax"}={}){
   try{
    for(let i=0;i<count;i++){
     const timelineTime=start+(end-start)*i/(count-1),t=i===count-1&&end<sceneConfig(id).duration?Math.max(start,end-1e-7):timelineTime,values={};let data;
-    if(id==='bax'){
+    if(id==='objects'){
      channels=native.map(({id,label,unit})=>({id,label,unit}));
      for(const track of native){
       values[track.id]=sampleTrack(track.keys,t,groupId==='camera'?(baseline.look?.motion?.amount??1):(baseline.objectMotion??baseline.look?.motion?.amount??1));
@@ -87,8 +89,8 @@ export function createRuntime(canvas,{initialScene="bax"}={}){
   if(parameters.scene==='pop'){pop??=createPopDemo();return {...sampleProceduralMotion(t=>pop.nodesAt(t,evaluateParameterAnimation(parameters,t)),{duration:config.duration,rate,width:1920,height:1080,seed:42}),musicBpm:120};}
   if(parameters.scene==='procedural')return {...sampleProceduralMotion(t=>graphics.nodesAt(t,evaluateParameterAnimation(parameters,t)),{duration:config.duration,rate,width:1920,height:1080,seed:graphics.config.seed}),musicBpm:proceduralTempo(parameters)};
   init3d();const previousAspect=camera.aspect;const frames=[],v=new T.Vector3(),q=new T.Quaternion();
-  const names=['device.root','dial.rotor','bax.kinetic','bax.gyro.outer-gimbal-pivot','bax.gyro.inner-gimbal-pivot','bax.gyro.rotor','bax.emblem','bax.cover.hinge'];
-  const profiles={'dial.rotor':'dial','bax.cover.hinge':'hinge','bax.gyro.rotor':'rotor','bax.gyro.outer-gimbal-pivot':'bearing','bax.gyro.inner-gimbal-pivot':'bearing'};
+  const names=['device.root','dial.rotor','objects.kinetic','objects.gyro.outer-gimbal-pivot','objects.gyro.inner-gimbal-pivot','objects.gyro.rotor','objects.emblem','objects.cover.hinge'];
+  const profiles={'dial.rotor':'dial','objects.cover.hinge':'hinge','objects.gyro.rotor':'rotor','objects.gyro.outer-gimbal-pivot':'bearing','objects.gyro.inner-gimbal-pivot':'bearing'};
   // Discover authored tracks and optional sound tags for future scene elements too.
   for(const key of Object.keys(parameters.motion?.tracks||{}))if(!key.startsWith('camera.'))names.push(key.replace(/\.(position|rotation)(\.[xyz])?$/,''));
   scene.traverse(o=>{if(o.userData.sound)names.push(o.name);});
@@ -104,7 +106,7 @@ export function createRuntime(canvas,{initialScene="bax"}={}){
   }
   camera.aspect=previousAspect;camera.updateProjectionMatrix();return {duration:config.duration,rate,frames,cuts:parameters.motion?.cuts||[]};
  }
- function pickObject(x,y){if(!scene||!camera)return null;const ray=new T.Raycaster();scene.updateMatrixWorld(true);camera.updateMatrixWorld(true);ray.setFromCamera(new T.Vector2(x*2-1,1-y*2),camera);for(const hit of ray.intersectObjects(scene.children,true)){let object=hit.object;if(!object.visible)continue;while(object){if(['device.root','bax.emblem','bax.kinetic'].includes(object.name))return object.name;if(!object.visible)break;object=object.parent;}}return null;}
+ function pickObject(x,y){if(!scene||!camera)return null;const ray=new T.Raycaster();scene.updateMatrixWorld(true);camera.updateMatrixWorld(true);ray.setFromCamera(new T.Vector2(x*2-1,1-y*2),camera);for(const hit of ray.intersectObjects(scene.children,true)){let object=hit.object;if(!object.visible)continue;while(object){if(['device.root','objects.emblem','objects.kinetic'].includes(object.name))return object.name;if(!object.visible)break;object=object.parent;}}return null;}
  let disposed=false;
  function dispose(){
   if(disposed)return;disposed=true;

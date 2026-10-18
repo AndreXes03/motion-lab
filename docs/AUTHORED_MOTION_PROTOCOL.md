@@ -11,7 +11,7 @@ is an inspection view, not a second project format.
 
 | Data | Saved location | Time domain | Value | Editability |
 | --- | --- | --- | --- | --- |
-| BAX native camera/object channels | `parameters.motion.tracks` | Absolute source scene seconds | Scene units or radians | Existing keys: time, scalar axis value, outgoing easing |
+| OBJECTS native camera/object channels | `parameters.motion.tracks` | Absolute source scene seconds | Scene units or radians | Existing keys: time, scalar axis value, outgoing easing |
 | Target timing | `parameters.animation.groups[groupId]` | Seconds relative to `start` | Normalized source progress 0–1 | Independent target timing inside `start`–`end` |
 | Numeric parameter automation | `parameters.animation.tracks[controlId]` | Source scene seconds | Catalog parameter units | Bounds and binding come from the control catalog |
 | Function-authored pose observations | Runtime inspection only | Source scene seconds | Actual evaluated pose | Read-only samples; no invented editable keys |
@@ -26,7 +26,7 @@ Use the immutable bridge to change an existing native source key:
 
 ```js
 const nextMotion = editAuthoredKey(
-  'bax', 'camera', 'camera.position.x', 1,
+  'objects', 'camera', 'camera.position.x', 1,
   {value: -2.4, ease: 'bezier', bezier: [.2, .1, .7, .85]},
   {motion: parameters.motion}
 );

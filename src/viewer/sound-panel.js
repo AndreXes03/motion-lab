@@ -57,13 +57,13 @@ export function mountSoundPanel({runtime,parameters,onChange,onPause,getTime}){
  async function exportBuffer(p){await new Promise(resolve=>setTimeout(resolve,0));const rendered=renderSound(planSound(runtime.sampleMotion(p),p.sound));const result=new AudioBuffer({numberOfChannels:2,length:rendered.channels[0].length,sampleRate:rendered.sampleRate});for(let c=0;c<2;c++)result.copyToChannel(rendered.channels[c],c);return result;}
  function setScene(scene){
   panel.hidden=false;
-  // Mirrors runtime.sampleMotion: only BAX emits local mechanical profiles;
+  // Mirrors runtime.sampleMotion: only OBJECTS emits local mechanical profiles;
   // DOT has fixed authored cues; these study adapters currently emit no SFX.
   const is2d=['procedural','pop','dot','replay'].includes(scene);
   const hasMotionEffects=!['starter','pulse','camera'].includes(scene);
   const authoredCues=scene==='dot';
-  mechanics.hidden=scene!=='bax';sfx.hidden=!hasMotionEffects;subtle.hidden=!hasMotionEffects;
-  for(const key of ['dial','hinge','gyro'])fields[key].row.hidden=scene!=='bax';
+  mechanics.hidden=scene!=='objects';sfx.hidden=!hasMotionEffects;subtle.hidden=!hasMotionEffects;
+  for(const key of ['dial','hinge','gyro'])fields[key].row.hidden=scene!=='objects';
   fields.objects.row.hidden=authoredCues;fields.density.row.hidden=authoredCues;
   const sceneLabels=is2d?{camera:'Transitions',objects:'Shapes and text',accents:'Entrances and stops'}:{camera:labels.camera,objects:labels.objects,accents:labels.accents};
   for(const [key,label]of Object.entries(sceneLabels)){

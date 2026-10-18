@@ -35,11 +35,11 @@ export function getControlCatalog(scene) {
     const camera = ['fov','fisheye','cameraMotion'].includes(control.id);
     const lighting = ['contrast','keyStrength','fill'].includes(control.id);
     const contexts=[camera ? 'camera' : lighting ? 'lighting' : 'composition'];
-    if (scene === 'bax' && ['shell','knob','display'].includes(control.id)) contexts.push('device.root');
-    if (scene === 'bax' && control.id === 'energy') contexts.push('device.root','bax.kinetic','bax.emblem');
+    if (scene === 'objects' && ['shell','knob','display'].includes(control.id)) contexts.push('device.root');
+    if (scene === 'objects' && control.id === 'energy') contexts.push('device.root','objects.kinetic','objects.emblem');
     return {...control, path, group:control.group??(camera ? 'Lens' : lighting ? 'Lights' : 'Composition'), contexts:control.contexts??contexts, animatable:control.animatable??(control.type === 'range' && control.id !== 'contrast'), binding:'value', valueId:control.id};
   });
-  if (scene === 'bax') {
+  if (scene === 'objects') {
     controls.push(
       range('fov','Camera field of view',['look','camera','fov'],25,100,1,defaultLook.camera.fov,'Camera',['camera'],'Lens angle in degrees.'),
       range('exposure','Exposure',['look','post','exposure'],.25,2.5,.01,defaultLook.post.exposure,'Lighting',['lighting'],'Overall light exposure.'),
@@ -48,12 +48,12 @@ export function getControlCatalog(scene) {
       range('rim','Rim light',['look','lighting','rim'],0,8,.05,defaultLook.lighting.rim,'Lighting',['lighting'],'Edge light intensity.'),
       range('environment','Environment light',['look','lighting','environment'],0,1.5,.01,defaultLook.lighting.environment,'Lighting',['lighting'],'Ambient studio light intensity.')
     );
-    for (const [objectId, label] of [['device.root','Radio'],['bax.kinetic','Gyro'],['bax.emblem','Emblem']]) {
+    for (const [objectId, label] of [['device.root','Radio'],['objects.kinetic','Gyro'],['objects.emblem','Emblem']]) {
       for (const axis of ['x','y','z']) controls.push(range(`${objectId}.${axis}`,`${label} ${axis.toUpperCase()}`,['objectEdits',objectId,axis],-5,5,.05,0,label,[objectId],`Position offset on the ${axis.toUpperCase()} axis.`));
       controls.push(range(`${objectId}.yaw`,`${label} rotation`,['objectEdits',objectId,'yaw'],-180,180,1,0,label,[objectId],'Rotation offset in degrees.'),range(`${objectId}.scale`,`${label} scale`,['objectEdits',objectId,'scale'],.25,2,.01,1,label,[objectId],'Uniform scale multiplier.'));
     }
   }
-  if(scene==='bax'){
+  if(scene==='objects'){
     for(const [id,label,min,max,step,fallback,group]of [
       ['lensDistortion','Lens distortion',0,.6,.01,0,'Lens'],['aberrationPx','Chromatic aberration',0,12,.1,0,'Lens'],
       ['dofFocus','Focus distance',.1,60,.1,8,'Lens'],['dofStrength','Depth of field strength',0,1,.01,.35,'Lens'],['dofMaxBlur','Maximum focus blur',0,30,1,12,'Lens'],
