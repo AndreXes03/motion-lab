@@ -1,6 +1,6 @@
 # Usage
 
-Motion Lab is a local rendering engine for Three.js scenes and Canvas2D motion graphics. The 3D test is a 10-second film with a radio, mechanical emblem and gyroscope. The gyroscope uses deterministic kinematics, rather than a physics simulation. The procedural demo builds generative graphics directly from code.
+Framevolve is a local rendering engine for Three.js scenes and Canvas2D motion graphics. The 3D test is a 10-second film with a radio, mechanical emblem and gyroscope. The gyroscope uses deterministic kinematics, rather than a physics simulation. The procedural demo builds generative graphics directly from code.
 
 ## Start
 

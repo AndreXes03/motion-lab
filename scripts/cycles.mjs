@@ -75,15 +75,23 @@ async function main(){
  const recipePath=path.join(directory,'recipe.json');let baked=false;if(options.resume&&await exists(options.out)&&!await exists(recipePath))throw Error('Cannot resume an existing output without its matching Cycles recipe cache');
  if(await exists(recipePath)){const recipe=JSON.parse(await readFile(recipePath,'utf8'));if(!options.resume||recipe.fingerprint!==fingerprint)throw Error('Existing Cycles cache does not match this source and recipe. Choose a fresh output path.');baked=recipe.baked===true;}
  const frozen=path.join(directory,'source');
- manifest={schemaVersion:1,engine:'cycles',status:'running',path:options.out,sourceHash,fingerprint,sourceSnapshot:frozen,settings:options,adaptations,createdAt:new Date().toISOString(),frames:0,total:options.count};await updateManifest({phase:'freezing'});
+ manifest={schemaVersion:1,engine:'cycles',status:'running',path:options.out,sourceHash,fingerprint,sourceSnapshot:frozen,settings:options,adaptations,createdAt:new Date().toISOString(),frames:0,total:options.count};await updateManifest({phase:'freezing'});emit('progress',{phase:'freezing',percent:0});
  await writeFile(options.out+'.project.json',JSON.stringify({schemaVersion:2,command:options.command,parameters:options.parameters,settings:{...options},config:{scene:options.scene,duration:13.9,width:options.width,height:options.height,fps:options.fps},start:options.start,end:options.start+options.duration,time:options.time},null,2));
  if(!baked){if(await exists(frozen))await rm(frozen,{recursive:true});await freeze(frozen);if(await sourceDigest(frozen)!==sourceHash)throw Error('Scene source changed while freezing; retry using a fresh output path');await writeFile(recipePath,JSON.stringify({fingerprint,baked:false}));await updateManifest({phase:'baking'});const sourceReport=await bake(directory,frozen,options);await updateManifest({sourceReport});await writeFile(recipePath,JSON.stringify({fingerprint,baked:true}));}
  const pending=[];let completed=0;for(let frame=1;frame<=options.count;frame++){if(options.resume&&await validFrame(path.join(directory,'frames',`frame-${String(frame).padStart(6,'0')}.png`),options))completed++;else pending.push(frame);}
  const started=Date.now();await updateManifest({phase:'rendering',frames:completed});
- let manifestWrites=Promise.resolve();
+ let manifestWrites=Promise.resolve(),previewWrites=Promise.resolve();
+ const publishPreview=async event=>{
+  if(!options.progressive||![1,2].includes(event.stage))return;
+  const previewDir=path.join(directory,'progressive-'+event.stage);await mkdir(path.join(previewDir,'frames'),{recursive:true});
+  await copyFile(path.join(directory,'preview-raw-'+event.stage+'.png'),path.join(previewDir,'frames','frame-000001.png'));
+  const sequence=await finishFrames(previewDir,{...options,width:event.width,height:event.height,count:1},frozen);
+  const destination=path.join(directory,'preview-stage-'+event.stage+'.png');await copyFile(path.join(sequence,'frame-000001.png'),destination+'.part');await rename(destination+'.part',destination);
+  emit('preview',{stage:event.stage,width:event.width,height:event.height,samples:event.samples,phase:'refining',percent:25+event.stage*15});
+ };
  const jobs=Array.from({length:Math.min(options.workers,pending.length)},(_,worker)=>pending.filter((_,i)=>i%options.workers===worker));
- await Promise.all(jobs.map((frames,worker)=>run(blender,['--background','--factory-startup','--python',path.join(frozen,'scripts/cycles/render.py')],{cwd:directory,env:{...process.env,MOTION_CYCLES_DIR:directory,MOTION_CYCLES_WORKER:String(worker),MOTION_CYCLES_FRAMES:JSON.stringify(frames)},onEvent:event=>{if(event.type==='frame'){completed++;emit('frame',{...event,frames:completed,total:options.count,percent:20+Math.floor(completed/options.count*70)});manifestWrites=manifestWrites.then(()=>updateManifest({frames:completed,device:event.device,percent:20+Math.floor(completed/options.count*70)}));}else emit(event.type,event);}})));
- await manifestWrites;
+ await Promise.all(jobs.map((frames,worker)=>run(blender,['--background','--factory-startup','--python',path.join(frozen,'scripts/cycles/render.py')],{cwd:directory,env:{...process.env,MOTION_CYCLES_DIR:directory,MOTION_CYCLES_WORKER:String(worker),MOTION_CYCLES_FRAMES:JSON.stringify(frames)},onEvent:event=>{if(event.type==='preview'){previewWrites=previewWrites.then(()=>publishPreview(event));previewWrites.catch(()=>{});}else if(event.type==='frame'){completed++;emit('frame',{...event,frames:completed,total:options.count,percent:20+Math.floor(completed/options.count*70)});manifestWrites=manifestWrites.then(()=>updateManifest({frames:completed,device:event.device,percent:20+Math.floor(completed/options.count*70)}));}else emit(event.type,event);}})));
+ await manifestWrites;await previewWrites;
  for(let frame=1;frame<=options.count;frame++)if(!await validFrame(path.join(directory,'frames',`frame-${String(frame).padStart(6,'0')}.png`),options))throw Error('Incomplete or invalid Cycles frame '+frame);
  await updateManifest({phase:'encoding'});emit('progress',{phase:'encoding',frames:completed,total:options.count,percent:92});const sequence=await finishFrames(directory,options,frozen),temporary=options.out+'.part'+path.extname(options.out);
  let audioPath=options.audio,audioOffset=options.start;

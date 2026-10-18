@@ -146,7 +146,7 @@ export async function exportBrowserVideo({scene,parameters={},settings={},onProg
   if(!blob.size)throw new Error('The browser produced an empty video');
   report({phase:'finalizing',percent:99,mimeType,extension,framesRendered,droppedFrameSlots});
   const metadata=await readRecordedVideoMetadata(blob);checkAbort(signal);
-  const result={blob,mimeType,extension,filename:`motion-lab-${chosen}.${extension}`,mode:'realtime',renderer:'threejs',
+  const result={blob,mimeType,extension,filename:`framevolve-${chosen}.${extension}`,mode:'realtime',renderer:'threejs',
    width:options.width,height:options.height,fpsRequested:options.fps,durationRequested:options.duration,
    recordingWallSeconds,framesRendered,droppedFrameSlots,hasAudio:ownedAudioTracks.length>0,...metadata};
   report({phase:'complete',percent:100,mimeType,extension,framesRendered,droppedFrameSlots});return result;

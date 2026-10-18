@@ -1,4 +1,6 @@
-MOTION LAB — INSTALLER macOS BETA
+FRAMEVOLVE — INSTALLER macOS BETA
+
+Framevolve usa ancora nomi repo, ZIP, launcher e MCP Motion Lab per compatibilità.
 
 Tre varianti: Studio, Studio + Codex, Studio + Claude Desktop.
 Questo ZIP è un piccolo bootstrap: scarica una sorgente Git fissata, poi

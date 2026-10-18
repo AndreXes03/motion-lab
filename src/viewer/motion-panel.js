@@ -1,4 +1,5 @@
 import './motion-curve-editor.css';
+import {sourceCurvePoints, sourceTimingKeys, sampleSourceChannel} from '../engine/motion-curve-preview.js';
 import {findAnimationGroupOutputTime} from '../engine/motion-source-seek.js';
 import {sceneConfig} from '../scene-registry.js';
 import {getControlCatalog, createControlManifest, readControlValue} from '../engine/control-catalog.js';
@@ -29,7 +30,10 @@ const svgEl = (tag, attrs = {}) => {
 export function mountMotionPanel({container, getScene, getParameters, getAnimation, getTime, getAuthoredTracks, onAuthoredChange, onChange, onSeek}) {
   let scene, selectedControl, selectedTime = null, catalog = [], groups = [], selectedWindow = null, graphEnd = 1, showAllTools = false;
   let nativeTracks = [], selectedNativeTrack, nativePlayhead, nativeAxis;
-  let motionView = 'original', selectedNativeKey = null, nativeGesture = null, nativeSuppressClick = false, nativeSeekMessage = '';
+  let motionView = 'auto', selectedNativeKey = null, nativeGesture = null, nativeSuppressClick = false, nativeSeekMessage = '';
+  let nativeViewport = null, nativeViewportKey = '', retimeGesture = null, panGesture = null;
+  const isEasy = () => document.body.dataset.experience !== 'pro';
+  const retiming = () => isGroup() && (isEasy() || !nativeEditable() || motionView === 'retime' || (motionView === 'auto' && Boolean(currentGroup())));
   let nativeRequest = 0, nativeRequestKey = '', nativeLoading = false;
   const observedWindows = new Map();
   let gesture = null, suppressClick = false, previewBezier = null;
@@ -120,7 +124,7 @@ export function mountMotionPanel({container, getScene, getParameters, getAnimati
   const controlSelect = document.createElement('select');
   controlSelect.id = 'motion-control';
   choose.input.replaceWith(controlSelect);
-  controlSelect.onchange = () => { selectedControl = controlSelect.value; selectedTime = null; selectedWindow = null; previewBezier = null; nativeSeekMessage = ''; sync(); };
+  controlSelect.onchange = () => { selectedControl = controlSelect.value; motionView = 'auto'; selectedTime = null; selectedWindow = null; previewBezier = null; nativeSeekMessage = ''; sync(); };
   const allTools = field('Show parameter tracks', 'motion-show-all-tools', 'checkbox');
   allTools.wrap.title = 'Show individual numeric parameter tracks. Existing animated tracks remain available. This preference is not saved.';
   allTools.input.onchange = () => { showAllTools = allTools.input.checked; sync(); };
@@ -128,7 +132,7 @@ export function mountMotionPanel({container, getScene, getParameters, getAnimati
   const windowSelect = document.createElement('select'); windowSelect.id = 'motion-window'; windowField.input.replaceWith(windowSelect);
   windowSelect.onchange = () => {
     const window = groupDefinition()?.windows[Number(windowSelect.value)];
-    if (window) { selectedWindow = {...window}; selectedTime = null; previewBezier = null; nativeSeekMessage = ''; sync(); }
+    if (window) { selectedWindow = {...window}; motionView = 'auto'; selectedTime = null; previewBezier = null; nativeSeekMessage = ''; sync(); }
   };
   const windowHelp = el('small', '', 'One motion clip per target. Choosing a shot only changes the view; creating its curve replaces that target’s previous clip.');
   windowHelp.hidden = true; windowField.wrap.append(windowHelp);
@@ -167,11 +171,21 @@ export function mountMotionPanel({container, getScene, getParameters, getAnimati
   const nativeValues = el('div', 'motion-fine-row'); nativeValues.append(nativeTime.wrap, nativeValue.wrap, nativeSave);
   const nativeShared = el('small', 'motion-source-shared');
   nativeEditor.append(nativeValues, nativeEaseField.wrap, nativeHandleRow, nativeShared, nativeError);
-  nativeSection.append(nativeField.wrap, nativeStatus, nativeGraph, nativeList, nativeEditor, nativeRefresh);
-  const viewPicker = el('div', 'motion-view-picker'); viewPicker.setAttribute('role', 'group'); viewPicker.setAttribute('aria-label', 'Motion curve view');
-  const originalView = button('Original motion', () => { motionView = 'original'; syncMotionView(); }, 'motion-view-original');
-  const retimeView = button('Retime', () => { motionView = 'retime'; syncMotionView(); }, 'motion-view-retime');
-  viewPicker.append(originalView, retimeView);
+  const curveTools = el('div', 'motion-curve-tools');
+  const fitCurve = button('Fit', () => { nativeViewport = null; drawNativeGraph(); updateTime(); }, 'motion-curve-fit');
+  const zoomOut = button('−', () => navigateCurve(1.5), 'motion-curve-zoom-out'); zoomOut.setAttribute('aria-label', 'Zoom out curve');
+  const zoomIn = button('+', () => navigateCurve(1 / 1.5), 'motion-curve-zoom-in'); zoomIn.setAttribute('aria-label', 'Zoom in curve');
+  const panLeft = button('←', () => navigateCurve(1, -.25), 'motion-curve-pan-left'); panLeft.setAttribute('aria-label', 'Pan curve left');
+  const panRight = button('→', () => navigateCurve(1, .25), 'motion-curve-pan-right'); panRight.setAttribute('aria-label', 'Pan curve right');
+  const curveHelp = el('span', '', 'Scroll to pan · pinch to zoom');
+  curveTools.append(curveHelp, panLeft, panRight, zoomOut, zoomIn, fitCurve);
+  const easyTemplates = el('section', 'motion-easy-templates'); easyTemplates.setAttribute('aria-label', 'Motion templates');
+  const retimeReset = button('Original timing', () => write(a => { delete a.groups[groupId()]; }), 'motion-source-reset-timing');
+  nativeSection.append(nativeField.wrap, curveTools, nativeGraph, nativeStatus, easyTemplates, retimeReset, nativeList, nativeEditor, nativeRefresh);
+  const editModeField = field('Curve editing', 'motion-edit-mode', 'text');
+  const editMode = document.createElement('select'); editMode.id = 'motion-edit-mode'; editModeField.input.replaceWith(editMode);
+  for (const [value, label] of [['original', 'Edit source keys'], ['retime', 'Edit timing']]) { const option = el('option', '', label); option.value = value; editMode.append(option); }
+  editMode.onchange = () => { motionView = editMode.value; drawNativeGraph(); updateTime(); };
   const timingHeading = el('h3', '', 'Timing curve'); timingHeading.id = 'motion-timing-title';
   const graphSection = el('section', 'motion-graph-section');
   graphSection.setAttribute('aria-labelledby', timingHeading.id);
@@ -251,10 +265,10 @@ export function mountMotionPanel({container, getScene, getParameters, getAnimati
   const keyHeading = el('h3', '', 'Selected key');
   keySection.append(keyHeading, fineRow, presetRow, error);
   editor.append(editorTitle, keyOutput, easingField.wrap, handles, actions);
-  advanced.append(newKey, rateField.wrap, editor, enable.wrap);
+  advanced.append(editModeField.wrap, newKey, rateField.wrap, editor, enable.wrap);
   allTools.wrap.classList.add('motion-parameter-toggle'); nativeDetails.append(nativeSection);
   graphSection.append(graphHeader, graph, summary, transport, quickActions, graphHint, keyList, empty);
-  root.append(contextHeader, targetRow, viewPicker, intro, nativeDetails, graphSection, keySection, advanced, allTools.wrap);
+  root.append(contextHeader, targetRow, intro, nativeDetails, graphSection, keySection, advanced, allTools.wrap);
   container.replaceChildren(root);
 
   function navigate(direction) {
@@ -335,21 +349,55 @@ export function mountMotionPanel({container, getScene, getParameters, getAnimati
   function nativeTrack() { return nativeTracks.find(item => item.id === selectedNativeTrack); }
   function nativeEditable(track = nativeTrack()) { return Boolean(track?.editable && track.source === 'keys' && onAuthoredChange); }
   function syncMotionView() {
-    const original = isGroup() && motionView === 'original';
+    const group = isGroup(), original = group && !retiming();
     root.dataset.motionView = original ? 'original' : 'retime';
-    viewPicker.hidden = !isGroup(); nativeDetails.hidden = !original; nativeDetails.open = true;
-    graphSection.hidden = original; keySection.hidden = original; advanced.hidden = original;
-    originalView.setAttribute('aria-pressed', String(original)); retimeView.setAttribute('aria-pressed', String(!original));
-    if (original) {
-      const track = nativeTrack();
-      timingState.textContent = nativeLoading ? 'Loading' : nativeEditable(track) ? 'Source keys' : track ? 'Sampled · read only' : 'No channel';
-      timingState.dataset.edited = 'false'; intro.hidden = true;
-    } else {
-      const edited = Boolean(isGroup() ? currentGroup() : getAnimation?.()?.tracks?.[selectedControl]?.length);
-      timingState.textContent = getAnimation?.()?.enabled === false ? 'Overrides off' : edited ? 'Retimed' : 'No retiming';
-      timingState.dataset.edited = String(edited);
-      intro.hidden = intro.dataset.warning !== 'true';
-      timingHeading.textContent = isGroup() ? 'Timing remap' : 'Parameter curve';
+    root.dataset.experience = isEasy() ? 'easy' : 'pro';
+    editModeField.wrap.hidden = !group || !nativeEditable() || isEasy(); editMode.value = original ? 'original' : 'retime'; nativeDetails.hidden = !group; nativeDetails.open = true;
+    // The source curve remains the main editing surface. The low-level clock
+    // map is available only in Pro precision controls.
+    graphSection.hidden = original; keySection.hidden = original; advanced.hidden = isEasy();
+    for (const item of [newKey, rateField.wrap, editor, enable.wrap]) item.hidden = original;
+    if (group) { editModeField.wrap.after(graphSection, keySection); }
+    else { root.insertBefore(graphSection, advanced); root.insertBefore(keySection, advanced); }
+    curveTools.hidden = isEasy(); easyTemplates.hidden = !group || !isEasy();
+    retimeReset.hidden = !group || !retiming(); retimeReset.disabled = !currentGroup();
+    nativeEditor.hidden = !original || !nativeEditable() || selectedNativeKey === null;
+    nativeList.hidden = isEasy() || retiming() || nativeTrack()?.source === 'samples';
+    nativeRefresh.hidden = isEasy() || nativeEditable();
+    allTools.wrap.hidden = isEasy();
+    const edited = Boolean(group ? currentGroup() : getAnimation?.()?.tracks?.[selectedControl]?.length);
+    timingState.textContent = nativeLoading ? 'Loading' : getAnimation?.()?.enabled === false ? 'Overrides off' : retiming() ? nativeTrack()?.source === 'samples' ? 'Sampled timing' : edited ? 'Timing' : 'Source motion' : 'Source keys';
+    timingState.dataset.edited = String(edited); intro.hidden = intro.dataset.warning !== 'true';
+    timingHeading.textContent = group ? 'Clock mapping' : 'Parameter curve';
+  }
+  function navigateCurve(scale = 1, shift = 0, anchor = .5) {
+    if (!nativeAxis) return;
+    const full = clip(), old = nativeAxis.end - nativeAxis.start;
+    const span = clamp(old * scale, (full.end - full.start) / 64, full.end - full.start);
+    const start = clamp(nativeAxis.start + old * anchor - span * anchor + old * shift, full.start, full.end - span);
+    nativeViewport = {start, end: start + span}; drawNativeGraph(); updateTime();
+  }
+  function timingKeys() { return structuredClone(currentGroup()?.keys ?? sourceTimingKeys(nativeTrack(), clip())); }
+  function drawTemplates() {
+    easyTemplates.replaceChildren();
+    const track = nativeTrack(); if (!track || !isGroup()) return;
+    const profiles = [{id:'original', label:'Original'}, ...getInterpolationPresets(getScene()).filter(p => p.ease !== 'linear')];
+    for (const profile of profiles) {
+      const a = state(); a.enabled = true;
+      if (profile.id === 'original') delete a.groups[groupId()];
+      else {
+        seedGroup(a, 1);
+        a.groups[groupId()].keys[0] = {...a.groups[groupId()].keys[0], ease: profile.ease, ...(profile.bezier ? {bezier: [...profile.bezier]} : {})};
+      }
+      const card = button('', () => { motionView = 'retime'; onChange(a); sync(); }, 'motion-template-' + profile.id);
+      card.className = 'motion-template'; card.setAttribute('aria-label', profile.label + ' motion template');
+      const proposed = a.groups[groupId()], current = currentGroup();
+      card.setAttribute('aria-pressed', String(JSON.stringify(proposed ?? null) === JSON.stringify(current ?? null)));
+      const points = sourceCurvePoints(track, {...clip(), animation:a, groupId:groupId(), count:48});
+      const lo = Math.min(...points.map(p=>p.value)), hi = Math.max(...points.map(p=>p.value)), span = Math.max(hi-lo,.001);
+      const mini = svgEl('svg', {viewBox:'0 0 112 44', 'aria-hidden':'true'});
+      mini.append(svgEl('polyline',{points:points.map((p,i)=>`${4+i/48*104},${38-(p.value-lo)/span*30}`).join(' '), fill:'none',stroke:'currentColor','stroke-width':2}));
+      card.append(mini, el('span','',profile.label)); easyTemplates.append(card);
     }
   }
   function loadNativeEditor() {
@@ -409,28 +457,21 @@ export function mountMotionPanel({container, getScene, getParameters, getAnimati
     const valid = points => (points ?? []).filter(key => Number.isFinite(key.t) && Number.isFinite(key.value)).sort((a, b) => a.t - b.t);
     const knots = valid(track.keys), isSampled = track.source === 'samples';
     if (!knots.length) { nativeStatus.textContent = 'No motion data available.'; nativeEditor.hidden = true; return; }
-    const {start, end} = clip(), inWindow = knots.filter(key => key.t >= start - 1e-9 && key.t <= end + 1e-9);
-    // Native keys use the SAME easing evaluator as rendering. Observations from
-    // function-authored motion are joined directly, never eased a second time.
-    let points;
-    if (isSampled) points = valid(track.samples?.length ? track.samples : knots).filter(key => key.t >= start - 1e-9 && key.t <= end + 1e-9);
-    else {
-      const times = [...new Set([start, ...inWindow.map(key => key.t), end])].sort((a, b) => a - b);
-      points = [];
-      for (let segment = 0; segment < times.length - 1; segment++) for (let i = 0; i < 32; i++) {
-        const t = times[segment] + (times[segment + 1] - times[segment]) * i / 32;
-        points.push({t, value: sampleParameterTrack(knots, t)});
-      }
-      points.push({t: end, value: sampleParameterTrack(knots, end)});
-    }
+    const window = clip(), viewKey = `${getScene()}:${groupId()}:${selectedNativeTrack}:${window.start}:${window.end}`;
+    if (viewKey !== nativeViewportKey) { nativeViewport = null; nativeViewportKey = viewKey; }
+    const {start, end} = !isEasy() && nativeViewport ? nativeViewport : window;
+    const originalPoints = sourceCurvePoints(track, {start, end, count:256});
+    const points = retiming() ? sourceCurvePoints(track, {start, end, animation:getAnimation?.(), groupId:groupId(), count:256}) : originalPoints;
     if (!points.length) { nativeStatus.textContent = 'No samples in this shot.'; nativeEditor.hidden = true; return; }
-    const values = points.map(key => key.value), low = Math.min(...values), high = Math.max(...values), span = Math.max(high - low, .01);
+    const values = [...points, ...originalPoints].map(key => key.value), low = Math.min(...values), high = Math.max(...values), span = Math.max(high - low, .01);
     const lo = nativeGesture?.axis.lo ?? low - span * .12, hi = nativeGesture?.axis.hi ?? high + span * .12;
     const {left, right, top, bottom} = graphGeometry;
     const x = t => left + (t - start) / Math.max(end - start, .00001) * (right - left);
     const y = value => bottom - (value - lo) / (hi - lo) * (bottom - top);
     const format = value => Math.abs(value) >= 10000 ? value.toExponential(1) : String(Number(value.toFixed(2)));
     nativeAxis = {start, end, left, right, top, bottom, lo, hi};
+    const clipPath = svgEl('clipPath', {id:'motion-native-plot-clip'}); clipPath.append(svgEl('rect', {x:left-8,y:top-8,width:right-left+16,height:bottom-top+16}));
+    const defs = svgEl('defs'); defs.append(clipPath); nativeGraph.append(defs);
     for (let i = 0; i <= 4; i++) {
       const t = start + (end - start) * i / 4, px = x(t);
       nativeGraph.append(svgEl('line', {x1: px, x2: px, y1: top, y2: bottom, stroke: 'currentColor', opacity: '.12'}));
@@ -440,14 +481,16 @@ export function mountMotionPanel({container, getScene, getParameters, getAnimati
       nativeGraph.append(svgEl('line', {x1: left, x2: right, y1: y(value), y2: y(value), stroke: 'currentColor', opacity: '.12'}));
       const label = svgEl('text', {x: left - 5, y: y(value) + 3, fill: 'currentColor', 'font-size': 11, 'text-anchor': 'end'}); label.textContent = format(value); nativeGraph.append(label);
     }
+    if (retiming() && currentGroup()) nativeGraph.append(svgEl('polyline', {points: originalPoints.map(key => `${x(key.t).toFixed(2)},${y(key.value).toFixed(2)}`).join(' '), fill: 'none', stroke: 'currentColor', opacity: '.35', 'stroke-width': 1.5, 'stroke-dasharray': '4 4'}));
     nativeGraph.append(svgEl('polyline', {points: points.map(key => `${x(key.t).toFixed(2)},${y(key.value).toFixed(2)}`).join(' '), fill: 'none', stroke: isSampled ? 'var(--studio-accent, #9abce3)' : 'var(--motion-accent, #b49aef)', 'stroke-width': 2}));
-    const editable = nativeEditable(track);
+    const editable = nativeEditable(track) && !retiming() && !isEasy();
+    nativeGraph.setAttribute('aria-label', retiming() ? 'Retimed source movement in film seconds' : 'Original source movement in scene seconds');
     nativeGraph.dataset.source = track.source; nativeGraph.dataset.editable = String(editable);
-    nativeStatus.textContent = nativeSeekMessage || (isSampled ? 'Evaluated motion · sampled · read only' : editable ? 'Source keyframes · drag to edit' : 'Source keyframes · read only');
+    nativeStatus.textContent = nativeSeekMessage || (retiming() ? (isEasy() ? 'Templates preserve the original motion.' : (currentGroup() ? 'Drag points to adjust timing · dashed: original' : 'Drag points to adjust timing')) + (isSampled ? ' · sampled channel' : '') : (isSampled ? 'Evaluated motion · sampled · read only' : editable ? 'Source keyframes · drag to edit' : 'Source keyframes · read only'));
     nativeList.hidden = isSampled;
     const indexed = knots.map((key, index) => ({key, index})).filter(({key}) => key.t >= start - 1e-9 && key.t <= end + 1e-9);
-    if (!indexed.some(({index}) => index === selectedNativeKey)) selectedNativeKey = indexed[0]?.index ?? null;
-    if (!isSampled) for (const {key, index} of indexed) {
+    if (!knots[selectedNativeKey]) selectedNativeKey = indexed[0]?.index ?? null;
+    if (!isSampled && !retiming() && !isEasy()) for (const {key, index} of indexed) {
       const dot = svgEl('circle', {cx: x(key.t), cy: y(key.value), r: index === selectedNativeKey ? 5 : 4, fill: index === selectedNativeKey ? '#eef0f3' : 'var(--motion-accent, #b49aef)', stroke: '#111', 'stroke-width': 2, 'data-native-key': index, tabindex: 0, role: 'button', 'aria-label': `Source key at ${key.t} seconds, ${key.value}, ${key.ease ?? 'smooth'}`});
       dot.classList.add('motion-source-key'); dot.addEventListener('click', event => { event.stopPropagation(); if (!nativeSuppressClick) selectNativeKey(index); });
       nativeGraph.append(dot);
@@ -460,8 +503,16 @@ export function mountMotionPanel({container, getScene, getParameters, getAnimati
       nativeGraph.append(svgEl('line', {x1: x(anchor.t), y1: y(anchor.value), x2: hx, y2: hy, stroke: 'var(--motion-accent, #b49aef)', 'stroke-width': 1, 'pointer-events': 'none'}));
       nativeGraph.append(svgEl('circle', {cx: hx, cy: hy, r: 6, fill: 'var(--motion-accent, #b49aef)', stroke: '#0d0f11', 'stroke-width': 2, 'data-native-handle': handle, tabindex: 0, role: 'button', 'aria-label': handle ? 'Incoming source Bézier handle' : 'Outgoing source Bézier handle'}));
     }
+    if (retiming() && !isEasy()) for (const [index, key] of timingKeys().entries()) {
+      const time = window.start + key.t / targetRate();
+      if (time < start || time > end) continue;
+      const value = sampleSourceChannel(track, window.start + key.value * (window.end - window.start));
+      nativeGraph.append(svgEl('circle', {cx:x(time), cy:y(value), r:6, fill:'var(--motion-accent)', stroke:'#111', 'stroke-width':2, 'data-retime-key':index, tabindex:0, role:'button', 'aria-label':`Timing point ${index + 1} at ${time.toFixed(3)} seconds. Drag horizontally to retime original movement.`}));
+    }
     nativePlayhead = svgEl('line', {y1: top, y2: bottom, stroke: '#fff', 'stroke-width': 1.5, 'stroke-dasharray': '3 3', 'pointer-events': 'none'});
-    nativeGraph.append(nativePlayhead); loadNativeEditor(); syncMotionView();
+    nativeGraph.append(nativePlayhead);
+    for (const node of nativeGraph.querySelectorAll('polyline,circle,[data-native-handle]')) node.setAttribute('clip-path','url(#motion-native-plot-clip)');
+    loadNativeEditor(); drawTemplates(); syncMotionView();
   }
   function nativePoint(event, axis = nativeAxis) {
     const rect = nativeGraph.getBoundingClientRect();
@@ -470,7 +521,7 @@ export function mountMotionPanel({container, getScene, getParameters, getAnimati
   }
   nativeGraph.addEventListener('pointerdown', event => {
     const target = event.target.closest('[data-native-key],[data-native-handle]');
-    if (!target || event.button !== 0 || !nativeEditable() || nativeGesture) return;
+    if (!target || event.altKey || event.button !== 0 || retiming() || isEasy() || !nativeEditable() || nativeGesture) return;
     event.preventDefault(); event.stopPropagation();
     if (target.hasAttribute('data-native-key')) selectedNativeKey = Number(target.dataset.nativeKey);
     const track = nativeTrack();
@@ -507,19 +558,87 @@ export function mountMotionPanel({container, getScene, getParameters, getAnimati
   nativeGraph.addEventListener('pointercancel', event => finishNativeGesture(event, true));
   nativeGraph.addEventListener('lostpointercapture', event => { if (nativeGesture) finishNativeGesture(event, true); });
   nativeGraph.addEventListener('click', event => {
-    if (nativeSuppressClick || !nativeAxis || event.target.closest('[data-native-key],[data-native-handle]')) return;
-    seekNativeSource(nativePoint(event).t);
+    if (nativeSuppressClick || !nativeAxis || event.target.closest('[data-native-key],[data-native-handle],[data-retime-key]')) return;
+    if (retiming()) onSeek(nativePoint(event).t); else seekNativeSource(nativePoint(event).t);
   });
   nativeGraph.addEventListener('keydown', event => {
     if (event.key === 'Escape' && nativeGesture) { event.preventDefault(); event.stopPropagation(); finishNativeGesture(event, true); return; }
     if (event.key === ' ' || event.key === 'Enter') { event.preventDefault(); event.stopPropagation(); if (event.target.hasAttribute('data-native-key')) selectNativeKey(Number(event.target.dataset.nativeKey)); return; }
-    if (!['ArrowLeft', 'ArrowRight'].includes(event.key) || nativeTrack()?.source !== 'keys') return;
+    if (retiming() || !['ArrowLeft', 'ArrowRight'].includes(event.key) || nativeTrack()?.source !== 'keys') return;
     event.preventDefault(); event.stopPropagation();
     const next = (selectedNativeKey ?? 0) + (event.key === 'ArrowRight' ? 1 : -1), key = nativeTrack().keys[next];
     if (key && key.t >= clip().start && key.t <= clip().end) { selectNativeKey(next); nativeGraph.focus(); }
   });
+  nativeGraph.addEventListener('wheel', event => {
+    if (isEasy() || !nativeAxis) return;
+    event.preventDefault(); event.stopPropagation();
+    const rect = nativeGraph.getBoundingClientRect();
+    if (event.ctrlKey || event.metaKey) navigateCurve(Math.exp(clamp(event.deltaY, -80, 80) * .012), 0, clamp((event.clientX - rect.left) / rect.width, 0, 1));
+    else navigateCurve(1, (event.deltaX || event.deltaY) * .002);
+  }, {passive:false});
+  nativeGraph.addEventListener('pointerdown', event => {
+    if (isEasy() || !nativeAxis || nativeGesture) return;
+    if (event.button === 1 || (event.button === 0 && event.altKey)) {
+      event.preventDefault(); panGesture = {pointerId:event.pointerId, x:event.clientX, axis:{...nativeAxis}};
+      nativeGraph.setPointerCapture(event.pointerId); return;
+    }
+    const target = event.target.closest('[data-retime-key]');
+    if (!retiming() || !target || event.button !== 0) return;
+    event.preventDefault(); event.stopPropagation();
+    retimeGesture = {pointerId:event.pointerId, index:Number(target.dataset.retimeKey), keys:timingKeys(), original:structuredClone(getAnimation?.()), baseline:state(), axis:{...nativeAxis}, x:event.clientX, changed:false};
+    nativeGraph.setPointerCapture(event.pointerId);
+  });
+  nativeGraph.addEventListener('pointermove', event => {
+    if (panGesture?.pointerId === event.pointerId) {
+      event.preventDefault(); const g = panGesture, full = clip(), span = g.axis.end - g.axis.start;
+      const start = clamp(g.axis.start - (event.clientX - g.x) / nativeGraph.getBoundingClientRect().width * span, full.start, full.end - span);
+      nativeViewport = {start, end:start + span}; drawNativeGraph(); updateTime(); return;
+    }
+    const g = retimeGesture;
+    if (!g || g.pointerId !== event.pointerId || (!g.changed && Math.abs(event.clientX - g.x) < 3)) return;
+    event.preventDefault();
+    const list = structuredClone(g.keys), key = list[g.index], point = nativePoint(event,g.axis);
+    const min = g.index ? list[g.index - 1].t + 1e-5 : 0, max = g.index < list.length - 1 ? list[g.index + 1].t - 1e-5 : limit();
+    key.t = clamp(round((point.t - clip().start) * targetRate(g.baseline)), min, max);
+    const a = structuredClone(g.baseline);
+    if (!currentGroup(a)) seedGroup(a,1);
+    a.groups[groupId()].keys = list;
+    try { onChange(a,{record:false}); g.latest = a; g.changed = true; onSeek(point.t); drawNativeGraph(); drawGraph(); updateTime(); }
+    catch (failure) { nativeStatus.textContent = failure.message; }
+  });
+  function finishRetime(event, cancelled = false) {
+    if (panGesture?.pointerId === event.pointerId) {
+      panGesture = null; nativeSuppressClick = true; setTimeout(()=>{nativeSuppressClick=false;},0);
+      if (nativeGraph.hasPointerCapture(event.pointerId)) nativeGraph.releasePointerCapture(event.pointerId);
+      return;
+    }
+    const g = retimeGesture;
+    if (!g || (event.pointerId !== undefined && g.pointerId !== event.pointerId)) return;
+    retimeGesture = null; nativeSuppressClick = true; setTimeout(()=>{nativeSuppressClick=false;},0);
+    if (nativeGraph.hasPointerCapture(g.pointerId)) nativeGraph.releasePointerCapture(g.pointerId);
+    if (g.changed) onChange(cancelled ? g.original : g.latest, cancelled ? {record:false,cancelled:true} : {record:true});
+    else if (!cancelled) onSeek(clip().start + g.keys[g.index].t / targetRate());
+    sync();
+  }
+  nativeGraph.addEventListener('pointerup', event => finishRetime(event));
+  nativeGraph.addEventListener('pointercancel', event => finishRetime(event,true));
+  nativeGraph.addEventListener('lostpointercapture', event => { if (retimeGesture || panGesture) finishRetime(event,true); });
+  nativeGraph.addEventListener('keydown', event => {
+    if (event.key === 'Escape' && retimeGesture) { event.preventDefault(); event.stopPropagation(); finishRetime(event,true); }
+    if (event.key === '+' || event.key === '=') { event.preventDefault(); navigateCurve(1/1.5); }
+    if (event.key === '-') { event.preventDefault(); navigateCurve(1.5); }
+    if (event.key === 'Home') { event.preventDefault(); nativeViewport=null; drawNativeGraph(); updateTime(); }
+    const target = event.target.closest('[data-retime-key]');
+    if (target && ['Enter',' '].includes(event.key)) { event.preventDefault(); const key = timingKeys()[Number(target.dataset.retimeKey)]; onSeek(clip().start + key.t / targetRate()); return; }
+    if (!target || !['ArrowLeft','ArrowRight'].includes(event.key)) return;
+    event.preventDefault(); event.stopPropagation();
+    const index = Number(target.dataset.retimeKey), list = timingKeys(), key=list[index];
+    key.t = clamp(key.t + (event.key === 'ArrowRight' ? 1 : -1) / sceneConfig(getScene()).fps * (event.shiftKey ? 10 : 1), index ? list[index-1].t + 1e-5 : 0, index < list.length-1 ? list[index+1].t - 1e-5 : limit());
+    write(a=>{if(!currentGroup(a))seedGroup(a,1);a.groups[groupId()].keys=list;});
+    nativeGraph.querySelector(`[data-retime-key="${index}"]`)?.focus();
+  });
   function requestNativeTracks() {
-    if (!isGroup() || container.hidden || nativeGesture) return;
+    if (!isGroup() || container.hidden || nativeGesture || retimeGesture) return;
     const window = clip(), parameters = structuredClone(getParameters());
     delete parameters.animation;
     const payload = {scene: getScene(), groupId: groupId(), start: window.start, end: window.end, parameters};
@@ -730,7 +849,7 @@ export function mountMotionPanel({container, getScene, getParameters, getAnimati
       playhead.setAttribute('x1', String(x)); playhead.setAttribute('x2', String(x));
     }
     if (nativePlayhead && nativeAxis) {
-      const poseTime = animationGroupData.sampleAnimationGroupTime({animation: a}, groupId(), Number(time));
+      const poseTime = retiming() ? Number(time) : animationGroupData.sampleAnimationGroupTime({animation: a}, groupId(), Number(time));
       const px = nativeAxis.left + clamp((poseTime - nativeAxis.start) / Math.max(nativeAxis.end - nativeAxis.start, .00001), 0, 1) * (nativeAxis.right - nativeAxis.left);
       nativePlayhead.setAttribute('x1', String(px)); nativePlayhead.setAttribute('x2', String(px));
     }
@@ -742,9 +861,9 @@ export function mountMotionPanel({container, getScene, getParameters, getAnimati
     next.disabled = !list.some(k => k.t > navigationTime + 1e-6);
   }
   function sync() {
-    if (gesture || nativeGesture) return;
+    if (gesture || nativeGesture || retimeGesture) return;
     const nextScene = getScene();
-    if (scene !== nextScene) { showAllTools = false; selectedWindow = null; motionView = 'original'; selectedNativeKey = null; }
+    if (scene !== nextScene) { showAllTools = false; selectedWindow = null; motionView = 'auto'; selectedNativeKey = null; }
     groups = getAnimationGroups(nextScene);
     const parameters = getParameters();
     const manifest = parameters.studio?.controlManifest ?? createControlManifest(nextScene);
@@ -829,8 +948,10 @@ export function mountMotionPanel({container, getScene, getParameters, getAnimati
     smoothKey.disabled = index < 0 || list.length < 2; linearKey.disabled = smoothKey.disabled;
     applyEasing.disabled = !selected || index === list.length - 1; easingPreset.disabled = Boolean(selected && index === list.length - 1);
     selectedLabel.textContent = selected ? `Key ${index + 1} / ${list.length} · ${selected.ease ?? 'linear'}` : 'Select a key';
-    loadEditor(); drawGraph(); syncMotionView(); updateTime(); requestNativeTracks();
+    loadEditor(); drawGraph(); drawNativeGraph(); syncMotionView(); updateTime(); requestNativeTracks();
   }
+  const experienceObserver = new MutationObserver(() => { if (isEasy() && !isGroup()) selectedControl = groups.length ? 'group:' + groups[0].id : selectedControl; sync(); });
+  experienceObserver.observe(document.body, {attributes:true, attributeFilter:['data-experience']});
   sync();
   return {sync, updateTime};
 }

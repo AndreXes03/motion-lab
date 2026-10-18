@@ -16,7 +16,7 @@ export function mountViewportToolbar({container,select,onChange}){
    group.dataset.modes=signature;group.replaceChildren();
    for(const id of ['wireframe','clay','normals','clean','beauty']){
     const option=options.find(o=>o.value===id);if(!option)continue;
-    const button=document.createElement('button');button.type='button';button.dataset.mode=id;button.setAttribute('role','radio');button.setAttribute('aria-label',option.textContent);button.title=option.textContent+' · preview only';
+    const button=document.createElement('button');button.type='button';button.dataset.mode=id;button.setAttribute('role','radio');button.setAttribute('aria-label',option.textContent);button.title=id==='beauty'?'Final look · render with the selected engine':option.textContent+' · preview only';
     button.innerHTML='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4" aria-hidden="true">'+shapes[id]+'</svg>';
     button.onclick=()=>{select.value=id;sync();onChange();};group.append(button);
    }

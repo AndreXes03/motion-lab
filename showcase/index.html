@@ -4,24 +4,24 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <meta name="theme-color" content="#101112">
-  <meta name="description" content="Build editable 2D and 3D scenes with a coding agent. Shape motion, lens, lighting and grading in Motion Lab. Preview in the browser; render locally.">
+  <meta name="description" content="Build editable 2D and 3D scenes with a coding agent. Shape motion, lens, lighting and grading in Framevolve. Preview in the browser; render locally.">
   <link rel="canonical" href="https://andrexes03.github.io/motion-lab/">
   <meta property="og:type" content="website">
-  <meta property="og:title" content="Motion Lab — Make motion. Keep control.">
+  <meta property="og:title" content="Framevolve — Make motion. Keep control.">
   <meta property="og:description" content="Build a scene with a coding agent. Shape its motion, materials, light and finish in the studio. Render locally.">
   <meta property="og:url" content="https://andrexes03.github.io/motion-lab/">
   <meta property="og:image" content="https://andrexes03.github.io/motion-lab/demo/pulse-poster.jpg">
   <meta name="twitter:card" content="summary_large_image">
   <meta name="author" content="Andrea Salvo">
-  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='16' fill='%23101112'/%3E%3Cpath d='M13 45V19l19 17 19-17v26' fill='none' stroke='%23d7f56b' stroke-width='6'/%3E%3C/svg%3E">
-  <title>Motion Lab — Make motion. Keep control.</title>
-  <link rel="stylesheet" href="./site.css?v=mac-downloads-beta-v1">
+  <link rel="icon" type="image/png" data-brand="brand/framevolve-mark.png" href="./brand/framevolve-mark.png">
+  <title>Framevolve — Make motion. Keep control.</title>
+  <link rel="stylesheet" href="./site.css?v=framevolve-downloads-v2">
 </head>
 <body>
   <a class="skip-link" href="#demo">Skip to the films</a>
   <canvas id="site-ambient" width="240" height="135" aria-hidden="true"></canvas>
   <header class="site-header">
-    <a class="wordmark" href="#top" aria-label="Motion Lab home"><span class="mark" aria-hidden="true">M</span><span>Motion Lab</span><small>LOCAL STUDIO</small></a>
+    <a class="wordmark" href="#top" aria-label="Framevolve home"><img class="mark" data-brand="brand/framevolve-mark.png" src="./brand/framevolve-mark.png" alt="" width="28" height="28" aria-hidden="true"><span>Framevolve</span><small>LOCAL STUDIO</small></a>
     <nav aria-label="Main navigation"><a href="#workflow">Workflow</a><a href="#demo">Films</a><a href="#controls">Controls</a><a href="#rendering">Rendering</a></nav>
     <button class="nav-cta" type="button" data-open-downloads aria-haspopup="dialog" aria-controls="downloads">Download <span aria-hidden="true">↓</span></button>
   </header>
@@ -29,7 +29,7 @@
   <main id="top">
     <section class="hero" aria-labelledby="hero-title">
       <div class="hero-copy">
-        <p class="eyebrow"><span class="live-dot"></span> CODE MOTION LAB</p>
+        <p class="eyebrow"><span class="live-dot"></span> FRAMEVOLVE</p>
         <h1 id="hero-title">Make motion.<br><span>Keep control.</span></h1>
         <p class="hero-description">Build a scene with a coding agent. Shape the details in the studio. Render the film on your own machine.</p>
         <div class="hero-actions">
@@ -39,7 +39,7 @@
         </div>
         <p class="hero-note"><span class="live-dot"></span> Editable 2D, hybrid and 3D scenes. Your code and timing stay yours.</p>
       </div>
-      <a class="hero-film" href="#demo" aria-label="Watch PULSE, a 3D film made in Motion Lab">
+      <a class="hero-film" href="#demo" aria-label="Watch PULSE, a 3D film made in Framevolve">
         <img class="hero-film-poster" data-asset="demo/pulse-poster.jpg" src="./demo/pulse-poster.jpg" alt="PULSE: a close-up product film with sculptural sound hardware and reflected studio light" width="1920" height="1080" fetchpriority="high">
         <video class="hero-film-loop" data-hero-motion data-asset="demo/pulse-1080.mp4" data-poster="demo/pulse-poster.jpg" poster="./demo/pulse-poster.jpg" autoplay muted loop playsinline preload="none" aria-hidden="true" tabindex="-1"></video>
         <span class="hero-film-top"><span>01 / PULSE</span><span>CYCLES · 3D PRODUCT FILM</span></span>
@@ -52,27 +52,45 @@
       <div class="section-intro">
         <p class="eyebrow">ONE CONTINUOUS WORKFLOW</p>
         <h2 id="workflow-title">The agent builds.<br>You direct the scene.</h2>
-        <p>Ask your coding agent to shape the code and scene recipe. Open the same scene in Motion Lab to refine its controls, timing and finish.</p>
+        <p>Ask your coding agent to shape the code and scene recipe. Open the same scene in Framevolve to refine its controls, timing and finish.</p>
       </div>
-      <div class="workflow-grid">
-        <figure class="ui-shot">
-          <img data-asset="demo/ui-tools.jpg" src="../demo/ui-tools.jpg" alt="Motion Lab studio with scene-specific tool groups for motion, lens, lighting and compositing" width="1600" height="1000" loading="lazy">
-          <figcaption><span>01</span><span>Choose the controls that matter for this scene.</span></figcaption>
+      <div class="studio-gallery">
+        <div class="studio-gallery-bar">
+          <div class="studio-view-tabs" role="tablist" aria-label="Studio workspaces">
+            <button id="studio-tab-easy" type="button" role="tab" aria-selected="true" aria-controls="studio-view-easy" data-studio-view="easy">Easy <span>Find a direction</span></button>
+            <button id="studio-tab-pro" type="button" role="tab" aria-selected="false" aria-controls="studio-view-pro" tabindex="-1" data-studio-view="pro">Pro <span>Shape every curve</span></button>
+            <button id="studio-tab-export" type="button" role="tab" aria-selected="false" aria-controls="studio-view-export" tabindex="-1" data-studio-view="export">Export <span>Prepare the delivery</span></button>
+          </div>
+          <span class="studio-capture-label">Inside the studio</span>
+        </div>
+        <figure id="studio-view-easy" class="ui-shot" role="tabpanel" aria-labelledby="studio-tab-easy" tabindex="0">
+          <a class="studio-capture-link" data-capture="demo/ui-studio-easy.jpg" href="./demo/ui-studio-easy.jpg" target="_blank" rel="noopener" aria-label="View the Easy workspace screenshot at full size">
+            <img data-asset="demo/ui-studio-easy.jpg" src="./demo/ui-studio-easy.jpg" alt="Framevolve Easy workspace with motion presets and a simplified curve preview" width="1280" height="720" loading="lazy">
+          </a>
+          <figcaption><span>Easy</span><span>Start with a preset. See the movement before you change it.</span><a data-capture="demo/ui-studio-easy.jpg" href="./demo/ui-studio-easy.jpg" target="_blank" rel="noopener">Full size ↗</a></figcaption>
         </figure>
-        <figure class="ui-shot motion-shot">
-          <img data-asset="demo/ui-motion-groups.jpg" src="../demo/ui-motion-groups.jpg" alt="Motion Lab motion panel with independent curves for a camera and an object" width="1600" height="1000" loading="lazy">
-          <figcaption><span>02</span><span>See original movement. Shape each part’s timing.</span></figcaption>
+        <figure id="studio-view-pro" class="ui-shot" role="tabpanel" aria-labelledby="studio-tab-pro" tabindex="0" hidden>
+          <a class="studio-capture-link" data-capture="demo/ui-studio-pro.jpg" href="./demo/ui-studio-pro.jpg" target="_blank" rel="noopener" aria-label="View the Pro workspace screenshot at full size">
+            <img data-asset="demo/ui-studio-pro.jpg" src="./demo/ui-studio-pro.jpg" alt="Framevolve Pro workspace showing original animation curves and precise keyframe controls" width="1280" height="720" loading="lazy">
+          </a>
+          <figcaption><span>Pro</span><span>Work from the original curves. Refine the timing and easing.</span><a data-capture="demo/ui-studio-pro.jpg" href="./demo/ui-studio-pro.jpg" target="_blank" rel="noopener">Full size ↗</a></figcaption>
+        </figure>
+        <figure id="studio-view-export" class="ui-shot" role="tabpanel" aria-labelledby="studio-tab-export" tabindex="0" hidden>
+          <a class="studio-capture-link" data-capture="demo/ui-studio-export.jpg" href="./demo/ui-studio-export.jpg" target="_blank" rel="noopener" aria-label="View the Export panel screenshot at full size">
+            <img data-asset="demo/ui-studio-export.jpg" src="./demo/ui-studio-export.jpg" alt="Framevolve Export panel with delivery format, resolution and renderer controls" width="1280" height="720" loading="lazy">
+          </a>
+          <figcaption><span>Export</span><span>Choose the format, resolution and renderer in one place.</span><a data-capture="demo/ui-studio-export.jpg" href="./demo/ui-studio-export.jpg" target="_blank" rel="noopener">Full size ↗</a></figcaption>
         </figure>
       </div>
       <div class="workflow-footer">
-        <p>Useful controls stay close. Deeper settings stay available when you need them.</p>
+        <p>A focused workspace to explore. Precise tools when you need them.</p>
         <div class="inline-actions"><a class="button secondary" href="./studio/?scene=bax&amp;panel=look">Open scene controls</a><a class="button secondary" href="./studio/?scene=bax&amp;panel=motion">Open motion curves</a></div>
       </div>
     </section>
 
     <section id="demo" class="demo-section section-rule" aria-labelledby="demo-title">
       <div class="section-intro centered">
-        <p class="eyebrow">MADE IN MOTION LAB</p>
+        <p class="eyebrow">MADE IN FRAMEVOLVE</p>
         <h2 id="demo-title">Different scenes.<br>One workspace.</h2>
         <p>Finished films made from editable scene code, controls, camera moves and sound.</p>
       </div>
@@ -117,7 +135,7 @@
       <div class="section-intro">
         <p class="eyebrow">PREVIEW HERE. RENDER LOCALLY.</p>
         <h2 id="render-title">Keep the whole pass.</h2>
-        <p>Motion Lab renders the scene recipe at each requested time. Review a frame, listen to the sound design, then choose the delivery path that fits.</p>
+        <p>Framevolve renders the scene recipe at each requested time. Review a frame, listen to the sound design, then choose the delivery path that fits.</p>
       </div>
       <div class="render-grid">
         <article class="render-card"><span class="render-label">IN THE BROWSER</span><h3>Preview and direct.</h3><p>3D previews use Three.js; procedural 2D uses Canvas. Auto adapts while you work; Fast, Balanced and Sharp are there when you choose.</p><span class="render-pills"><i>Auto</i><i>Fast</i><i>Balanced</i><i>Sharp</i></span></article>
@@ -128,7 +146,7 @@
     </section>
 
     <section id="agent-plugin" class="render-section section-rule" aria-labelledby="agent-plugin-title">
-      <div class="section-intro"><p class="eyebrow">LOCAL AGENT PLUGIN · BETA</p><h2 id="agent-plugin-title">Direct the local Studio<br>from your agent.</h2><p>A local MCP plugin connects Codex or Claude to your Motion Lab checkout. Discover real controls, save named directions and inspect local render jobs.</p></div>
+      <div class="section-intro"><p class="eyebrow">LOCAL AGENT PLUGIN · BETA</p><h2 id="agent-plugin-title">Direct the local Studio<br>from your agent.</h2><p>A local MCP plugin connects Codex or Claude to your Framevolve checkout (Motion Lab repository). Discover real controls, save named directions and inspect local render jobs.</p></div>
       <div class="render-grid">
         <article class="render-card"><span class="render-label">DISCOVER</span><h3>Use the scene's real tools.</h3><p>Read available scenes, control catalogs and saved versions. Parameter changes create a new named version; the original stays available.</p></article>
         <article class="render-card"><span class="render-label">PREVIEW AND RENDER</span><h3>Inspect the next pass.</h3><p>Request small preview frames and asynchronous local render jobs. Retrieve completed images and original output files through the agent.</p></article>
@@ -176,7 +194,7 @@ npm run viewer</pre><p id="copy-status" role="status">The app renders on your ma
   </main>
 
   <dialog id="downloads" class="download-dialog" aria-labelledby="downloads-title" aria-describedby="downloads-intro">
-    <form method="dialog" class="download-heading"><p class="eyebrow">TAKE MOTION LAB HOME · macOS BETA</p><button class="button secondary" aria-label="Close downloads" autofocus>Close ×</button></form>
+    <form method="dialog" class="download-heading"><p class="eyebrow">TAKE FRAMEVOLVE HOME · macOS BETA</p><button class="button secondary" aria-label="Close downloads" autofocus>Close ×</button></form>
     <h2 id="downloads-title">Choose your local setup.</h2>
     <p id="downloads-intro">Small ZIP installers download a pinned source version and install dependencies. Requires macOS, Git, Node.js 22.12+ and Google Chrome. These are local Studio launchers, not standalone apps.</p>
     <div class="render-grid">
@@ -184,11 +202,11 @@ npm run viewer</pre><p id="copy-status" role="status">The app renders on your ma
       <article class="render-card"><span class="render-label">STUDIO + CODEX</span><h3>Direct through your agent.</h3><p>Studio plus the local MCP beta. Requires a Codex CLI with plugin support; registers a local marketplace after installation succeeds.</p><a class="button secondary" data-download-file="motion-lab-codex-macos-beta.zip" href="./downloads/motion-lab-codex-macos-beta.zip" download>Download for Codex ↓</a></article>
       <article class="render-card"><span class="render-label">STUDIO + CLAUDE DESKTOP</span><h3>Keep the same scene.</h3><p>Studio plus the same MCP tools for Claude Desktop. Requires Claude already installed; preserves other settings and backs up its config.</p><a class="button secondary" data-download-file="motion-lab-claude-macos-beta.zip" href="./downloads/motion-lab-claude-macos-beta.zip" download>Download for Claude ↓</a></article>
     </div>
-    <p class="local-note">Extract the ZIP, read LEGGIMI.txt, then open “Installa Motion Lab.command”. Internet is needed for installation. Unsigned beta: macOS may request confirmation. Existing checkouts, launchers and Motion Lab client registrations are never replaced. Cycles requires local Blender and a supported scene.</p>
+    <p class="local-note">Extract the ZIP, read LEGGIMI.txt, then open “Installa Motion Lab.command”. Internet is needed for installation. Unsigned beta: macOS may request confirmation. Existing checkouts, launchers and client registrations are never replaced. Cycles requires local Blender and a supported scene.</p>
     <p class="local-note"><a class="text-link" href="./studio/">Try the online browser demo — no installer ↗</a> · <a class="text-link" href="https://github.com/AndreXes03/motion-lab/blob/codex/mac-downloads/docs/MAC_DOWNLOADS.md">Setup, checks and limitations ↗</a></p>
   </dialog>
   <noscript><p class="local-note">JavaScript is required for the download chooser. <a href="./downloads/motion-lab-studio-macos-beta.zip">Download the macOS Studio installer</a>.</p></noscript>
-  <footer><a class="wordmark" href="#top"><span class="mark" aria-hidden="true">M</span><span>Motion Lab</span></a><span>Created by Andrea Salvo · Open source, MIT</span><div><a href="https://github.com/AndreXes03/motion-lab/tree/main/docs">Documentation ↗</a><a href="https://github.com/AndreXes03/motion-lab/blob/main/THIRD_PARTY.md">Asset licenses</a></div></footer>
-  <script src="./site.js?v=mac-downloads-beta-v1"></script>
+  <footer><a class="wordmark" href="#top"><img class="mark" data-brand="brand/framevolve-mark.png" src="./brand/framevolve-mark.png" alt="" width="28" height="28" aria-hidden="true"><span>Framevolve</span></a><span>Created by Andrea Salvo · Open source, MIT</span><div><a href="https://github.com/AndreXes03/motion-lab/tree/main/docs">Documentation ↗</a><a href="https://github.com/AndreXes03/motion-lab/blob/main/THIRD_PARTY.md">Asset licenses</a></div></footer>
+  <script src="./site.js?v=framevolve-downloads-v2"></script>
 </body>
 </html>

@@ -1,6 +1,6 @@
 # Architecture
 
-Motion Lab renders Three.js scenes and Canvas2D graphics locally. The viewer and CLI use the same frame calculation; the CLI encodes frames into video.
+Framevolve renders Three.js scenes and Canvas2D graphics locally. The viewer and CLI use the same frame calculation; the CLI encodes frames into video.
 
 ```mermaid
 flowchart LR
