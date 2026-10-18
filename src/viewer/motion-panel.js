@@ -1,4 +1,5 @@
 import './motion-curve-editor.css';
+import {moveCurveSelection} from '../engine/curve-interaction.js';
 import {sourceCurvePoints, sourceTimingKeys, sampleSourceChannel} from '../engine/motion-curve-preview.js';
 import {findAnimationGroupOutputTime} from '../engine/motion-source-seek.js';
 import {sceneConfig} from '../scene-registry.js';
@@ -6,7 +7,7 @@ import {getControlCatalog, createControlManifest, readControlValue} from '../eng
 import {sampleParameterTrack} from '../engine/parameter-animation.js';
 import * as animationGroupData from '../engine/animation-groups.js';
 import {getInterpolationPresets} from '../engine/control-presets.js';
-import {getAuthoredAnimationTracks, editAuthoredKey} from '../engine/authored-animation.js';
+import {getAuthoredAnimationTracks, editAuthoredKey, editAuthoredKeys} from '../engine/authored-animation.js';
 
 const BEZIER_EQUIVALENTS = {linear: [1 / 3, 1 / 3, 2 / 3, 2 / 3], in: [1 / 3, 0, 2 / 3, 0], out: [1 / 3, 1, 2 / 3, 1]};
 const SVG_NS = 'http://www.w3.org/2000/svg';
@@ -38,6 +39,15 @@ export function mountMotionPanel({container, getScene, getParameters, getAnimati
   const observedWindows = new Map();
   let gesture = null, suppressClick = false, previewBezier = null;
   let playhead, graphGeometry = GRAPH;
+  let selectedTimes = new Set(), selectedNativeKeys = new Set(), selectedRetimeKeys = new Set(), surfaceGesture = null;
+  const additive = event => event.shiftKey || event.metaKey || event.ctrlKey;
+  const selectIndex = (set, index, event = {}) => {
+    if (additive(event)) { if (set.has(index)) set.delete(index); else set.add(index); }
+    else if (!set.has(index)) { set.clear(); set.add(index); }
+  };
+  const resetSelection = () => { selectedTimes.clear(); selectedNativeKeys.clear(); selectedRetimeKeys.clear(); };
+  const snapStep = () => snap.input.checked ? 1 / sceneConfig(getScene()).fps : 0;
+
   const state = () => {
     const raw = getAnimation?.();
     return {version: 1, enabled: raw?.enabled ?? true, rate: raw?.rate ?? 1, tracks: structuredClone(raw?.tracks ?? {}), rates: structuredClone(raw?.rates ?? {}), groups: structuredClone(raw?.groups ?? {})};
@@ -124,7 +134,7 @@ export function mountMotionPanel({container, getScene, getParameters, getAnimati
   const controlSelect = document.createElement('select');
   controlSelect.id = 'motion-control';
   choose.input.replaceWith(controlSelect);
-  controlSelect.onchange = () => { selectedControl = controlSelect.value; motionView = 'auto'; selectedTime = null; selectedWindow = null; previewBezier = null; nativeSeekMessage = ''; sync(); };
+  controlSelect.onchange = () => { selectedControl = controlSelect.value; motionView = 'auto'; resetSelection(); selectedTime = null; selectedWindow = null; previewBezier = null; nativeSeekMessage = ''; sync(); };
   const allTools = field('Show parameter tracks', 'motion-show-all-tools', 'checkbox');
   allTools.wrap.title = 'Show individual numeric parameter tracks. Existing animated tracks remain available. This preference is not saved.';
   allTools.input.onchange = () => { showAllTools = allTools.input.checked; sync(); };
@@ -132,7 +142,7 @@ export function mountMotionPanel({container, getScene, getParameters, getAnimati
   const windowSelect = document.createElement('select'); windowSelect.id = 'motion-window'; windowField.input.replaceWith(windowSelect);
   windowSelect.onchange = () => {
     const window = groupDefinition()?.windows[Number(windowSelect.value)];
-    if (window) { selectedWindow = {...window}; motionView = 'auto'; selectedTime = null; previewBezier = null; nativeSeekMessage = ''; sync(); }
+    if (window) { selectedWindow = {...window}; motionView = 'auto'; resetSelection(); selectedTime = null; previewBezier = null; nativeSeekMessage = ''; sync(); }
   };
   const windowHelp = el('small', '', 'One motion clip per target. Choosing a shot only changes the view; creating its curve replaces that target’s previous clip.');
   windowHelp.hidden = true; windowField.wrap.append(windowHelp);
@@ -149,7 +159,7 @@ export function mountMotionPanel({container, getScene, getParameters, getAnimati
   const nativeGraph = svgEl('svg', {id: 'motion-native-graph', viewBox: `0 0 ${GRAPH.width} ${GRAPH.height}`, role: 'group', tabindex: 0, 'aria-label': 'Original source movement in scene seconds'});
   nativeGraph.classList.add('motion-curve'); nativeGraph.style.width = '100%'; nativeGraph.style.height = 'auto'; nativeGraph.style.display = 'block';
   const nativeList = el('div', 'motion-key-list'); nativeList.id = 'motion-native-keys';
-  nativeSelect.onchange = () => { selectedNativeTrack = nativeSelect.value; selectedNativeKey = null; nativeSeekMessage = ''; drawNativeGraph(); updateTime(); };
+  nativeSelect.onchange = () => { selectedNativeTrack = nativeSelect.value; selectedNativeKeys.clear(); selectedRetimeKeys.clear(); selectedNativeKey = null; nativeSeekMessage = ''; drawNativeGraph(); updateTime(); };
   const nativeRefresh = button('Refresh', () => { nativeRequestKey = ''; requestNativeTracks(); }, 'motion-native-refresh');
   const nativeEditor = el('section', 'motion-native-editor');
   const nativeTime = field('Time (s)', 'motion-source-time');
@@ -181,6 +191,12 @@ export function mountMotionPanel({container, getScene, getParameters, getAnimati
   curveTools.append(curveHelp, panLeft, panRight, zoomOut, zoomIn, fitCurve);
   const easyTemplates = el('section', 'motion-easy-templates'); easyTemplates.setAttribute('aria-label', 'Motion templates');
   const retimeReset = button('Original timing', () => write(a => { delete a.groups[groupId()]; }), 'motion-source-reset-timing');
+  const selectionTools = el('div', 'motion-selection-tools');
+  const selectionCount = el('span', '', ''); selectionCount.id = 'motion-selection-count'; selectionCount.setAttribute('aria-live', 'polite');
+  const selectAllKeys = button('Select all', () => selectAllVisible(), 'motion-select-all');
+  const snap = field('Snap to frames', 'motion-snap', 'checkbox'); snap.input.checked = true;
+  selectionTools.append(selectionCount, selectAllKeys, snap.wrap);
+  const interactionHelp = el('small', 'motion-interaction-help', 'Drag background to scrub · Shift-click to select · Shift-drag to box select · Alt-drag to pan · Esc to cancel');
   nativeSection.append(nativeField.wrap, curveTools, nativeGraph, nativeStatus, easyTemplates, retimeReset, nativeList, nativeEditor, nativeRefresh);
   const editModeField = field('Curve editing', 'motion-edit-mode', 'text');
   const editMode = document.createElement('select'); editMode.id = 'motion-edit-mode'; editModeField.input.replaceWith(editMode);
@@ -268,7 +284,7 @@ export function mountMotionPanel({container, getScene, getParameters, getAnimati
   advanced.append(editModeField.wrap, newKey, rateField.wrap, editor, enable.wrap);
   allTools.wrap.classList.add('motion-parameter-toggle'); nativeDetails.append(nativeSection);
   graphSection.append(graphHeader, graph, summary, transport, quickActions, graphHint, keyList, empty);
-  root.append(contextHeader, targetRow, intro, nativeDetails, graphSection, keySection, advanced, allTools.wrap);
+  root.append(contextHeader, targetRow, intro, selectionTools, interactionHelp, nativeDetails, graphSection, keySection, advanced, allTools.wrap);
   container.replaceChildren(root);
 
   function navigate(direction) {
@@ -276,8 +292,8 @@ export function mountMotionPanel({container, getScene, getParameters, getAnimati
     const key = direction < 0 ? [...list].reverse().find(k => k.t < t - 1e-6) : list.find(k => k.t > t + 1e-6);
     if (key) selectKey(key);
   }
-  function selectKey(key) {
-    selectedTime = key.t;
+  function selectKey(key, event = {}) {
+    selectIndex(selectedTimes, key.t, event); selectedTime = key.t;
     onSeek(seekTime(key.t));
     sync();
   }
@@ -322,7 +338,7 @@ export function mountMotionPanel({container, getScene, getParameters, getAnimati
     if ((!isGroup() || currentGroup()) && keys().some(k => k.t !== oldTime && Math.abs(k.t - key.t) <= 1e-6)) {
       error.textContent = 'A key already uses that time. Select it to edit, or choose a different time.'; return;
     }
-    selectedTime = key.t;
+    selectedTimes = new Set([key.t]); selectedTime = key.t;
     const saved = write(a => {
       if (isGroup() && !currentGroup(a)) seedGroup(a);
       const source = isGroup() ? a.groups[groupId()].keys : a.tracks[selectedControl] ?? [];
@@ -335,13 +351,13 @@ export function mountMotionPanel({container, getScene, getParameters, getAnimati
   }
   function remove() {
     if (selectedTime === null || (isGroup() && !currentGroup())) return;
-    const oldTime = selectedTime; selectedTime = null;
+    const removed = selectedTimes.size ? new Set(selectedTimes) : new Set([selectedTime]); selectedTime = null; selectedTimes.clear();
     write(a => {
       if (isGroup()) {
-        const list = (a.groups[groupId()]?.keys ?? []).filter(k => k.t !== oldTime);
+        const list = (a.groups[groupId()]?.keys ?? []).filter(k => !removed.has(k.t));
         if (list.length) a.groups[groupId()].keys = list; else delete a.groups[groupId()];
       } else {
-        const list = (a.tracks[selectedControl] ?? []).filter(k => k.t !== oldTime);
+        const list = (a.tracks[selectedControl] ?? []).filter(k => !removed.has(k.t));
         if (list.length) a.tracks[selectedControl] = list; else { delete a.tracks[selectedControl]; delete a.rates[selectedControl]; }
       }
     });
@@ -426,8 +442,8 @@ export function mountMotionPanel({container, getScene, getParameters, getAnimati
     else nativeStatus.textContent = nativeSeekMessage;
     return time;
   }
-  function selectNativeKey(index, seek = true) {
-    selectedNativeKey = index; nativeError.textContent = '';
+  function selectNativeKey(index, seek = true, event = {}) {
+    selectIndex(selectedNativeKeys, index, event); selectedNativeKey = index; nativeError.textContent = '';
     if (seek) seekNativeSource(nativeTrack().keys[index].t);
     drawNativeGraph(); updateTime();
   }
@@ -464,7 +480,7 @@ export function mountMotionPanel({container, getScene, getParameters, getAnimati
     const points = retiming() ? sourceCurvePoints(track, {start, end, animation:getAnimation?.(), groupId:groupId(), count:256}) : originalPoints;
     if (!points.length) { nativeStatus.textContent = 'No samples in this shot.'; nativeEditor.hidden = true; return; }
     const values = [...points, ...originalPoints].map(key => key.value), low = Math.min(...values), high = Math.max(...values), span = Math.max(high - low, .01);
-    const lo = nativeGesture?.axis.lo ?? low - span * .12, hi = nativeGesture?.axis.hi ?? high + span * .12;
+    const lo = (nativeGesture ?? retimeGesture)?.axis.lo ?? low - span * .12, hi = (nativeGesture ?? retimeGesture)?.axis.hi ?? high + span * .12;
     const {left, right, top, bottom} = graphGeometry;
     const x = t => left + (t - start) / Math.max(end - start, .00001) * (right - left);
     const y = value => bottom - (value - lo) / (hi - lo) * (bottom - top);
@@ -489,13 +505,13 @@ export function mountMotionPanel({container, getScene, getParameters, getAnimati
     nativeStatus.textContent = nativeSeekMessage || (retiming() ? (isEasy() ? 'Templates preserve the original motion.' : (currentGroup() ? 'Drag points to adjust timing · dashed: original' : 'Drag points to adjust timing')) + (isSampled ? ' · sampled channel' : '') : (isSampled ? 'Evaluated motion · sampled · read only' : editable ? 'Source keyframes · drag to edit' : 'Source keyframes · read only'));
     nativeList.hidden = isSampled;
     const indexed = knots.map((key, index) => ({key, index})).filter(({key}) => key.t >= start - 1e-9 && key.t <= end + 1e-9);
-    if (!knots[selectedNativeKey]) selectedNativeKey = indexed[0]?.index ?? null;
+    if (!knots[selectedNativeKey]) { selectedNativeKey = indexed[0]?.index ?? null; selectedNativeKeys = new Set(selectedNativeKey === null ? [] : [selectedNativeKey]); }
     if (!isSampled && !retiming() && !isEasy()) for (const {key, index} of indexed) {
-      const dot = svgEl('circle', {cx: x(key.t), cy: y(key.value), r: index === selectedNativeKey ? 5 : 4, fill: index === selectedNativeKey ? '#eef0f3' : 'var(--motion-accent, #b49aef)', stroke: '#111', 'stroke-width': 2, 'data-native-key': index, tabindex: 0, role: 'button', 'aria-label': `Source key at ${key.t} seconds, ${key.value}, ${key.ease ?? 'smooth'}`});
-      dot.classList.add('motion-source-key'); dot.addEventListener('click', event => { event.stopPropagation(); if (!nativeSuppressClick) selectNativeKey(index); });
+      const dot = svgEl('circle', {cx: x(key.t), cy: y(key.value), r: selectedNativeKeys.has(index) ? 6 : 4, 'aria-pressed': selectedNativeKeys.has(index), fill: selectedNativeKeys.has(index) ? '#eef0f3' : 'var(--motion-accent, #b49aef)', stroke: '#111', 'stroke-width': 2, 'data-native-key': index, tabindex: 0, role: 'button', 'aria-label': `Source key at ${key.t} seconds, ${key.value}, ${key.ease ?? 'smooth'}`});
+      dot.classList.add('motion-source-key'); dot.addEventListener('click', event => { event.stopPropagation(); if (!nativeSuppressClick) selectNativeKey(index, true, event); });
       nativeGraph.append(dot);
-      const item = button(`${key.t.toFixed(2)} s · ${format(key.value)}`, () => selectNativeKey(index));
-      item.title = key.ease ?? 'smooth'; item.className = 'motion-native-key'; item.dataset.nativeKey = String(index); item.setAttribute('aria-pressed', String(index === selectedNativeKey)); nativeList.append(item);
+      const item = button(`${key.t.toFixed(2)} s · ${format(key.value)}`, event => selectNativeKey(index, true, event));
+      item.title = key.ease ?? 'smooth'; item.className = 'motion-native-key'; item.dataset.nativeKey = String(index); item.setAttribute('aria-pressed', String(selectedNativeKeys.has(index))); nativeList.append(item);
     }
     const key = knots[selectedNativeKey], next = knots[selectedNativeKey + 1];
     if (editable && key?.ease === 'bezier' && next && key.bezier) for (const handle of [0, 1]) {
@@ -507,7 +523,7 @@ export function mountMotionPanel({container, getScene, getParameters, getAnimati
       const time = window.start + key.t / targetRate();
       if (time < start || time > end) continue;
       const value = sampleSourceChannel(track, window.start + key.value * (window.end - window.start));
-      nativeGraph.append(svgEl('circle', {cx:x(time), cy:y(value), r:6, fill:'var(--motion-accent)', stroke:'#111', 'stroke-width':2, 'data-retime-key':index, tabindex:0, role:'button', 'aria-label':`Timing point ${index + 1} at ${time.toFixed(3)} seconds. Drag horizontally to retime original movement.`}));
+      nativeGraph.append(svgEl('circle', {cx:x(time), cy:y(value), r:selectedRetimeKeys.has(index)?7:6, 'aria-pressed':selectedRetimeKeys.has(index), fill:selectedRetimeKeys.has(index)?'#eef0f3':'var(--motion-accent)', stroke:'#111', 'stroke-width':2, 'data-retime-key':index, tabindex:0, role:'button', 'aria-label':`Timing point ${index + 1} at ${time.toFixed(3)} seconds. Drag horizontally to retime original movement.`}));
     }
     nativePlayhead = svgEl('line', {y1: top, y2: bottom, stroke: '#fff', 'stroke-width': 1.5, 'stroke-dasharray': '3 3', 'pointer-events': 'none'});
     nativeGraph.append(nativePlayhead);
@@ -523,9 +539,10 @@ export function mountMotionPanel({container, getScene, getParameters, getAnimati
     const target = event.target.closest('[data-native-key],[data-native-handle]');
     if (!target || event.altKey || event.button !== 0 || retiming() || isEasy() || !nativeEditable() || nativeGesture) return;
     event.preventDefault(); event.stopPropagation();
-    if (target.hasAttribute('data-native-key')) selectedNativeKey = Number(target.dataset.nativeKey);
+    if (target.hasAttribute('data-native-key')) { selectedNativeKey = Number(target.dataset.nativeKey); selectIndex(selectedNativeKeys, selectedNativeKey, event); }
     const track = nativeTrack();
-    nativeGesture = {pointerId: event.pointerId, index: selectedNativeKey, handle: target.hasAttribute('data-native-handle') ? Number(target.dataset.nativeHandle) : null, track: structuredClone(track), original: structuredClone(getParameters().motion), axis: {...nativeAxis}, x: event.clientX, y: event.clientY, changed: false};
+    nativeGesture = {additive:additive(event), pointerId: event.pointerId, index: selectedNativeKey, handle: target.hasAttribute('data-native-handle') ? Number(target.dataset.nativeHandle) : null, track: structuredClone(track), original: structuredClone(getParameters().motion), axis: {...nativeAxis}, indices: [...selectedNativeKeys], selection: [...selectedNativeKeys], originalTime: outputTime(), startPoint: nativePoint(event), x: event.clientX, y: event.clientY, changed: false};
+    drawNativeGraph(); updateTime();
     nativeGraph.setPointerCapture(event.pointerId);
   });
   nativeGraph.addEventListener('pointermove', event => {
@@ -533,8 +550,14 @@ export function mountMotionPanel({container, getScene, getParameters, getAnimati
     if (!gesture || event.pointerId !== gesture.pointerId || (!gesture.changed && Math.hypot(event.clientX - gesture.x, event.clientY - gesture.y) < 3)) return;
     event.preventDefault(); const point = nativePoint(event, gesture.axis), keys = gesture.track.keys, key = keys[gesture.index]; let patch;
     if (gesture.handle === null) {
-      const min = gesture.index ? keys[gesture.index - 1].t + .000001 : 0, max = gesture.index < keys.length - 1 ? keys[gesture.index + 1].t - .000001 : duration();
-      patch = {t: clamp(round(point.t), min, max), value: round(point.value)};
+      if (!gesture.indices.length) return;
+      const moved = moveCurveSelection(keys, gesture.indices, point.t - gesture.startPoint.t, point.value - gesture.startPoint.value, {maxTime: duration(), step: snapStep(), anchor: gesture.index});
+      try {
+        const next = editAuthoredKeys(getScene(), groupId(), selectedNativeTrack, gesture.indices.map(index => ({index, t: moved[index].t, value: moved[index].value})), {motion: gesture.original});
+        onAuthoredChange(next, {record:false}); gesture.changed = true; gesture.latest = next;
+        refreshNativeSource(next); seekNativeSource(moved[gesture.index].t);
+      } catch (failure) { nativeError.textContent = failure.message; }
+      return;
     } else {
       const next = keys[gesture.index + 1], bezier = [...key.bezier];
       bezier[gesture.handle * 2] = round(clamp((point.t - key.t) / (next.t - key.t), 0, 1));
@@ -542,7 +565,7 @@ export function mountMotionPanel({container, getScene, getParameters, getAnimati
       patch = {ease: 'bezier', bezier};
     }
     const next = applyNativeEdit(patch, {record: false}, gesture.original);
-    if (next) { gesture.changed = true; gesture.latest = next; seekNativeSource(patch.t ?? key.t); }
+    if (next) { gesture.changed = true; gesture.latest = next; seekNativeSource(patch.t ?? (key.t + keys[gesture.index + 1].t) / 2); }
   });
   function finishNativeGesture(event, cancelled = false) {
     const gesture = nativeGesture; if (!gesture || (event.pointerId !== undefined && event.pointerId !== gesture.pointerId)) return;
@@ -552,7 +575,9 @@ export function mountMotionPanel({container, getScene, getParameters, getAnimati
     if (gesture.changed) {
       const next = cancelled ? gesture.original : gesture.latest;
       onAuthoredChange(next, cancelled ? {record: false, cancelled: true} : {record: true}); refreshNativeSource(next);
-    } else selectNativeKey(gesture.index);
+      if (cancelled) onSeek(gesture.originalTime);
+    } else if (!cancelled) { if(!gesture.additive&&gesture.handle===null)selectedNativeKeys=new Set([gesture.index]);seekNativeSource(nativeTrack().keys[gesture.index].t); drawNativeGraph(); updateTime(); }
+    syncSelectionTools();
   }
   nativeGraph.addEventListener('pointerup', event => finishNativeGesture(event));
   nativeGraph.addEventListener('pointercancel', event => finishNativeGesture(event, true));
@@ -577,7 +602,7 @@ export function mountMotionPanel({container, getScene, getParameters, getAnimati
     else navigateCurve(1, (event.deltaX || event.deltaY) * .002);
   }, {passive:false});
   nativeGraph.addEventListener('pointerdown', event => {
-    if (isEasy() || !nativeAxis || nativeGesture) return;
+    if (isEasy() || !nativeAxis || nativeGesture || surfaceGesture) return;
     if (event.button === 1 || (event.button === 0 && event.altKey)) {
       event.preventDefault(); panGesture = {pointerId:event.pointerId, x:event.clientX, axis:{...nativeAxis}};
       nativeGraph.setPointerCapture(event.pointerId); return;
@@ -585,7 +610,8 @@ export function mountMotionPanel({container, getScene, getParameters, getAnimati
     const target = event.target.closest('[data-retime-key]');
     if (!retiming() || !target || event.button !== 0) return;
     event.preventDefault(); event.stopPropagation();
-    retimeGesture = {pointerId:event.pointerId, index:Number(target.dataset.retimeKey), keys:timingKeys(), original:structuredClone(getAnimation?.()), baseline:state(), axis:{...nativeAxis}, x:event.clientX, changed:false};
+    const selectedIndex = Number(target.dataset.retimeKey); selectIndex(selectedRetimeKeys, selectedIndex, event);
+    retimeGesture = {additive:additive(event),indices:[...selectedRetimeKeys], startPoint:nativePoint(event), originalTime:outputTime(), pointerId:event.pointerId, index:Number(target.dataset.retimeKey), keys:timingKeys(), original:structuredClone(getAnimation?.()), baseline:state(), axis:{...nativeAxis}, x:event.clientX, changed:false};
     nativeGraph.setPointerCapture(event.pointerId);
   });
   nativeGraph.addEventListener('pointermove', event => {
@@ -598,12 +624,13 @@ export function mountMotionPanel({container, getScene, getParameters, getAnimati
     if (!g || g.pointerId !== event.pointerId || (!g.changed && Math.abs(event.clientX - g.x) < 3)) return;
     event.preventDefault();
     const list = structuredClone(g.keys), key = list[g.index], point = nativePoint(event,g.axis);
-    const min = g.index ? list[g.index - 1].t + 1e-5 : 0, max = g.index < list.length - 1 ? list[g.index + 1].t - 1e-5 : limit();
-    key.t = clamp(round((point.t - clip().start) * targetRate(g.baseline)), min, max);
+    if (!g.indices.length) return;
+    const moved = moveCurveSelection(g.keys, g.indices, (point.t - g.startPoint.t) * targetRate(g.baseline), 0, {maxTime:limit(), step:snapStep() * targetRate(g.baseline), anchor:g.index});
+    list.splice(0, list.length, ...moved);
     const a = structuredClone(g.baseline);
     if (!currentGroup(a)) seedGroup(a,1);
     a.groups[groupId()].keys = list;
-    try { onChange(a,{record:false}); g.latest = a; g.changed = true; onSeek(point.t); drawNativeGraph(); drawGraph(); updateTime(); }
+    try { onChange(a,{record:false}); g.latest = a; g.changed = true; onSeek(seekTime(list[g.index].t)); drawNativeGraph(); drawGraph(); updateTime(); }
     catch (failure) { nativeStatus.textContent = failure.message; }
   });
   function finishRetime(event, cancelled = false) {
@@ -617,7 +644,8 @@ export function mountMotionPanel({container, getScene, getParameters, getAnimati
     retimeGesture = null; nativeSuppressClick = true; setTimeout(()=>{nativeSuppressClick=false;},0);
     if (nativeGraph.hasPointerCapture(g.pointerId)) nativeGraph.releasePointerCapture(g.pointerId);
     if (g.changed) onChange(cancelled ? g.original : g.latest, cancelled ? {record:false,cancelled:true} : {record:true});
-    else if (!cancelled) onSeek(clip().start + g.keys[g.index].t / targetRate());
+    else if (!cancelled) {if(!g.additive)selectedRetimeKeys=new Set([g.index]);onSeek(clip().start + g.keys[g.index].t / targetRate());}
+    if (cancelled && g.changed) onSeek(g.originalTime);
     sync();
   }
   nativeGraph.addEventListener('pointerup', event => finishRetime(event));
@@ -703,9 +731,9 @@ export function mountMotionPanel({container, getScene, getParameters, getAnimati
       points.push(`${x(graphEnd)},${y(sampleParameterTrack(list, graphEnd))}`);
       graph.append(svgEl('polyline', {points: points.join(' '), fill: 'none', stroke: 'var(--motion-accent, #b49aef)', 'stroke-width': 2}));
       for (const key of list) {
-        const dot = svgEl('circle', {'data-key-time': key.t, class: 'motion-curve-key', cx: x(key.t), cy: y(key.value), r: selectedTime === key.t ? 5 : 4, fill: selectedTime === key.t ? '#eef0f3' : 'var(--motion-accent, #b49aef)', stroke: '#111', 'stroke-width': 1, role: 'button', tabindex: 0, 'aria-label': `Key at ${key.t} source seconds, value ${key.value}`});
+        const dot = svgEl('circle', {'data-key-time': key.t, class: 'motion-curve-key', cx: x(key.t), cy: y(key.value), r: selectedTimes.has(key.t) ? 6 : 4, 'aria-pressed':selectedTimes.has(key.t), fill: selectedTimes.has(key.t) ? '#eef0f3' : 'var(--motion-accent, #b49aef)', stroke: '#111', 'stroke-width': 1, role: 'button', tabindex: 0, 'aria-label': `Key at ${key.t} source seconds, value ${key.value}`});
         dot.style.cursor = 'grab';
-        dot.addEventListener('click', event => { event.stopPropagation(); if (!suppressClick) selectKey(key); });
+        dot.addEventListener('click', event => { event.stopPropagation(); if (!suppressClick) selectKey(key, event); });
         dot.addEventListener('keydown', event => { if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); event.stopPropagation(); selectKey(key); graph.focus(); } });
         graph.append(dot);
       }
@@ -747,7 +775,7 @@ export function mountMotionPanel({container, getScene, getParameters, getAnimati
     if (existing) { selectKey(existing); return; }
     const def = definition(); if (!def) return;
     const key = {t: Math.min(round(t), limit()), value: round(clamp(value ?? (list.length ? sampleParameterTrack(list, t) : readControlValue(def, getParameters())), def.min, def.max)), ease: isGroup() ? 'linear' : 'smooth'};
-    selectedTime = key.t;
+    selectedTimes = new Set([key.t]); selectedTime = key.t;
     write(animation => setTargetKeys(animation, [...list, key].sort((a, b) => a.t - b.t)));
     onSeek(seekTime(key.t));
   }
@@ -775,13 +803,13 @@ export function mountMotionPanel({container, getScene, getParameters, getAnimati
     const point = event.target.closest('[data-key-time], [data-handle]'); if (!point) return;
     event.preventDefault(); event.stopPropagation();
     const handle = point.hasAttribute('data-handle');
-    if (!handle) selectKey(keys().find(key => key.t === Number(point.dataset.keyTime)));
+    if (!handle) selectKey(keys().find(key => key.t === Number(point.dataset.keyTime)), event);
     const list = keys(), index = list.findIndex(key => key.t === (handle ? Number(point.dataset.segmentTime) : selectedTime)); if (index < 0) return;
     if (handle) {
       selectedTime = list[index].t;
       list[index] = {...list[index], ease: 'bezier', bezier: list[index].bezier ?? [...previewBezier.values]};
     }
-    gesture = {pointerId: event.pointerId, kind: handle ? 'handle' : 'key', handle: Number(point.dataset.handle), index, list: structuredClone(list), baseline: state(), original: structuredClone(getAnimation?.()), x: event.clientX, y: event.clientY, changed: false};
+    gesture = {additive:additive(event),indices:list.map((key,index)=>selectedTimes.has(key.t)?index:-1).filter(index=>index>=0), selection:[...selectedTimes], originalTime:outputTime(), startPoint:graphPoint(event), pointerId: event.pointerId, kind: handle ? 'handle' : 'key', handle: Number(point.dataset.handle), index, list: structuredClone(list), baseline: state(), original: structuredClone(getAnimation?.()), x: event.clientX, y: event.clientY, changed: false};
     graph.setPointerCapture(event.pointerId);
   }
   function dragGesture(event) {
@@ -790,9 +818,11 @@ export function mountMotionPanel({container, getScene, getParameters, getAnimati
     event.preventDefault();
     const g = gesture, list = structuredClone(g.list), key = list[g.index], point = graphPoint(event);
     if (g.kind === 'key') {
-      const min = g.index ? list[g.index - 1].t + 1e-5 : 0;
-      const max = g.index < list.length - 1 ? list[g.index + 1].t - 1e-5 : limit();
-      key.t = Math.min(limit(), clamp(round(point.t), min, max)); key.value = round(point.value); selectedTime = key.t;
+      if (!g.indices.length) return;
+      const def = definition();
+      const moved = moveCurveSelection(g.list, g.indices, point.t - g.startPoint.t, point.value - g.startPoint.value, {maxTime:limit(), minValue:def.min, maxValue:def.max, step:snapStep() * targetRate(g.baseline), anchor:g.index});
+      list.splice(0,list.length,...moved); selectedTime = list[g.index].t;
+      selectedTimes = new Set(g.indices.map(index=>list[index].t));
     } else {
       const end = list[g.index + 1]; if (!end) return;
       key.bezier = [...(key.bezier ?? [1 / 3, 0, 2 / 3, 1])];
@@ -802,7 +832,7 @@ export function mountMotionPanel({container, getScene, getParameters, getAnimati
     const animation = structuredClone(g.baseline); setTargetKeys(animation, list);
     try {
       onChange(animation, {record: false}); g.changed = true; g.latest = animation;
-      onSeek(seekTime(g.kind === 'handle' ? (key.t + list[g.index + 1].t) / 2 : key.t));
+      onSeek(seekTime(g.kind === 'handle' ? (key.t + list[g.index + 1].t) / 2 : list[g.index].t));
       loadEditor(); drawGraph(); updateTime();
       selectedLabel.textContent = `Key ${g.index + 1} / ${list.length}`;
     } catch (failure) { error.textContent = failure.message ?? 'Could not move this key.'; }
@@ -811,10 +841,11 @@ export function mountMotionPanel({container, getScene, getParameters, getAnimati
     if (!gesture || (event.pointerId !== undefined && event.pointerId !== gesture.pointerId)) return;
     const g = gesture; gesture = null;
     if (g.changed) previewBezier = null;
+    else if(!g.additive&&g.kind==='key')selectedTimes=new Set([selectedTime]);
     if (graph.hasPointerCapture(g.pointerId)) graph.releasePointerCapture(g.pointerId);
+    suppressClick = true; setTimeout(() => { suppressClick = false; }, 0);
     if (g.changed) {
-      suppressClick = true; setTimeout(() => { suppressClick = false; }, 0);
-      if (cancelled) { selectedTime = g.list[g.index].t; onChange(g.original, {record: false, cancelled: true}); }
+      if (cancelled) { selectedTimes = new Set(g.selection); selectedTime = g.list[g.index].t; onChange(g.original, {record: false, cancelled: true}); onSeek(g.originalTime); }
       else onChange(g.latest, {record: true});
     }
     sync();
@@ -837,8 +868,93 @@ export function mountMotionPanel({container, getScene, getParameters, getAnimati
       key.ease = 'bezier'; key.bezier = [...(key.bezier ?? previewBezier.values)]; previewBezier = null; key.bezier[index] = round(clamp(key.bezier[index] + (['ArrowRight', 'ArrowUp'].includes(event.key) ? .02 : -.02), 0, 1));
       write(animation => setTargetKeys(animation, list)); graph.querySelector(`[data-handle="${Math.floor(index / 2)}"]`)?.focus(); return;
     }
+    if (['Delete','Backspace'].includes(event.key) && selectedTimes.size) { event.preventDefault(); event.stopPropagation(); remove(); graph.focus(); return; }
     if (event.key === 'ArrowLeft' || event.key === 'ArrowRight') { event.preventDefault(); event.stopPropagation(); navigate(event.key === 'ArrowLeft' ? -1 : 1); graph.focus(); }
   });
+
+  function syncSelectionTools() {
+    const source = isGroup() && !retiming(), count = source ? selectedNativeKeys.size : isGroup() ? selectedRetimeKeys.size : selectedTimes.size;
+    selectionCount.textContent = count > 1 ? `${count} keys selected` : 'Select keys';
+    selectionTools.hidden = isEasy(); interactionHelp.hidden = isEasy();
+  }
+  function selectAllVisible(surface = isGroup() ? nativeGraph : graph) {
+    if (surface === nativeGraph) {
+      if (retiming()) selectedRetimeKeys = new Set(timingKeys().map((_,i)=>i).filter(i=>{const t=clip().start+timingKeys()[i].t/targetRate();return t>=nativeAxis.start&&t<=nativeAxis.end;}));
+      else selectedNativeKeys = new Set((nativeTrack()?.keys ?? []).map((_,i)=>i).filter(i=>nativeTrack().keys[i].t>=nativeAxis.start&&nativeTrack().keys[i].t<=nativeAxis.end));
+      drawNativeGraph();
+    } else { selectedTimes = new Set(keys().map(key=>key.t)); drawGraph(); }
+    updateTime();
+  }
+  function installSurfaceGestures(surface, native) {
+    const point = event => native ? nativePoint(event) : graphPoint(event);
+    surface.addEventListener('pointerdown', event => {
+      if (event.button !== 0 || event.altKey || gesture || nativeGesture || retimeGesture || panGesture || surfaceGesture || (native && !nativeAxis) || event.target.closest('[role=button]')) return;
+      event.preventDefault(); surface.focus();
+      surfaceGesture = {surface, native, pointerId:event.pointerId, start:point(event), x:event.clientX, y:event.clientY, marquee:event.shiftKey&&!isEasy(), moved:false,
+        selectedTimes:[...selectedTimes], selectedNativeKeys:[...selectedNativeKeys], selectedRetimeKeys:[...selectedRetimeKeys], originalTime:outputTime()};
+      surface.setPointerCapture(event.pointerId);
+      if (!surfaceGesture.marquee) scrubSurface(surfaceGesture, event);
+    });
+    surface.addEventListener('pointermove', event => {
+      const g=surfaceGesture;
+      if (!g || g.surface!==surface || event.pointerId!==g.pointerId) return;
+      event.preventDefault(); g.moved ||= Math.hypot(event.clientX-g.x,event.clientY-g.y)>3;
+      if (!g.marquee) {scrubSurface(g,event);return;}
+      const rect=surface.getBoundingClientRect();
+      // Select by the visible point positions, including the evaluated retimed curve.
+      const selector=native?(retiming()?'[data-retime-key]':'[data-native-key]'):'[data-key-time]';
+      const hits=[...surface.querySelectorAll(selector)].filter(node=>{
+        const box=node.getBoundingClientRect(),x=box.x+box.width/2,y=box.y+box.height/2;
+        return x>=Math.min(g.x,event.clientX)&&x<=Math.max(g.x,event.clientX)&&y>=Math.min(g.y,event.clientY)&&y<=Math.max(g.y,event.clientY);
+      });
+      if (native && retiming()) selectedRetimeKeys=new Set([...g.selectedRetimeKeys,...hits.map(node=>Number(node.dataset.retimeKey))]);
+      else if (native) selectedNativeKeys=new Set([...g.selectedNativeKeys,...hits.map(node=>Number(node.dataset.nativeKey))]);
+      else selectedTimes=new Set([...g.selectedTimes,...hits.map(node=>Number(node.dataset.keyTime))]);
+      if(native) drawNativeGraph(); else drawGraph(); updateTime();
+      const x=(Math.min(g.x,event.clientX)-rect.left)/rect.width*GRAPH.width,y=(Math.min(g.y,event.clientY)-rect.top)/rect.height*GRAPH.height;
+      surface.append(svgEl('rect',{x,y,width:Math.abs(event.clientX-g.x)/rect.width*GRAPH.width,height:Math.abs(event.clientY-g.y)/rect.height*GRAPH.height,class:'motion-selection-box','pointer-events':'none'}));
+    });
+    const finish=(event,cancelled=false)=>{
+      const g=surfaceGesture;if(!g||g.surface!==surface||(event.pointerId!==undefined&&g.pointerId!==event.pointerId))return;
+      surfaceGesture=null;
+      if(cancelled){selectedTimes=new Set(g.selectedTimes);selectedNativeKeys=new Set(g.selectedNativeKeys);selectedRetimeKeys=new Set(g.selectedRetimeKeys);onSeek(g.originalTime);}
+      if(native){nativeSuppressClick=true;setTimeout(()=>{nativeSuppressClick=false;},0);if(g.marquee)drawNativeGraph();}
+      else{suppressClick=true;setTimeout(()=>{suppressClick=false;},0);if(g.marquee)drawGraph();}
+      if(surface.hasPointerCapture(g.pointerId))surface.releasePointerCapture(g.pointerId);
+      updateTime();
+    };
+    surface.addEventListener('pointerup',event=>finish(event));
+    surface.addEventListener('pointercancel',event=>finish(event,true));
+    surface.addEventListener('lostpointercapture',event=>finish(event,true));
+    surface.addEventListener('keydown',event=>{
+      if(event.key==='Escape'&&surfaceGesture){event.preventDefault();event.stopPropagation();finish(event,true);}
+      if((event.metaKey||event.ctrlKey)&&event.key.toLowerCase()==='a'){event.preventDefault();event.stopPropagation();selectAllVisible(surface);}
+    });
+  }
+  function scrubSurface(g, event) {
+    const local=g.native?nativePoint(event).t:graphPoint(event).t;
+    if(g.native&&!retiming())seekNativeSource(local);else onSeek(g.native?local:seekTime(local));
+    updateTime();
+  }
+  installSurfaceGestures(nativeGraph,true); installSurfaceGestures(graph,false);
+
+  function nudgeSelection(surface, native, event) {
+    if(!event.shiftKey||!['ArrowLeft','ArrowRight','ArrowUp','ArrowDown'].includes(event.key))return;
+    event.preventDefault();event.stopImmediatePropagation();
+    const direction=['ArrowRight','ArrowUp'].includes(event.key)?1:-1,horizontal=['ArrowLeft','ArrowRight'].includes(event.key);
+    if(native&&!retiming()&&nativeEditable()) {
+      const track=nativeTrack(),indices=[...selectedNativeKeys];if(!indices.length)return;
+      const moved=moveCurveSelection(track.keys,indices,horizontal?direction/sceneConfig(getScene()).fps:0,horizontal?0:direction*(nativeAxis.hi-nativeAxis.lo)/100,{maxTime:duration()});
+      try {const next=editAuthoredKeys(getScene(),groupId(),selectedNativeTrack,indices.map(index=>({index,t:moved[index].t,value:moved[index].value})),{motion:getParameters().motion});onAuthoredChange(next);refreshNativeSource(next);seekNativeSource(moved[selectedNativeKey??indices[0]].t);surface.focus();}catch(failure){nativeError.textContent=failure.message;}
+    } else {
+      const source=native?timingKeys():keys(),indices=native?[...selectedRetimeKeys]:source.map((key,i)=>selectedTimes.has(key.t)?i:-1).filter(i=>i>=0);if(!indices.length)return;
+      const def=definition(),moved=moveCurveSelection(source,indices,horizontal?direction*targetRate()/sceneConfig(getScene()).fps:0,native||horizontal?0:direction*(def.max-def.min)/100,{maxTime:limit(),minValue:def.min,maxValue:def.max});
+      if(!native){selectedTimes=new Set(indices.map(i=>moved[i].t));selectedTime=moved[indices[0]].t;}
+      write(a=>setTargetKeys(a,moved));onSeek(seekTime(moved[indices[0]].t));surface.focus();
+    }
+  }
+  nativeGraph.addEventListener('keydown',event=>nudgeSelection(nativeGraph,true,event),true);
+  graph.addEventListener('keydown',event=>nudgeSelection(graph,false,event),true);
 
   function updateTime(time = outputTime()) {
     // Playback updates avoid cloning tracks, rebuilding the SVG, or touching editor fields.
@@ -854,7 +970,7 @@ export function mountMotionPanel({container, getScene, getParameters, getAnimati
       nativePlayhead.setAttribute('x1', String(px)); nativePlayhead.setAttribute('x2', String(px));
     }
     summary.textContent = `Film ${Number(time).toFixed(2)} s · ${isGroup() ? 'Shot' : 'Source'} ${source.toFixed(2)} s · ${Number(rate).toFixed(2)}×`;
-    root.dataset.animationEnabled = String(a.enabled !== false);
+    root.dataset.animationEnabled = String(a.enabled !== false); syncSelectionTools();
     const list = isGroup() ? currentGroup(a)?.keys ?? identityKeys() : a.tracks?.[selectedControl] ?? [];
     const navigationTime = selectedTime ?? source;
     previous.disabled = !list.some(k => k.t < navigationTime - 1e-6);
@@ -863,7 +979,7 @@ export function mountMotionPanel({container, getScene, getParameters, getAnimati
   function sync() {
     if (gesture || nativeGesture || retimeGesture) return;
     const nextScene = getScene();
-    if (scene !== nextScene) { showAllTools = false; selectedWindow = null; motionView = 'auto'; selectedNativeKey = null; }
+    if (scene !== nextScene) { resetSelection(); showAllTools = false; selectedWindow = null; motionView = 'auto'; selectedNativeKey = null; }
     groups = getAnimationGroups(nextScene);
     const parameters = getParameters();
     const manifest = parameters.studio?.controlManifest ?? createControlManifest(nextScene);
@@ -927,7 +1043,8 @@ export function mountMotionPanel({container, getScene, getParameters, getAnimati
     enable.input.checked = state().enabled;
     if (document.activeElement !== rateField.input) rateField.input.value = String(targetRate());
     const list = keys();
-    if (isGroup() && selectedTime === null) selectedTime = list[0]?.t ?? null;
+    if (isGroup() && selectedTime === null) { selectedTime = list[0]?.t ?? null; selectedTimes = new Set(selectedTime === null ? [] : [selectedTime]); }
+    selectedTimes = new Set([...selectedTimes].filter(t=>list.some(key=>key.t===t)));
     const selectedIndex = list.findIndex(key => key.t === selectedTime), segment = list[selectedIndex === list.length - 1 ? selectedIndex - 1 : selectedIndex];
     const equivalent = BEZIER_EQUIVALENTS[segment?.ease ?? (isGroup() ? 'linear' : 'smooth')];
     if (isGroup() && segment && equivalent && !segment.bezier) previewBezier = {target: selectedControl, time: segment.t, window: `${clip().start}:${clip().end}`, values: [...equivalent]};
@@ -940,15 +1057,15 @@ export function mountMotionPanel({container, getScene, getParameters, getAnimati
     contextTitle.textContent = isGroup() ? 'Target & shot' : 'Parameter target';
     keyList.replaceChildren();
     for (const key of list) {
-      const item = button(`${key.t.toFixed(2)}s · ${isGroup() ? Math.round(key.value * 100) + '%' : key.value}`, () => selectKey(key));
+      const item = button(`${key.t.toFixed(2)}s · ${isGroup() ? Math.round(key.value * 100) + '%' : key.value}`, event => selectKey(key, event));
       item.title = `${isGroup() && !currentGroup() ? 'Original timing reference · ' : ''}${key.ease ?? (isGroup() ? 'linear' : 'smooth')} · select and seek`;
-      item.className = 'motion-key'; item.dataset.keyTime = String(key.t); item.setAttribute('aria-pressed', String(key.t === selectedTime)); keyList.append(item);
+      item.className = 'motion-key'; item.dataset.keyTime = String(key.t); item.setAttribute('aria-pressed', String(selectedTimes.has(key.t))); keyList.append(item);
     }
     const selected = list.find(key => key.t === selectedTime), index = list.indexOf(selected);
     smoothKey.disabled = index < 0 || list.length < 2; linearKey.disabled = smoothKey.disabled;
     applyEasing.disabled = !selected || index === list.length - 1; easingPreset.disabled = Boolean(selected && index === list.length - 1);
     selectedLabel.textContent = selected ? `Key ${index + 1} / ${list.length} · ${selected.ease ?? 'linear'}` : 'Select a key';
-    loadEditor(); drawGraph(); drawNativeGraph(); syncMotionView(); updateTime(); requestNativeTracks();
+    loadEditor(); drawGraph(); drawNativeGraph(); syncMotionView(); updateTime(); syncSelectionTools(); requestNativeTracks();
   }
   const experienceObserver = new MutationObserver(() => { if (isEasy() && !isGroup()) selectedControl = groups.length ? 'group:' + groups[0].id : selectedControl; sync(); });
   experienceObserver.observe(document.body, {attributes:true, attributeFilter:['data-experience']});

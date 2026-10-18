@@ -18,7 +18,7 @@ function controlUnit(def) {
 }
 
 /** Shared, accessible control renderer. Values are emitted as their native type. */
-export function renderControl(def, {value, onInput = () => {}, onCommit = () => {}, prefix = 'control-'} = {}) {
+export function renderControl(def, {value, onInput = () => {}, onCommit = () => {}, onBegin = () => {}, onCancel = () => {}, prefix = 'control-'} = {}) {
   const wrap = document.createElement('div');
   wrap.className = 'control';
   wrap.dataset.controlId = def.id;
@@ -145,6 +145,30 @@ export function renderControl(def, {value, onInput = () => {}, onCommit = () => 
       numericInput.setAttribute('aria-describedby', help.id);
     }
     wrap.append(help);
+  }
+  if (numeric) {
+    label.classList.add('control-scrub-label'); label.title = (def.help ? def.help + ' ' : '') + 'Drag to adjust · Shift for larger steps · Escape to cancel';
+    let scrub, escapeScrub;
+    label.addEventListener('pointerdown', event => {
+      if (event.button !== 0 || input.disabled) return;
+      event.preventDefault(); onBegin();document.addEventListener('keydown',escapeScrub); scrub = {x:event.clientX, value:current, moved:false, pointerId:event.pointerId}; label.setPointerCapture(event.pointerId);
+    });
+    label.addEventListener('pointermove', event => {
+      if (!scrub || scrub.pointerId !== event.pointerId) return;
+      if (!scrub.moved && Math.abs(event.clientX-scrub.x)<3) return;
+      const next=sanitize(scrub.value+(event.clientX-scrub.x)*(Number(def.step)||.01)*(event.shiftKey?10:1));
+      scrub.moved=true;current=next;input.value=String(next);numericInput.value=String(next);onInput(next);
+    });
+    const finish = (cancelled=false) => {
+      if(!scrub)return;
+      const g=scrub;scrub=null;document.removeEventListener('keydown',escapeScrub);
+      if(g.moved){if(cancelled){current=g.value;input.value=String(current);numericInput.value=String(current);onInput(current);onCancel();}else onCommit(current);}
+      else numericInput.focus();
+      if(label.hasPointerCapture(g.pointerId))label.releasePointerCapture(g.pointerId);
+    };
+    label.addEventListener('pointerup',()=>finish());label.addEventListener('pointercancel',()=>finish(true));label.addEventListener('lostpointercapture',()=>finish(true));
+    escapeScrub=event=>{if(event.key==='Escape'&&scrub){event.preventDefault();event.stopPropagation();finish(true);}};
+    label.addEventListener('click',event=>event.preventDefault());
   }
   return wrap;
 }
