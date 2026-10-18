@@ -8,7 +8,7 @@ import { fileURLToPath } from 'node:url';
 
 const exec = promisify(execFile);
 export const SOURCE_URL = 'https://github.com/AndreXes03/motion-lab.git';
-export const SOURCE_COMMIT = '8e8c56815992833338f2b5e4316182417b54a4b9';
+export const SOURCE_COMMIT = 'f39f2eaa725e3ea5ee83b8b78862274c21a0b84a';
 export const VARIANTS = ['studio', 'codex', 'claude'];
 const self = fileURLToPath(import.meta.url);
 const exists = async file => { try { await lstat(file); return true; } catch (e) { if (e.code === 'ENOENT') return false; throw e; } };
