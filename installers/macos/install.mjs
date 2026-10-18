@@ -8,7 +8,8 @@ import { fileURLToPath } from 'node:url';
 
 const exec = promisify(execFile);
 export const SOURCE_URL = 'https://github.com/AndreXes03/motion-lab.git';
-export const SOURCE_COMMIT = 'f39f2eaa725e3ea5ee83b8b78862274c21a0b84a';
+export const SOURCE_COMMIT = 'eebc318c524a89cd0fa0f7ce448d7296f21a7a76';
+export const SOURCE_DEPTH = 3;
 export const VARIANTS = ['studio', 'codex', 'claude'];
 const self = fileURLToPath(import.meta.url);
 const exists = async file => { try { await lstat(file); return true; } catch (e) { if (e.code === 'ENOENT') return false; throw e; } };
@@ -105,14 +106,14 @@ export async function install(options, deps = {}) {
   await mkdir(destination); // Exclusive reservation; never reuses another checkout.
   const root = path.join(destination, 'repository'), statusFile = path.join(destination, 'installation.json');
   const sourceCommit = deps.sourceCommit ?? SOURCE_COMMIT, sourceURL = deps.sourceURL ?? SOURCE_URL;
-  const state = { schemaVersion: 1, variant, sourceCommit, repository: root, port, status: 'installing' };
+  const state = { schemaVersion: 1, variant, sourceCommit, sourceDepth: SOURCE_DEPTH, repository: root, port, status: 'installing' };
   await writeJson(statusFile, state);
   let stage = 'source';
   try {
     await mkdir(root);
     await run(git, ['init', root]);
     await run(git, ['-C', root, 'remote', 'add', 'origin', sourceURL]);
-    await run(git, ['-C', root, 'fetch', '--depth=2', '--no-tags', 'origin', sourceCommit]);
+    await run(git, ['-C', root, 'fetch', '--depth=' + SOURCE_DEPTH, '--no-tags', 'origin', sourceCommit]);
     await run(git, ['-C', root, 'checkout', '-b', 'motion-lab-beta', 'FETCH_HEAD']);
     if (await run(git, ['-C', root, 'rev-parse', 'HEAD']) !== sourceCommit) throw Error('Commit scaricato diverso dal pin; installazione fermata.');
     stage = 'dependencies';
@@ -142,7 +143,7 @@ export async function install(options, deps = {}) {
         await cp(plugin, path.join(marketplace, 'plugins/motion-lab'), { recursive: true });
         // Absolute paths keep the SDK dependencies/runtime independent of the host's plugin cache.
         await writeJson(path.join(marketplace, 'plugins/motion-lab/mcp.json'), { mcpServers: { 'motion-lab': { type: 'stdio', ...entry } } });
-        await writeJson(path.join(marketplace, '.agents/plugins/marketplace.json'), { name: 'motion-lab-beta', interface: { displayName: 'Motion Lab Download Beta' }, plugins: [{ name: 'motion-lab', source: { source: 'local', path: './plugins/motion-lab' }, policy: { installation: 'AVAILABLE', authentication: 'ON_INSTALL' }, category: 'Productivity' }] });
+        await writeJson(path.join(marketplace, '.agents/plugins/marketplace.json'), { name: 'motion-lab-beta', interface: { displayName: 'Framevolve Download Beta' }, plugins: [{ name: 'motion-lab', source: { source: 'local', path: './plugins/motion-lab' }, policy: { installation: 'AVAILABLE', authentication: 'ON_INSTALL' }, category: 'Productivity' }] });
         state.configBackup = await backup(deps.codexConfigFile ?? path.join(process.env.CODEX_HOME || path.join(home, '.codex'), 'config.toml'));
         await run(codex, ['plugin', 'marketplace', 'add', marketplace, '--json']);
         await run(codex, ['plugin', 'add', 'motion-lab@motion-lab-beta', '--json']);

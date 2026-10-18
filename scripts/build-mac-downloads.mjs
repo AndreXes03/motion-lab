@@ -4,7 +4,7 @@ import { deflateRawSync } from 'node:zlib';
 import { mkdir, readFile, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { SOURCE_COMMIT, SOURCE_URL, VARIANTS } from '../installers/macos/install.mjs';
+import { SOURCE_COMMIT, SOURCE_DEPTH, SOURCE_URL, VARIANTS } from '../installers/macos/install.mjs';
 
 const root = fileURLToPath(new URL('..', import.meta.url));
 const args = process.argv.slice(2);
@@ -44,12 +44,12 @@ for (const variant of VARIANTS) {
     { name: folder + 'Installa Motion Lab.command', body: shell, mode: 0o100755 },
     { name: folder + 'install.mjs', body: installer },
     { name: folder + 'LEGGIMI.txt', body: readme },
-    { name: folder + 'SOURCE.json', body: JSON.stringify({ schemaVersion: 1, variant, repository: SOURCE_URL, sourceCommit: SOURCE_COMMIT, node: '>=22.12', platform: 'macOS', standalone: false }, null, 2) + '\n' },
+    { name: folder + 'SOURCE.json', body: JSON.stringify({ schemaVersion: 1, variant, repository: SOURCE_URL, sourceCommit: SOURCE_COMMIT, sourceDepth: SOURCE_DEPTH, node: '>=22.12', platform: 'macOS', standalone: false }, null, 2) + '\n' },
   ]);
   const file = 'motion-lab-' + variant + '-macos-beta.zip';
   await writeFile(path.join(output, file), archive);
   assets.push({ file, variant, bytes: archive.length, sha256: createHash('sha256').update(archive).digest('hex'), sourceCommit: SOURCE_COMMIT });
 }
-await writeFile(path.join(output, 'manifest.json'), JSON.stringify({ schemaVersion: 1, sourceCommit: SOURCE_COMMIT, assets }, null, 2) + '\n');
+await writeFile(path.join(output, 'manifest.json'), JSON.stringify({ schemaVersion: 1, sourceCommit: SOURCE_COMMIT, sourceDepth: SOURCE_DEPTH, assets }, null, 2) + '\n');
 await writeFile(path.join(output, 'SHA256SUMS'), assets.map(a => a.sha256 + '  ' + a.file).join('\n') + '\n');
 console.log('Download creati in ' + output + '\n' + assets.map(a => a.file + ': ' + a.bytes + ' bytes').join('\n'));

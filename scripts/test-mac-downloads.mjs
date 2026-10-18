@@ -6,7 +6,7 @@ import os from 'node:os';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { test } from 'node:test';
-import { install, mergeClaude, checkNode, SOURCE_COMMIT } from '../installers/macos/install.mjs';
+import { install, mergeClaude, checkNode, SOURCE_COMMIT, SOURCE_DEPTH } from '../installers/macos/install.mjs';
 const exec = promisify(execFile), root = fileURLToPath(new URL('..', import.meta.url));
 const runReal = async (cmd, args, cwd) => (await exec(cmd, args, { cwd, env: { ...process.env, GIT_CONFIG_GLOBAL: '/dev/null', GIT_CONFIG_SYSTEM: '/dev/null' } })).stdout.trim();
 const readJson = async file => JSON.parse(await readFile(file, 'utf8'));
@@ -32,6 +32,7 @@ async function fixture(t) {
   const mainSha = await runReal('git', ['rev-parse', 'HEAD'], source);
   await runReal('git', ['checkout', 'plugin'], source);
   await runReal('git', ['-c', 'user.name=Test', '-c', 'user.email=test@example.invalid', 'merge', '--no-edit', 'main'], source);
+  await writeFile(path.join(source, 'package.json'), '{"name":"motion-lab","type":"module","description":"branding after integration"}'); await commit('branding');
   const sha = await runReal('git', ['rev-parse', 'HEAD'], source), calls = [];
   const deps = { platform: 'darwin', home, codexConfigFile: path.join(home, '.codex/config.toml'), sourceURL: source, sourceCommit: sha, find: async name => name, chromeAvailable: async () => true, claudeAvailable: async () => true };
   deps.run = async (cmd, args, cwd) => {
@@ -64,6 +65,12 @@ test('Studio installs an exact local Git pin into new destination and creates a 
   await assert.rejects(install(options, f.deps), /già esistente/);
   assert.equal(await runReal('git', ['status', '--porcelain'], result.repository), '');
   assert.equal(await runReal('git', ['merge-base', '--is-ancestor', f.mainSha, 'HEAD'], result.repository), '');
+  assert.ok(f.calls.some(c => c.cmd === 'git' && c.args.includes('--depth=' + SOURCE_DEPTH)));
+  // This payload has a post-merge commit: depth 2 loses main, while the installer depth includes it.
+  const tooShallow = path.join(f.base, 'depth-two'); await mkdir(tooShallow);
+  await runReal('git', ['init', tooShallow]);
+  await runReal('git', ['fetch', '--depth=2', '--no-tags', f.source, f.sha], tooShallow);
+  await assert.rejects(runReal('git', ['cat-file', '-e', f.mainSha + '^{commit}'], tooShallow));
   // Exercise the real update checker on the shallow installed merge; only ls-remote is simulated.
   await runReal('git', ['remote', 'set-url', 'origin', 'https://github.com/AndreXes03/motion-lab.git'], result.repository);
   const bin = path.join(f.base, 'bin'); await mkdir(bin);
@@ -146,7 +153,7 @@ test('ZIPs are deterministic, integrity checked, executable, portable and pinned
   const first = new Map(await Promise.all((await readdir(out)).map(async name => [name, await readFile(path.join(out, name))])));
   await runReal(process.execPath, [path.join(root, 'scripts/build-mac-downloads.mjs'), '--out', out]);
   for (const [name, data] of first) assert.deepEqual(await readFile(path.join(out, name)), data);
-  const manifest = await readJson(path.join(out, 'manifest.json')); assert.equal(manifest.sourceCommit, SOURCE_COMMIT); assert.equal(manifest.assets.length, 3);
+  const manifest = await readJson(path.join(out, 'manifest.json')); assert.equal(manifest.sourceCommit, SOURCE_COMMIT); assert.equal(manifest.sourceDepth, SOURCE_DEPTH); assert.equal(manifest.assets.length, 3);
   // Python stdlib verifies ZIP CRC, extraction names, Unix permissions and every payload, independently of the writer.
   const code = "import zipfile,json,pathlib,sys,hashlib\np=pathlib.Path(sys.argv[1]);m=json.loads((p/'manifest.json').read_text())\nfor a in m['assets']:\n b=(p/a['file']).read_bytes();assert len(b)<50000;assert hashlib.sha256(b).hexdigest()==a['sha256']\n with zipfile.ZipFile(p/a['file']) as z:\n  assert z.testzip() is None;assert len(z.infolist())==4\n  for i in z.infolist():\n   assert '..' not in pathlib.PurePosixPath(i.filename).parts;assert not i.filename.startswith('/')\n   s=z.read(i).decode();assert '/Users/' not in s and '/workspace/' not in s and 'BEGIN PRIVATE KEY' not in s\n   if i.filename.endswith('.command'): assert (i.external_attr>>16)&0o111\n   if i.filename.endswith('SOURCE.json'): assert json.loads(s)['sourceCommit']==m['sourceCommit']\n";
   await runReal('python3', ['-c', code, out]);
