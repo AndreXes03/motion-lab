@@ -1,0 +1,1 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" fill="#d7f56b"><title>Framevolve</title><defs><path id="orbit" d="M52 8C77 8 96 24 96 48V67L39 34V22C39 14 44 8 52 8Z"/></defs><use href="#orbit"/><use href="#orbit" transform="rotate(120 64 64)"/><use href="#orbit" transform="rotate(240 64 64)"/></svg>

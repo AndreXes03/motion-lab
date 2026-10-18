@@ -1,5 +1,5 @@
 {
   "name": "motion-lab",
-  "version": "0.1.0",
-  "description": "Local Motion Lab MCP tools; no browser widget or remote rendering service."
+  "version": "0.1.1",
+  "description": "Local agent tools for Framevolve Studio: editable scenes, versions, previews and render jobs."
 }
