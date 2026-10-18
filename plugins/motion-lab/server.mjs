@@ -37,7 +37,7 @@ const descriptions={
   get_job:'Read a plugin request/job. Return a real inline PNG when small and ready, or the original local output file link for completed renders. Does not start another render.',
   open_studio:'Explicitly open the local Studio browser on macOS, or return its address with open:false. Versions pane requires manual selection of the named version; no unsaved browser edits are overwritten.',
 };
-const server=new Server({name:'motion-lab',version:'0.1.0'},{capabilities:{tools:{}}});
+const server=new Server({name:'motion-lab',title:'Framevolve',version:'0.1.1'},{capabilities:{tools:{}}});
 server.setRequestHandler(ListToolsRequestSchema,async()=>({tools:Object.entries(schemas).map(([name,schema])=>({name,description:descriptions[name],inputSchema:z.toJSONSchema(schema),annotations:{readOnlyHint:name==='get_job',destructiveHint:false,openWorldHint:true}}))}));
 server.setRequestHandler(CallToolRequestSchema,async request=>{
   const updates=await checkUpdates(root); // Deliberately BEFORE all tool/input validation, including unknown tools.
