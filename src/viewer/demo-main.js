@@ -23,7 +23,7 @@ $('redo-edit').onclick=()=>{if(!future.length)return;history.push(structuredClon
 $('play').onclick=()=>{playing=!playing;last=performance.now();setIcon($('play'),playing?'pause':'play',{label:playing?'Pause':'Play',iconOnly:true});};
 $('seek').max=179;$('seek').oninput=()=>{pause();time=Number($('seek').value)/30;draw();};
 $('loop').setAttribute('aria-pressed','true');$('loop').onclick=()=>{loop=!loop;$('loop').setAttribute('aria-pressed',String(loop));};
-function tick(now){if(playing&&!document.hidden){time+=Math.min((now-last)/1000,.08);if(time>=6){time=loop?0:179/30;if(!loop)pause();}draw();}last=now;requestAnimationFrame(tick);}requestAnimationFrame(tick);
+function tick(now){if(playing&&!document.hidden){time+=Math.max(0,Math.min((now-last)/1000,.08));if(time>=6){time=loop?time%6:179/30;if(!loop)pause();}draw();}last=now;requestAnimationFrame(tick);}requestAnimationFrame(tick);
 document.addEventListener('visibilitychange',()=>{if(document.hidden)pause();});
 $('scene').replaceChildren(new Option('3D quick demo','starter'));$('project-title').textContent='Chromatic bloom';$('project-kind').textContent='LIGHTWEIGHT WEB DEMO';$('project-subtitle').textContent='Fold, orbit and bloom in real 3D';
 $('timeline-meta').textContent='6 s · 30 fps · lightweight 3D';$('timeline-ruler').replaceChildren(...Array.from({length:7},(_,i)=>{const node=document.createElement('span');node.textContent=String(i).padStart(2,'0');return node;}));
