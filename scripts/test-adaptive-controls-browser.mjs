@@ -3,7 +3,7 @@ import {chromium} from 'playwright';
 import {mkdir,readFile,writeFile} from 'node:fs/promises';
 import {validateStudioParameters} from './studio-api.mjs';
 
-const openAdvanced=async page=>{const detail=page.locator('#motion-advanced');if(!await detail.evaluate(node=>node.open))await detail.locator(':scope > summary').click();};
+const openAdvanced=async page=>{await page.locator('#experience-pro').click();const retime=page.locator('#motion-view-retime');if(await retime.isVisible())await retime.click();const detail=page.locator('#motion-advanced');if(!await detail.evaluate(node=>node.open))await detail.locator(':scope > summary').click();};
 const output=new URL('../outputs/adaptive-controls-draft/',import.meta.url);
 await mkdir(output,{recursive:true});
 const browser=await chromium.launch({executablePath:'/Applications/Google Chrome.app/Contents/MacOS/Google Chrome',headless:true,args:['--disable-gpu-sandbox']});
@@ -12,7 +12,7 @@ const page=await browser.newPage({viewport:{width:1440,height:1000}});
 const errors=[];page.on('pageerror',e=>errors.push(e.message));
 const record=async name=>results.push({name,passed:true});
 async function idle(){await page.evaluate(()=>window.motionPreview.whenIdle());}
-async function state(){await idle();await page.locator('#tab-code').click();return JSON.parse(await page.locator('#code-content').textContent());}
+async function state(){await idle();await page.locator('#experience-pro').click();await page.locator('#tab-code').click();return JSON.parse(await page.locator('#code-content').textContent());}
 async function seek(seconds){await page.locator('#seek').evaluate((input,t)=>{input.value=String(t*30);input.dispatchEvent(new Event('input',{bubbles:true}));},seconds);await idle();}
 async function addKey(t,value,ease='linear'){await openAdvanced(page);await page.locator('#motion-new-key').click();await page.locator('#motion-key-time').fill(String(t));await page.locator('#motion-key-value').fill(String(value));await openAdvanced(page);await page.locator('#motion-key-ease').selectOption(ease);await page.locator('#motion-save-key').click();}
 async function hash(){return page.locator('#renderCanvas').evaluate(canvas=>{let h=2166136261;for(const v of canvas.getContext('2d').getImageData(0,0,canvas.width,canvas.height).data)h=Math.imul(h^v,16777619);return h>>>0;});}

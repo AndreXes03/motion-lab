@@ -1,6 +1,7 @@
 import {studyControlDefinitions} from '../src/engine/scene-capabilities.js';
 import {resolveControlManifest} from '../src/engine/control-catalog.js';
 import {validateParameterAnimation} from '../src/engine/parameter-animation.js';
+import {validateAuthoredMotion} from '../src/engine/authored-animation.js';
 import {validateRenderPlan,resolveRenderPlan} from '../src/engine/render-policy.js';
 import {getCyclesCapabilities,buildCyclesCommand} from './cycles/studio.mjs';
 import {getMixedCapabilities,preflightMixed,buildMixedCommand} from './mixed/studio.mjs';
@@ -67,31 +68,9 @@ function merge(base, patch) {
 }
 
 function validateMotion(motion, allowedTracks, duration=config.duration) {
-  if (!isRecord(motion) || !isRecord(motion.tracks)) throw new Error('motion must be an object with a tracks map');
-  if (Object.keys(motion).some(key => !['name', 'cuts', 'tracks'].includes(key))) throw new Error('motion contains unsupported fields');
-  if (motion.cuts !== undefined) {
-    if (!Array.isArray(motion.cuts) || motion.cuts.length > 1000) throw new Error('motion.cuts must be an array of at most 1000 cut times');
-    for (const cut of motion.cuts) {
-      const time = typeof cut === 'number' ? cut : isRecord(cut) ? (cut.time ?? cut.t) : NaN;
-      if (!Number.isFinite(time) || time < 0 || time > duration) throw new Error(`Every motion cut must be a finite time from 0 to ${duration} seconds`);
-    }
-  }
-  const tracks = Object.entries(motion.tracks);
-  if (tracks.length > 100) throw new Error('motion has too many tracks');
-  for (const [name, keys] of tracks) {
-    if (!allowedTracks.has(name)) throw new Error(`Unsupported motion track: ${name}`);
-    if (!name || name.length > 120 || !Array.isArray(keys) || keys.length > 1000) throw new Error(`Invalid motion track: ${name}`);
-    let previous = -Infinity;
-    for (const key of keys) {
-      if (!isRecord(key) || Object.keys(key).some(k => !['t', 'value', 'ease'].includes(k)) || !Number.isFinite(key.t) || key.t < 0 || key.t > 10 || key.t < previous || key.value === undefined) throw new Error(`Invalid key in motion track ${name}`);
-      finiteTree(key.value, `motion.${name}.value`);
-      const vector = ['camera.position', 'camera.target'].includes(name) || (!name.endsWith('.z') && name !== 'camera.roll');
-      if (vector ? (!Array.isArray(key.value) || key.value.length !== 3 || !key.value.every(Number.isFinite)) : (typeof key.value !== 'number' || !Number.isFinite(key.value))) throw new Error(`Invalid value in motion track ${name}`);
-      if (key.ease !== undefined && !['linear', 'smooth', 'hold', 'in', 'out', 'inOut'].includes(key.ease)) throw new Error(`Invalid easing in motion track ${name}`);
-      previous = key.t;
-    }
-  }
-  return motion;
+  // This field is the legacy BAX source document, retained in every recipe.
+  // A shorter function-authored scene does not shorten those unused source keys.
+  return validateAuthoredMotion(motion,{allowedTracks,duration:10,cutDuration:duration});
 }
 
 function validateStudioMeta(studio, scene, look) {

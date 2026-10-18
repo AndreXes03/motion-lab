@@ -4,6 +4,8 @@ on:
     branches: [main]
     paths:
       - 'src/**'
+      - 'public/**'
+      - 'scripts/**'
       - 'project/**'
       - 'index.html'
       - 'package*.json'

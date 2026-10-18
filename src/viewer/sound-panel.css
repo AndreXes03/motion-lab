@@ -1,7 +1,35 @@
-#sound-tools>label{display:block;margin-top:12px;font-size:11px;color:var(--text,#e3e7ec)}
-#sound-tools>label>select{margin-top:6px}
-#sound-tools input[type=number]{box-sizing:border-box;display:block;width:100%;padding:7px 9px;margin:6px 0 0;border:1px solid #46505e;border-radius:4px;background:#1c2430;color:#f2f4f8;font:inherit}
-#sound-tools input[type=number]:disabled{opacity:.45}
-#sound-tools .finish-checkbox{display:flex;align-items:center;gap:7px}
-#sound-tools .finish-checkbox input{accent-color:#b4c3ef}
-#sound-status{line-height:1.5;min-height:2.7em}
+#sound-tools.sound-panel{--sound-accent:#87c7b0;color:#eef0f3;min-width:0;padding:0;border:0}
+#sound-tools .sound-heading{display:flex;align-items:center;justify-content:space-between;gap:14px;margin-bottom:10px}
+#sound-tools .sound-heading h3{margin:0;color:#eef0f3;font-size:15px;font-weight:600;letter-spacing:-.25px}
+#sound-tools .sound-enable{display:flex;align-items:center;gap:7px;white-space:nowrap;margin:0;color:var(--sound-accent);font-size:12px}
+#sound-tools .sound-enable input{accent-color:var(--sound-accent);width:14px;height:14px;margin:0}
+#sound-tools .sound-section{margin:0;padding:16px 0;border:0;border-top:1px solid #30363e;min-width:0}
+#sound-tools .sound-section h4,#sound-tools .sound-section>summary{margin:0 0 14px;color:#eef0f3;font-size:12px;font-weight:600;letter-spacing:.01em}
+#sound-tools .sound-disclosure>summary{display:flex;align-items:center;justify-content:space-between;margin:0;list-style:none;cursor:pointer;min-height:20px}
+#sound-tools .sound-disclosure>summary::-webkit-details-marker{display:none}
+#sound-tools .sound-disclosure>summary::after{content:'';width:6px;height:6px;border-right:1px solid #929ba8;border-bottom:1px solid #929ba8;transform:rotate(-45deg);margin-right:4px}
+#sound-tools .sound-disclosure[open]>summary{margin-bottom:16px}
+#sound-tools .sound-disclosure[open]>summary::after{transform:rotate(45deg)}
+#sound-tools .sound-control{margin:0 0 17px}
+#sound-tools .sound-control:last-child{margin-bottom:0}
+#sound-tools .sound-control-head{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:8px}
+#sound-tools .sound-control-head>label{margin:0;color:#c4cbd4;font-size:12px;font-weight:400}
+#sound-tools .sound-value{display:flex;align-items:center;gap:4px;color:#929ba8;font-size:11px;flex-shrink:0}
+#sound-tools input[type=range]{display:block;width:100%;accent-color:var(--sound-accent);margin:8px 0}
+#sound-tools .sound-control .sound-timbre{display:grid;grid-template-columns:46px minmax(0,1fr);align-items:center;gap:8px;margin:10px 0 0;font-size:11px;color:#929ba8}
+#sound-tools .sound-field{display:grid;grid-template-columns:minmax(0,1fr);gap:7px;margin:12px 0 0;color:#c4cbd4;font-size:12px}
+#sound-tools.sound-panel select,#sound-tools.sound-panel input[type=number]{box-sizing:border-box;display:block;width:100%;min-width:0;min-height:32px;padding:6px 9px;margin:0;border:1px solid #30363e;border-radius:6px;background:#20242a;color:#eef0f3;font-family:inherit;font-size:12px}
+#sound-tools.sound-panel select:focus-visible,#sound-tools.sound-panel input:focus-visible,#sound-tools button:focus-visible,#sound-tools summary:focus-visible{outline:2px solid var(--sound-accent);outline-offset:3px}
+#sound-tools .sound-bpm{grid-template-columns:1fr 90px;align-items:center}
+#sound-tools input:disabled{opacity:.45}
+#sound-tools #sound-status{font-size:11px;line-height:1.55;min-height:0;margin:2px 0 12px;padding:10px 12px;background:#171a1e;border:1px solid #30363e;border-radius:6px;color:#aeb9c6}
+#sound-tools .sound-actions{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:0;padding-bottom:10px}
+#sound-tools .sound-actions button{min-height:32px;padding:7px 8px;border:1px solid #30363e;border-radius:6px;background:#20242a;color:#c4cbd4;font-size:12px;cursor:pointer}
+#sound-tools .sound-actions button:hover{border-color:#64716e;color:#eef0f3}
+#sound-tools .sound-actions .sound-download{grid-column:1/-1;color:var(--sound-accent);border-color:#3e5a50;background:#1b2924}
+#sound-tools .sound-section[hidden],#sound-tools .sound-control[hidden],#sound-tools .sound-field[hidden]{display:none!important}
+#sound-tools.sound-panel .sound-value input[type=number]{width:61px;min-height:28px;padding:4px 5px;text-align:right;color:var(--sound-accent);font-family:ui-monospace,SFMono-Regular,monospace;font-size:11px;font-variant-numeric:tabular-nums}
+
+#sound-tools .sound-timbre[hidden],#sound-tools .sound-actions button[hidden]{display:none!important}
+
+#sound-tools.sound-panel>summary{display:none}
