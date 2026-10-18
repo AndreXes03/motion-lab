@@ -41,7 +41,9 @@
     "studio:status": "node scripts/launch-studio.mjs status",
     "studio:stop": "node scripts/launch-studio.mjs stop",
     "install:mac": "node scripts/install-mac-launcher.mjs",
-    "test:launcher": "node --test scripts/test-mac-launcher.mjs"
+    "test:launcher": "node --test scripts/test-mac-launcher.mjs",
+    "build:downloads": "node scripts/build-mac-downloads.mjs",
+    "test:downloads": "node --test scripts/test-mac-downloads.mjs"
   },
   "keywords": [
     "threejs",

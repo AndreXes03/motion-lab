@@ -1,4 +1,17 @@
 const assetPrefix = location.pathname.includes('/showcase/') ? '../' : '';
+const downloadDialog = document.getElementById('downloads');
+let downloadOpener;
+for (const button of document.querySelectorAll('[data-open-downloads]')) {
+  button.addEventListener('click', () => {
+    downloadOpener = button;
+    downloadDialog.showModal();
+  });
+}
+downloadDialog.addEventListener('close', () => downloadOpener?.focus());
+for (const link of document.querySelectorAll('[data-download-file]')) {
+  // Copies served from /showcase/ and from a site root share the same downloads directory.
+  link.href = assetPrefix + 'downloads/' + link.dataset.downloadFile;
+}
 const reducedMotion = matchMedia('(prefers-reduced-motion: reduce)');
 const asset = file => {
   const version = /pulse-1080\.mp4$/.test(file)

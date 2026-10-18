@@ -1,0 +1,42 @@
+MOTION LAB — INSTALLER macOS BETA
+
+Tre varianti: Studio, Studio + Codex, Studio + Claude Desktop.
+Questo ZIP è un piccolo bootstrap: scarica una sorgente Git fissata, poi
+installa le dipendenze npm. Richiede rete GitHub/npm, Git (Command Line
+Tools), Node.js >=22.12 e Google Chrome in /Applications.
+Codex richiede una CLI con plugin marketplace/add (anche quella di ChatGPT);
+Claude richiede Claude Desktop già installato. Non installa questi programmi.
+Cycles richiede inoltre Blender locale e una scena supportata (oggi PULSE).
+
+1. Estrai tutto lo ZIP in una cartella.
+2. Leggi SOURCE.json (commit sorgente) e install.mjs.
+3. Doppio clic su "Installa Motion Lab.command". Il Terminale mostra esito/errori.
+   macOS può chiedere conferma per uno script scaricato non firmato:
+   questa beta non è firmata/notarizzata e non aggira Gatekeeper.
+4. Dopo "Installazione riuscita", apri ~/Applications/Motion Lab VARIANTE.app.
+   È un launcher: avvia un servizio locale e Studio nel browser, non è
+   un'app standalone. La porta predefinita è 4198.
+5. Per Codex/Claude riavvia il client e verifica i tool; una conversazione
+   nativa non viene simulata né certificata dall'installer.
+
+Installa in una NUOVA ~/Applications/Motion Lab/VARIANTE/repository.
+Non sovrascrive checkout/app/registrazioni Motion Lab esistenti; nessun
+pull/reset/stash/clean, nessun aggiornamento automatico o invio di file locali.
+Le tre varianti usano la stessa porta: non avviarle contemporaneamente.
+Per un'altra porta/destinazione usa Terminale, ad esempio:
+node install.mjs --variant studio --destination "/cartella/nuova" \
+  --applications-dir "/cartella/nuove-app" --port 4199
+
+Claude: merge della sola voce mcpServers.motion-lab, con backup del JSON
+esistente. Se JSON invalido, voce già presente o modifica concorrente:
+si ferma senza sostituirla. Chiudi Claude prima dell'installazione.
+Codex: backup config.toml e comandi CLI ufficiali marketplace/add,
+preservando le altre impostazioni. Non inserisce token o account.
+Se la CLI fallisce dopo una registrazione parziale, l'esito è FALLITO:
+consulta installation.json e backup prima di modificare il client manualmente.
+
+Un'installazione incompleta resta nella sua cartella con installation.json:
+non viene eliminata automaticamente. Usa una cartella nuova per riprovare.
+Render, versioni e asset locali non si sincronizzano con GitHub o col sito.
+Il sito pubblico è una demo browser separata: non controlla MCP o il tuo Mac.
+Guida: https://github.com/AndreXes03/motion-lab/blob/codex/mac-downloads/docs/MAC_DOWNLOADS.md
