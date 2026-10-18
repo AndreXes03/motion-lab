@@ -1,15 +1,43 @@
 const assetPrefix = location.pathname.includes('/showcase/') ? '../' : '';
+const downloadDialog = document.getElementById('downloads');
+let downloadOpener;
+for (const button of document.querySelectorAll('[data-open-downloads]')) {
+  button.addEventListener('click', () => {
+    downloadOpener = button;
+    downloadDialog.showModal();
+  });
+}
+downloadDialog.addEventListener('close', () => downloadOpener?.focus());
+downloadDialog.addEventListener('keydown', event => {
+  if (event.key !== 'Tab') return;
+  const links = [...downloadDialog.querySelectorAll('button:not([disabled]), a[href]')];
+  const first = links[0], last = links.at(-1);
+  if (event.shiftKey && document.activeElement === first || !event.shiftKey && document.activeElement === last) {
+    event.preventDefault();
+    (event.shiftKey ? last : first).focus();
+  }
+});
+for (const link of document.querySelectorAll('[data-download-file]')) {
+  // Copies served from /showcase/ and from a site root share the same downloads directory.
+  link.href = assetPrefix + 'downloads/' + link.dataset.downloadFile;
+}
 const reducedMotion = matchMedia('(prefers-reduced-motion: reduce)');
 const asset = file => {
   const version = /pulse-1080\.mp4$/.test(file)
     ? '?v=pulse-continuous-audio-blue-end-v2'
     : /(?:camera|pulse)-1080\.mp4$/.test(file) || /(?:camera|pulse)-poster\.jpg$/.test(file)
     ? '?v=cycles-motion-tools-v1'
-    : /ui-(?:tools|motion-groups)\.jpg$/.test(file)
-      ? '?v=adaptive-controls-v1'
+    : /ui-(?:studio-easy|studio-pro|studio-export)\.jpg$/.test(file)
+      ? '?v=studio-workspaces-v4'
       : '';
   return assetPrefix + file + version;
 };
+
+for (const element of document.querySelectorAll('[data-brand]')) {
+  const url = assetPrefix + element.dataset.brand;
+  if (element.tagName === 'LINK') element.href = url;
+  else element.src = url;
+}
 
 let heroVideo;
 for (const element of document.querySelectorAll('[data-asset]')) {
@@ -196,4 +224,32 @@ document.getElementById('copy-setup').onclick = async () => {
 
 for (const link of document.querySelectorAll('a[href^="./studio/"]')) {
   link.href = assetPrefix + link.getAttribute('href').slice(2);
+}
+
+
+const studioViewTabs = [...document.querySelectorAll('[data-studio-view]')];
+function selectStudioView(index, focus = false) {
+  studioViewTabs.forEach((tab, i) => {
+    const active = i === index;
+    tab.setAttribute('aria-selected', String(active));
+    tab.tabIndex = active ? 0 : -1;
+    document.getElementById(tab.getAttribute('aria-controls')).hidden = !active;
+  });
+  if (focus) studioViewTabs[index].focus();
+}
+studioViewTabs.forEach((tab, index) => {
+  tab.addEventListener('click', () => selectStudioView(index));
+  tab.addEventListener('keydown', event => {
+    let next = index;
+    if (event.key === 'ArrowRight') next = (index + 1) % studioViewTabs.length;
+    else if (event.key === 'ArrowLeft') next = (index - 1 + studioViewTabs.length) % studioViewTabs.length;
+    else if (event.key === 'Home') next = 0;
+    else if (event.key === 'End') next = studioViewTabs.length - 1;
+    else return;
+    event.preventDefault();
+    selectStudioView(next, true);
+  });
+});
+for (const link of document.querySelectorAll('[data-capture]')) {
+  link.href = asset(link.dataset.capture);
 }

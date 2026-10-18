@@ -1,4 +1,4 @@
-# Motion Lab MCP · local beta
+# Framevolve MCP · local beta
 
 Install and use this package from a reviewed copy. The [local setup and tool guide](../../docs/MCP_PLUGIN.md) covers Codex, Claude Desktop/Code, version IDs, update checks and renderer limits.
 
@@ -14,3 +14,7 @@ The second command speaks MCP stdio, not a terminal UI or an HTTP endpoint. Conf
 No config is written to Codex, Claude or Linux Home by these scripts. No marketplace or install command is executed automatically. Credentials are neither required nor packaged. Offline Git checks do not prevent local tools.
 
 The runtime helper is a copy of `scripts/launch-studio.mjs` from `codex/mac-launcher` commit `72ed7c8cd9554481b4f90954c6dc5353783566ae`. It lets a reviewed external plugin run against a checkout that does not yet contain the launcher commit. It imports Vite from the selected repo and checks exact repo/instance health before reuse. No Linux Chromium adapter is bundled.
+
+## Codex branding
+
+Framevolve is the display name in Codex and its composer. The `motion-lab` package and MCP identifiers remain stable for existing installations and links. Brand assets live in `assets/`; the Codex manifest declares the logo and composer icon.

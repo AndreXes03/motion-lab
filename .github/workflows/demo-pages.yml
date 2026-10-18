@@ -1,14 +1,17 @@
-name: Publish Motion Lab demo
+name: Publish Framevolve demo
 on:
   push:
     branches: [main]
     paths:
       - 'src/**'
+      - 'public/**'
+      - 'scripts/**'
       - 'project/**'
       - 'index.html'
       - 'package*.json'
       - 'vite.config.*'
       - 'showcase/**'
+      - 'installers/**'
       - 'demo/**'
       - 'examples/**'
       - '.github/workflows/demo-pages.yml'
@@ -33,6 +36,8 @@ jobs:
           node-version: 22
           cache: npm
       - run: npm ci
+      - name: Build portable macOS downloads
+        run: node scripts/build-mac-downloads.mjs
       - name: Build interactive studio
         env:
           VITE_PUBLIC_DEMO: 'true'
@@ -40,13 +45,16 @@ jobs:
       - uses: actions/configure-pages@v5
       - name: Assemble demo
         run: |
-          mkdir -p _site/demo _site/examples _site/studio
+          mkdir -p _site/demo _site/examples _site/studio _site/downloads
           cp -R dist/. _site/studio/
+          cp -R public/brand _site/brand
           cp showcase/index.html _site/index.html
           cp showcase/site.css showcase/site.js _site/
           cp examples/procedural-field.html examples/procedural-live.js _site/examples/
           cp demo/*.mp4 demo/*.gif demo/*.jpg demo/*.png _site/demo/
           cp demo/render-manifest.json _site/demo/
+          cp outputs/downloads/* _site/downloads/
+          node -e "const fs=require('node:fs'),installer=JSON.parse(fs.readFileSync('outputs/downloads/manifest.json','utf8'));fs.writeFileSync('_site/build-info.json',JSON.stringify({sourceCommit:process.env.GITHUB_SHA,installerSourceCommit:installer.sourceCommit,installerSourceDepth:installer.sourceDepth})+'\n')"
       - uses: actions/upload-pages-artifact@v4
         with:
           path: _site

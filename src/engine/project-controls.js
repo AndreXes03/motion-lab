@@ -4,7 +4,7 @@ import studio from '../../project/studio.json' with { type: 'json' };
 import defaultLook from '../../project/look.json' with { type: 'json' };
 
 /** Persisted UI schema. Controls target public render parameters, not mesh internals. */
-export const studioProjects = [...studio.projects,...newStudioProjects];
+export const studioProjects = [...studio.projects.map(project=>({...project,controls:[...project.controls,...(studyControlDefinitions[project.id]??[])]})),...newStudioProjects];
 
 function merge(target, patch) {
   for (const [key, value] of Object.entries(patch ?? {})) {
@@ -36,10 +36,11 @@ export function resolveParameters(scene, values = {}, presetId = 'original', bas
 
   if(scene==='starter')return {scene,product:{accent:color(controls.accent,'#d7f56b'),shell:color(controls.shell,'#d2d3c8'),fov:limit(controls.fov,45,95,65),fisheye:limit(controls.fisheye,0,.6,.08),keyStrength:limit(controls.keyStrength,.3,2,1),fill:limit(controls.fill,0,.4,.1)}};
   if(isNewScene(scene))return{scene,sceneControls:Object.fromEntries((studyControlDefinitions[scene]??[]).map(c=>[c.id,limit(controls[c.id],c.min,c.max,c.default)])),look:{...structuredClone(baseLook??defaultLook),post:{...structuredClone(baseLook??defaultLook).post,shutterAngle:sceneRegistry[scene].shutterAngle??0,grain:0}}};
-  if (scene === 'pop') return {scene,graphics:{accent:color(controls.accent,'#ff66a7'),speed:limit(controls.speed,.25,2.5,1),cameraMotion:limit(controls.cameraMotion,0,1,1),fisheye:limit(controls.fisheye,0,.6,.3)}};
+  const sceneControls=Object.fromEntries((studyControlDefinitions[scene]??[]).map(c=>[c.id,limit(controls[c.id],c.min,c.max,c.default)]));
+  if (scene === 'pop') return {scene,sceneControls,graphics:{accent:color(controls.accent,'#ff66a7'),speed:limit(controls.speed,.25,2.5,1),cameraMotion:limit(controls.cameraMotion,0,1,1),fisheye:limit(controls.fisheye,0,.6,.3)}};
 
   if (scene === 'procedural') return {
-    scene,
+    scene,sceneControls,
     graphics: {
       title: String(controls.title ?? 'MOTION').trim().slice(0, 22) || 'MOTION',
       accent: color(controls.accent, '#ff5a24'),

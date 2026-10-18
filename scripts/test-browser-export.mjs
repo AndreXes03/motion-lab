@@ -20,8 +20,8 @@ const settings={width:1080,height:1920,fps:60,start:2,duration:1,bitrateMbps:20}
 assert.deepEqual(normalizeBrowserExportSettings('dot',settings),settings);
 assert.deepEqual(settings,{width:1080,height:1920,fps:60,start:2,duration:1,bitrateMbps:20},'Settings are not mutated');
 for(const invalid of [{width:1279},{height:63},{width:1920,height:1920},{fps:0},{fps:60.5},{fps:61},{start:-1},{start:10},{duration:0},{duration:11},{start:9,duration:2},{bitrateMbps:0},{bitrateMbps:21},{width:NaN}]){
- assert.throws(()=>normalizeBrowserExportSettings('bax',invalid),undefined,JSON.stringify(invalid));
+ assert.throws(()=>normalizeBrowserExportSettings('objects',invalid),undefined,JSON.stringify(invalid));
 }
 assert.throws(()=>normalizeBrowserExportSettings('unknown'));
-assert.throws(()=>normalizeBrowserExportSettings('bax',null));
+assert.throws(()=>normalizeBrowserExportSettings('objects',null));
 console.log('Browser export helpers passed: supported-container selection, capture guard, authored duration, resolution/FPS/bitrate bounds and immutable settings.');

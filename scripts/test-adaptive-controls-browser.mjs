@@ -3,7 +3,7 @@ import {chromium} from 'playwright';
 import {mkdir,readFile,writeFile} from 'node:fs/promises';
 import {validateStudioParameters} from './studio-api.mjs';
 
-const openAdvanced=async page=>{const detail=page.locator('#motion-advanced');if(!await detail.evaluate(node=>node.open))await detail.locator(':scope > summary').click();};
+const openAdvanced=async page=>{await page.locator('#experience-pro').click();const retime=page.locator('#motion-view-retime');if(await retime.isVisible())await retime.click();const detail=page.locator('#motion-advanced');if(!await detail.evaluate(node=>node.open))await detail.locator(':scope > summary').click();};
 const output=new URL('../outputs/adaptive-controls-draft/',import.meta.url);
 await mkdir(output,{recursive:true});
 const browser=await chromium.launch({executablePath:'/Applications/Google Chrome.app/Contents/MacOS/Google Chrome',headless:true,args:['--disable-gpu-sandbox']});
@@ -12,7 +12,7 @@ const page=await browser.newPage({viewport:{width:1440,height:1000}});
 const errors=[];page.on('pageerror',e=>errors.push(e.message));
 const record=async name=>results.push({name,passed:true});
 async function idle(){await page.evaluate(()=>window.motionPreview.whenIdle());}
-async function state(){await idle();await page.locator('#tab-code').click();return JSON.parse(await page.locator('#code-content').textContent());}
+async function state(){await idle();await page.locator('#experience-pro').click();await page.locator('#tab-code').click();return JSON.parse(await page.locator('#code-content').textContent());}
 async function seek(seconds){await page.locator('#seek').evaluate((input,t)=>{input.value=String(t*30);input.dispatchEvent(new Event('input',{bubbles:true}));},seconds);await idle();}
 async function addKey(t,value,ease='linear'){await openAdvanced(page);await page.locator('#motion-new-key').click();await page.locator('#motion-key-time').fill(String(t));await page.locator('#motion-key-value').fill(String(value));await openAdvanced(page);await page.locator('#motion-key-ease').selectOption(ease);await page.locator('#motion-save-key').click();}
 async function hash(){return page.locator('#renderCanvas').evaluate(canvas=>{let h=2166136261;for(const v of canvas.getContext('2d').getImageData(0,0,canvas.width,canvas.height).data)h=Math.imul(h^v,16777619);return h>>>0;});}
@@ -36,11 +36,11 @@ try{
  await page.locator('#tab-versions').click();await page.locator('#import-recipe').setInputFiles({name:'adaptive-draft.json',mimeType:'application/json',buffer:Buffer.from(JSON.stringify(downloaded))});assert.deepEqual((await state()).parameters.animation,recipe.parameters.animation);await record('Recipe download/import and reset round trip animation');
  await page.locator('#tab-motion').click();await seek(2);await page.screenshot({path:new URL('procedural-motion.png',output).pathname});
  await page.setViewportSize({width:390,height:844});await page.locator('#motion-control').evaluate(el=>el.scrollIntoView({block:'start'}));await page.locator('#preview-quality').selectOption('balanced');await idle();assert.equal(await page.locator('#renderCanvas').evaluate(c=>c.width),480);await page.screenshot({path:new URL('mobile-motion-panel.png',output).pathname});assert.ok(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth));await record('Mobile interface fits the viewport');await page.setViewportSize({width:1440,height:1000});await page.locator('#preview-quality').selectOption('sharp');await idle();
- await page.locator('#scene').selectOption('bax');await page.locator('#tab-look').click();await page.locator('#control-scope').selectOption('all');
+ await page.locator('#scene').selectOption('objects');await page.locator('#tab-look').click();await page.locator('#control-scope').selectOption('all');
  await page.locator('#control-search').fill('Radio X');assert.equal(await page.locator('#project-controls .control:visible').count(),1);await page.locator('#control-search').fill('');
- await page.locator('#tab-motion').click();await openAdvanced(page);await page.locator('#motion-show-all-tools').check();await page.locator('#motion-control').selectOption('device.root.x');await addKey(0,-.5);await addKey(4,.5);recipe=await state();await validateStudioParameters(recipe.parameters);assert.equal(recipe.parameters.animation.tracks['device.root.x'].length,2);await writeFile(new URL('bax-example.project.json',output),JSON.stringify(recipe,null,2));await record('3D transforms use real paths and catalog search filters controls');
+ await page.locator('#tab-motion').click();await openAdvanced(page);await page.locator('#motion-show-all-tools').check();await page.locator('#motion-control').selectOption('device.root.x');await addKey(0,-.5);await addKey(4,.5);recipe=await state();await validateStudioParameters(recipe.parameters);assert.equal(recipe.parameters.animation.tracks['device.root.x'].length,2);await writeFile(new URL('objects-example.project.json',output),JSON.stringify(recipe,null,2));await record('3D transforms use real paths and catalog search filters controls');
  await seek(2);const threeHash=await hash();await page.evaluate(p=>{delete p.animation;p.objectEdits['device.root']={x:0};window.motion.render(2,{width:960,height:540,parameters:p});},structuredClone(recipe.parameters));assert.equal(await hash(),threeHash);await record('3D midpoint matches rendered object transform');
- await page.locator('#tab-motion').click();await page.screenshot({path:new URL('bax-motion.png',output).pathname});
+ await page.locator('#tab-motion').click();await page.screenshot({path:new URL('objects-motion.png',output).pathname});
  await page.locator('#scene').selectOption('pulse');await page.locator('#tab-motion').click();assert.ok(await page.locator('#motion-control option').count());await record('Existing PULSE film exposes selected animation tools');
  assert.deepEqual(errors,[]);await record('No browser errors');
  await writeFile(new URL('browser-checks.json',output),JSON.stringify({passed:true,results},null,2));console.log(JSON.stringify({passed:true,results},null,2));

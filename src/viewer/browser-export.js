@@ -70,7 +70,7 @@ export async function readRecordedVideoMetadata(blob) {
 export async function exportBrowserVideo({scene,parameters={},settings={},onProgress=()=>{},signal,audioBuffer,audioStream}={}) {
  const capabilities=getBrowserExportCapabilities();
  if(!capabilities.available)throw new Error(capabilities.reason);
- const chosen=scene ?? parameters.scene ?? 'bax',options=normalizeBrowserExportSettings(chosen,settings);
+ const chosen=scene ?? parameters.scene ?? 'objects',options=normalizeBrowserExportSettings(chosen,settings);
  const snapshot=structuredClone(parameters);
  snapshot.scene=chosen;delete snapshot.previewQuality;
  checkAbort(signal);
@@ -146,7 +146,7 @@ export async function exportBrowserVideo({scene,parameters={},settings={},onProg
   if(!blob.size)throw new Error('The browser produced an empty video');
   report({phase:'finalizing',percent:99,mimeType,extension,framesRendered,droppedFrameSlots});
   const metadata=await readRecordedVideoMetadata(blob);checkAbort(signal);
-  const result={blob,mimeType,extension,filename:`motion-lab-${chosen}.${extension}`,mode:'realtime',renderer:'threejs',
+  const result={blob,mimeType,extension,filename:`framevolve-${chosen}.${extension}`,mode:'realtime',renderer:'threejs',
    width:options.width,height:options.height,fpsRequested:options.fps,durationRequested:options.duration,
    recordingWallSeconds,framesRendered,droppedFrameSlots,hasAudio:ownedAudioTracks.length>0,...metadata};
   report({phase:'complete',percent:100,mimeType,extension,framesRendered,droppedFrameSlots});return result;

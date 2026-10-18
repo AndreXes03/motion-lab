@@ -1,0 +1,57 @@
+import {sampleAnimationGroupTime} from '../engine/animation-groups.js';
+import {createObjectEditor} from '../engine/object-editor.js';
+import * as T from 'three';
+import {createStudio} from '../engine/studio.js';
+import {applyTracks,sampleTrack} from '../engine/animation.js';
+import motion from '../../project/motion.json';
+import {createDevice} from '../components/device.js';
+import {createObjectsEmblem} from '../components/objects-emblem.js';
+import {createObjectsKinetic} from '../components/objects-kinetic.js';
+import {createLedSign} from '../components/led-sign.js';
+import {clamp,smooth} from '../engine/timeline.js';
+export function createScene(renderer,config){
+ const studio=createStudio(renderer,{top:'#247ac5',bottom:'#c5d6e2'});const {scene}=studio;
+ const camera=new T.PerspectiveCamera(60,16/9,.1,100);
+ const device=createDevice({...config,text:{...config.text,display:'FV'},deviceBrand:'FRAMEVOLVE'});device.group.scale.setScalar(.68);scene.add(device.group);
+ for(const o of [...device.group.children])if(o.name.startsWith('cable.'))o.visible=false;
+ const plush=createObjectsEmblem();scene.add(plush);
+ const keys=createObjectsKinetic();keys.scale.setScalar(.83);scene.add(keys);
+ const sign=createLedSign({width:3.0,height:1.3});sign.root.position.set(-1.2,3.0,-3.0);scene.add(sign.root);
+ const editObjects=createObjectEditor(scene);
+ function update(time,parameters={}){
+ editObjects.restore();
+ const t=clamp(time,0,config.duration),look=parameters.look;studio.applyLook(look);camera.fov=look.camera.fov;camera.updateProjectionMatrix();
+ const activeMotion=parameters.motion||motion;
+ const clockForTarget=target=>sampleAnimationGroupTime(parameters,target.startsWith('camera.')?'camera':target.startsWith('objects.gyro.')||target.startsWith('objects.kinetic')?'gyro':target.startsWith('objects.emblem')||target.startsWith('objects.cover.')?'emblem':'radio',t);
+ applyTracks(scene,camera,activeMotion,t,look.motion.amount,clockForTarget);
+ // Energy affects object tracks only. Camera tracks keep the authored look.
+ const objectMotion=Number.isFinite(parameters.objectMotion)?clamp(parameters.objectMotion,0,1.8):look.motion.amount;
+ if(parameters.objectMotion!==undefined)for(const [target,keys] of Object.entries(activeMotion.tracks)){
+  if(target.startsWith('camera.'))continue;
+  const rotationZ=target.endsWith('.rotation.z');
+  const suffix=rotationZ?'.rotation.z':target.endsWith('.rotation')?'.rotation':'.position';
+  const object=scene.getObjectByName(target.slice(0,-suffix.length));
+  if(!object)throw new Error(`Unknown object motion target: ${target}`);
+  const sampled=sampleTrack(keys,clockForTarget(target),objectMotion);
+  if(rotationZ)object.rotation.z=sampled;else object[suffix.slice(1)].set(...sampled);
+ }
+ device.plastic.color.set(parameters.shell||config.palette.shell);device.plastic.roughness=look.surface.shellRoughness;device.plastic.bumpScale=look.surface.grainScale;device.orange.color.set(parameters.knob||config.palette.knob);
+ device.setDisplay(parameters.display??(t<1.15?'MAKE.':t<2.2?'PLAY.':'FV.'));
+ sign.setText(t<7.5?'IDEAS\nIN PLAY.':'@brand');
+ plush.userData.update?.(sampleAnimationGroupTime(parameters,'emblem',t),{amount:objectMotion});
+ keys.userData.update?.(sampleAnimationGroupTime(parameters,'gyro',t),{motion:activeMotion,amount:objectMotion});
+ editObjects.apply(parameters.objectEdits);
+ const roots=[device.group,plush,keys,sign.root];for(const root of roots)root.visible=true;
+ if(parameters.inspect){
+  const chosen=scene.getObjectByName(parameters.inspect.object);if(!chosen)throw new Error('Unknown inspection object');
+  roots.forEach(root=>root.visible=root===chosen);
+  chosen.updateWorldMatrix(true,true);const box=new T.Box3();chosen.traverseVisible(o=>{if(o.geometry){o.geometry.computeBoundingBox();box.union(o.geometry.boundingBox.clone().applyMatrix4(o.matrixWorld));}});const center=box.getCenter(new T.Vector3()),size=box.getSize(new T.Vector3());
+  const yaw=(parameters.inspect.yaw??20)*Math.PI/180, distance=Math.max(size.y,size.x/camera.aspect)*1.8;
+  camera.fov=40;camera.updateProjectionMatrix();camera.position.set(center.x+Math.sin(yaw)*distance,center.y+.2,center.z+Math.cos(yaw)*distance);camera.lookAt(center);
+ }
+ return t;
+ }
+ // Keep the film free of screen-space branding. Product textures remain in the scene.
+ function drawOverlay(){}
+ return {scene,camera,update,drawOverlay};
+}

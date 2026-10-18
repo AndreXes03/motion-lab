@@ -86,6 +86,17 @@ for (const scene of sceneIds) {
   assert.ok(recommended.controls.some(id=>catalog.find(c=>c.id===id)?.animatable), `${scene} chosen tools include a usable animation parameter`);
   assert.deepEqual(recommended.controls, saved.controls, `${scene} default selection follows project/control-selections.json`);
   assert.deepEqual(alias.controls, recommended.controls, `${scene} essential alias preserves the recommended selection`);
+  const sceneKind = studioProjects.find(item => item.id === scene)?.kind;
+  if (['2d', 'hybrid'].includes(sceneKind)) {
+    // The public capability catalog is the agent's editing contract. A new 2D
+    // parameter must be discoverable in both modes, even if its panel is closed.
+    const missing = ids.filter(id => !recommended.controls.includes(id));
+    assert.deepEqual(missing, [], `${scene}: every planned 2D control needs a default panel; missing ${missing.join(', ')}`);
+    // This authoring requirement does not restrict a user's custom saved layout.
+    const first = recommended.controls[0];
+    const custom = validateControlManifest({version: 1, scene, controls: [first]}, scene);
+    assert.deepEqual(custom.controls, [first], `${scene}: custom layouts may still hide controls without deleting values or tracks`);
+  }
   assert.deepEqual(recommended.rationale, saved.rationale, `${scene} manifest carries the selection rationale`);
   assert.ok(recommended.controls.length > 0 && recommended.controls.every(id => all.controls.includes(id)), `${scene} recommended controls are a non-empty subset of the full catalog`);
   assert.deepEqual(validateControlManifest(recommended, scene), recommended);
@@ -133,23 +144,23 @@ for (const scene of sceneIds) {
   assert.deepEqual(migrated.studio.controlManifest.controls, recommended.controls, `${scene} upgrades saved empty manifests through API validation`);
 }
 
-const baxManifest = createControlManifest('bax');
-assert.throws(() => validateControlManifest({ ...baxManifest, controls: [...baxManifest.controls, baxManifest.controls[0]] }, 'bax'), /Duplicate manifest control/);
-const duplicatePanel = structuredClone(baxManifest);
+const objectsManifest = createControlManifest('objects');
+assert.throws(() => validateControlManifest({ ...objectsManifest, controls: [...objectsManifest.controls, objectsManifest.controls[0]] }, 'objects'), /Duplicate manifest control/);
+const duplicatePanel = structuredClone(objectsManifest);
 duplicatePanel.panels[1].id = duplicatePanel.panels[0].id;
-assert.throws(() => validateControlManifest(duplicatePanel, 'bax'), /duplicate panel id/);
-const duplicatedPanelControl = structuredClone(baxManifest);
+assert.throws(() => validateControlManifest(duplicatePanel, 'objects'), /duplicate panel id/);
+const duplicatedPanelControl = structuredClone(objectsManifest);
 duplicatedPanelControl.panels[1].controls.push(duplicatedPanelControl.panels[0].controls[0]);
-assert.throws(() => validateControlManifest(duplicatedPanelControl, 'bax'), /selected controls exactly once/);
-const omittedPanelControl = structuredClone(baxManifest);
+assert.throws(() => validateControlManifest(duplicatedPanelControl, 'objects'), /selected controls exactly once/);
+const omittedPanelControl = structuredClone(objectsManifest);
 omittedPanelControl.panels.at(-1).controls.pop();
-assert.throws(() => validateControlManifest(omittedPanelControl, 'bax'), /Every selected control needs a panel/);
-const unselectedPanelControl = structuredClone(baxManifest);
+assert.throws(() => validateControlManifest(omittedPanelControl, 'objects'), /Every selected control needs a panel/);
+const unselectedPanelControl = structuredClone(objectsManifest);
 unselectedPanelControl.panels[0].controls.push('device.root.x');
-assert.throws(() => validateControlManifest(unselectedPanelControl, 'bax'), /selected controls exactly once/);
-const invalidPanelCategory = structuredClone(baxManifest);
+assert.throws(() => validateControlManifest(unselectedPanelControl, 'objects'), /selected controls exactly once/);
+const invalidPanelCategory = structuredClone(objectsManifest);
 invalidPanelCategory.panels[0].category = 'misc';
-assert.throws(() => validateControlManifest(invalidPanelCategory, 'bax'), /Invalid panel metadata/);
+assert.throws(() => validateControlManifest(invalidPanelCategory, 'objects'), /Invalid panel metadata/);
 
 for (const [scene, definitions] of Object.entries(studyControlDefinitions)) {
   assert.ok(sceneIds.includes(scene), `scene capability metadata only names registered scenes: ${scene}`);

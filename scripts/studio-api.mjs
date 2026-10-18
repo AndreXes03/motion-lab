@@ -1,6 +1,8 @@
+import {migrateLegacyScene} from '../src/engine/legacy-scene.js';
 import {studyControlDefinitions} from '../src/engine/scene-capabilities.js';
 import {resolveControlManifest} from '../src/engine/control-catalog.js';
 import {validateParameterAnimation} from '../src/engine/parameter-animation.js';
+import {validateAuthoredMotion} from '../src/engine/authored-animation.js';
 import {validateRenderPlan,resolveRenderPlan} from '../src/engine/render-policy.js';
 import {getCyclesCapabilities,buildCyclesCommand} from './cycles/studio.mjs';
 import {getMixedCapabilities,preflightMixed,buildMixedCommand} from './mixed/studio.mjs';
@@ -67,31 +69,9 @@ function merge(base, patch) {
 }
 
 function validateMotion(motion, allowedTracks, duration=config.duration) {
-  if (!isRecord(motion) || !isRecord(motion.tracks)) throw new Error('motion must be an object with a tracks map');
-  if (Object.keys(motion).some(key => !['name', 'cuts', 'tracks'].includes(key))) throw new Error('motion contains unsupported fields');
-  if (motion.cuts !== undefined) {
-    if (!Array.isArray(motion.cuts) || motion.cuts.length > 1000) throw new Error('motion.cuts must be an array of at most 1000 cut times');
-    for (const cut of motion.cuts) {
-      const time = typeof cut === 'number' ? cut : isRecord(cut) ? (cut.time ?? cut.t) : NaN;
-      if (!Number.isFinite(time) || time < 0 || time > duration) throw new Error(`Every motion cut must be a finite time from 0 to ${duration} seconds`);
-    }
-  }
-  const tracks = Object.entries(motion.tracks);
-  if (tracks.length > 100) throw new Error('motion has too many tracks');
-  for (const [name, keys] of tracks) {
-    if (!allowedTracks.has(name)) throw new Error(`Unsupported motion track: ${name}`);
-    if (!name || name.length > 120 || !Array.isArray(keys) || keys.length > 1000) throw new Error(`Invalid motion track: ${name}`);
-    let previous = -Infinity;
-    for (const key of keys) {
-      if (!isRecord(key) || Object.keys(key).some(k => !['t', 'value', 'ease'].includes(k)) || !Number.isFinite(key.t) || key.t < 0 || key.t > 10 || key.t < previous || key.value === undefined) throw new Error(`Invalid key in motion track ${name}`);
-      finiteTree(key.value, `motion.${name}.value`);
-      const vector = ['camera.position', 'camera.target'].includes(name) || (!name.endsWith('.z') && name !== 'camera.roll');
-      if (vector ? (!Array.isArray(key.value) || key.value.length !== 3 || !key.value.every(Number.isFinite)) : (typeof key.value !== 'number' || !Number.isFinite(key.value))) throw new Error(`Invalid value in motion track ${name}`);
-      if (key.ease !== undefined && !['linear', 'smooth', 'hold', 'in', 'out', 'inOut'].includes(key.ease)) throw new Error(`Invalid easing in motion track ${name}`);
-      previous = key.t;
-    }
-  }
-  return motion;
+  // This field is the legacy OBJECTS source document, retained in every recipe.
+  // A shorter function-authored scene does not shorten those unused source keys.
+  return validateAuthoredMotion(motion,{allowedTracks,duration:10,cutDuration:duration});
 }
 
 function validateStudioMeta(studio, scene, look) {
@@ -120,8 +100,9 @@ function validateStudioMeta(studio, scene, look) {
 export async function validateStudioParameters(input) {
   if (!isRecord(input)) throw new Error('parameters must be a JSON object');
   finiteTree(input, 'parameters');
+  input = migrateLegacyScene(input);
   for (const key of Object.keys(input)) if (!ALLOWED_PARAMETERS.has(key)) throw new Error(`Unsupported parameter: ${key}`);
-  const scene = input.scene ?? 'bax';
+  const scene = input.scene ?? 'objects';
   if (!sceneIds.includes(scene)) throw new Error('scene must be '+sceneIds.join(', '));
   const defaults = await Promise.all([readProject('look'), readProject('motion')]);
   const look = merge(defaults[0], input.look ?? {});
@@ -160,12 +141,12 @@ export async function validateStudioParameters(input) {
   if (input.knob !== undefined && (typeof input.knob !== 'string' || !/^#[0-9a-f]{6}$/i.test(input.knob))) throw new Error('knob must be a hex color');
   if (input.display !== undefined && (typeof input.display !== 'string' || input.display.length > 22)) throw new Error('display must be text up to 22 characters');
   if (input.objectMotion !== undefined && (typeof input.objectMotion !== 'number' || !Number.isFinite(input.objectMotion) || input.objectMotion < 0 || input.objectMotion > 2)) throw new Error('objectMotion must be 0..2');
-  if (input.review !== undefined && (scene !== 'bax' || !['beauty', 'clean', 'clay', 'normals'].includes(input.review))) throw new Error('review is only supported for the BAX scene');
-  if (input.inspect !== undefined && (!isRecord(input.inspect) || Object.keys(input.inspect).some(k => !['object', 'yaw'].includes(k)) || scene !== 'bax' || !['device.root', 'bax.emblem', 'bax.kinetic'].includes(input.inspect.object) || (input.inspect.yaw !== undefined && (!Number.isFinite(input.inspect.yaw) || Math.abs(input.inspect.yaw) > 180)))) throw new Error('Invalid inspect parameter');
+  if (input.review !== undefined && (scene !== 'objects' || !['beauty', 'clean', 'clay', 'normals'].includes(input.review))) throw new Error('review is only supported for the OBJECTS scene');
+  if (input.inspect !== undefined && (!isRecord(input.inspect) || Object.keys(input.inspect).some(k => !['object', 'yaw'].includes(k)) || scene !== 'objects' || !['device.root', 'objects.emblem', 'objects.kinetic'].includes(input.inspect.object) || (input.inspect.yaw !== undefined && (!Number.isFinite(input.inspect.yaw) || Math.abs(input.inspect.yaw) > 180)))) throw new Error('Invalid inspect parameter');
   if(input.objectEdits!==undefined){
     if(!isRecord(input.objectEdits))throw new Error('objectEdits must be an object');
     for(const [id,edits]of Object.entries(input.objectEdits)){
-      if(scene!=='bax'||!['device.root','bax.emblem','bax.kinetic'].includes(id)||!isRecord(edits))throw new Error('Unsupported object edit');
+      if(scene!=='objects'||!['device.root','objects.emblem','objects.kinetic'].includes(id)||!isRecord(edits))throw new Error('Unsupported object edit');
       const ranges={x:[-5,5],y:[-5,5],z:[-5,5],yaw:[-180,180],scale:[.25,2]};
       for(const [key,value]of Object.entries(edits)){const range=ranges[key];if(!range||!Number.isFinite(value)||value<range[0]||value>range[1])throw new Error('Invalid object edit: '+id+'.'+key);}
     }
@@ -265,7 +246,7 @@ async function sourceFingerprint() {
 
 function jobManifest(job) {
   return {
-    id: job.id, kind: job.kind, scene: job.scene, status: job.status,
+    id: job.id, kind: job.kind, purpose: job.purpose ?? 'export', scene: job.scene, status: job.status,
     progress: job.progress, frames: job.frames, total: job.total, phase: job.phase, samples: job.samples, totalSamples: job.totalSamples,
     createdAt: job.createdAt, startedAt: job.startedAt,
     finishedAt: job.finishedAt, time: job.time, sourceHash: job.sourceHash,
@@ -301,10 +282,10 @@ async function loadPersistedJobs() {
         error = 'Render file is missing from the output folder.';
       }
       const job = {
-        id, kind: record.kind, scene: record.scene, status,
+        id, kind: record.kind, purpose: record.purpose ?? 'export', scene: record.scene, status,
         progress: status === 'completed' ? 100 : Math.max(0, Math.min(99, Number(record.progress) || 0)),
-        frames: Math.max(0, Number(record.frames) || (status === 'completed' ? (record.kind === 'frame' ? 1 : sceneConfig(record.scene??'bax').duration * (record.settings?.fps ?? config.fps)) : 0)),
-        total: Math.max(1, Number(record.total) || (record.kind === 'frame' ? 1 : sceneConfig(record.scene??'bax').duration * (record.settings?.fps ?? config.fps))),
+        frames: Math.max(0, Number(record.frames) || (status === 'completed' ? (record.kind === 'frame' ? 1 : sceneConfig(record.scene??'objects').duration * (record.settings?.fps ?? config.fps)) : 0)),
+        total: Math.max(1, Number(record.total) || (record.kind === 'frame' ? 1 : sceneConfig(record.scene??'objects').duration * (record.settings?.fps ?? config.fps))),
         samples: Math.max(0, Number(record.samples) || (status === 'completed' && record.kind === 'frame' ? (record.settings?.temporalSamples ?? 1) : 0)),
         totalSamples: Math.max(0, Number(record.totalSamples) || (record.kind === 'frame' ? (record.settings?.temporalSamples ?? 1) : 0)),
         phase: status === 'completed' ? 'completed' : status === 'failed' ? 'failed' : (record.phase || 'rendering'),
@@ -317,7 +298,7 @@ async function loadPersistedJobs() {
         sourceHash: record.sourceHash ?? null, sourceHashAfter: record.sourceHashAfter ?? null,
         parameters: record.parameters ?? {}, settings: record.settings ?? null, engine:record.engine??'threejs', rendererSelection:record.rendererSelection??null
       };
-      if (job.status === 'completed' && job.destination !== 'downloads') {
+      if (job.status === 'completed' && job.destination !== 'downloads' && job.purpose !== 'viewport') {
         try { await publishDownload(job); await writeJobManifest(job); }
         catch { /* Keep historical files accessible if Downloads is unavailable. */ }
       }
@@ -332,7 +313,7 @@ function publicJob(job) {
   const { sourceHash, sourceHashAfter, pid, logs, snapshotPath, manifestPath, parameters, ...publicFields } = job;
   return {
     ...publicFields,
-    previewUrl: job.frames > 0 ? `/api/studio/jobs/${job.id}/preview?frame=${job.previewFrame??job.frames}` : null,
+    previewUrl: job.previewStage ? `/api/studio/jobs/${job.id}/preview?stage=${job.previewStage}` : job.frames > 0 ? `/api/studio/jobs/${job.id}/preview?frame=${job.previewFrame??job.frames}` : null,
     filename: path.basename(job.outputPath),
     outputPath: job.outputPath
   };
@@ -355,6 +336,9 @@ function launchJob(job, invocation, spawnFn) {
     if (!line.trim()) return;
     try {
       const event = JSON.parse(line);
+      if(event.type==='preview'&&job.purpose==='viewport'&&job.engine==='cycles'&&[1,2].includes(event.stage)){
+        job.previewStage=event.stage;job.previewWidth=event.width;job.previewHeight=event.height;job.previewSamples=event.samples;job.phase='refining';job.progress=Math.max(job.progress,Number(event.percent)||0);
+      }
       if (['progress','frame'].includes(event.type)) {
         if (Number.isFinite(event.percent)) job.progress = Math.max(0, Math.min(99, event.percent));
         if (Number.isFinite(event.frames)) job.frames = Math.max(job.frames ?? 0, Math.min(job.total, event.frames));
@@ -363,7 +347,7 @@ function launchJob(job, invocation, spawnFn) {
         if(job.engine==='cycles'&&event.type==='frame'&&Number.isInteger(event.frame)&&event.frame>0&&event.frame<=job.total)job.previewFrame=event.frame;
         if (Number.isFinite(event.sample)) job.samples = Math.max(job.samples ?? 0, Math.min(job.totalSamples ?? event.totalSamples ?? 1, event.sample));
         if (Number.isFinite(event.totalSamples)) job.totalSamples = Math.max(1, event.totalSamples);
-        if (['sampling', 'rendering', 'encoding','baking','freezing'].includes(event.phase)) job.phase = event.phase;
+        if (['sampling', 'rendering', 'encoding','baking','freezing','refining','final'].includes(event.phase)) job.phase = event.phase;
       }
       if (event.type === 'error') job.error = event.message || 'Render failed';
     } catch { /* CLI diagnostics can include non-JSON lines; retain as logs. */ }
@@ -391,7 +375,7 @@ function launchJob(job, invocation, spawnFn) {
           job.phase = 'failed';
           job.error = 'Project sources changed during rendering; the output is not marked complete.';
         } else {
-          await publishDownload(job);
+          if (job.purpose !== 'viewport') await publishDownload(job);
           job.status = 'completed'; job.phase = 'completed'; job.progress = 100; job.frames = job.total; job.samples = job.totalSamples; job.url = `/api/studio/jobs/${job.id}/file`;
           job.downloadUrl = `/api/studio/jobs/${job.id}/download`;
         }
@@ -421,7 +405,7 @@ export function createStudioApi({ spawnFn = nodeSpawn, revealFn = revealWithFind
       if (req.method === 'GET' && route === '/studio') {
         await loadPersistedJobs();
         const [versions] = await Promise.all([listVersions()]);
-        const currentJobs = [...jobs.values()].sort((a, b) => String(b.createdAt).localeCompare(String(a.createdAt))).map(publicJob);
+        const currentJobs = [...jobs.values()].filter(job => job.purpose !== 'viewport').sort((a, b) => String(b.createdAt).localeCompare(String(a.createdAt))).map(publicJob);
         return send(res, 200, { versions, jobs: currentJobs, outputDirectory: DOWNLOAD_DIR });
       }
       if(req.method==='GET'&&route==='/studio/capabilities')return send(res,200,{capabilities:await capabilitiesFn()});
@@ -453,14 +437,17 @@ export function createStudioApi({ spawnFn = nodeSpawn, revealFn = revealWithFind
         await loadPersistedJobs();
         const job = jobs.get(previewMatch[1]);
         if (!job) return send(res, 404, { error: 'Job not found' });
+        const stageQuery=new URL(req.url,'http://127.0.0.1').searchParams.get('stage');
+        const progressiveStage=stageQuery===null?null:Number(stageQuery);
+        if(stageQuery!==null&&(![1,2].includes(progressiveStage)||job.purpose!=='viewport'||job.engine!=='cycles'||progressiveStage>(job.previewStage??0)))return send(res,404,{error:'Progressive frame not ready'});
         const fullFrame = job.kind === 'frame' && job.status === 'completed';
         const cyclesPreview=job.engine==='cycles'&&Number.isInteger(job.previewFrame);
         const mixedPreview=job.engine==='mixed'&&Number.isInteger(job.previewFrame);
-        const previewPath = fullFrame ? job.outputPath : mixedPreview?path.join(RENDER_DIR,`${job.id}${job.extension}.mixed`,`frame-${String(job.previewFrame).padStart(6,'0')}.png`):cyclesPreview?path.join(RENDER_DIR,'cycles',`${job.id}${job.extension}.cycles`,'frames',`frame-${String(job.previewFrame).padStart(6,'0')}.png`):path.join(RENDER_DIR, `${job.id}${job.extension}.progress.jpg`);
+        const previewPath = progressiveStage ? path.join(RENDER_DIR,'cycles',`${job.id}${job.extension}.cycles`,`preview-stage-${progressiveStage}.png`) : fullFrame ? job.outputPath : mixedPreview?path.join(RENDER_DIR,`${job.id}${job.extension}.mixed`,`frame-${String(job.previewFrame).padStart(6,'0')}.png`):cyclesPreview?path.join(RENDER_DIR,'cycles',`${job.id}${job.extension}.cycles`,'frames',`frame-${String(job.previewFrame).padStart(6,'0')}.png`):path.join(RENDER_DIR, `${job.id}${job.extension}.progress.jpg`);
         const info = await stat(previewPath).catch(() => null);
         if (!info?.isFile()) return send(res, 404, { error: 'Render preview not ready' });
         res.statusCode = 200;
-        res.setHeader('Content-Type', fullFrame||cyclesPreview||mixedPreview ? 'image/png' : 'image/jpeg');
+        res.setHeader('Content-Type', progressiveStage||fullFrame||cyclesPreview||mixedPreview ? 'image/png' : 'image/jpeg');
         res.setHeader('Content-Length', info.size);
         res.setHeader('Cache-Control', 'no-store, max-age=0');
         createReadStream(previewPath).pipe(res);
@@ -500,11 +487,12 @@ export function createStudioApi({ spawnFn = nodeSpawn, revealFn = revealWithFind
         return send(res, 201, version);
       }
       if (route === '/studio/render') {
-        if (!isRecord(body) || Object.keys(body).some(k => !['kind', 'time', 'parameters', 'settings'].includes(k))) return send(res, 400, { error: 'Expected kind, time, parameters, and optional settings' });
+        if (!isRecord(body) || Object.keys(body).some(k => !['kind', 'time', 'parameters', 'settings', 'purpose'].includes(k))) return send(res, 400, { error: 'Expected kind, time, parameters, and optional settings' });
         if (!['frame', 'preview', 'export'].includes(body.kind)) return send(res, 400, { error: 'kind must be frame, preview, or export' });
+        if (body.purpose !== undefined && (body.purpose !== 'viewport' || body.kind !== 'frame')) return send(res, 400, { error: 'Viewport jobs must be single frames' });
         if (activeRenderId) return send(res, 409, { error: 'Another local render is already running' });
         const time = body.time ?? 0;
-        const selectedConfig=sceneConfig(body.parameters?.scene??'bax');if (typeof time !== 'number' || !Number.isFinite(time) || time < 0 || time > selectedConfig.duration) return send(res, 400, { error: `time must be a number from 0 to ${selectedConfig.duration} seconds` });
+        const selectedConfig=sceneConfig(body.parameters?.scene??'objects');if (typeof time !== 'number' || !Number.isFinite(time) || time < 0 || time > selectedConfig.duration) return send(res, 400, { error: `time must be a number from 0 to ${selectedConfig.duration} seconds` });
         reservation = `pending:${randomUUID()}`;
         activeRenderId = reservation;
         const parameters = await validateStudioParameters(body.parameters);
@@ -534,13 +522,13 @@ export function createStudioApi({ spawnFn = nodeSpawn, revealFn = revealWithFind
         await writeFile(snapshotPath, `${JSON.stringify(snapshot, null, 2)}\n`, { flag: 'wx' });
         const total = body.kind === 'frame' ? 1 : Math.round(selectedConfig.duration * fps);
         const totalSamples = body.kind === 'frame'&&selection.selectedRenderer==='threejs' ? settings.temporalSamples : 0;
-        const job = { id, kind: body.kind, scene: parameters.scene, status: 'running', progress: 0, frames: 0, total, samples: 0, totalSamples, phase: 'rendering', createdAt: new Date().toISOString(), time, url: null, downloadUrl: null, error: null, extension, settings, sourceHash, outputPath, snapshotPath, manifestPath: path.join(RENDER_DIR,`${id}${extension}.job.json`), parameters,engine:selection.selectedRenderer,rendererSelection:selection };
+        const job = { id, kind: body.kind, purpose: body.purpose ?? 'export', scene: parameters.scene, status: 'running', progress: 0, frames: 0, total, samples: 0, totalSamples, phase: 'rendering', createdAt: new Date().toISOString(), time, url: null, downloadUrl: null, error: null, extension, settings, sourceHash, outputPath, snapshotPath, manifestPath: path.join(RENDER_DIR,`${id}${extension}.job.json`), parameters,engine:selection.selectedRenderer,rendererSelection:selection };
         jobs.set(id, job);
         await writeJobManifest(job);
         const args = [body.kind, '--out', outputPath, '--snapshot', snapshotPath];
         if (body.kind === 'frame') args.push('--time', String(time), '--width', String(width), '--height', String(height), '--fps', String(fps), '--temporal-samples', String(temporalSamples));
         else args.push('--temporal-samples', String(snapshot.temporalSamples), '--fps', String(fps), '--format', settings.format, ...(settings.bitrateMbps === null ? [] : ['--bitrate-mbps', String(settings.bitrateMbps)]));
-        const invocation=selection.selectedRenderer==='mixed'?buildMixedCommand({kind:body.kind,snapshotPath,outputPath,root:ROOT,audioPath:plan.composite.audioFile??undefined,audioOffset:plan.composite.audioOffset}):selection.selectedRenderer==='cycles'?buildCyclesCommand({kind:body.kind,snapshotPath,outputPath,root:ROOT,settings:{width,height,fps,cyclesSamples:plan.cycles.samples,device:plan.cycles.device,workers:plan.cycles.workers,denoise:plan.cycles.denoise,motionBlur:temporalSamples>1,shutter:Math.max(0,Math.min(1,(parameters.look?.post?.shutterAngle??180)/360)),composite:'titles'}}):{command:process.execPath,args:[CLI,...args],cwd:ROOT};
+        const invocation=selection.selectedRenderer==='mixed'?buildMixedCommand({kind:body.kind,snapshotPath,outputPath,root:ROOT,audioPath:plan.composite.audioFile??undefined,audioOffset:plan.composite.audioOffset}):selection.selectedRenderer==='cycles'?buildCyclesCommand({kind:body.kind,snapshotPath,outputPath,root:ROOT,settings:{width,height,fps,progressive:body.purpose==='viewport',cyclesSamples:plan.cycles.samples,device:plan.cycles.device,workers:plan.cycles.workers,denoise:plan.cycles.denoise,motionBlur:temporalSamples>1,shutter:Math.max(0,Math.min(1,(parameters.look?.post?.shutterAngle??180)/360)),composite:'titles'}}):{command:process.execPath,args:[CLI,...args],cwd:ROOT};
         launchJob(job, invocation, spawnFn);
         reservation = null;
         return send(res, 202, { id });

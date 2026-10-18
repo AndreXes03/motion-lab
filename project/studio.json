@@ -2,7 +2,7 @@
   "version": 1,
   "projects": [
     {
-      "id": "bax",
+      "id": "objects",
       "title": "Objects in play",
       "subtitle": "Three 3D objects, studio lighting and a cinematic camera.",
       "kind": "3d",

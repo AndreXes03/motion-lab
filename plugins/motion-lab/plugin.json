@@ -1,6 +1,18 @@
 {
   "name": "motion-lab",
-  "version": "0.1.0",
-  "description": "Local agent tools for immutable Motion Lab versions, previews and render jobs. Requires a configured local checkout.",
-  "mcpServers": "./mcp.json"
+  "version": "0.1.1",
+  "description": "Local agent tools for Framevolve Studio: editable scenes, versions, previews and render jobs.",
+  "mcpServers": "./mcp.json",
+  "interface": {
+    "displayName": "Framevolve",
+    "shortDescription": "Create, preview and render editable motion locally.",
+    "longDescription": "Connect Framevolve Studio to Codex. Inspect scenes, adjust editable controls, save versions and render previews on your Mac.",
+    "developerName": "Andrea Salvo",
+    "category": "Productivity",
+    "brandColor": "#d7f56b",
+    "logo": "./assets/framevolve-logo.svg",
+    "logoDark": "./assets/framevolve-logo.svg",
+    "composerIcon": "./assets/framevolve-mark.svg",
+    "websiteUrl": "https://andrexes03.github.io/motion-lab/"
+  }
 }

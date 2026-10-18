@@ -1,4 +1,6 @@
 import {studioProjects} from '../engine/project-controls.js';
+import {icon} from './studio-icons.js';
+import './preview-quality.css';
 
 const STORAGE_KEY = 'motion-lab-preview-quality';
 const MODES = ['auto', 'balanced', 'fast', 'sharp'];
@@ -37,21 +39,34 @@ function mobileViewport() {
 }
 
 /** Mount the preview-quality selector and expose a render policy for the viewer. */
-export function mountPreviewQuality({container, getScene, onChange = () => {}}) {
+export function mountPreviewQuality({container, getScene, getOutputSettings = () => ({width:1920,height:1080}), onChange = () => {}, onModeChange = () => {}}) {
   if (!container?.append || typeof getScene !== 'function') {
     throw new TypeError('Preview quality requires a container and getScene callback.');
   }
 
-  let mode = loadMode();
+  let interactiveMode = loadMode();
+  let mode = interactiveMode;
+  let renderState = 'pending';
+  let renderPhase = '';
+  let renderMilliseconds = null;
   let samples = [];
   // A tier stays in place until costs recover well below the downgrade limit.
   let adaptiveTier = 0;
 
   const toolbar = document.createElement('div');
-  toolbar.className = 'preview-toolbar';
+  toolbar.className = 'preview-toolbar preview-mode-toolbar';
+  const modes = document.createElement('div'); modes.className = 'preview-mode-buttons';
+  modes.setAttribute('role', 'group'); modes.setAttribute('aria-label', 'Preview mode');
+  const interactiveButton = document.createElement('button'); interactiveButton.type = 'button'; interactiveButton.id = 'preview-mode-interactive';
+  interactiveButton.setAttribute('aria-label', 'Interactive'); interactiveButton.title = 'Interactive preview'; interactiveButton.innerHTML = icon('play');
+  const renderButton = document.createElement('button'); renderButton.type = 'button'; renderButton.id = 'preview-mode-render';
+  renderButton.setAttribute('aria-label', 'Render view'); renderButton.title = 'Full-resolution frame · selected final renderer'; renderButton.innerHTML = icon('frame');
+  modes.append(interactiveButton, renderButton);
+  const qualityControl = document.createElement('div'); qualityControl.className = 'preview-interactive-quality';
   const label = document.createElement('label');
   label.htmlFor = 'preview-quality';
-  label.textContent = 'Preview';
+  label.textContent = 'Quality';
+  label.className = 'preview-quality-label';
   const select = document.createElement('select');
   select.id = 'preview-quality';
   select.setAttribute('aria-label', 'Preview quality');
@@ -66,7 +81,8 @@ export function mountPreviewQuality({container, getScene, onChange = () => {}}) 
   status.id = 'preview-quality-status';
   status.setAttribute('role', 'status');
   status.setAttribute('aria-live', 'polite');
-  toolbar.append(label, select, status);
+  qualityControl.append(label, select);
+  toolbar.append(modes, qualityControl, status);
   container.append(toolbar);
 
   function getSettings(interacting = false) {
@@ -75,6 +91,12 @@ export function mountPreviewQuality({container, getScene, onChange = () => {}}) 
     const isTwoDimensional = kind === '2d';
     let width;
     let quality = 'full';
+
+    if (mode === 'render') {
+      const output = getOutputSettings();
+      width = interacting ? 640 : output.width;
+      return {width, height: interacting ? Math.round(width * output.height / output.width) : output.height, quality: 'full', label: 'Render view'};
+    }
 
     if (mode === 'balanced') width = 640;
     else if (mode === 'fast') { width = 384; quality = 'fast'; }
@@ -93,7 +115,17 @@ export function mountPreviewQuality({container, getScene, onChange = () => {}}) 
   }
 
   function updateStatus(setting = getSettings(false)) {
-    status.textContent = `${setting.label} · ${setting.width} × ${setting.height}${setting.quality === 'fast' ? ' · simplified effects' : ''}`;
+    const isRender = mode === 'render';
+    toolbar.dataset.mode = isRender ? 'render' : 'interactive';
+    toolbar.dataset.renderState = renderState;
+    interactiveButton.setAttribute('aria-pressed', String(!isRender));
+    renderButton.setAttribute('aria-pressed', String(isRender));
+    qualityControl.hidden = isRender;
+    toolbar.setAttribute('aria-busy', String(isRender && renderState === 'rendering'));
+    if (isRender) {
+      const duration = renderMilliseconds === null ? '' : renderMilliseconds < 1000 ? ` · ${Math.round(renderMilliseconds)} ms` : ` · ${(renderMilliseconds / 1000).toFixed(1)} s`;
+      status.textContent = renderState === 'pending' ? (renderPhase === 'waiting' ? 'Renderer busy…' : 'Waiting to refine…') : renderState === 'rendering' ? (['freezing','baking','starting','preparing'].includes(renderPhase) ? 'Preparing scene…' : renderPhase === 'refining' ? 'Refining…' : renderPhase === 'final' ? 'Final pass…' : 'Rendering…') : renderState === 'error' ? 'Render failed' : renderState === 'unavailable' ? 'Local renderer required' : `${setting.width} × ${setting.height}${duration}`;
+    } else status.textContent = `${setting.width} × ${setting.height}${setting.quality === 'fast' ? ' · simplified effects' : ''}`;
   }
 
   function reportFrame(ms) {
@@ -118,27 +150,44 @@ export function mountPreviewQuality({container, getScene, onChange = () => {}}) 
   }
 
   function setMode(nextMode) {
-    if (!MODES.includes(nextMode)) throw new RangeError(`Unknown preview quality: ${nextMode}`);
+    if (nextMode === 'interactive') nextMode = interactiveMode;
+    if (nextMode !== 'render' && !MODES.includes(nextMode)) throw new RangeError(`Unknown preview quality: ${nextMode}`);
     if (mode === nextMode) return;
+    const previousMode = mode;
     mode = nextMode;
-    if (mode === 'auto') {
-      samples = [];
-      adaptiveTier = 0;
+    if (mode === 'render') {
+      renderState = 'pending';
+      renderMilliseconds = null;
+    } else {
+      interactiveMode = mode;
+      select.value = mode;
+      saveMode(mode);
+      if (mode === 'auto') { samples = []; adaptiveTier = 0; }
     }
-    select.value = mode;
-    saveMode(mode);
     updateStatus();
-    onChange();
+    onModeChange(mode, previousMode);
+    onChange({mode, previousMode, interactiveMode});
   }
 
+  function setRenderState(state, ms, phase = '') {
+    if (!['pending', 'rendering', 'ready', 'error', 'unavailable'].includes(state)) throw new RangeError(`Unknown preview render state: ${state}`);
+    renderState = state; renderPhase = phase;
+    renderMilliseconds = state === 'ready' && Number.isFinite(ms) && ms >= 0 ? ms : null;
+    updateStatus();
+  }
+
+  interactiveButton.addEventListener('click', () => setMode(interactiveMode));
+  renderButton.addEventListener('click', () => setMode('render'));
   select.addEventListener('change', () => setMode(select.value));
   updateStatus();
 
   return {
     getSettings,
     reportFrame,
-    syncScene() { samples = []; adaptiveTier = 0; updateStatus(); },
+    syncScene() { samples = []; adaptiveTier = 0; renderState = 'pending'; renderMilliseconds = null; updateStatus(); },
     getMode: () => mode,
+    getInteractiveMode: () => interactiveMode,
+    setRenderState,
     setMode
   };
 }

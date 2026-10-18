@@ -1,12 +1,18 @@
-# Motion Lab showcase
+# Framevolve showcase
 
-This static English-language page presents Motion Lab as one continuous workflow: a coding agent shapes the scene code and recipe, you direct the motion and finish in the studio, then render locally. Six playable examples show its 2D, hybrid and 3D range; the PULSE film leads the page.
+This static English-language page presents Framevolve as one continuous workflow: a coding agent shapes the scene code and recipe, you direct the motion and finish in the studio, then render locally. Five playable examples show its 2D, hybrid and 3D range; the PULSE film leads the page.
 
-The visual system keeps Motion Lab’s graphite panels, glass surfaces and small lime accent. The PULSE hero video loops muted only while visible, pauses when the page is hidden or the visitor scrolls away, and falls back to its poster for reduced-motion settings. The demo film player below remains user-controlled.
+The visual system keeps Framevolve’s graphite panels, glass surfaces and small lime accent. The PULSE hero video loops muted only while visible, pauses when the page is hidden or the visitor scrolls away, and falls back to its poster for reduced-motion settings. The demo film player below remains user-controlled.
 
 ## Studio captures
 
-The workflow section uses `demo/ui-tools.jpg` and `demo/ui-motion-groups.jpg`. Keep those filenames stable. Capture the first from the live Properties panel with the scene-specific controls visible. Capture the second from Motion with a temporary camera-group curve visible; do not save that example curve into a project or recipe.
+The workflow section is a full-width screenshot gallery with Easy, Pro and Export tabs. It uses three real 1280 × 720 JPEG captures from the current application:
+
+- `demo/ui-studio-easy.jpg`: Easy Motion with its preset cards and simplified original-curve preview.
+- `demo/ui-studio-pro.jpg`: Pro Motion with the original native animation curve and keyframe controls visible.
+- `demo/ui-studio-export.jpg`: the current Export panel with its delivery controls visible.
+
+Capture all three from the running Studio after UI changes settle. Use the same browser viewport, keep the original scene motion, and do not manufacture curves or alter screenshot pixels. Use PULSE or the debranded native-motion scene; no old product marks should be visible. Inspect the captures before publication. Tabs support arrows, Home and End; each image links to its full-size capture. When replacing images, bump the UI capture version in `site.js`.
 
 ## Preview
 
@@ -16,9 +22,9 @@ From the repository root, run:
 npm run viewer
 ```
 
-Open the showcase at `http://127.0.0.1:4173/showcase/`. `site.js` prefixes video, poster and screenshot paths for this local route, while the published page uses the same assets from the site root. Studio links open the BAX scene at its Properties or Motion panel.
+Open the showcase at `http://127.0.0.1:4173/showcase/`. `site.js` prefixes video, poster and screenshot paths for this local route, while the published page uses the same assets from the site root. Studio links open PULSE at its Scene or Motion panel.
 
-To capture the studio views from a running preview on port 4194, start Vite with `npx vite --host 127.0.0.1 --port 4194`, then run `node scripts/tools-preview.mjs`. It waits for `window.motionPreview.whenIdle()` before capturing the two JPEGs.
+Use the running preview URL for browser-based captures. The legacy `scripts/tools-preview.mjs` produces the older two-image gallery and should not be used to refresh these three views.
 
 ## Rendering copy
 
@@ -27,3 +33,7 @@ To capture the studio views from a running preview on port 4194, start Vite with
 ## Publication
 
 The [GitHub Pages workflow](../.github/workflows/demo-pages.yml) copies this page and its referenced demo assets to the publication root. Keep internal notes out of the public page. Preserve the distinction between the browser preview, standard Three.js rendering and optional local renderer paths; do not imply runtime AI, native After Effects or Cinema 4D support, or general scene conversion.
+
+## Brand assets
+
+Framevolve is the product name. The repository and existing public URLs keep `motion-lab` for compatibility. Both the landing wordmark and favicon use `public/brand/framevolve-mark.png`, also served by the Studio. The Pages assembly must copy `public/brand` to `_site/brand` so the landing and Studio share the same asset without route assumptions. Existing authored film titles stay unchanged.

@@ -5,36 +5,47 @@ import {getControlCatalog,readControlValue} from '../src/engine/control-catalog.
 import {getControlPresets,getInterpolationPresets} from '../src/engine/control-presets.js';
 import {validateStudioParameters} from './studio-api.mjs';
 
-const openAdvanced=async page=>{const detail=page.locator('#motion-advanced');if(!await detail.evaluate(node=>node.open))await detail.locator(':scope > summary').click();};
+const openAdvanced=async page=>{await page.locator('#experience-pro').click();const detail=page.locator('#motion-advanced');if(!await detail.evaluate(node=>node.open))await detail.locator(':scope > summary').click();const editMode=page.locator('#motion-edit-mode');if(await editMode.isVisible())await editMode.selectOption('retime');};
 const output=new URL('../outputs/adaptive-controls-draft/',import.meta.url);
 await mkdir(output,{recursive:true});
 const browser=await chromium.launch({executablePath:'/Applications/Google Chrome.app/Contents/MacOS/Google Chrome',headless:true,args:['--disable-gpu-sandbox']});
 const page=await browser.newPage({viewport:{width:1440,height:1000}}),errors=[],checks=[];
 page.on('pageerror',error=>errors.push(error.message));
 const idle=()=>page.evaluate(()=>window.motionPreview.whenIdle());
-async function recipe(){await idle();await page.locator('#tab-code').click();return JSON.parse(await page.locator('#code-content').textContent());}
+async function recipe(){await idle();await page.locator('#experience-pro').click();await page.locator('#tab-code').click();return JSON.parse(await page.locator('#code-content').textContent());}
 async function mode(value){await page.locator('#preview-quality').selectOption(value);await idle();}
 async function seek(time){await page.locator('#seek').evaluate((input,time)=>{input.value=String(time*30);input.dispatchEvent(new Event('input',{bubbles:true}));},time);await idle();}
-async function motion(){await page.locator('#tab-motion').click();}
+async function motion(){await page.locator('#experience-pro').click();await page.locator('#tab-motion').click();await openAdvanced(page);}
+async function tools(category){
+ const tab=category==='compositing'?'compositing':'look';
+ await page.locator(`#tab-${tab}`).click();
+ assert.equal(await page.locator(`#inspector-${tab} #workspace-catalog`).count(),1,'The active workspace owns the shared catalog');
+ const button=page.locator(`#tool-categories button[data-category="${category}"]`);
+ assert.equal(await button.count(),1,`The active workspace exposes ${category}`);
+ // The category rail is omitted when the workspace has only one category.
+ if(await button.isVisible())await button.click();
+ const visibleCategories=await page.locator('#project-controls .control:visible').evaluateAll(nodes=>nodes.map(node=>node.dataset.category));
+ assert.ok(visibleCategories.length);assert.ok(visibleCategories.every(value=>value===category));
+}
 function values(parameters,profile){const catalog=getControlCatalog(parameters.scene);return Object.fromEntries(Object.keys(profile.values).map(id=>[id,readControlValue(catalog.find(control=>control.id===id),parameters)]));}
 const pass=(name,details={})=>checks.push({name,passed:true,...details});
 
 try{
- await page.goto('http://127.0.0.1:4194/?scene=bax&render=1');
+ await page.goto('http://127.0.0.1:4194/?scene=objects&render=1');
  await page.waitForFunction(()=>window.motionPreview&&window.motion?.ready);await page.evaluate(()=>window.motion.ready);await mode('sharp');
  const original=await recipe();
  for(const category of ['lights','compositing']){
-  const profiles=getControlPresets('bax',category),profile=profiles.find(profile=>profile.id!=='original'&&profile.id!=='clean')??profiles[0];
+  const profiles=getControlPresets('objects',category),profile=profiles.find(profile=>profile.id!=='original'&&profile.id!=='clean')??profiles[0];
   assert.ok(profile,'Preset must exist');
-  await page.locator('#tab-look').click();await page.locator(`#tool-categories button[data-category="${category}"]`).click();
+  await tools(category);
   const selector=page.locator(`.panel-preset[data-preset-category="${category}"]`).first();
-  const before=await recipe();await page.locator('#tab-look').click();await selector.selectOption(profile.id);const applied=await recipe();
+  const before=await recipe();await tools(category);await selector.selectOption(profile.id);const applied=await recipe();
   assert.deepEqual(values(applied.parameters,profile),profile.values);
   assert.equal(applied.config.duration,original.config.duration);assert.deepEqual(applied.parameters.motion,before.parameters.motion);
   await page.locator('#undo-edit').click();assert.deepEqual(values((await recipe()).parameters,profile),values(before.parameters,profile));
   await page.locator('#redo-edit').click();assert.deepEqual(values((await recipe()).parameters,profile),profile.values);
-  await page.locator('#tab-look').click();await page.locator(`#tool-categories button[data-category="${category}"]`).click();
-  const def=getControlCatalog('bax').find(control=>Object.hasOwn(profile.values,control.id)&&control.type==='range');
+  await tools(category);
+  const def=getControlCatalog('objects').find(control=>Object.hasOwn(profile.values,control.id)&&control.type==='range');
   const custom=Number((Math.min(def.max,profile.values[def.id]+def.step*2)).toFixed(8));
   assert.notEqual(custom,profile.values[def.id]);
   await page.locator(`#control-${def.id}-number`).fill(String(custom));await page.locator(`#control-${def.id}-number`).press('Tab');await idle();
@@ -93,10 +104,10 @@ try{
  const fast=await recipe();assert.deepEqual(fast.parameters,stable.parameters);assert.deepEqual(fast.exportSettings,stable.exportSettings);assert.deepEqual(fast.config,stable.config);
  await page.locator('#export-settings summary').click();
  await page.locator('#export-resolution').selectOption('2560x1440');await page.locator('#export-fps').selectOption('25');await page.locator('#export-samples').selectOption('4');
-  await page.locator('#export-settings summary').click();
+  await page.locator('#export-settings-close').click();
  const delivery=await recipe();let renderRequest;
  await page.route('**/api/studio/render',async route=>{renderRequest=route.request().postDataJSON();await route.fulfill({status:409,contentType:'application/json',body:JSON.stringify({error:'QA intercepted render request; no render job started.'})});});
- await page.locator('#render-final').click();await page.waitForFunction(()=>document.getElementById('render-status').textContent.includes('QA intercepted'));
+ await page.locator('#export-settings summary').click();await page.locator('#render-final').click();await page.waitForFunction(()=>document.getElementById('render-status').textContent.includes('QA intercepted'));
  assert.equal(renderRequest.kind,'export');assert.equal(renderRequest.time,1);assert.deepEqual(renderRequest.settings,delivery.exportSettings);assert.deepEqual(renderRequest.parameters,delivery.parameters);
  assert.equal(Object.hasOwn(renderRequest,'previewQuality'),false);assert.equal(Object.hasOwn(renderRequest.parameters,'previewQuality'),false);assert.equal(renderRequest.settings.width,2560);assert.equal(renderRequest.settings.height,1440);assert.equal(renderRequest.settings.fps,25);assert.equal(renderRequest.settings.temporalSamples,4);
  pass('Preview quality changes no recipe values; export payload retains independent delivery settings',{previewWidth:384,exportSettings:renderRequest.settings,renderPolicy:renderRequest.parameters.renderPolicy,jobStarted:false});
