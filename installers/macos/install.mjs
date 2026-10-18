@@ -112,7 +112,7 @@ export async function install(options, deps = {}) {
     await mkdir(root);
     await run(git, ['init', root]);
     await run(git, ['-C', root, 'remote', 'add', 'origin', sourceURL]);
-    await run(git, ['-C', root, 'fetch', '--depth=1', '--no-tags', 'origin', sourceCommit]);
+    await run(git, ['-C', root, 'fetch', '--depth=2', '--no-tags', 'origin', sourceCommit]);
     await run(git, ['-C', root, 'checkout', '-b', 'motion-lab-beta', 'FETCH_HEAD']);
     if (await run(git, ['-C', root, 'rev-parse', 'HEAD']) !== sourceCommit) throw Error('Commit scaricato diverso dal pin; installazione fermata.');
     stage = 'dependencies';
@@ -146,8 +146,8 @@ export async function install(options, deps = {}) {
         state.configBackup = await backup(deps.codexConfigFile ?? path.join(process.env.CODEX_HOME || path.join(home, '.codex'), 'config.toml'));
         await run(codex, ['plugin', 'marketplace', 'add', marketplace, '--json']);
         await run(codex, ['plugin', 'add', 'motion-lab@motion-lab-beta', '--json']);
-        const installed = await run(codex, ['plugin', 'list', '--marketplace', 'motion-lab-beta', '--json']);
-        if (!/\bmotion-lab\b/.test(installed)) throw Error('Codex non conferma il plugin installato. Controlla registrazione e backup; Studio resta disponibile.');
+        const installed = JSON.parse(await run(codex, ['plugin', 'list', '--marketplace', 'motion-lab-beta', '--json']));
+        if (!Array.isArray(installed.installed) || !installed.installed.some(p => p?.name === 'motion-lab' && p.marketplaceName === 'motion-lab-beta' && p.installed === true && p.enabled === true)) throw Error('Codex non conferma il plugin installato e abilitato nel marketplace corretto. Controlla registrazione e backup; Studio resta disponibile.');
       }
     }
     state.status = 'installed'; await writeJson(statusFile, state);

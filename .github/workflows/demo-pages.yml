@@ -53,7 +53,7 @@ jobs:
           cp demo/*.mp4 demo/*.gif demo/*.jpg demo/*.png _site/demo/
           cp demo/render-manifest.json _site/demo/
           cp outputs/downloads/* _site/downloads/
-          node -e "require('node:fs').writeFileSync('_site/build-info.json',JSON.stringify({sourceCommit:process.env.GITHUB_SHA,installerSourceCommit:'8e8c56815992833338f2b5e4316182417b54a4b9'})+'\n')"
+          node -e "const fs=require('node:fs');fs.writeFileSync('_site/build-info.json',JSON.stringify({sourceCommit:process.env.GITHUB_SHA,installerSourceCommit:JSON.parse(fs.readFileSync('outputs/downloads/manifest.json','utf8')).sourceCommit})+'\n')"
       - uses: actions/upload-pages-artifact@v4
         with:
           path: _site

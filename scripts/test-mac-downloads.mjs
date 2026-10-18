@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import { execFile } from 'node:child_process';
 import { promisify } from 'node:util';
-import { mkdtemp, mkdir, readFile, writeFile, copyFile, rm, realpath, stat, readdir } from 'node:fs/promises';
+import { mkdtemp, mkdir, readFile, writeFile, copyFile, rm, realpath, stat, readdir, chmod } from 'node:fs/promises';
 import os from 'node:os';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -24,6 +24,14 @@ async function fixture(t) {
   await runReal('git', ['init', '-b', 'main'], source);
   await runReal('git', ['-c', 'user.name=Test', '-c', 'user.email=test@example.invalid', 'add', '.'], source);
   await runReal('git', ['-c', 'user.name=Test', '-c', 'user.email=test@example.invalid', 'commit', '-m', 'fixture'], source);
+  const commit = message => runReal('git', ['-c', 'user.name=Test', '-c', 'user.email=test@example.invalid', 'commit', '-am', message], source);
+  await runReal('git', ['checkout', '-b', 'plugin'], source);
+  await writeFile(path.join(source, 'package.json'), '{"name":"motion-lab","type":"module","description":"plugin"}'); await commit('plugin');
+  await runReal('git', ['checkout', 'main'], source);
+  await writeFile(path.join(source, 'index.html'), '<h1>New main UI</h1>'); await commit('main UI');
+  const mainSha = await runReal('git', ['rev-parse', 'HEAD'], source);
+  await runReal('git', ['checkout', 'plugin'], source);
+  await runReal('git', ['-c', 'user.name=Test', '-c', 'user.email=test@example.invalid', 'merge', '--no-edit', 'main'], source);
   const sha = await runReal('git', ['rev-parse', 'HEAD'], source), calls = [];
   const deps = { platform: 'darwin', home, codexConfigFile: path.join(home, '.codex/config.toml'), sourceURL: source, sourceCommit: sha, find: async name => name, chromeAvailable: async () => true, claudeAvailable: async () => true };
   deps.run = async (cmd, args, cwd) => {
@@ -35,13 +43,13 @@ async function fixture(t) {
     }
     if (cmd === 'codex') {
       if (args.includes('--help')) return 'supported';
-      if (args[1] === 'list') return args.includes('--marketplace') ? '{"plugins":[{"name":"motion-lab","installed":true,"enabled":true}]}' : '{"plugins":[]}';
+      if (args[1] === 'list') return args.includes('--marketplace') ? '{"installed":[{"pluginId":"motion-lab@motion-lab-beta","name":"motion-lab","marketplaceName":"motion-lab-beta","installed":true,"enabled":true}],"available":[]}' : '{"installed":[],"available":[]}';
       return '{}';
     }
     return runReal(cmd, args, cwd);
   };
   const options = variant => ({ variant, destination: path.join(home, 'install ' + variant), applications: path.join(home, 'app ' + variant) });
-  return { base, home, source, sha, calls, deps, options };
+  return { base, home, source, sha, mainSha, calls, deps, options };
 }
 test('Studio installs an exact local Git pin into new destination and creates a real executable app', async t => {
   const f = await fixture(t), options = f.options('studio');
@@ -55,6 +63,17 @@ test('Studio installs an exact local Git pin into new destination and creates a 
   assert.equal(f.calls.some(c => c.cmd === 'codex'), false);
   await assert.rejects(install(options, f.deps), /già esistente/);
   assert.equal(await runReal('git', ['status', '--porcelain'], result.repository), '');
+  assert.equal(await runReal('git', ['merge-base', '--is-ancestor', f.mainSha, 'HEAD'], result.repository), '');
+  // Exercise the real update checker on the shallow installed merge; only ls-remote is simulated.
+  await runReal('git', ['remote', 'set-url', 'origin', 'https://github.com/AndreXes03/motion-lab.git'], result.repository);
+  const bin = path.join(f.base, 'bin'); await mkdir(bin);
+  const realGit = await runReal('which', ['git']);
+  const fakeGit = path.join(bin, 'git');
+  await writeFile(fakeGit, '#!' + process.execPath + '\nconst cp=require("node:child_process");const args=process.argv.slice(2);if(args[0]==="ls-remote")process.stdout.write(' + JSON.stringify(f.mainSha + '\trefs/heads/main\n') + ');else{const r=cp.spawnSync(' + JSON.stringify(realGit) + ',args,{stdio:"inherit"});process.exit(r.status??1);}\n');
+  await chmod(fakeGit, 0o755);
+  const script = 'import {checkUpdates} from ' + JSON.stringify(new URL('../plugins/motion-lab/updates.mjs', import.meta.url).href) + ';console.log(JSON.stringify(await checkUpdates(process.argv[1])));';
+  const checked = await exec(process.execPath, ['--input-type=module', '-e', script, result.repository], { env: { ...process.env, PATH: bin + path.delimiter + process.env.PATH } });
+  assert.equal(JSON.parse(checked.stdout).state, 'current'); assert.equal(JSON.parse(checked.stdout).available, false);
 });
 test('Claude merges only MCP entry, preserves settings with byte-for-byte backup, rejects bad/existing config', async t => {
   const f = await fixture(t), file = path.join(f.home, 'Library/Application Support/Claude/claude_desktop_config.json');
@@ -105,6 +124,21 @@ test('Failures never report success or touch client config: dependencies, pin mi
   }
   const f = await fixture(t);
   await assert.rejects(install(f.options('studio'), { ...f.deps, platform: 'linux' }), /solo macOS/);
+});
+test('Codex rejects available-only, disabled, wrong-marketplace and malformed verification JSON', async t => {
+  const cases = [
+    { installed: [], available: [{ name: 'motion-lab', marketplaceName: 'motion-lab-beta' }] },
+    { installed: [{ name: 'motion-lab', marketplaceName: 'motion-lab-beta', installed: true, enabled: false }] },
+    { installed: [{ name: 'motion-lab', marketplaceName: 'different', installed: true, enabled: true }] },
+    'malformed JSON',
+  ];
+  for (const value of cases) {
+    const f = await fixture(t), run = f.deps.run, options = f.options('codex');
+    f.deps.run = (cmd, args, cwd) => cmd === 'codex' && args[1] === 'list' && args.includes('--marketplace') ? Promise.resolve(typeof value === 'string' ? value : JSON.stringify(value)) : run(cmd, args, cwd);
+    await assert.rejects(install(options, f.deps));
+    const status = await readJson(path.join(options.destination, 'installation.json'));
+    assert.equal(status.status, 'failed'); assert.equal(status.stage, 'client');
+  }
 });
 test('ZIPs are deterministic, integrity checked, executable, portable and pinned; output manifest matches', async t => {
   const f = await fixture(t), out = path.join(f.base, 'downloads');
