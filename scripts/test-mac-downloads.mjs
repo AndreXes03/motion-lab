@@ -76,11 +76,14 @@ test('Studio installs an exact local Git pin into new destination and creates a 
   const bin = path.join(f.base, 'bin'); await mkdir(bin);
   const realGit = await runReal('which', ['git']);
   const fakeGit = path.join(bin, 'git');
-  await writeFile(fakeGit, '#!' + process.execPath + '\nconst cp=require("node:child_process");const args=process.argv.slice(2);if(args[0]==="ls-remote")process.stdout.write(' + JSON.stringify(f.mainSha + '\trefs/heads/main\n') + ');else{const r=cp.spawnSync(' + JSON.stringify(realGit) + ',args,{stdio:"inherit"});process.exit(r.status??1);}\n');
+  // Only ls-remote is simulated; exec the real Git directly within the production time bounds.
+  const quote = value => "'" + value.replaceAll("'", "'\\''") + "'";
+  await writeFile(fakeGit, ['#!/bin/sh', 'if [ "$1" = "ls-remote" ]; then', "  printf '%s\\trefs/heads/main\\n' " + quote(f.mainSha), 'else', '  exec ' + quote(realGit) + ' "$@"', 'fi', ''].join('\n'));
   await chmod(fakeGit, 0o755);
   const script = 'import {checkUpdates} from ' + JSON.stringify(new URL('../plugins/motion-lab/updates.mjs', import.meta.url).href) + ';console.log(JSON.stringify(await checkUpdates(process.argv[1])));';
   const checked = await exec(process.execPath, ['--input-type=module', '-e', script, result.repository], { env: { ...process.env, PATH: bin + path.delimiter + process.env.PATH } });
-  assert.equal(JSON.parse(checked.stdout).state, 'current'); assert.equal(JSON.parse(checked.stdout).available, false);
+  const updates = JSON.parse(checked.stdout);
+  assert.equal(updates.state, 'current', JSON.stringify(updates)); assert.equal(updates.available, false);
 });
 test('Claude merges only MCP entry, preserves settings with byte-for-byte backup, rejects bad/existing config', async t => {
   const f = await fixture(t), file = path.join(f.home, 'Library/Application Support/Claude/claude_desktop_config.json');
