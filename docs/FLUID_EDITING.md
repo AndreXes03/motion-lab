@@ -22,6 +22,6 @@ Local changes, a work branch or local commits preserve the local copy. Network f
 
 ## Web trial
 
-The public build has its own small entry point and six-mesh 3D scene, no textures, no shadow maps and no multipass compositor. It does not load the desktop runtime or full films. Motion templates load only when the Motion panel is opened. The preview runs at 640 × 360 and pauses when the tab is hidden.
+The public build has its own small entry point and kinetic 3D sculpture built from shared primitive geometry, no textures, no shadow maps and no multipass compositor. It does not load the desktop runtime or full films. Motion templates load only when the Motion panel is opened. The preview runs at 640 × 360 and pauses when the tab is hidden. Color palettes, motion energy and camera travel are editable. Automatic playback respects reduced-motion preferences.
 
 The web trial includes material, lens and light controls, timeline scrubbing, basic undo/redo and PNG capture. Pro opens an explanatory download dialog. Full scenes, keyframe editing, code, sound and video exports are available in the downloaded Studio. The homepage uses a compressed 5-second silent loop; full films remain available on request. Reduced-motion and data-saving preferences suppress the automatic loop.
