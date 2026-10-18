@@ -33,7 +33,9 @@
         "bloomThreshold",
         "bloomRadius",
         "shutterAngle",
-        "antialias"
+        "antialias",
+        "cameraDistance",
+        "keepSubjectSize"
       ],
       "panels": [
         {
@@ -51,6 +53,8 @@
           "category": "lens",
           "controls": [
             "fov",
+            "cameraDistance",
+            "keepSubjectSize",
             "lensDistortion"
           ],
           "advanced": false
@@ -164,7 +168,7 @@
           "advanced": true
         }
       ],
-      "rationale": "Cover the radio material, typography, camera focus, all studio lights and finished image in both workspace modes. Reserve optical and sampling detail for disclosure panels; raw object transforms remain in the selected-object inspector and full catalog."
+      "rationale": "Cover the radio material, typography, camera focus, all studio lights and finished image in both workspace modes. Reserve optical and sampling detail for disclosure panels; raw object transforms remain in the selected-object inspector and full catalog. Pair the perspective lens with real camera distance and subject-size compensation."
     },
     "procedural": {
       "controls": [
@@ -268,7 +272,10 @@
         "colorContrast",
         "colorSaturation",
         "grain",
-        "grainSize"
+        "grainSize",
+        "fovScale",
+        "cameraDistance",
+        "keepSubjectSize"
       ],
       "panels": [
         {
@@ -317,7 +324,10 @@
           "title": "Pop lens",
           "category": "lens",
           "controls": [
-            "fisheye"
+            "fisheye",
+            "fovScale",
+            "cameraDistance",
+            "keepSubjectSize"
           ],
           "advanced": false
         },
@@ -342,7 +352,7 @@
           "advanced": false
         }
       ],
-      "rationale": "Expose all planned 2D and lettering controls: title/caption sizing, halftone/burst/window motifs, palette, scene and ticker motion, camera/lens and texture. Preserve the authored default collage and give both workspace modes the same creative coverage."
+      "rationale": "Expose all planned 2D and lettering controls: title/caption sizing, halftone/burst/window motifs, palette, scene and ticker motion, camera/lens and texture. Preserve the authored default collage and give both workspace modes the same creative coverage. Pair the perspective lens with real camera distance and subject-size compensation."
     },
     "starter": {
       "controls": [
@@ -353,7 +363,9 @@
         "keyStrength",
         "fill",
         "colorContrast",
-        "colorSaturation"
+        "colorSaturation",
+        "cameraDistance",
+        "keepSubjectSize"
       ],
       "panels": [
         {
@@ -372,6 +384,8 @@
           "category": "lens",
           "controls": [
             "fov",
+            "cameraDistance",
+            "keepSubjectSize",
             "fisheye"
           ],
           "advanced": false
@@ -397,13 +411,12 @@
           "advanced": false
         }
       ],
-      "rationale": "Include all implemented product materials, lens, key/fill lighting and grade controls. Camera and product animation are edited in Motion; avoid unsupported material or renderer settings."
+      "rationale": "Include all implemented product materials, lens, key/fill lighting and grade controls. Camera and product animation are edited in Motion; avoid unsupported material or renderer settings. Pair the perspective lens with real camera distance and subject-size compensation."
     },
     "pulse": {
       "controls": [
         "speakerVibration",
         "recordSpeed",
-        "cameraFraming",
         "lensStrength",
         "focusBlur",
         "keyLight",
@@ -418,7 +431,10 @@
         "exposure",
         "colorContrast",
         "colorSaturation",
-        "bloomStrength"
+        "bloomStrength",
+        "fovScale",
+        "cameraDistance",
+        "keepSubjectSize"
       ],
       "panels": [
         {
@@ -436,8 +452,10 @@
           "title": "Macro lens",
           "category": "lens",
           "controls": [
-            "cameraFraming",
             "lensStrength",
+            "fovScale",
+            "cameraDistance",
+            "keepSubjectSize",
             "focusBlur"
           ],
           "advanced": false
@@ -512,7 +530,7 @@
           "advanced": false
         }
       ],
-      "rationale": "Cover separate speaker/record performance, framing and macro focus, key/fill/rim lighting, real surface roughness, display/background brightness and finishing in both modes. Keep aggregate mechanism gain and light shape in secondary panels; preserve authored camera cuts and neutral material defaults."
+      "rationale": "Cover separate speaker/record performance, framing and macro focus, key/fill/rim lighting, real surface roughness, display/background brightness and finishing in both modes. Keep aggregate mechanism gain and light shape in secondary panels; preserve authored camera cuts and neutral material defaults. Pair the perspective lens with real camera distance and subject-size compensation."
     },
     "camera": {
       "controls": [
@@ -525,7 +543,10 @@
         "colorContrast",
         "colorSaturation",
         "bloomStrength",
-        "grainStrength"
+        "grainStrength",
+        "fovScale",
+        "cameraDistance",
+        "keepSubjectSize"
       ],
       "panels": [
         {
@@ -543,6 +564,9 @@
           "category": "lens",
           "controls": [
             "lensStrength",
+            "fovScale",
+            "cameraDistance",
+            "keepSubjectSize",
             "focusBlur"
           ],
           "advanced": false
@@ -579,7 +603,7 @@
           "advanced": false
         }
       ],
-      "rationale": "Include every implemented city-motion, lens, focus, lighting and image control. Bloom and grain are normal finishing tools in both modes, while authored camera cuts remain intact."
+      "rationale": "Include every implemented city-motion, lens, focus, lighting and image control. Bloom and grain are normal finishing tools in both modes, while authored camera cuts remain intact. Pair the perspective lens with real camera distance and subject-size compensation."
     },
     "dot": {
       "controls": [
@@ -588,7 +612,10 @@
         "lensMotion",
         "glowStrength",
         "colorContrast",
-        "colorSaturation"
+        "colorSaturation",
+        "fovScale",
+        "cameraDistance",
+        "keepSubjectSize"
       ],
       "panels": [
         {
@@ -606,9 +633,13 @@
           "title": "Character camera",
           "category": "lens",
           "controls": [
-            "lensMotion"
+            "lensMotion",
+            "fovScale",
+            "cameraDistance",
+            "keepSubjectSize"
           ],
-          "advanced": false
+          "advanced": false,
+          "help": "Camera movement affects the graphic composition. Wide lens and Camera distance affect the physical device after 12 seconds."
         },
         {
           "id": "finish",
@@ -622,7 +653,7 @@
           "advanced": false
         }
       ],
-      "rationale": "Expose every implemented character, framing and finish control in both modes. Character scale and glow are creative essentials; no artificial 3D light or material controls for this canvas scene."
+      "rationale": "Expose character acting, graphic framing and finish in both modes. Pair the physical device lens with actual distance and subject-size compensation; these controls affect its 3D reveal after 12 seconds. The earlier 2D character layouts remain unchanged."
     },
     "replay": {
       "controls": [
@@ -638,7 +669,10 @@
         "finishPush",
         "threadStrength",
         "colorContrast",
-        "colorSaturation"
+        "colorSaturation",
+        "fovScale",
+        "cameraDistance",
+        "keepSubjectSize"
       ],
       "panels": [
         {
@@ -679,6 +713,9 @@
           "title": "Final composition",
           "category": "lens",
           "controls": [
+            "fovScale",
+            "cameraDistance",
+            "keepSubjectSize",
             "finishPush"
           ],
           "advanced": false
@@ -703,7 +740,7 @@
           "advanced": false
         }
       ],
-      "rationale": "Expose every planned editorial control: card spacing/tilt/scale/depth, composition scale and poster spacing, reveal pace, orbit scale/speed, final camera push, connecting threads and grade. The same planned controls are available in Easy and Pro; neutral values preserve the editorial film."
+      "rationale": "Expose every planned editorial control: card spacing/tilt/scale/depth, composition scale and poster spacing, reveal pace, orbit scale/speed, final camera push, connecting threads and grade. The same planned controls are available in Easy and Pro; neutral values preserve the editorial film. Pair the perspective lens with real camera distance and subject-size compensation."
     }
   }
 }

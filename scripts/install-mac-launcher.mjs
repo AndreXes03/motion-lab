@@ -38,6 +38,8 @@ export async function installLauncher({ root, destination, port = 4173 }) {
     await copyFile(helper, path.join(resources, 'launch-studio.mjs'));
     await copyFile(path.join(path.dirname(SELF),'studio-update.mjs'),path.join(resources,'studio-update.mjs'));
     await copyFile(path.join(root,'public/brand/framevolve.icns'),path.join(resources,'Framevolve.icns'));
+    await copyFile(path.join(root,'LICENSE'),path.join(resources,'LICENSE'));
+    await copyFile(path.join(root,'licenses/legacy/MIT.txt'),path.join(resources,'LEGACY-MIT.txt'));
     await writeFile(path.join(temporary, 'Contents/Info.plist'), `<?xml version="1.0" encoding="UTF-8"?>\n<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">\n<plist version="1.0"><dict><key>CFBundleName</key><string>Framevolve</string><key>CFBundleIconFile</key><string>Framevolve.icns</string><key>CFBundleIdentifier</key><string>org.motionlab.local-launcher</string><key>CFBundleExecutable</key><string>MotionLabLauncher</string><key>CFBundlePackageType</key><string>APPL</string><key>CFBundleVersion</key><string>1</string><key>LSUIElement</key><true/></dict></plist>\n`);
     const shell = `#!/bin/sh\n/bin/mkdir -p ${quote(cache)} || exit 1\n${quote(node)} ${quote(path.join(root,'scripts/launch-studio.mjs'))} --repo ${quote(root)} --port ${port} >> ${quote(log)} 2>&1\nresult=$?\nif [ "$result" -ne 0 ]; then\n  detail=$(/usr/bin/tail -n 8 ${quote(log)})\n  /usr/bin/osascript - "$detail" <<'APPLESCRIPT'\non run argv\n  display alert "Motion Lab non avviato" message (item 1 of argv) as critical\nend run\nAPPLESCRIPT\nfi\nexit "$result"\n`;
     await writeFile(executable, shell); await chmod(executable, 0o755);

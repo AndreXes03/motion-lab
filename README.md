@@ -6,7 +6,7 @@
 
 **Make motion. Keep control.**
 
-An open-source studio for making editable 2D, hybrid and 3D motion with code, scene-specific tools and local rendering.
+A free-to-use, source-available studio for making editable 2D, hybrid and 3D motion with code, scene-specific tools and local rendering.
 
 [See the films](https://andrexes03.github.io/motion-lab/) · [Open the browser studio](https://andrexes03.github.io/motion-lab/studio/) · [Setup](#run-motion-lab-locally) · [Guides](docs/README.md)
 
@@ -87,4 +87,4 @@ Video renders go to Downloads. Windows and Linux have not been validated. Read [
 | Checks and limitations | [Validation](docs/VALIDATION.md) |
 | Licenses | [Third-party assets](THIRD_PARTY.md) |
 
-Created by Andrea Salvo. Source code is available under the [MIT License](LICENSE). Demo trademarks and third-party assets retain their respective rights. FFmpeg binaries are not included.
+Created and owned by Andrea Salvo. New Studio interface/editing tools, plugins and installation/update features are covered by the proprietary [Framevolve Free Use License](LICENSE): free personal and professional use, including selling your own rendered work; resale, paid software hosting and commercial repackaging require written permission. Earlier MIT grants remain valid for previously published code; see [licensing details](docs/LICENSING.md). Demo trademarks and third-party assets retain their respective rights. FFmpeg binaries are not included.

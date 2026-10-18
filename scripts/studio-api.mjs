@@ -36,7 +36,7 @@ const MAX_BODY = 2 * 1024 * 1024;
 const MAX_JSON_DEPTH = 32;
 const ALLOWED_PARAMETERS = new Set(['scene', 'look', 'motion', 'graphics', 'studio', 'display', 'shell', 'knob', 'objectMotion', 'objectEdits', 'review', 'inspect', 'sound', 'animation', 'product', 'sceneControls', 'renderPolicy']);
 const LOOK_SECTIONS = {
-  camera: new Set(['fov']),
+  camera: new Set(['fov','fovScale','distance','keepSubjectSize']),
   lighting: new Set(['preset', 'key', 'fill', 'rim', 'environment', 'keyPosition', 'keyTarget', 'rimPosition', 'keyAngle', 'keyPenumbra', 'keyColor', 'rimColor']),
   surface: new Set(['shellRoughness', 'grainScale']),
   post: new Set(['dofEnabled','dofAuto','dofFocus','dofStrength','dofMaxBlur','exposure', 'bloomStrength', 'bloomThreshold', 'bloomRadius', 'aberrationPx', 'grain', 'grainSize', 'vignette', 'lensDistortion', 'aoIntensity', 'shutterAngle', 'antialias','colorContrast','colorSaturation']),

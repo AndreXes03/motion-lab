@@ -10,7 +10,7 @@ const runtime=createDemoRuntime($('renderCanvas'));
 setIcon($('play'),'play',{label:'Play',iconOnly:true});setIcon($('loop'),'loop',{label:'Loop playback',iconOnly:true});
 const defaults={accent:'#ff7142',shell:'#6864ff',energy:1,cameraTravel:1,palette:'electric'};
 let time=0,playing=false,loop=true,last=0,pending=0,values={...defaults},animation,motionPanel,motionModule,history=[],future=[];
-const params=()=>({...resolveParameters('starter',values),demo:{energy:values.energy??1,cameraTravel:values.cameraTravel??1,palette:values.palette??'electric'},...(animation?{animation}:{} )});
+const params=()=>({...resolveParameters('starter',values),look:{camera:{distance:values.cameraDistance??1,keepSubjectSize:values.keepSubjectSize??true}},demo:{energy:values.energy??1,cameraTravel:values.cameraTravel??1,palette:values.palette??'electric'},...(animation?{animation}:{} )});
 const idle=[];
 function draw(){if(pending)return;pending=requestAnimationFrame(()=>{pending=0;runtime.render(time,{parameters:params(),width:640,height:360});$('seek').value=Math.round(time*30);$('time').textContent=`00:0${Math.floor(time)}:${String(Math.round(time*30)%30).padStart(2,'0')} · F${String(Math.round(time*30)).padStart(3,'0')}`;motionPanel?.updateTime(time);for(const resolve of idle.splice(0))resolve();});}
 window.motionPreview={whenIdle:()=>pending?new Promise(resolve=>idle.push(resolve)):Promise.resolve(),getSettings:()=>({width:640,height:360,previewQuality:'fast'})};
@@ -39,9 +39,9 @@ let controlBaseline;
 function controls(){
  const parent=$('project-controls');parent.replaceChildren();
  const catalog=[...getControlCatalog('starter'),{id:'energy',label:'Motion energy',type:'range',min:0,max:1.6,step:.05,default:1,help:'Add more floating, twisting and orbital variation to the continuous loop.'},{id:'cameraTravel',label:'Camera travel',type:'range',min:0,max:1.5,step:.05,default:1,help:'Amount of camera travel around the sculpture.'}],p=params();
- for(const [title,ids]of [['Motion',['energy','cameraTravel']],['Materials',['accent','shell']],['Camera & light',['fov','keyStrength','fill']]]){
+ for(const [title,ids]of [['Motion',['energy','cameraTravel']],['Materials',['accent','shell']],['Camera lens',['fov','cameraDistance','keepSubjectSize']],['Lighting',['keyStrength','fill']]]){
   const group=document.createElement('details');group.className='catalog-group';group.open=true;const heading=document.createElement('summary');heading.textContent=title;group.append(heading);
-  for(const id of ids){const def=catalog.find(def=>def.id===id);const node=renderControl(def,{value:['energy','cameraTravel'].includes(id)?values[id]??1:readControlValue(def,p),onInput:value=>{controlBaseline??=structuredClone({values,animation});pause();values[id]=value;draw();},onBegin:()=>{controlBaseline=structuredClone({values,animation});},onCancel:()=>{if(controlBaseline){values=controlBaseline.values;animation=controlBaseline.animation;controlBaseline=undefined;draw();}},onCommit:()=>{if(controlBaseline&&JSON.stringify(controlBaseline)!==JSON.stringify({values,animation})){history.push(controlBaseline);future=[];$('undo-edit').disabled=false;$('redo-edit').disabled=true;}controlBaseline=undefined;}});group.append(node);}
+  for(const id of ids){const def=catalog.find(def=>def.id===id);const node=renderControl(def,{value:['energy','cameraTravel','cameraDistance','keepSubjectSize'].includes(id)?values[id]??def.default:readControlValue(def,p),onInput:value=>{controlBaseline??=structuredClone({values,animation});pause();values[id]=value;draw();},onBegin:()=>{controlBaseline=structuredClone({values,animation});},onCancel:()=>{if(controlBaseline){values=controlBaseline.values;animation=controlBaseline.animation;controlBaseline=undefined;draw();}},onCommit:()=>{if(controlBaseline&&JSON.stringify(controlBaseline)!==JSON.stringify({values,animation})){history.push(controlBaseline);future=[];$('undo-edit').disabled=false;$('redo-edit').disabled=true;}controlBaseline=undefined;}});group.append(node);}
   parent.append(group);
  }
  $('control-search').hidden=true;$('presets').replaceChildren();

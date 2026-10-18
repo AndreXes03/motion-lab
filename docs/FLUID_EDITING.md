@@ -25,3 +25,11 @@ Local changes, a work branch or local commits preserve the local copy. Network f
 The public build has its own small entry point and kinetic 3D sculpture built from shared primitive geometry, no textures, no shadow maps and no multipass compositor. It does not load the desktop runtime or full films. Motion templates load only when the Motion panel is opened. The preview runs at 640 × 360 and pauses when the tab is hidden. Color palettes, motion energy and camera travel are editable. Automatic playback respects reduced-motion preferences.
 
 The web trial includes material, lens and light controls, timeline scrubbing, basic undo/redo and PNG capture. Pro opens an explanatory download dialog. Full scenes, keyframe editing, code, sound and video exports are available in the downloaded Studio. The homepage uses a compressed 5-second silent loop; full films remain available on request. Reduced-motion and data-saving preferences suppress the automatic loop.
+
+## Wide lenses and camera distance
+
+Every perspective scene (Objects, Product starter, PULSE, CAMERA, PLAY.EXE, the 3D parts of REPLAY and DOT’s physical device reveal) pairs its lens angle with **Camera distance** and **Keep subject size**. The web trial uses the same helper and controls.
+
+Keep subject size is enabled by default: a wider angle moves the actual camera closer to the shot target, using the ratio of the two half-angle tangents. This retains approximately the same subject size while changing depth and perspective. Camera distance adds an independent distance multiplier: below 1 moves closer, above 1 moves away. Disable the link for independent lens and camera adjustments.
+
+Objects and Product starter retain their absolute angle in degrees. Scenes with animated authored lenses expose a Wide lens multiplier, preserving each shot's lens animation. Distance and lens angle support parameter keyframes and recipe/API round trips. The same camera is used by interactive preview, local/browser rendering and the PULSE Cycles camera bake. Original values and unrelated 2D layouts remain intact. Imported older layouts with a visible lens receive the companion controls.

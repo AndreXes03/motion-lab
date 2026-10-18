@@ -1,3 +1,4 @@
+import {applyCameraLens} from '../engine/camera-lens.js';
 import {createPulseSurfaceControls, pulseControlGain} from './pulse-surface-controls.js';
 import {createReviewMaterials} from '../engine/preview-review.js';
 import {sampleAnimationGroupTime} from '../engine/animation-groups.js';
@@ -162,7 +163,7 @@ const glossEnv=glossStudio(renderer);
    camera.position.addScaledVector(camera.position.clone().sub(target).normalize(),1.42*boardPass);camera.position.y+=.72*boardPass;
  }
  if(cameraFraming!==1)camera.position.sub(target).multiplyScalar(cameraFraming).add(target);
- camera.up.set(Math.sin(roll),Math.cos(roll),0);camera.lookAt(target);camera.updateProjectionMatrix();
+ camera.up.set(Math.sin(roll),Math.cos(roll),0);camera.lookAt(target);applyCameraLens(camera,p,{target,referenceFov:camera.fov});camera.updateProjectionMatrix();
  return target;})();
  if(mechanismFrameTime!==frameTime)applyMechanismPose(mechanismFrameTime);
  if(w!==renderWidth||h!==renderHeight){composite.setSize(w,h);renderWidth=w;renderHeight=h;}
@@ -175,7 +176,7 @@ const glossEnv=glossStudio(renderer);
  const diagnostic=reviews.isDiagnostic(p.review);
  if(diagnostic||p.review==='clean')renderer.render(scene,camera);else composite.render();ctx.drawImage(renderer.domElement,0,0,w,h);
  // Deliberately crisp vector graphics, rendered after 3D: zero temporal blur.
- ctx.save();ctx.scale(w/1920,h/1080);if(!diagnostic&&t>12.7){ctx.globalAlpha=ease((t-12.7)/.5);ctx.fillStyle='#f4f3df';ctx.textAlign='center';ctx.font='600 25px Arial';ctx.fillText('MOTION LAB',960,978);ctx.font='400 16px Arial';ctx.fillText('OPEN SOURCE. FULL VOLUME.',960,1014);}
+ ctx.save();ctx.scale(w/1920,h/1080);if(!diagnostic&&t>12.7){ctx.globalAlpha=ease((t-12.7)/.5);ctx.fillStyle='#f4f3df';ctx.textAlign='center';ctx.font='600 25px Arial';ctx.fillText('MOTION LAB',960,978);ctx.font='400 16px Arial';ctx.fillText('YOUR IDEAS. FULL VOLUME.',960,1014);}
  ctx.restore();}
  const cameraChannels=[
   ...['x','y','z'].map(axis=>({id:`camera.position.${axis}`,label:`Camera position ${axis.toUpperCase()}`,unit:'scene units'})),

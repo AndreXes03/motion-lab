@@ -1,21 +1,60 @@
-MIT License
+Framevolve Free Use License 1.0
+Copyright (c) 2026 Andrea Salvo. All rights reserved.
+Effective for new copyrightable contributions and modifications first
+published on or after 18 October 2026 under this notice.
 
-Copyright (c) 2026 Andrea Salvo
+1. Scope and ownership
+This is a proprietary, source-available license, not the MIT License or an
+open-source license. It covers Andrea Salvo's original contributions to the
+current Framevolve distribution, including Studio interface and editing tools,
+agent plugins and bridges, installers, launchers, update tools and related
+documentation, except for the prior grants and third-party materials below.
+Copyright and ownership remain with Andrea Salvo.
 
-Permission is hereby granted, free of charge, to any person obtaining a copy
-of this software and associated documentation files (the "Software"), to deal
-in the Software without restriction, including without limitation the rights
-to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-copies of the Software, and to permit persons to whom the Software is
-furnished to do so, subject to the following conditions:
+2. Free use
+Individuals, freelancers and organizations may download, install and run the
+Software without a license fee, including for internal business use and client
+work. You may inspect the source, make private modifications and keep backup
+copies. You may share the complete, unmodified official distribution without
+charging for it, retaining this license and all applicable third-party notices.
+Third-party assets may not be extracted or redistributed on their own.
 
-The above copyright notice and this permission notice shall be included in all
-copies or substantial portions of the Software.
+3. No resale or paid software offering
+Without Andrea Salvo's prior written permission, you may not sell, resell,
+rent, sublicense for payment, commercially repackage, white-label or offer
+paid hosted access to the Software, its plugins, installers, interface/editing
+components or modified versions. This restriction applies to individuals and
+organizations, including companies. Distribution of modified versions or
+incorporation of these protected contributions into another distributed
+software product requires prior written permission. No trademark rights or
+right to imply endorsement are granted.
 
+4. Your work and outputs
+You retain rights in your own projects and original rendered outputs. You may
+use and sell videos, images and client deliverables created with the Software;
+this license does not require a credit or royalty for those outputs. Rights in
+third-party music, fonts, icons, brands and other assets remain subject to
+their own terms. This section does not license supplied demo media or assets.
+
+5. Prior MIT grants and third-party rights
+This license does not revoke or restrict rights already granted for code
+previously published under MIT. In particular, repository history through
+commit 6a7f1ca62b7b30d534fe181f912606ad4cfc6718 retains its original MIT
+grant for the covered original code; the preserved notice is in
+licenses/legacy/MIT.txt. Only new copyrightable contributions and modifications
+licensed under this notice are subject to the restrictions above. Earlier
+code cannot be represented as newly exclusive or its prior grant withdrawn.
+Third-party components retain their own licenses; see THIRD_PARTY.md and the
+original notices in licenses/, public/vendor/ and src/assets/fonts/.
+
+6. Warranty and liability
 THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-SOFTWARE.
+IMPLIED, INCLUDING MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
+NONINFRINGEMENT. TO THE MAXIMUM EXTENT PERMITTED BY LAW, ANDREA SALVO SHALL
+NOT BE LIABLE FOR CLAIMS, DAMAGES OR OTHER LIABILITY ARISING FROM USE OF THE
+SOFTWARE. Mandatory rights under applicable law are not excluded.
+
+7. Other permissions
+Permissions not expressly granted are reserved. Contact Andrea Salvo through
+the official repository for a separate written software distribution or
+commercial licensing agreement: https://github.com/AndreXes03/motion-lab

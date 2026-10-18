@@ -1,3 +1,4 @@
+import {applyCameraLens} from '../engine/camera-lens.js';
 import * as T from 'three';
 import {RoundedBoxGeometry} from 'three/addons/geometries/RoundedBoxGeometry.js';
 import {RoomEnvironment} from 'three/addons/environments/RoomEnvironment.js';
@@ -29,7 +30,7 @@ export function createDotDevice(drawFace,drawClock){
   const target=g.clone();target.setAttribute('position',new T.BufferAttribute(circle,3));target.computeVertexNormals();g.morphAttributes.position=[new T.BufferAttribute(circle,3)];g.morphAttributes.normal=[target.attributes.normal.clone()];target.dispose();mesh.updateMorphTargets();return {mesh,base,circle,half};
  }
  const morphs=[circleMorph(back,1.85,1.02),circleMorph(gasket,1.715,.92),circleMorph(glass,1.655,.88)];
- return {render(c,x,y,r,t,amount=1,clock=0){
+ return {camera,render(c,x,y,r,t,amount=1,clock=0,parameters={}){
   const q=1-clock;
   for(const {mesh,base,circle,half} of morphs){mesh.morphTargetInfluences[0]=clock;if(mesh===glass){const uv=mesh.geometry.attributes.uv;for(let i=0;i<uv.count;i++)uv.setXY(i,(base[i*3]*q+circle[i*3]*clock)/(half*2)+.5,(base[i*3+1]*q+circle[i*3+1]*clock)/(half*2)+.5);uv.needsUpdate=true;}}
   ctx.fillStyle='#f1ede5';ctx.fillRect(0,0,768,768);if(clock>0&&drawClock)drawClock(ctx,t,q);
@@ -40,7 +41,7 @@ export function createDotDevice(drawFace,drawClock){
   const reveal=Math.max(0,Math.min(1,(q-.14)/.14)),accessoryAlpha=reveal*reveal*(3-2*reveal);
   for(const mesh of [cord,attachment,key]){mesh.visible=accessoryAlpha>.0001;mesh.material.transparent=true;mesh.material.opacity=accessoryAlpha;}
   cord.scale.setScalar(.88+.12*q);cord.rotation.z=.04*Math.sin((t-13.3)*3)*q;
-  const opticalClock=clock*Math.max(0,Math.min(1,(t-12.19)/.6));rig.rotation.set((-.12+.065*Math.sin((t-13.3)*1.1))*q-.04*opticalClock,(-.15-.24*Math.max(0,Math.min(1,(t-13.3)/2.7)))*q+.12*Math.sin((t-12.19)*.8)*opticalClock,.075*Math.sin((t-13.3)*1.5)*q+.025*Math.sin((t-12.19)*1.2)*opticalClock);camera.lookAt(-.18*q,0,0);renderer.render(scene,camera);c.save();c.globalAlpha=amount;c.drawImage(renderer.domElement,x-r*1.46,y-r*1.46,r*2.92,r*2.92);c.restore();
+  const opticalClock=clock*Math.max(0,Math.min(1,(t-12.19)/.6));rig.rotation.set((-.12+.065*Math.sin((t-13.3)*1.1))*q-.04*opticalClock,(-.15-.24*Math.max(0,Math.min(1,(t-13.3)/2.7)))*q+.12*Math.sin((t-12.19)*.8)*opticalClock,.075*Math.sin((t-13.3)*1.5)*q+.025*Math.sin((t-12.19)*1.2)*opticalClock);camera.position.set(0,0,8.5);camera.lookAt(-.18*q,0,0);applyCameraLens(camera,parameters,{target:[-.18*q,0,0],referenceFov:34});renderer.render(scene,camera);c.save();c.globalAlpha=amount;c.drawImage(renderer.domElement,x-r*1.46,y-r*1.46,r*2.92,r*2.92);c.restore();
   // Project the exact rounded/morphed glass boundary for physical foreground occlusion.
   const displayContour=rounded(3.31,3.31,.88).getPoints(40).map(p=>{const rad=Math.hypot(p.x,p.y),dx=Math.abs(p.x/rad),dy=Math.abs(p.y/rad),half=1.655,cc=half-.88,edge=half/Math.max(dx,dy),dot=cc*(dx+dy);let boundary=edge;if(Math.min(dx,dy)*edge>cc)boundary=dot+Math.sqrt(Math.max(0,dot*dot-(2*cc*cc-.88*.88)));const k=half/boundary,point=new T.Vector3(p.x*(q+k*clock),p.y*(q+k*clock),0);glass.localToWorld(point);point.project(camera);return[x+(point.x)*r*1.46,y-(point.y)*r*1.46];});
   return {displayContour};

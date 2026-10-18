@@ -1,8 +1,10 @@
+import {applyCameraLens} from '../engine/camera-lens.js';
 import {sampleAnimationGroupTime} from '../engine/animation-groups.js';
 import {createObjectEditor} from '../engine/object-editor.js';
 import * as T from 'three';
 import {createStudio} from '../engine/studio.js';
 import {applyTracks,sampleTrack} from '../engine/animation.js';
+import defaultLook from '../../project/look.json';
 import motion from '../../project/motion.json';
 import {createDevice} from '../components/device.js';
 import {createObjectsEmblem} from '../components/objects-emblem.js';
@@ -41,14 +43,16 @@ export function createScene(renderer,config){
  plush.userData.update?.(sampleAnimationGroupTime(parameters,'emblem',t),{amount:objectMotion});
  keys.userData.update?.(sampleAnimationGroupTime(parameters,'gyro',t),{motion:activeMotion,amount:objectMotion});
  editObjects.apply(parameters.objectEdits);
+ let lensTarget=sampleTrack(activeMotion.tracks['camera.target']??motion.tracks['camera.target'],clockForTarget('camera.target'),look.motion.amount);
  const roots=[device.group,plush,keys,sign.root];for(const root of roots)root.visible=true;
  if(parameters.inspect){
   const chosen=scene.getObjectByName(parameters.inspect.object);if(!chosen)throw new Error('Unknown inspection object');
   roots.forEach(root=>root.visible=root===chosen);
   chosen.updateWorldMatrix(true,true);const box=new T.Box3();chosen.traverseVisible(o=>{if(o.geometry){o.geometry.computeBoundingBox();box.union(o.geometry.boundingBox.clone().applyMatrix4(o.matrixWorld));}});const center=box.getCenter(new T.Vector3()),size=box.getSize(new T.Vector3());
   const yaw=(parameters.inspect.yaw??20)*Math.PI/180, distance=Math.max(size.y,size.x/camera.aspect)*1.8;
-  camera.fov=40;camera.updateProjectionMatrix();camera.position.set(center.x+Math.sin(yaw)*distance,center.y+.2,center.z+Math.cos(yaw)*distance);camera.lookAt(center);
+  camera.fov=40;camera.updateProjectionMatrix();camera.position.set(center.x+Math.sin(yaw)*distance,center.y+.2,center.z+Math.cos(yaw)*distance);camera.lookAt(center);lensTarget=center.toArray();
  }
+ applyCameraLens(camera,parameters,{target:lensTarget,referenceFov:parameters.inspect?40:defaultLook.camera.fov,fov:camera.fov});
  return t;
  }
  // Keep the film free of screen-space branding. Product textures remain in the scene.

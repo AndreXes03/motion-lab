@@ -1,6 +1,6 @@
 # Third-party software and research
 
-This local prototype uses the installed packages listed below. Their original
+Framevolve uses the installed packages listed below. Their original
 license and notice files are preserved under [`licenses/`](licenses/). Package
 versions are those in the tested `package-lock.json`; reinstalling dependencies
 may change them within the declared version ranges.
@@ -31,7 +31,7 @@ machine. A separate system `ffmpeg` was not present during testing.
 
 The wind texture in `src/assets/audio/wind-magnific.mp3` was generated with
 Magnific / ElevenLabs. [Provenance](src/assets/audio/provenance.json) records
-its source and use. This generated audio asset is separate from the MIT code
+its source and use. This generated audio asset is separate from the application
 license. The editable application synthesizes its fallback music locally.
 
 The PULSE and CAMERA demo films include music downloaded through the project
@@ -40,13 +40,13 @@ owner’s Artlist account:
 - PULSE: [Mansij — RoboRhythm](https://artlist.io/royalty-free-music/song/roborhythm/132753).
 - CAMERA: [Evgeny Bardyuzha — Let It Drop (Instrumental version)](https://artlist.io/royalty-free-music/song/let-it-drop-instrumental-version/116014).
 
-These soundtracks are separately licensed stock assets, not MIT code. The
+These soundtracks are separately licensed stock assets, not application code. The
 original tracks and standalone edited stems are not distributed in this
 repository. Obtain your own appropriate music rights when reusing them.
 
 Demo marks and visual assets retain their owners’ rights. The Andrea Salvo
 logo belongs to its owner. Their inclusion does not grant rights to reuse the
-marks, and the MIT code license does not cover them.
+marks, and the application license does not cover them.
 
 ## References
 
@@ -72,3 +72,21 @@ These packages are not added to the main application or the Pages studio bundle.
 Original notices are retained in `licenses/photoreal/`. The rendered headphones,
 surface maps and studio lighting reuse Motion Lab code; no external HDR image or
 AI-generated bitmap is used for this test.
+
+## Studio interface icons
+
+The interface uses Flaticon Uicons Regular Rounded 3.3.1. The local sprite's
+original package source, version, checksum and included glyphs are recorded in
+[the source manifest](public/vendor/uicons/SOURCE.json); the upstream
+[Flaticon License](public/vendor/uicons/LICENSE.txt) is preserved separately.
+These icons are third-party assets, not Andrea Salvo's code and not MIT assets.
+They are interface controls, not an icon library offered for reuse or rendering.
+
+The project owner reports a paid Flaticon subscription. Flaticon's
+[official terms, section 8.1](https://www.flaticon.com/legal) permit use without
+visible attribution when the relevant content is downloaded during the Premium
+subscription. The currently recorded acquisition is the public npm package,
+without an account-specific Premium download certificate. Until that acquisition
+is verified or replaced with a documented Premium download, the existing Uicons
+credit is retained. Do not discard upstream license/provenance files, or infer
+that this subscription relicenses icons for other users' independent reuse.
