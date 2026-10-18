@@ -3,7 +3,7 @@
   "command": "export",
   "config": {
     "id": "objects-in-play",
-    "scene": "bax",
+    "scene": "objects",
     "title": "Objects in play",
     "duration": 10,
     "fps": 30,
@@ -17,8 +17,8 @@
       "led": "#fff1db"
     },
     "text": {
-      "display": "BAX.",
-      "title": "BAX STUDIO",
+      "display": "OBJECTS.",
+      "title": "OBJECTS STUDIO",
       "eyebrow": "OBJECTS IN PLAY",
       "footer": "IDEAS, MADE TANGIBLE."
     },

@@ -16,7 +16,7 @@ const viewport = {width: 1600, height: 1000};
 async function openStudio(browser, panel, outputName) {
   const page = await browser.newPage({viewport, deviceScaleFactor: 2, reducedMotion: 'reduce'});
   const url = new URL('/', baseUrl);
-  url.searchParams.set('scene', 'bax');
+  url.searchParams.set('scene', 'objects');
   url.searchParams.set('panel', panel);
   await page.goto(url.href, {waitUntil: 'domcontentloaded'});
   await page.waitForFunction(() => window.motion?.ready);
@@ -28,7 +28,7 @@ async function openStudio(browser, panel, outputName) {
   await page.locator('#seek').evaluate((input, value) => {
     input.value = String(value);
     input.dispatchEvent(new Event('input', {bubbles: true}));
-  }, Math.round(8.8 * sceneConfig('bax').fps));
+  }, Math.round(8.8 * sceneConfig('objects').fps));
 
   if (panel === 'motion') {
     await page.locator('#motion-control').selectOption('group:camera');

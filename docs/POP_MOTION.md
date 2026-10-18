@@ -17,7 +17,7 @@ La sequenza ha quattro capitoli: player (0–2,5 s), città e BASS (2,5–5 s), 
 - `src/components/comic.js`: retino, sticker a stella, titoli con contorno, pannelli arrotondati e ticker.
 - `src/scenes/pop-demo.js`: composizione ibrida Canvas2D + Three.js con renderer trasparente dedicato.
 
-Il rendering è deterministico. Le dimensioni delle lettere sono reali geometrie 3D; le finestre laterali e la città sono grafiche 2D. Gli SFX seguono proxy dei gesti principali, non una simulazione fisica. La scena usa luci e materiali propri; i post-effetti 3D della scena BAX non vengono applicati, mentre grana e motion blur temporale restano disponibili. Non sono implementati import di font nel viewer, editor di parole o editor delle singole inquadrature nel viewer; le inquadrature sono editabili nella sequenza `SHOTS`.
+Il rendering è deterministico. Le dimensioni delle lettere sono reali geometrie 3D; le finestre laterali e la città sono grafiche 2D. Gli SFX seguono proxy dei gesti principali, non una simulazione fisica. La scena usa luci e materiali propri; i post-effetti 3D della scena OBJECTS non vengono applicati, mentre grana e motion blur temporale restano disponibili. Non sono implementati import di font nel viewer, editor di parole o editor delle singole inquadrature nel viewer; le inquadrature sono editabili nella sequenza `SHOTS`.
 
 ```sh
 node scripts/cli.mjs export --snapshot demo/pop-motion.project.json --out renders/pop-motion.mp4

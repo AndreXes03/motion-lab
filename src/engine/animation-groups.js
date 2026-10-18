@@ -3,7 +3,7 @@ import {sampleParameterTrack} from './parameter-animation.js';
 import {clamp} from './timeline.js';
 
 const groupDefinitions={
-  bax:[['camera','Camera','Camera position, target and roll.'],['radio','Radio','Radio assembly and rotary controls.'],['gyro','Gyro','Gyro assembly and its constrained mechanism.'],['emblem','Emblem','Emblem assembly and cover mechanism.']],
+  objects:[['camera','Camera','Camera position, target and roll.'],['radio','Radio','Radio assembly and rotary controls.'],['gyro','Gyro','Gyro assembly and its constrained mechanism.'],['emblem','Emblem','Emblem assembly and cover mechanism.']],
   pulse:[['camera','Camera','Lens choreography within an authored shot.'],['mechanisms','Mechanisms','Speaker, record, connector and device movement.']],
   camera:[['camera','Camera','Camera flight within an authored shot.'],['city','City vehicles','Vehicle and fan motion independent of camera flight.']],
   starter:[['camera','Camera','Product camera travel.'],['product','Product','Product assembly, impact and rotary controls.']],
@@ -12,7 +12,7 @@ const groupDefinitions={
   pop:[['camera','Camera','Camera movement through the composition.'],['lettering','Lettering & player','Lettering and player motion.']],
   procedural:[['graphics','Graphics','Procedural shape and lettering movement.']]
 };
-const fallbackCuts={bax:[0,2.2,4.5,7.5,10],pop:[0,2.5,5,7.5,10],procedural:[0,20/11,40/11,60/11,80/11,100/11,10]};
+const fallbackCuts={objects:[0,2.2,4.5,7.5,10],pop:[0,2.5,5,7.5,10],procedural:[0,20/11,40/11,60/11,80/11,100/11,10]};
 
 /** Discover scene-owned animation groups and recommended shot windows. */
 export function getAnimationGroups(scene) {

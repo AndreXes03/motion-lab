@@ -13,10 +13,10 @@ try{
  const page=await browser.newPage();await page.goto(`http://127.0.0.1:${server.httpServer.address().port}/?render=1`);await page.waitForFunction(()=>window.motion?.ready);await page.evaluate(()=>window.motion.ready);
  const report=await page.evaluate(async()=>{
   const T=await import('/node_modules/three/build/three.module.js');
-  const {createScene}=await import('/src/scenes/bax.js'),{config}=await import('/src/config.js');
+  const {createScene}=await import('/src/scenes/objects.js'),{config}=await import('/src/config.js');
   const look=await fetch('/project/look.json').then(r=>r.json()),motion=await fetch('/project/motion.json').then(r=>r.json());
   const renderer=new T.WebGLRenderer({antialias:false});const app=createScene(renderer,config);
-  const roots=['device.root','bax.emblem','bax.kinetic'];const meshes=[];
+  const roots=['device.root','objects.emblem','objects.kinetic'];const meshes=[];
   roots.forEach(name=>app.scene.getObjectByName(name).traverse(o=>{if(o.isMesh){o.geometry.computeBoundingBox();meshes.push(o);}}));
   const triangle=new T.Triangle(),nearest=new T.Vector3(),local=new T.Vector3(),inverse=new T.Matrix4(),worldBox=new T.Box3(),point=new T.Vector3(),ray=new T.Raycaster();
   const samples=[],risks=[];let min={distance:Infinity};

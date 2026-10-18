@@ -1,3 +1,4 @@
+import {migrateLegacyScene} from '../src/engine/legacy-scene.js';
 import {studyControlDefinitions} from '../src/engine/scene-capabilities.js';
 import {resolveControlManifest} from '../src/engine/control-catalog.js';
 import {validateParameterAnimation} from '../src/engine/parameter-animation.js';
@@ -68,7 +69,7 @@ function merge(base, patch) {
 }
 
 function validateMotion(motion, allowedTracks, duration=config.duration) {
-  // This field is the legacy BAX source document, retained in every recipe.
+  // This field is the legacy OBJECTS source document, retained in every recipe.
   // A shorter function-authored scene does not shorten those unused source keys.
   return validateAuthoredMotion(motion,{allowedTracks,duration:10,cutDuration:duration});
 }
@@ -99,8 +100,9 @@ function validateStudioMeta(studio, scene, look) {
 export async function validateStudioParameters(input) {
   if (!isRecord(input)) throw new Error('parameters must be a JSON object');
   finiteTree(input, 'parameters');
+  input = migrateLegacyScene(input);
   for (const key of Object.keys(input)) if (!ALLOWED_PARAMETERS.has(key)) throw new Error(`Unsupported parameter: ${key}`);
-  const scene = input.scene ?? 'bax';
+  const scene = input.scene ?? 'objects';
   if (!sceneIds.includes(scene)) throw new Error('scene must be '+sceneIds.join(', '));
   const defaults = await Promise.all([readProject('look'), readProject('motion')]);
   const look = merge(defaults[0], input.look ?? {});
@@ -139,12 +141,12 @@ export async function validateStudioParameters(input) {
   if (input.knob !== undefined && (typeof input.knob !== 'string' || !/^#[0-9a-f]{6}$/i.test(input.knob))) throw new Error('knob must be a hex color');
   if (input.display !== undefined && (typeof input.display !== 'string' || input.display.length > 22)) throw new Error('display must be text up to 22 characters');
   if (input.objectMotion !== undefined && (typeof input.objectMotion !== 'number' || !Number.isFinite(input.objectMotion) || input.objectMotion < 0 || input.objectMotion > 2)) throw new Error('objectMotion must be 0..2');
-  if (input.review !== undefined && (scene !== 'bax' || !['beauty', 'clean', 'clay', 'normals'].includes(input.review))) throw new Error('review is only supported for the BAX scene');
-  if (input.inspect !== undefined && (!isRecord(input.inspect) || Object.keys(input.inspect).some(k => !['object', 'yaw'].includes(k)) || scene !== 'bax' || !['device.root', 'bax.emblem', 'bax.kinetic'].includes(input.inspect.object) || (input.inspect.yaw !== undefined && (!Number.isFinite(input.inspect.yaw) || Math.abs(input.inspect.yaw) > 180)))) throw new Error('Invalid inspect parameter');
+  if (input.review !== undefined && (scene !== 'objects' || !['beauty', 'clean', 'clay', 'normals'].includes(input.review))) throw new Error('review is only supported for the OBJECTS scene');
+  if (input.inspect !== undefined && (!isRecord(input.inspect) || Object.keys(input.inspect).some(k => !['object', 'yaw'].includes(k)) || scene !== 'objects' || !['device.root', 'objects.emblem', 'objects.kinetic'].includes(input.inspect.object) || (input.inspect.yaw !== undefined && (!Number.isFinite(input.inspect.yaw) || Math.abs(input.inspect.yaw) > 180)))) throw new Error('Invalid inspect parameter');
   if(input.objectEdits!==undefined){
     if(!isRecord(input.objectEdits))throw new Error('objectEdits must be an object');
     for(const [id,edits]of Object.entries(input.objectEdits)){
-      if(scene!=='bax'||!['device.root','bax.emblem','bax.kinetic'].includes(id)||!isRecord(edits))throw new Error('Unsupported object edit');
+      if(scene!=='objects'||!['device.root','objects.emblem','objects.kinetic'].includes(id)||!isRecord(edits))throw new Error('Unsupported object edit');
       const ranges={x:[-5,5],y:[-5,5],z:[-5,5],yaw:[-180,180],scale:[.25,2]};
       for(const [key,value]of Object.entries(edits)){const range=ranges[key];if(!range||!Number.isFinite(value)||value<range[0]||value>range[1])throw new Error('Invalid object edit: '+id+'.'+key);}
     }
@@ -282,8 +284,8 @@ async function loadPersistedJobs() {
       const job = {
         id, kind: record.kind, purpose: record.purpose ?? 'export', scene: record.scene, status,
         progress: status === 'completed' ? 100 : Math.max(0, Math.min(99, Number(record.progress) || 0)),
-        frames: Math.max(0, Number(record.frames) || (status === 'completed' ? (record.kind === 'frame' ? 1 : sceneConfig(record.scene??'bax').duration * (record.settings?.fps ?? config.fps)) : 0)),
-        total: Math.max(1, Number(record.total) || (record.kind === 'frame' ? 1 : sceneConfig(record.scene??'bax').duration * (record.settings?.fps ?? config.fps))),
+        frames: Math.max(0, Number(record.frames) || (status === 'completed' ? (record.kind === 'frame' ? 1 : sceneConfig(record.scene??'objects').duration * (record.settings?.fps ?? config.fps)) : 0)),
+        total: Math.max(1, Number(record.total) || (record.kind === 'frame' ? 1 : sceneConfig(record.scene??'objects').duration * (record.settings?.fps ?? config.fps))),
         samples: Math.max(0, Number(record.samples) || (status === 'completed' && record.kind === 'frame' ? (record.settings?.temporalSamples ?? 1) : 0)),
         totalSamples: Math.max(0, Number(record.totalSamples) || (record.kind === 'frame' ? (record.settings?.temporalSamples ?? 1) : 0)),
         phase: status === 'completed' ? 'completed' : status === 'failed' ? 'failed' : (record.phase || 'rendering'),
@@ -490,7 +492,7 @@ export function createStudioApi({ spawnFn = nodeSpawn, revealFn = revealWithFind
         if (body.purpose !== undefined && (body.purpose !== 'viewport' || body.kind !== 'frame')) return send(res, 400, { error: 'Viewport jobs must be single frames' });
         if (activeRenderId) return send(res, 409, { error: 'Another local render is already running' });
         const time = body.time ?? 0;
-        const selectedConfig=sceneConfig(body.parameters?.scene??'bax');if (typeof time !== 'number' || !Number.isFinite(time) || time < 0 || time > selectedConfig.duration) return send(res, 400, { error: `time must be a number from 0 to ${selectedConfig.duration} seconds` });
+        const selectedConfig=sceneConfig(body.parameters?.scene??'objects');if (typeof time !== 'number' || !Number.isFinite(time) || time < 0 || time > selectedConfig.duration) return send(res, 400, { error: `time must be a number from 0 to ${selectedConfig.duration} seconds` });
         reservation = `pending:${randomUUID()}`;
         activeRenderId = reservation;
         const parameters = await validateStudioParameters(body.parameters);

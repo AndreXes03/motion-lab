@@ -5,14 +5,14 @@ import {assertSafeControlDocument} from './control-catalog.js';
 import {parameterEasings,easeProgress,validateParameterAnimation} from './parameter-animation.js';
 
 const axes=['x','y','z'];
-const names={'camera.position':'Camera position','camera.target':'Look target','camera.roll':'Camera roll','device.root.position':'Radio position','device.root.rotation':'Radio rotation','dial.rotor.rotation.z':'Dial rotation','bax.kinetic.position':'Gyro position','bax.kinetic.rotation':'Gyro rotation','bax.emblem.position':'Emblem position','bax.emblem.rotation':'Emblem rotation','bax.cover.hinge.rotation.z':'Cover rotation'};
+const names={'camera.position':'Camera position','camera.target':'Look target','camera.roll':'Camera roll','device.root.position':'Radio position','device.root.rotation':'Radio rotation','dial.rotor.rotation.z':'Dial rotation','objects.kinetic.position':'Gyro position','objects.kinetic.rotation':'Gyro rotation','objects.emblem.position':'Emblem position','objects.emblem.rotation':'Emblem rotation','objects.cover.hinge.rotation.z':'Cover rotation'};
 function assertGroup(scene,groupId){
  if(!getAnimationGroups(scene).some(group=>group.id===groupId))throw new Error(`Unknown authored animation group: ${scene}/${groupId}`);
 }
-function baxGroup(target){
+function objectsGroup(target){
  if(target.startsWith('camera.'))return 'camera';
- if(target.startsWith('bax.gyro.')||target.startsWith('bax.kinetic'))return 'gyro';
- if(target.startsWith('bax.emblem')||target.startsWith('bax.cover.'))return 'emblem';
+ if(target.startsWith('objects.gyro.')||target.startsWith('objects.kinetic'))return 'gyro';
+ if(target.startsWith('objects.emblem')||target.startsWith('objects.cover.'))return 'emblem';
  return 'radio';
 }
 function keyCopy(key,value){
@@ -22,7 +22,7 @@ function keyCopy(key,value){
 /** Shared source-key validation for the renderer recipe, editor and agent bridge.
  * Reading does not normalize keys: omitted easing remains the authored smooth default.
  */
-export function validateAuthoredMotion(motion,{allowedTracks=new Set(Object.keys(defaultMotion.tracks)),duration=sceneRegistry.bax.duration,cutDuration=duration}={}){
+export function validateAuthoredMotion(motion,{allowedTracks=new Set(Object.keys(defaultMotion.tracks)),duration=sceneRegistry.objects.duration,cutDuration=duration}={}){
  assertSafeControlDocument(motion);
  if(!motion||typeof motion!=='object'||Array.isArray(motion)||!motion.tracks||typeof motion.tracks!=='object'||Array.isArray(motion.tracks))throw new Error('motion must be an object with a tracks map');
  if(Object.keys(motion).some(key=>!['name','cuts','tracks'].includes(key)))throw new Error('motion contains unsupported fields');
@@ -56,11 +56,11 @@ export function validateAuthoredMotion(motion,{allowedTracks=new Set(Object.keys
  */
 export function getAuthoredAnimationTracks(scene,groupId,{motion=defaultMotion}={}){
  assertGroup(scene,groupId);
- if(scene!=='bax')return [];
+ if(scene!=='objects')return [];
  validateAuthoredMotion(motion);
  const tracks=[];
  for(const [target,keys]of Object.entries(motion.tracks)){
-  if(baxGroup(target)!==groupId)continue;
+  if(objectsGroup(target)!==groupId)continue;
   if(!Array.isArray(keys)||!keys.length)throw new Error(`Missing authored keys: ${target}`);
   const vector=Array.isArray(keys[0].value),count=vector?keys[0].value.length:1;
   if(vector&&count!==3)throw new Error(`Unsupported authored vector: ${target}`);
@@ -114,7 +114,7 @@ export function getAuthoredAnimationProtocol(scene,{motion=defaultMotion,animati
   version:1,scene,recipePaths:{source:['motion','tracks'],groupTiming:['animation','groups'],parameterTracks:['animation','tracks']},
   interpolation:{owner:'outgoing-key',defaultNative:'smooth',defaultGroup:'linear',easings:[...parameterEasings],smooth:'6u^5 - 15u^4 + 10u^3',bezier:'Normalized cubic Bezier; invert x before evaluating y. Four control values in [0,1].',hold:'Keep the left value until the next key time.'},
   groups:groups.map(group=>({...group,timeDomain:'clip-local-seconds',progressRange:[0,1],timing:normalized?.groups[group.id]??null,
-   source:{timeDomain:'scene-seconds',channels:getAuthoredAnimationTracks(scene,group.id,{motion}),availability:scene==='bax'?'native-keys':'evaluated-samples',editable:scene==='bax'}})),
+   source:{timeDomain:'scene-seconds',channels:getAuthoredAnimationTracks(scene,group.id,{motion}),availability:scene==='objects'?'native-keys':'evaluated-samples',editable:scene==='objects'}})),
   parameterTracks:{timeDomain:'scene-seconds',sampling:'scene time multiplied by the per-track rate',tracks:normalized?.tracks??{},rates:normalized?.rates??{}},
   instructions:'Inspect the source curve before editing. A linear group progress curve means no retiming; it does not describe the source movement. Sampled function curves are read-only observations. Save native edits in parameters.motion; save retiming separately in parameters.animation.'
  };

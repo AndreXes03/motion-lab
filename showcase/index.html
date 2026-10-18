@@ -84,7 +84,7 @@
       </div>
       <div class="workflow-footer">
         <p>A focused workspace to explore. Precise tools when you need them.</p>
-        <div class="inline-actions"><a class="button secondary" href="./studio/?scene=bax&amp;panel=look">Open scene controls</a><a class="button secondary" href="./studio/?scene=bax&amp;panel=motion">Open motion curves</a></div>
+        <div class="inline-actions"><a class="button secondary" href="./studio/?scene=pulse&amp;panel=look">Open scene controls</a><a class="button secondary" href="./studio/?scene=pulse&amp;panel=motion">Open motion curves</a></div>
       </div>
     </section>
 
@@ -124,11 +124,11 @@
         <article class="tool-group"><span class="tool-symbol" aria-hidden="true">◌</span><h3>Compositing</h3><p>Exposure, contrast, saturation, grain and finishing effects.</p></article>
       </div>
       <div class="motion-explainer">
-        <div><p class="eyebrow">INDEPENDENT TARGETS</p><h3>Move the radio.<br>Keep the camera on its path.</h3><p>Choose a camera or object group, then shape it inside one shot window. Other groups, captions, cuts and film duration keep their own timing.</p><a class="text-link" href="./studio/?scene=bax&amp;panel=motion">Explore motion curves ↗</a></div>
+        <div><p class="eyebrow">INDEPENDENT TARGETS</p><h3>Move the objects.<br>Keep the camera on its path.</h3><p>Choose a camera or object group, then shape it inside one shot window. Other groups, captions, cuts and film duration keep their own timing.</p><a class="text-link" href="./studio/?scene=pulse&amp;panel=motion">Explore motion curves ↗</a></div>
         <div class="curve-visual" aria-hidden="true"><svg viewBox="0 0 620 280" role="presentation"><path class="grid-line" d="M38 30V248H596M38 190H596M38 130H596M38 70H596"/><path class="curve curve-camera" d="M38 218 C132 215 159 73 268 83 S412 202 596 40"/><path class="curve curve-object" d="M38 190 C104 190 130 183 180 180 S284 56 340 54 S439 162 596 160"/><circle class="curve-dot camera-dot" cx="268" cy="83" r="6"/><circle class="curve-dot object-dot" cx="340" cy="54" r="6"/><text x="42" y="270">CAMERA</text><text x="490" y="270">OBJECT</text></svg><div class="curve-legend"><span><i class="legend-camera"></i> Camera</span><span><i class="legend-object"></i> Object</span><span>Source time →</span></div></div>
       </div>
       <div class="control-facts"><span>One scene recipe</span><span>Absolute keyframe values</span><span>Independent targets</span><span>Original cuts preserved</span></div>
-      <div class="version-strip"><div><p class="eyebrow">SAFE TO EXPLORE</p><h3>Try a change. Compare it. Undo it.</h3><p>Save named versions, compare a direction with your current scene, and step through edits with undo and redo. Curated light, compositing and easing recipes stay scene-specific, with up to four choices in each palette.</p></div><a class="button secondary" href="./studio/?scene=bax&amp;panel=look">Explore a scene</a></div>
+      <div class="version-strip"><div><p class="eyebrow">SAFE TO EXPLORE</p><h3>Try a change. Compare it. Undo it.</h3><p>Save named versions, compare a direction with your current scene, and step through edits with undo and redo. Curated light, compositing and easing recipes stay scene-specific, with up to four choices in each palette.</p></div><a class="button secondary" href="./studio/?scene=pulse&amp;panel=look">Explore a scene</a></div>
     </section>
 
     <section id="rendering" class="render-section section-rule" aria-labelledby="render-title">
@@ -159,18 +159,18 @@
       <div class="nerd-copy"><p class="eyebrow">FOR THE CURIOUS</p><h2 id="nerd-title">A recipe you can read.</h2><p>Scenes are parameterized code and JSON, sampled at an exact time. Motion curves can be grouped by camera or object, with one chosen shot window at a time. The source stays open when you want to go beyond the controls.</p><div class="nerd-links"><a href="https://github.com/AndreXes03/motion-lab/tree/main/src/scenes">Browse scene source ↗</a><a href="https://github.com/AndreXes03/motion-lab/tree/main/project">Browse project recipes ↗</a></div></div>
       <pre class="recipe-card" aria-label="Example scene recipe"><code><span class="code-muted">// A value at any time</span>
 {
-  <span class="code-key">"scene"</span>: <span class="code-string">"bax"</span>,
+  <span class="code-key">"scene"</span>: <span class="code-string">"pulse"</span>,
   <span class="code-key">"animation"</span>: {
     <span class="code-key">"version"</span>: <span class="code-number">1</span>,
     <span class="code-key">"enabled"</span>: <span class="code-boolean">true</span>,
     <span class="code-key">"rate"</span>: <span class="code-number">1</span>,
     <span class="code-key">"groups"</span>: {
       <span class="code-key">"camera"</span>: {
-        <span class="code-key">"start"</span>: <span class="code-number">0</span>, <span class="code-key">"end"</span>: <span class="code-number">2.2</span>,
+        <span class="code-key">"start"</span>: <span class="code-number">0</span>, <span class="code-key">"end"</span>: <span class="code-number">1.46</span>,
         <span class="code-key">"rate"</span>: <span class="code-number">1</span>,
         <span class="code-key">"keys"</span>: [
           { <span class="code-key">"t"</span>: <span class="code-number">0</span>, <span class="code-key">"value"</span>: <span class="code-number">0</span>, <span class="code-key">"ease"</span>: <span class="code-string">"linear"</span> },
-          { <span class="code-key">"t"</span>: <span class="code-number">2.2</span>, <span class="code-key">"value"</span>: <span class="code-number">1</span>, <span class="code-key">"ease"</span>: <span class="code-string">"linear"</span> }
+          { <span class="code-key">"t"</span>: <span class="code-number">1.46</span>, <span class="code-key">"value"</span>: <span class="code-number">1</span>, <span class="code-key">"ease"</span>: <span class="code-string">"linear"</span> }
         ]
       }
     }

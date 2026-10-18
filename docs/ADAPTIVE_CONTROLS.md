@@ -4,7 +4,7 @@ Studio uses a shared catalog of implemented controls across eight scenes. Run `n
 
 ## Workspace
 
-**Properties** opens the selected Project tools. **Complete tool catalog** exposes additional supported controls, category filters and search. Sliders have numeric inputs for precise changes. The categories are Motion, Lens, Lights, Compositing, Character, Graphics and Appearance; a scene only shows categories it supports. Advanced panels start closed. Selecting a BAX object, camera or lights filters its contextual properties.
+**Properties** opens the selected Project tools. **Complete tool catalog** exposes additional supported controls, category filters and search. Sliders have numeric inputs for precise changes. The categories are Motion, Lens, Lights, Compositing, Character, Graphics and Appearance; a scene only shows categories it supports. Advanced panels start closed. Selecting a OBJECTS object, camera or lights filters its contextual properties.
 
 Lights and Compositing panels offer small, editable preset collections. Selecting a lighting or compositing preset applies its native control values; it does not change the selected animation curves. Universal `colorContrast` and `colorSaturation` controls finish the displayed image after temporal integration. Their neutral defaults are exact no-ops. Scene exposure, bloom and grain remain separate controls, with stronger adjustment ranges where the renderer supports them.
 
@@ -12,7 +12,7 @@ Desktop is the reference for the complete workspace. Mobile provides essential c
 
 ## Camera and object motion
 
-Open **Motion**, choose a **Target** and **Shot**, then edit its existing movement. **Easy** shows a compact curve and curated templates, each previewing the selected channel. **Pro** opens the curve directly: native BAX keys expose time, value and outgoing easing; procedural scenes expose sampled movement with horizontal timing points. Existing timing overrides stay visible. There is no separate mode to enter before editing motion.
+Open **Motion**, choose a **Target** and **Shot**, then edit its existing movement. **Easy** shows a compact curve and curated templates, each previewing the selected channel. **Pro** opens the curve directly: native OBJECTS keys expose time, value and outgoing easing; procedural scenes expose sampled movement with horizontal timing points. Existing timing overrides stay visible. There is no separate mode to enter before editing motion.
 
 Drag a source key to edit its time/value, or a timing point horizontally to retime the original movement. Native timing landmarks begin at real source key timestamps; procedural channels use timing landmarks, never invented source keyframes. The dashed curve shows the source before a timing override. Source easing is evaluated once by the renderer, and identity timing preserves it exactly. Each gesture commits once; **Escape** cancels it. Scroll to pan, pinch to zoom, use **+/−** or **Fit**, or middle/Alt-drag to pan. Timing points also support arrow keys (Shift for ten frames).
 
@@ -22,7 +22,7 @@ Each target currently stores one clip. Choosing another shot changes the editor 
 
 | Scene | Available motion groups |
 | --- | --- |
-| BAX | Camera, radio, gyro, emblem |
+| OBJECTS | Camera, radio, gyro, emblem |
 | PULSE | Camera, mechanisms |
 | CAMERA | Camera, city vehicles |
 | Product starter | Camera, product |
@@ -81,7 +81,7 @@ Put 2–5 related controls in most panels, with exceptions for a cohesive light 
 
 Before handing over a new or revised video, include the selected/available control counts and a compact coverage report in the agent's review. Identify omitted meaningful capabilities and explain why; a tiny selection needs a scene-specific reason. Save the reviewed manifest and presets, register the motion source/target contract, and validate recipe import/export. Inspect representative changed frames and confirm the neutral defaults reproduce the approved composition. A successful catalog check proves bindings and metadata, not picture quality.
 
-The existing 2D selections expose every planned public control: Procedural has 16, POP 14, REPLAY 13 and DOT 6. Typography, shape/layout detail and actual motion layers stay editable rather than being flattened into a single style slider. PULSE exposes 18 controls including independent speaker/record motion, framing, surface roughness, rim lighting and stage/display brightness. BAX uses 31 curated controls covering camera focus, studio light colors, surface roughness and image finishing; redundant aggregate controls and raw object transforms remain outside the default selection. Never copy these counts into a new scene without checking its actual capabilities.
+The existing 2D selections expose every planned public control: Procedural has 16, POP 14, REPLAY 13 and DOT 6. Typography, shape/layout detail and actual motion layers stay editable rather than being flattened into a single style slider. PULSE exposes 18 controls including independent speaker/record motion, framing, surface roughness, rim lighting and stage/display brightness. OBJECTS uses 31 curated controls covering camera focus, studio light colors, surface roughness and image finishing; redundant aggregate controls and raw object transforms remain outside the default selection. Never copy these counts into a new scene without checking its actual capabilities.
 
 `src/engine/control-catalog.js` owns safe public parameter bindings. `src/engine/scene-capabilities.js` declares study controls resolved through `parameters.sceneControls`; product starter uses `parameters.product`. Paths are arrays: `['objectEdits', 'device.root', 'x']` preserves the dotted object name. Existing composition controls use `binding: 'value'`; additional parameter controls use `binding: 'parameter'`. Bounds and persistence must agree with server validation.
 
@@ -92,7 +92,7 @@ The agent-selected layout lives in `project/control-selections.json`. Recipes re
 A minimal version 1 manifest is still accepted:
 
 ```json
-{"version":1,"scene":"bax","controls":["shell","energy","fov"]}
+{"version":1,"scene":"objects","controls":["shell","energy","fov"]}
 ```
 
 It receives category panels automatically. Missing or empty early draft selections migrate to the scene's current authored recommendation. Invalid nonempty selections are rejected. DOT, PULSE, CAMERA and REPLAY now have real adapters and saved selections; they no longer depend on empty legacy control lists.
@@ -179,4 +179,4 @@ Compare representative default and changed frames, arbitrary seeks, disabled cur
 
 ## Original movement in the curve editor
 
-Opening a group displays its original timing reference keys without storing an override. BAX exposes its actual source keyframes; function-authored camera motion exposes evaluated position, rotation, zoom or field-of-view observations. Sampled paths are labelled as observations and are read-only. The editable timing curve controls when the existing pose is sampled, without applying native easing twice. Inspecting the original movement restores the current preview frame and leaves saved parameters intact.
+Opening a group displays its original timing reference keys without storing an override. OBJECTS exposes its actual source keyframes; function-authored camera motion exposes evaluated position, rotation, zoom or field-of-view observations. Sampled paths are labelled as observations and are read-only. The editable timing curve controls when the existing pose is sampled, without applying native easing twice. Inspecting the original movement restores the current preview frame and leaves saved parameters intact.

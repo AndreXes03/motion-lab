@@ -2,7 +2,7 @@
 // This keeps scrubbing deterministic and never rewrites the authored tracks.
 export function createObjectEditor(scene) {
   let previous=[];
-  const ids=new Set(['device.root','bax.emblem','bax.kinetic']);
+  const ids=new Set(['device.root','objects.emblem','objects.kinetic']);
   const finite=(value,fallback,min,max)=>Number.isFinite(value)?Math.max(min,Math.min(max,value)):fallback;
   return {
     restore(){for(const {object,position,rotation,scale} of previous){object.position.copy(position);object.quaternion.copy(rotation);object.scale.copy(scale);}previous=[];},

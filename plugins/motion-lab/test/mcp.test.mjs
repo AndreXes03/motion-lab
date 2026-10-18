@@ -89,11 +89,11 @@ test('real runtime baseline and patch: native versions, immutable base, preserva
   const count=(await f.events()).length;
   for(const bad of [{patches:[{id:'speed',value:999}]},{revision:'0'.repeat(64)},{patches:[{id:'__proto__',value:1}]},{scene:'pop'}])assert.equal((await f.call('set_parameters',{scene:'procedural',baseVersionId:base.versionId,revision:base.revision,patches:[{id:'speed',value:1.1}],...bad})).isError,true);
   assert.equal((await f.events()).length,count);
-  const runtime=await loadRuntime(f.root),bax=await runtime.baseline('bax');bax.animation={version:1,enabled:true,groups:{}};
-  const {validateStudioParameters}=await import(pathToFileURL(path.join(repo,'scripts/studio-api.mjs')).href);const normalized=await validateStudioParameters(bax);
-  const patched=await runtime.patch(normalized,'bax',[{id:'contrast',value:.5}]);assert.deepEqual(patched.motion,normalized.motion);assert.deepEqual(patched.animation,normalized.animation);assert.equal(patched.shell,normalized.shell);assert.notDeepEqual(patched.look.lighting,normalized.look.lighting);
-  const original=(await f.call('get_project',{scene:'bax'})).structuredContent;
-  const modify=async(base,patches)=>(await f.call('set_parameters',{scene:'bax',baseVersionId:base.versionId,revision:base.revision,patches})).structuredContent;
+  const runtime=await loadRuntime(f.root),objects=await runtime.baseline('objects');objects.animation={version:1,enabled:true,groups:{}};
+  const {validateStudioParameters}=await import(pathToFileURL(path.join(repo,'scripts/studio-api.mjs')).href);const normalized=await validateStudioParameters(objects);
+  const patched=await runtime.patch(normalized,'objects',[{id:'contrast',value:.5}]);assert.deepEqual(patched.motion,normalized.motion);assert.deepEqual(patched.animation,normalized.animation);assert.equal(patched.shell,normalized.shell);assert.notDeepEqual(patched.look.lighting,normalized.look.lighting);
+  const original=(await f.call('get_project',{scene:'objects'})).structuredContent;
+  const modify=async(base,patches)=>(await f.call('set_parameters',{scene:'objects',baseVersionId:base.versionId,revision:base.revision,patches})).structuredContent;
   const manual=await modify(original,[{id:'key',value:42},{id:'fill',value:.06},{id:'exposure',value:1.7}]);
   const contrastA=manual.parameters.studio.values.contrast;
   const b=await modify(manual,[{id:'contrast',value:.5}]);

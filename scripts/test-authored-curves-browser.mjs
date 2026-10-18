@@ -28,7 +28,7 @@ try{
   }
   const after=await recipe();assert.deepEqual(after.parameters,before.parameters,scene+' inspection must not edit recipe');assert.equal(await hash(),beforeHash,scene+' inspection must restore original pixels');
  }
- await page.locator('#scene').selectOption('bax');await idle();const untouched=await recipe();await page.locator('#tab-motion').click();await page.locator('#motion-view-retime').click();
+ await page.locator('#scene').selectOption('objects');await idle();const untouched=await recipe();await page.locator('#tab-motion').click();await page.locator('#motion-view-retime').click();
  const chosenWindow=await page.locator('#motion-window').inputValue(),referenceText=await page.locator('.motion-key').allTextContents();
  await page.locator('#seek').evaluate(input=>{input.value='96';input.dispatchEvent(new Event('input',{bubbles:true}));});await idle();
  assert.equal(await page.locator('#motion-window').inputValue(),chosenWindow);assert.deepEqual(await page.locator('.motion-key').allTextContents(),referenceText);
@@ -36,7 +36,7 @@ try{
  assert.equal((await recipe()).parameters.animation,undefined);await page.locator('#tab-motion').click();
  await page.locator('.motion-key').first().click();await openAdvanced(page);await page.locator('#motion-key-ease').selectOption('bezier');
  for(const[i,value]of[.42,0,.58,1].entries())await page.locator('#motion-bezier-'+i).fill(String(value));await page.locator('#motion-save-key').click();
- const edited=await recipe();assert.equal(edited.parameters.animation.groups.camera.start,0);assert.equal(edited.parameters.animation.groups.camera.end,2.2);assert.equal(edited.parameters.animation.groups.camera.keys.length,2);assert.equal(edited.parameters.animation.groups.camera.keys[0].ease,'bezier');assert.equal(edited.parameters.animation.groups.camera.keys[1].ease,'linear');assert.deepEqual(edited.parameters.motion,untouched.parameters.motion);assert.equal(edited.parameters.scene,'bax');
- assert.deepEqual(errors,[]);const report={passed:true,groups:results,defaultRecipesAndPixelsUnchanged:true,virtualKeyEditCopiesOnce:true,chosenClipFrozenAcrossCuts:true,nativeSourceUnchanged:true,errors,note:'Original motion is the default. BAX source keys are editable; evaluated function paths remain read-only. Retiming is an explicit separate mode and does not replace source keys.'};
+ const edited=await recipe();assert.equal(edited.parameters.animation.groups.camera.start,0);assert.equal(edited.parameters.animation.groups.camera.end,2.2);assert.equal(edited.parameters.animation.groups.camera.keys.length,2);assert.equal(edited.parameters.animation.groups.camera.keys[0].ease,'bezier');assert.equal(edited.parameters.animation.groups.camera.keys[1].ease,'linear');assert.deepEqual(edited.parameters.motion,untouched.parameters.motion);assert.equal(edited.parameters.scene,'objects');
+ assert.deepEqual(errors,[]);const report={passed:true,groups:results,defaultRecipesAndPixelsUnchanged:true,virtualKeyEditCopiesOnce:true,chosenClipFrozenAcrossCuts:true,nativeSourceUnchanged:true,errors,note:'Original motion is the default. OBJECTS source keys are editable; evaluated function paths remain read-only. Retiming is an explicit separate mode and does not replace source keys.'};
  const output=new URL('../outputs/adaptive-controls-draft/',import.meta.url);await mkdir(output,{recursive:true});await writeFile(new URL('authored-curves-browser-checks.json',output),JSON.stringify(report,null,2));console.log(JSON.stringify(report));
 }finally{await browser.close();}

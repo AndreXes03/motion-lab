@@ -139,7 +139,7 @@ See [Procedural graphics](PROCEDURAL.md) for the API. This Canvas2D mode handles
 
 `src/config.js` centralizes duration, frame rate, dimensions, palette and text. Components build geometry and materials; scenes define compositions; `src/engine/studio.js` sets lighting. The engine applies tracks, renders and composites; the viewer handles UI; scripts handle CLI and export.
 
-Use the appropriate scene factory, register it in `src/scene-registry.js` and `src/engine/runtime.js`, and supply real control definitions, supported motion groups, an agent-selected panel layout and renderer intent. New product scenes start from `src/scenes/product-starter.js`; the BAX scene uses `createScene(renderer, config)`. Keep frame calculation a function of absolute time, including backward seeks. See [Studio](STUDIO.md).
+Use the appropriate scene factory, register it in `src/scene-registry.js` and `src/engine/runtime.js`, and supply real control definitions, supported motion groups, an agent-selected panel layout and renderer intent. New product scenes start from `src/scenes/product-starter.js`; the OBJECTS scene uses `createScene(renderer, config)`. Keep frame calculation a function of absolute time, including backward seeks. See [Studio](STUDIO.md).
 
 Rendering is repeatable on the same machine/browser version; GPUs and drivers may change pixels. The 3D demo uses real geometry, perspective, PBR materials, procedural reflections and textures, 2D overlays, adjustable bloom, chromatic aberration and optional depth of field. `--temporal-samples` accepts 1–64 samples; never integrate across hard cuts. glTF import, arbitrary product insertion and reconstruction from images are not implemented.
 

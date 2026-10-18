@@ -241,7 +241,7 @@ async function main() {
   let browser;
   try {
     browser = await chromium.launch({ executablePath: CHROME, headless: command !== 'viewer', args: ['--disable-gpu-sandbox'] });
-    const page = await openMotion(browser, command==='viewer'?url+'?scene='+(parameters.scene||'bax')+(opts.sound?'&sound='+opts.sound:''):url+'?render=1&scene='+parameters.scene, width, height);
+    const page = await openMotion(browser, command==='viewer'?url+'?scene='+(parameters.scene||'objects')+(opts.sound?'&sound='+opts.sound:''):url+'?render=1&scene='+parameters.scene, width, height);
     output('ready', { command, url, width, height, start, end, temporalSamples, config: await page.evaluate(() => window.motion.config ?? null) });
     if (command === 'viewer') {
       await new Promise(resolve => { browser.on('disconnected', resolve); process.on('SIGINT', resolve); process.on('SIGTERM', resolve); });

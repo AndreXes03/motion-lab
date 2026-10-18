@@ -27,8 +27,8 @@ const asset = file => {
     ? '?v=pulse-continuous-audio-blue-end-v2'
     : /(?:camera|pulse)-1080\.mp4$/.test(file) || /(?:camera|pulse)-poster\.jpg$/.test(file)
     ? '?v=cycles-motion-tools-v1'
-    : /ui-(?:tools|motion-groups|studio-easy|studio-pro|studio-export)\.jpg$/.test(file)
-      ? '?v=studio-workspaces-v3'
+    : /ui-(?:studio-easy|studio-pro|studio-export)\.jpg$/.test(file)
+      ? '?v=studio-workspaces-v4'
       : '';
   return assetPrefix + file + version;
 };

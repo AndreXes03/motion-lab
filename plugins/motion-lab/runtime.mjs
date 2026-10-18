@@ -44,7 +44,7 @@ export async function loadRuntime(root) {
       const parameters = projects.resolveParameters(scene, values, 'original', look);
       parameters.look ??= look; parameters.motion = await store.readProject('motion'); parameters.objectEdits = {};
       parameters.sound = {}; // Native validation fills the same sound defaults used by the Viewer.
-      if (scene === 'bax') parameters.review = 'beauty';
+      if (scene === 'objects' || scene === 'bax') parameters.review = 'beauty';
       parameters.renderPolicy = policy.validateRenderPlan(plans.scenes?.[scene]);
       parameters.studio = { values, preset:'original', lookOverrides:{}, controlManifest:catalog.createControlManifest(scene) };
       return api.validateStudioParameters(parameters);

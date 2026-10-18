@@ -34,7 +34,7 @@ The PULSE, CAMERA, DOT and REPLAY films are 1920 × 1080 at 30 fps with sound de
 
 ## Shape the scene
 
-Every registered scene has an agent-selected set of controls and panel layout, chosen for its actual motion, lens, lights, materials or compositing needs. A complete control catalog remains available for deeper adjustments. The editor displays original BAX keyframes and evaluated camera paths for procedural scenes, without changing the scene on opening. Curated light, compositing and interpolation presets are scene-specific and limited to four choices per palette.
+Every registered scene has an agent-selected set of controls and panel layout, chosen for its actual motion, lens, lights, materials or compositing needs. A complete control catalog remains available for deeper adjustments. The editor displays original OBJECTS keyframes and evaluated camera paths for procedural scenes, without changing the scene on opening. Curated light, compositing and interpolation presets are scene-specific and limited to four choices per palette.
 
 Motion groups let you adjust a camera or object within one chosen shot window. Each target keeps its own curve and local timing; other groups, captions, cuts and total duration remain intact. Save versions, compare changes against a reference and undo or redo edits as you refine the scene.
 

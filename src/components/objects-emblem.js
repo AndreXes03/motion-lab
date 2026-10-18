@@ -5,23 +5,21 @@ import { createMicroSurfaceMaps } from './materials.js';
 
 // This is a machined object, not the soft inflatable used by the earlier look.
 // The separately extruded enamel sits below the chrome's front bevel.
+function roundedContour(path,left,bottom,right,top,radius) {
+  path.moveTo(left+radius,bottom);
+  path.lineTo(right-radius,bottom);path.quadraticCurveTo(right,bottom,right,bottom+radius);
+  path.lineTo(right,top-radius);path.quadraticCurveTo(right,top,right-radius,top);
+  path.lineTo(left+radius,top);path.quadraticCurveTo(left,top,left,top-radius);
+  path.lineTo(left,bottom+radius);path.quadraticCurveTo(left,bottom,left+radius,bottom);
+  path.closePath();
+}
+
+// A neutral machined frame: the silhouette no longer reproduces a letterform.
 function outline() {
-  const shape = new T.Shape();
-  shape.moveTo(-1.50, -1.90);
-  shape.lineTo(-1.50, 1.90);
-  shape.lineTo(-.53, 1.90);
-  shape.lineTo(-.53, 1.11);
-  shape.lineTo(-.12, 1.11);
-  shape.bezierCurveTo(1.12, 1.11, 1.95, .48, 1.95, -.37);
-  shape.bezierCurveTo(1.95, -1.37, 1.05, -1.90, -.11, -1.90);
-  shape.lineTo(-1.50, -1.90);
-  const opening = new T.Path();
-  opening.moveTo(-.53, -1.02);
-  opening.lineTo(-.14, -1.02);
-  opening.bezierCurveTo(.40, -1.02, .65, -.78, .65, -.35);
-  opening.bezierCurveTo(.65, .02, .40, .24, -.14, .24);
-  opening.lineTo(-.53, .24);
-  opening.lineTo(-.53, -1.02);
+  const shape=new T.Shape();
+  roundedContour(shape,-1.50,-1.90,1.95,1.90,.32);
+  const opening=new T.Path();
+  roundedContour(opening,-.425,-.75,.875,.75,.18);
   shape.holes.push(opening);
   return shape;
 }
@@ -33,7 +31,7 @@ function insetShape(base, outerX, outerY, holeScale) {
   shape.closePath();
   const hole = new T.Path();
   const points = base.holes[0].getPoints(72);
-  const centerX = .06, centerY = -.39;
+  const centerX = .225, centerY = 0;
   points.forEach((p, i) => {
     const x = centerX + (p.x - centerX) * holeScale;
     const y = centerY + (p.y - centerY) * holeScale;
@@ -154,10 +152,10 @@ function smoothBetween(a, b, t) {
   return u * u * (3 - 2 * u);
 }
 
-export function createBaxEmblem() {
+export function createObjectsEmblem() {
   const group = new T.Group();
   // Stable name for motion tracks and object-isolated inspection.
-  group.name = 'bax.emblem';
+  group.name = 'objects.emblem';
   group.userData.kind = 'machined-emblem-3d';
   group.userData.details = {
     rim: [.96, .75, .295],
@@ -203,7 +201,7 @@ export function createBaxEmblem() {
   });
 
   // The full steel back stops below the inlay; no opaque chrome cap covers it.
-  const body = addMesh(group, 'bax.body.chrome-machined', new T.ExtrudeGeometry(base, {
+  const body = addMesh(group, 'objects.body.chrome-machined', new T.ExtrudeGeometry(base, {
     depth: .41, steps: 1, bevelEnabled: true, bevelSegments: 7,
     bevelSize: .055, bevelThickness: .045, curveSegments: 128
   }), [sideSteel, sideSteel], -.26);
@@ -215,89 +213,89 @@ export function createBaxEmblem() {
   const hole = base.holes[0].getPoints(96);
   const bands = [
     { points: outer, cx: 0, cy: 0, start: [1, 1], peak: [.975, .978], nickA: [.966, .970], nickB: [.958, .963], land: [.94, .952], inlay: [.90, .92] },
-    { points: hole, cx: .06, cy: -.39, start: [1, 1], peak: [1.04, 1.04], nickA: [1.057, 1.057], nickB: [1.073, 1.073], land: [1.10, 1.10], inlay: [1.18, 1.18] }
+    { points: hole, cx: .225, cy: 0, start: [1, 1], peak: [1.04, 1.04], nickA: [1.057, 1.057], nickB: [1.073, 1.073], land: [1.10, 1.10], inlay: [1.18, 1.18] }
   ];
   bands.forEach((band, i) => {
     const make = scale => scaleContour(band.points, scale[0], scale[1], band.cx, band.cy);
-    loftBand(group, `bax.rim.${i}.shoulder`, make(band.start), make(band.peak), .15, .295, chrome);
-    loftBand(group, `bax.rim.${i}.engraved-groove-a`, make(band.peak), make(band.nickA), .295, .284, sideSteel);
-    loftBand(group, `bax.rim.${i}.engraved-groove-b`, make(band.nickA), make(band.nickB), .284, .295, chrome);
-    loftBand(group, `bax.rim.${i}.land`, make(band.nickB), make(band.land), .295, .295, chrome);
-    loftBand(group, `bax.rim.${i}.groove`, make(band.land), make(band.inlay), .295, .244, satinAluminum);
+    loftBand(group, `objects.rim.${i}.shoulder`, make(band.start), make(band.peak), .15, .295, chrome);
+    loftBand(group, `objects.rim.${i}.engraved-groove-a`, make(band.peak), make(band.nickA), .295, .284, sideSteel);
+    loftBand(group, `objects.rim.${i}.engraved-groove-b`, make(band.nickA), make(band.nickB), .284, .295, chrome);
+    loftBand(group, `objects.rim.${i}.land`, make(band.nickB), make(band.land), .295, .295, chrome);
+    loftBand(group, `objects.rim.${i}.groove`, make(band.land), make(band.inlay), .295, .244, satinAluminum);
   });
 
   // The black machined bed becomes visible when the hinged enamel service lid
   // opens. All exposed inner elements remain lower than the closed lid's back.
-  const innerBed = addMesh(group, 'bax.service.recess', new T.ExtrudeGeometry(enamelShape, {
+  const innerBed = addMesh(group, 'objects.service.recess', new T.ExtrudeGeometry(enamelShape, {
     depth: .008, steps: 1, bevelEnabled: false, curveSegments: 12
   }), innerNickel, .196);
   innerBed.receiveShadow = false;
   const insetSteel = new T.MeshStandardMaterial({ color: '#a2b4c4', metalness: .52, roughness: .34, roughnessMap: sideGrain, emissive: '#223343', emissiveIntensity: .25 });
   const orange = new T.MeshPhysicalMaterial({ color: '#e95722', metalness: .16, roughness: .38, clearcoat: .2, emissive: '#742307', emissiveIntensity: .32 });
   for (let i = 0; i < 3; i++) {
-    const rail = addMesh(group, `bax.service.guide-rail.${i}`, new RoundedBoxGeometry(.67, .025, .006, 3, .004), insetSteel);
+    const rail = addMesh(group, `objects.service.guide-rail.${i}`, new RoundedBoxGeometry(.67, .025, .006, 3, .004), insetSteel);
     rail.position.set(.53, -1.10 - i * .16, .208);
   }
-  const rotorBack = addMesh(group, 'bax.service.rotor-bearing', new T.CylinderGeometry(.32, .32, .007, 48), sideSteel);
+  const rotorBack = addMesh(group, 'objects.service.rotor-bearing', new T.CylinderGeometry(.32, .32, .007, 48), sideSteel);
   rotorBack.rotation.x = Math.PI / 2;
   rotorBack.position.set(1.18, -1.13, .203);
-  const rotor = addMesh(group, 'bax.service.orange-rotor', new T.CylinderGeometry(.242, .242, .008, 48), orange);
+  const rotor = addMesh(group, 'objects.service.orange-rotor', new T.CylinderGeometry(.242, .242, .008, 48), orange);
   rotor.rotation.x = Math.PI / 2;
   rotor.position.set(1.18, -1.13, .207);
-  const rotorCore = addMesh(group, 'bax.service.rotor-core', new T.CylinderGeometry(.044, .044, .003, 32), graphite);
+  const rotorCore = addMesh(group, 'objects.service.rotor-core', new T.CylinderGeometry(.044, .044, .003, 32), graphite);
   rotorCore.rotation.x = Math.PI / 2;
   rotorCore.position.set(1.18, -1.13, .211);
   for (const [name, x, y] of [['top', -1.04, 1.34], ['bottom', 1.27, -1.46]]) {
-    const pin = addMesh(group, `bax.service.guide-pin.${name}`, new T.CylinderGeometry(.043, .043, .012, 24), chrome);
+    const pin = addMesh(group, `objects.service.guide-pin.${name}`, new T.CylinderGeometry(.043, .043, .012, 24), chrome);
     pin.rotation.x = Math.PI / 2;
     pin.position.set(x, y, .205);
   }
-  printLabel(group, 'bax.service.inspection-mark', 'BAX  /  SERVICE 01', -.39, .58, .91, .073, .208, '#9daebc', '600 78px Arial, sans-serif');
+  printLabel(group, 'objects.service.inspection-mark', 'FV  /  SERVICE 01', .225, 1.25, .91, .073, .208, '#9daebc', '600 78px Arial, sans-serif');
 
-  // A captive vertical hinge carries the entire B-shaped enamel lid. The
+  // A captive vertical hinge carries the entire frame-shaped enamel lid. The
   // inverse-positioned content keeps its closed position exactly unchanged.
   const hinge = new T.Group();
-  hinge.name = 'bax.cover.hinge';
+  hinge.name = 'objects.cover.hinge';
   hinge.position.set(-1.35, 0, .24);
   group.add(hinge);
   const lid = new T.Group();
-  lid.name = 'bax.cover.leaf';
+  lid.name = 'objects.cover.leaf';
   lid.position.set(1.35, 0, -.24);
   hinge.add(lid);
   for (const [index, y] of [-1.15, -.22, .72].entries()) {
-    const barrel = addMesh(group, `bax.hinge.barrel.${index}`, new T.CylinderGeometry(.042, .042, .31, 24), chrome);
+    const barrel = addMesh(group, `objects.hinge.barrel.${index}`, new T.CylinderGeometry(.042, .042, .31, 24), chrome);
     barrel.position.set(-1.43, y, .225);
   }
-  const hingePin = addMesh(group, 'bax.hinge.pin', new T.CylinderGeometry(.014, .014, 2.30, 16), graphite);
+  const hingePin = addMesh(group, 'objects.hinge.pin', new T.CylinderGeometry(.014, .014, 2.30, 16), graphite);
   hingePin.position.set(-1.43, -.2, .225);
 
   // The enamel is its own solid lid, recessed below the lip when closed.
-  addMesh(lid, 'bax.inlay.cobalt-enamel', new T.ExtrudeGeometry(enamelShape, {
+  addMesh(lid, 'objects.inlay.cobalt-enamel', new T.ExtrudeGeometry(enamelShape, {
     depth: .020, steps: 1, bevelEnabled: true, bevelSize: .012, bevelThickness: .005, bevelSegments: 4, curveSegments: 64
   }), enamel, .219);
 
   // Small restrained manufacture cues, all above the recessed enamel face.
   const screwMetal = new T.MeshStandardMaterial({ color: '#aebbc9', metalness: 1, roughness: .23 });
-  screw(lid, -1.14, 1.51, .255, screwMetal, graphite, 'bax.fastener.top');
-  screw(lid, 1.22, -1.38, .255, screwMetal, graphite, 'bax.fastener.bottom');
+  screw(lid, -1.14, 1.51, .255, screwMetal, graphite, 'objects.fastener.top');
+  screw(lid, 1.22, -1.38, .255, screwMetal, graphite, 'objects.fastener.bottom');
 
   // A real inset gauge strip makes the vertical stem useful in close shots.
   const gaugeMetal = new T.MeshPhysicalMaterial({ color: '#b7cadb', metalness: 1, roughness: .25, roughnessMap: sideGrain });
-  const gauge = addMesh(lid, 'bax.gauge.satin-rail', new RoundedBoxGeometry(.023, 1.87, .008, 3, .006), gaugeMetal);
+  const gauge = addMesh(lid, 'objects.gauge.satin-rail', new RoundedBoxGeometry(.023, 1.87, .008, 3, .006), gaugeMetal);
   gauge.position.set(-1.17, -.16, .251);
   const tickMetal = new T.MeshStandardMaterial({ color: '#b7c8d8', metalness: .85, roughness: .3 });
   for (let i = 0; i < 9; i++) {
     const y = .63 - i * .20;
-    const tick = addMesh(lid, `bax.gauge.tick.${String(i + 1).padStart(2, '0')}`, new T.BoxGeometry(i % 2 ? .058 : .088, .006, .002), tickMetal);
+    const tick = addMesh(lid, `objects.gauge.tick.${String(i + 1).padStart(2, '0')}`, new T.BoxGeometry(i % 2 ? .058 : .088, .006, .002), tickMetal);
     tick.position.set(-1.035 + (i % 2 ? -.015 : 0), y, .250);
   }
   const index = new T.Mesh(new T.ShapeGeometry(new T.Shape([
     new T.Vector2(-.965, -.15), new T.Vector2(-.885, -.11), new T.Vector2(-.965, -.07)
   ])), new T.MeshStandardMaterial({ color: '#ee5a1d', metalness: .18, roughness: .31, side: T.DoubleSide }));
-  index.name = 'bax.gauge.copper-index';
+  index.name = 'objects.gauge.copper-index';
   index.position.z = .252;
   lid.add(index);
-  printLabel(lid, 'bax.serial', '01 / COBALT', -.93, -1.52, .62, .075, .251, '#c7d5f8', '600 86px Arial, sans-serif');
+  printLabel(lid, 'objects.serial', '01 / COBALT', -.93, -1.52, .62, .075, .251, '#c7d5f8', '600 86px Arial, sans-serif');
 
   group.userData.update = (time, { amount = 1 } = {}) => {
     const open = smoothBetween(3.5, 4.6, time);
