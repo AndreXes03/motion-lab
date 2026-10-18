@@ -348,3 +348,5 @@ body[data-panel=compositing] {--studio-accent:#8ac5d3}
 body[data-panel=audio] {--studio-accent:#89cbb1}
 
 .studio-brand img.brand-mark{width:28px;height:28px;border:0;border-radius:0;object-fit:contain}
+
+.control-scrub-label{cursor:ew-resize;touch-action:none;user-select:none}

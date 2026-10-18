@@ -1,5 +1,6 @@
 const assetPrefix = location.pathname.includes('/showcase/') ? '../' : '';
 const reducedMotion = matchMedia('(prefers-reduced-motion: reduce)');
+const saveData = navigator.connection?.saveData || /(^|-)2g$/.test(navigator.connection?.effectiveType ?? '');
 const asset = file => {
   const version = /pulse-1080\.mp4$/.test(file)
     ? '?v=pulse-continuous-audio-blue-end-v2'
@@ -22,7 +23,7 @@ for (const element of document.querySelectorAll('[data-asset]')) {
   if (element.dataset.poster) element.poster = asset(element.dataset.poster);
   if (element.hasAttribute('data-hero-motion')) {
     heroVideo = element;
-    if (reducedMotion.matches) {
+    if (reducedMotion.matches || saveData) {
       element.removeAttribute('autoplay');
       continue;
     }
@@ -33,7 +34,7 @@ for (const element of document.querySelectorAll('[data-asset]')) {
 if (heroVideo) {
   let heroVisible = true;
   const updateHeroPlayback = () => {
-    if (reducedMotion.matches || document.hidden || !heroVisible) {
+    if (reducedMotion.matches || saveData || document.hidden || !heroVisible) {
       heroVideo.pause();
       return;
     }
@@ -41,7 +42,7 @@ if (heroVideo) {
   };
   document.addEventListener('visibilitychange', updateHeroPlayback);
   reducedMotion.addEventListener?.('change', event => {
-    if (event.matches) {
+    if (event.matches || saveData) {
       heroVideo.pause();
       heroVideo.removeAttribute('src');
       heroVideo.load();

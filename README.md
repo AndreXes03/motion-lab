@@ -42,7 +42,9 @@ The [product starter](https://andrexes03.github.io/motion-lab/studio/?scene=star
 
 ## Preview, render and sound
 
-The interactive browser preview uses Three.js for 3D and Canvas for procedural 2D. Auto adjusts preview resolution as you work; Fast, Balanced and Sharp are available when you want a manual choice. These settings affect the preview only. In browsers with canvas recording support, the public Studio exports browser-rendered video at 720p or 1080p, plus PNG frames and JSON recipes. MP4 is offered when the browser supports its encoder; otherwise the Studio offers WebM. Browser video uses the real-time Three.js/Canvas path. Blender Cycles and prepared Mixed renders remain local-only; those renderer choices can be preserved in a recipe but are not executed on the public site.
+The public web demo opens a small 3D study at 640 × 360. Try the materials, camera, lighting, playback, scrubbing and motion templates without loading the full scene library. **Pro tools are available in the desktop download**: source curves, multiple keyframes, live curve editing, code, sound, saved recipes and video rendering.
+
+In the local Studio, Three.js previews 3D and Canvas previews procedural 2D. Auto, Fast, Balanced and Sharp change only interactive preview quality. They do not change saved parameters or final render settings.
 
 The local app renders videos with Three.js as its standard route. Blender Cycles is an optional local path currently supported for PULSE; it is scene-specific and requires a successful local capability check. Other scenes need their own conversion and visual review. Mixed-render jobs combine prepared local image or frame-sequence inputs through an explicit compositing plan in Studio; choosing “mixed” alone does not create those inputs. See [renderer selection](docs/RENDERER_SELECTION.md) and [compositing](docs/COMPOSITING.md).
 
@@ -64,10 +66,14 @@ The current setup is tested on macOS with Node.js 22.12 or newer and Google Chro
 git clone https://github.com/AndreXes03/motion-lab.git
 cd motion-lab
 npm ci
-npm run viewer
+npm run studio
 ```
 
-Open <http://127.0.0.1:4173/>. Video renders go to Downloads. Windows and Linux have not been validated. Read [usage and export details](docs/USAGE.md) and [supported setup](docs/VALIDATION.md).
+Open <http://127.0.0.1:4173/>. `npm run studio` checks official `origin/main` on every launch and applies only fast-forward updates. Local edits and work branches are preserved; offline launches use the installed copy. Downloaded ZIP copies also launch, but automatic updates require a Git clone. Use `npm run viewer` for a developer preview without an update check.
+
+On macOS, `node scripts/install-mac-launcher.mjs` creates a Framevolve app in your Applications folder. Its icon launches the same updater and Studio. See [editing and launch behavior](docs/FLUID_EDITING.md).
+
+Video renders go to Downloads. Windows and Linux have not been validated. Read [usage and export details](docs/USAGE.md) and [supported setup](docs/VALIDATION.md).
 
 ## Project guides
 

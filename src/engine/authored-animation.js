@@ -105,6 +105,19 @@ export function editAuthoredKey(scene,groupId,channelId,keyIndex,patch,{motion=d
  return result;
 }
 
+/** Apply a multi-key gesture atomically so shared vector clocks remain valid. */
+export function editAuthoredKeys(scene, groupId, channelId, patches, {motion = defaultMotion} = {}) {
+ const track = getAuthoredAnimationTracks(scene, groupId, {motion}).find(track => track.id === channelId);
+ if (!track?.editable || !Array.isArray(patches) || !patches.length) throw Error('Invalid source selection');
+ const result = structuredClone(motion);
+ for (const {index, t, value} of patches) {
+  if (!Number.isInteger(index) || !track.keys[index] || !Number.isFinite(t) || !Number.isFinite(value)) throw Error('Invalid source key');
+  const key = result.tracks[track.binding.track][index]; key.t = t;
+  if (track.binding.component === null) key.value = value; else key.value[track.binding.component] = value;
+ }
+ validateAuthoredMotion(result); return result;
+}
+
 /** Machine-readable contract for agents. This is a view of the existing recipe,
  * not a second save format. Native source keys and timing overrides stay distinct.
  */

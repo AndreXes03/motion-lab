@@ -147,3 +147,15 @@ body[data-experience=easy] .motion-panel.motion-interactive #motion-advanced { d
  .motion-panel.motion-interactive[data-experience=easy] .motion-template svg{height:30px}
  .motion-panel.motion-interactive[data-experience=easy] .motion-easy-templates{margin:10px 0}
 }
+
+/* Shared gesture affordances stay above the graph and remain reachable. */
+.motion-panel.motion-interactive .motion-selection-tools{display:flex;align-items:center;gap:8px;margin:9px 0;flex-wrap:wrap}
+.motion-panel.motion-interactive .motion-selection-tools>span{flex:1;color:var(--motion-accent);font-size:11px}
+.motion-panel.motion-interactive .motion-selection-tools .control{display:flex;align-items:center;gap:5px;margin:0}
+.motion-panel.motion-interactive .motion-selection-tools label{margin:0;font-size:10px}
+.motion-panel.motion-interactive .motion-selection-tools input{accent-color:var(--motion-accent);width:14px;height:14px}
+.motion-panel.motion-interactive .motion-interaction-help{display:block;color:var(--motion-muted);font-size:10px;line-height:1.6;margin:5px 0 10px}
+.motion-panel.motion-interactive .motion-selection-box{fill:#b49aef20;stroke:var(--motion-accent);stroke-width:1;stroke-dasharray:4 3}
+.motion-panel.motion-interactive .motion-curve{cursor:crosshair}
+.motion-panel.motion-interactive .motion-curve [aria-pressed=true]{stroke:var(--motion-accent);stroke-width:2.5}
+.motion-panel.motion-interactive[data-experience=easy] #motion-native-graph{touch-action:none}

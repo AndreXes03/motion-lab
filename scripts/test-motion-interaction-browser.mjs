@@ -74,6 +74,7 @@ try {
   assert.deepEqual(afterHandle.parameters.motion, initial.parameters.motion); assert.deepEqual(afterHandle.config, initial.config);
   await page.locator('#undo-edit').click(); assert.deepEqual((await recipe()).parameters.animation, beforeHandle.parameters.animation, 'A whole handle drag must undo in one step');
   await page.locator('#redo-edit').click(); assert.deepEqual((await recipe()).parameters.animation, afterHandle.parameters.animation); await motion();
+  await graph.scrollIntoViewIfNeeded();
   const box = await graph.boundingBox();
   await page.mouse.dblclick(box.x + box.width * .5, box.y + box.height * .5); await idle();
   const added = await recipe(); assert.equal(added.parameters.animation.groups.camera.keys.length, 3); await motion();
