@@ -1,7 +1,7 @@
 import * as T from 'three';
 import {FontLoader} from 'three/addons/loaders/FontLoader.js';
 import {TextGeometry} from 'three/addons/geometries/TextGeometry.js';
-import fontData from '../assets/fonts/helvetiker_bold.typeface.json';
+import fontData from '../assets/fonts/helvetiker_bold.typeface.json' with {type:'json'};
 import {springIn,beatClock} from '../engine/beat-clock.js';
 const font=new FontLoader().parse(fontData);
 /** Real extruded glyphs, individual centered pivots and a centered word baseline. */

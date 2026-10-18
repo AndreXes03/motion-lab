@@ -1,6 +1,8 @@
 <div align="center">
 
-# Motion Lab
+<img src="public/brand/framevolve-mark.png" alt="" width="72" height="72">
+
+# Framevolve
 
 **Make motion. Keep control.**
 
@@ -10,13 +12,13 @@ An open-source studio for making editable 2D, hybrid and 3D motion with code, sc
 
 </div>
 
-Build a scene with your coding agent. Shape its motion, lens, materials, lighting and grade in Motion Lab. The agent works on the same scene code and recipe; the studio gives you a visual way to direct the next pass.
+Build a scene with your coding agent. Shape its motion, lens, materials, lighting and grade in Framevolve. The agent works on the same scene code and recipe; the studio gives you a visual way to direct the next pass.
 
 [![PULSE — Blender Cycles](demo/pulse-poster.jpg)](https://andrexes03.github.io/motion-lab/demo/pulse-1080.mp4)
 
 PULSE · Blender Cycles · 1080p · 30 fps · 12.9 seconds. Click the frame to watch the film.
 
-## Made in Motion Lab
+## Made in Framevolve
 
 Five films show 2D graphics, hybrid compositions and detailed 3D scenes. Each one has its own source and editable recipe.
 
@@ -44,7 +46,7 @@ The interactive browser preview uses Three.js for 3D and Canvas for procedural 2
 
 The local app renders videos with Three.js as its standard route. Blender Cycles is an optional local path currently supported for PULSE; it is scene-specific and requires a successful local capability check. Other scenes need their own conversion and visual review. Mixed-render jobs combine prepared local image or frame-sequence inputs through an explicit compositing plan in Studio; choosing “mixed” alone does not create those inputs. See [renderer selection](docs/RENDERER_SELECTION.md) and [compositing](docs/COMPOSITING.md).
 
-Motion Lab also supports procedural music and movement-driven 2D or 3D sound effects. Read the [sound design guide](docs/SOUND_DESIGN.md).
+Framevolve also supports procedural music and movement-driven 2D or 3D sound effects. Read the [sound design guide](docs/SOUND_DESIGN.md).
 
 ## For the curious
 
@@ -52,7 +54,9 @@ Scenes are source code plus project parameters. The renderer samples a requested
 
 An optional [path-traced still experiment](docs/PHOTOREALISM.md) studies PULSE materials with reflected light. It is a separate image-render path, not the motion-film renderer or a native After Effects or Cinema 4D project conversion.
 
-## Run Motion Lab locally
+<a id="run-motion-lab-locally"></a>
+
+## Run Framevolve locally
 
 The current setup is tested on macOS with Node.js 22.12 or newer and Google Chrome. Internet access is needed for the first installation.
 

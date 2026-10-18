@@ -1,3 +1,4 @@
+import {graphicControls} from './graphic-controls.js';
 import {smoother,spliceMotion,arcEnvelope,replayEditTime} from './replay-motion-curves.js';
 import {replayPaperFormat} from './replay-paper-format.js';
 import {createReplayIllustrations} from './replay-illustrations.js';
@@ -71,16 +72,13 @@ const smoothGlyph=smoother;
 const cardImages=new Map();
 function cardImage(id){if(!cardImages.has(id)){const image=document.createElement('canvas');const [w,h]=replayPaperFormat(id).map(x=>x*250);image.width=Math.round(w*3);image.height=Math.round(h*3);const ctx=image.getContext('2d');ctx.scale(3,3);ctx.translate(w/2,h/2);art(ctx,id,false,[w,h]);cardImages.set(id,image);}return cardImages.get(id);}
 let cardWorld;
-const replayControlDefaults={cardSpread:1,cardTilt:1,cardScale:1,threadStrength:1,finishPush:1};
-function replayControls(parameters){
- const source=parameters.sceneControls??{},bounds={cardSpread:[.75,1.25],cardTilt:[0,1.5],cardScale:[.8,1.2],threadStrength:[0,1.5],finishPush:[0,1.5]};
- return Object.fromEntries(Object.entries(replayControlDefaults).map(([key,fallback])=>[key,Number.isFinite(source[key])?Math.max(bounds[key][0],Math.min(bounds[key][1],source[key])):fallback]));
-}
-function controlledCardPose(id,t,controls){
+const replayControls=parameters=>graphicControls('replay',parameters);
+export function controlledCardPose(id,t,controls){
  const pose=replayCardPose(id,t);
  if(controls.cardSpread!==1){pose.x=960+(pose.x-960)*controls.cardSpread;pose.y=540+(pose.y-540)*controls.cardSpread;}
  if(controls.cardTilt!==1){pose.rotation*=controls.cardTilt;pose.yaw*=controls.cardTilt;pose.pitch*=controls.cardTilt;}
  if(controls.cardScale!==1)pose.scale*=controls.cardScale;
+ if(controls.cardDepth!==1)pose.z*=controls.cardDepth;
  return pose;
 }
 function finishingTravel(t,strength=1){const finish=Math.max(0,t-11.4),ramp=smoother(finish/.32);return finish*ramp*strength;}
@@ -119,15 +117,15 @@ export function createReplayDemo(){illustrations??=createReplayIllustrations();r
  const finish=Math.max(0,t-11.4),travel=finishingTravel(cameraTime,controls.finishPush),push=1+.10*travel;
  if(finish>0){c.translate(960-22*travel,540-7*travel);c.scale(push,push);c.translate(-960,-540);}
  const chapter=Math.max(0,replayCuts.findLastIndex(x=>t>=x)),u=t-replayCuts[chapter];
- rect(c,0,0,1920,1080,C.cream);const hero=replayHeroCue(cardsTime);if(t>=11.4){const mask=replayHeroCue(t);disc(c,mask.iris.x,mask.iris.y,mask.iris.radius,C.red);if(t>=13.2)disc(c,mask.creamIris.x,mask.creamIris.y,mask.creamIris.radius,C.cream);}
+ rect(c,0,0,1920,1080,C.cream);const hero=replayHeroCue(cardsTime);hero.orbitRadius*=controls.orbitScale;if(t>=11.4){const mask=replayHeroCue(t);disc(c,mask.iris.x,mask.iris.y,mask.iris.radius,C.red);if(t>=13.2)disc(c,mask.creamIris.x,mask.creamIris.y,mask.creamIris.radius,C.cream);}
  // All cards survive the edit: a shared scene graph reflows them between layouts.
  drawCards(c,chapter,u,cardsTime,controls,cameraTime,t);
- if(replayHeadlineWeight(0,t)>0)reveal(c,t,()=>{type(c,'2016',960,490,250,C.red,'Arial','900','center');type(c,'to 2026',960,720,160,C.ink,'Georgia','italic','center')},replayHeadlineWeight(0,t));
- if(replayHeadlineWeight(1,t)>0)reveal(c,t-2.4,()=>{headline(c,'Ten years,',115,905,142);type(c,'one thread.',115,1035,142,C.ink,'"Bodoni 72", Georgia','italic')},replayHeadlineWeight(1,t));
- if(replayHeadlineWeight(2,t)>0)reveal(c,t-5.4,()=>type(c,"Summer ’16",890,580,96,'#76736d','"Bodoni 72", Georgia','italic','center'),replayHeadlineWeight(2,t));
+ if(replayHeadlineWeight(0,t)>0)reveal(c,t*controls.revealSpeed,()=>{type(c,'2016',960,490,250*controls.editorialScale,C.red,'Arial','900','center');type(c,'to 2026',960,720,160*controls.editorialScale,C.ink,'Georgia','italic','center')},replayHeadlineWeight(0,t));
+ if(replayHeadlineWeight(1,t)>0)reveal(c,(t-2.4)*controls.revealSpeed,()=>{headline(c,'Ten years,',115,905,142*controls.editorialScale);type(c,'one thread.',115,1035,142*controls.editorialScale,C.ink,'"Bodoni 72", Georgia','italic')},replayHeadlineWeight(1,t));
+ if(replayHeadlineWeight(2,t)>0)reveal(c,(t-5.4)*controls.revealSpeed,()=>type(c,"Summer ’16",890,580,96*controls.editorialScale,'#76736d','"Bodoni 72", Georgia','italic','center'),replayHeadlineWeight(2,t));
  if(t>=7.7&&t<9.75){
  const wordTime=t-7.7;c.save();const holes=[];
- ['GOOD','OLD','DAYS'].forEach((word,j)=>{c.save();const baseline=330+j*315;const {lift,exit,arrival}=replayPosterLine(j,t);c.translate(960+exit,baseline+lift);c.scale(.82,1);c.beginPath();c.rect(-850,-410,1700,410*arrival+8*arrival);c.clip();c.font='900 370px "Arial Black"';c.textAlign='left';let cursor=-c.measureText(word).width/2;for(let z=0;z<word.length;z++){const width=c.measureText(word[z]).width;if(z!==[1,0,1][j]){c.fillStyle=C.red;c.fillText(word[z],cursor,0)}else holes.push({x:960+exit+.82*(cursor+width/2),y:baseline+lift-138,width:.82*width});cursor+=width;}c.restore();});
+ ['GOOD','OLD','DAYS'].forEach((word,j)=>{c.save();const baseline=645+(j-1)*315*controls.posterSpacing;const {lift,exit,arrival}=replayPosterLine(j,t);c.translate(960+exit,baseline+lift);c.scale(.82,1);c.beginPath();c.rect(-850,-410,1700,410*arrival+8*arrival);c.clip();c.font='900 370px "Arial Black"';c.textAlign='left';let cursor=-c.measureText(word).width/2;for(let z=0;z<word.length;z++){const width=c.measureText(word[z]).width;if(z!==[1,0,1][j]){c.fillStyle=C.red;c.fillText(word[z],cursor,0)}else holes.push({x:960+exit+.82*(cursor+width/2),y:baseline+lift-138,width:.82*width});cursor+=width;}c.restore();});
  const extracted=[];
  for(const [id,hole,targetScale,dy,j]of[[8,holes[0],1.24,0,0],[3,holes[1],1.17,0,1],[11,holes[2],.98,0,2]]){
   const now=replayPosterLine(j,t),baseX=hole.x-now.exit,baseY=hole.y-now.lift;
@@ -146,8 +144,8 @@ export function createReplayDemo(){illustrations??=createReplayIllustrations();r
  }
  if(t>=9.4&&t<11.7){
   c.save();c.translate(-950*smoother((t-11.35)/.3),-14*smoother((t-11.35)/.3));
-  const previous=textReveal;textReveal=smoother((t-9.75)/.35);
-  headline(c,'Press play',120,235,142);type(c,'on 2016.',120,375,142,C.ink,'"Bodoni 72", Georgia','italic');
+  const previous=textReveal;textReveal=smoother((t-9.75)/.35*controls.revealSpeed);
+  headline(c,'Press play',120,235,142*controls.editorialScale);type(c,'on 2016.',120,375,142*controls.editorialScale,C.ink,'"Bodoni 72", Georgia','italic');
   textReveal=previous;c.restore();
  }
  if(t>=11.4){
@@ -156,7 +154,7 @@ export function createReplayDemo(){illustrations??=createReplayIllustrations();r
   const projected=cardWorld.renderRecord(c,hero,cardsTime);
   if(projected){hero.record={...hero.record,x:projected.x,y:projected.y};hero.labelRadius*=projected.radius/Math.max(.001,hero.blackRadius);}
 
-  if(t<13.95){c.save();c.translate(rec.x,rec.y);c.rotate((cardsTime-11.4)*.18);for(let j=0;j<7;j++){c.save();c.rotate(j*TAU/7);type(c,'replay',0,-hero.orbitRadius,Math.max(.01,hero.orbitTypeSize*smoother((cardsTime-11.6)/.42)),C.ink,'Arial','900','center');c.restore()}c.restore();}
+  if(t<13.95){c.save();c.translate(rec.x,rec.y);c.rotate((cardsTime-11.4)*.18*controls.orbitSpeed);for(let j=0;j<7;j++){c.save();c.rotate(j*TAU/7);type(c,'replay',0,-hero.orbitRadius,Math.max(.01,hero.orbitTypeSize*smoother((cardsTime-11.6)/.42)),C.ink,'Arial','900','center');c.restore()}c.restore();}
  }
  if(t>=13.2){
   c.font='900 240px Arial';const word='replay',whole=c.measureText(word).width;let cursor=960-whole/2;

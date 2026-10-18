@@ -5,7 +5,7 @@ import {getControlCatalog,readControlValue} from '../src/engine/control-catalog.
 import {getControlPresets,getInterpolationPresets} from '../src/engine/control-presets.js';
 import {validateStudioParameters} from './studio-api.mjs';
 
-const openAdvanced=async page=>{await page.locator('#experience-pro').click();const retime=page.locator('#motion-view-retime');if(await retime.isVisible())await retime.click();const detail=page.locator('#motion-advanced');if(!await detail.evaluate(node=>node.open))await detail.locator(':scope > summary').click();};
+const openAdvanced=async page=>{await page.locator('#experience-pro').click();const detail=page.locator('#motion-advanced');if(!await detail.evaluate(node=>node.open))await detail.locator(':scope > summary').click();const editMode=page.locator('#motion-edit-mode');if(await editMode.isVisible())await editMode.selectOption('retime');};
 const output=new URL('../outputs/adaptive-controls-draft/',import.meta.url);
 await mkdir(output,{recursive:true});
 const browser=await chromium.launch({executablePath:'/Applications/Google Chrome.app/Contents/MacOS/Google Chrome',headless:true,args:['--disable-gpu-sandbox']});
@@ -15,7 +15,7 @@ const idle=()=>page.evaluate(()=>window.motionPreview.whenIdle());
 async function recipe(){await idle();await page.locator('#experience-pro').click();await page.locator('#tab-code').click();return JSON.parse(await page.locator('#code-content').textContent());}
 async function mode(value){await page.locator('#preview-quality').selectOption(value);await idle();}
 async function seek(time){await page.locator('#seek').evaluate((input,time)=>{input.value=String(time*30);input.dispatchEvent(new Event('input',{bubbles:true}));},time);await idle();}
-async function motion(){await page.locator('#experience-pro').click();await page.locator('#tab-motion').click();const retime=page.locator('#motion-view-retime');if(await retime.isVisible())await retime.click();}
+async function motion(){await page.locator('#experience-pro').click();await page.locator('#tab-motion').click();await openAdvanced(page);}
 async function tools(category){
  const tab=category==='compositing'?'compositing':'look';
  await page.locator(`#tab-${tab}`).click();
@@ -104,10 +104,10 @@ try{
  const fast=await recipe();assert.deepEqual(fast.parameters,stable.parameters);assert.deepEqual(fast.exportSettings,stable.exportSettings);assert.deepEqual(fast.config,stable.config);
  await page.locator('#export-settings summary').click();
  await page.locator('#export-resolution').selectOption('2560x1440');await page.locator('#export-fps').selectOption('25');await page.locator('#export-samples').selectOption('4');
-  await page.locator('#export-settings summary').click();
+  await page.locator('#export-settings-close').click();
  const delivery=await recipe();let renderRequest;
  await page.route('**/api/studio/render',async route=>{renderRequest=route.request().postDataJSON();await route.fulfill({status:409,contentType:'application/json',body:JSON.stringify({error:'QA intercepted render request; no render job started.'})});});
- await page.locator('#render-final').click();await page.waitForFunction(()=>document.getElementById('render-status').textContent.includes('QA intercepted'));
+ await page.locator('#export-settings summary').click();await page.locator('#render-final').click();await page.waitForFunction(()=>document.getElementById('render-status').textContent.includes('QA intercepted'));
  assert.equal(renderRequest.kind,'export');assert.equal(renderRequest.time,1);assert.deepEqual(renderRequest.settings,delivery.exportSettings);assert.deepEqual(renderRequest.parameters,delivery.parameters);
  assert.equal(Object.hasOwn(renderRequest,'previewQuality'),false);assert.equal(Object.hasOwn(renderRequest.parameters,'previewQuality'),false);assert.equal(renderRequest.settings.width,2560);assert.equal(renderRequest.settings.height,1440);assert.equal(renderRequest.settings.fps,25);assert.equal(renderRequest.settings.temporalSamples,4);
  pass('Preview quality changes no recipe values; export payload retains independent delivery settings',{previewWidth:384,exportSettings:renderRequest.settings,renderPolicy:renderRequest.parameters.renderPolicy,jobStarted:false});

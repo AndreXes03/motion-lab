@@ -226,7 +226,7 @@ export async function mountReferencePanel({ onRecipe = () => {} } = {}) {
     if (!look) return;
     const blob = new Blob([JSON.stringify(look, null, 2)], { type: 'application/json' });
     const url = URL.createObjectURL(blob);
-    const anchor = el('a'); anchor.href = url; anchor.download = 'motion-lab-look.json'; anchor.click();
+    const anchor = el('a'); anchor.href = url; anchor.download = 'framevolve-look.json'; anchor.click();
     setTimeout(() => URL.revokeObjectURL(url), 0);
   });
   try { await reload(); } catch (error) { message(error.message, true); }

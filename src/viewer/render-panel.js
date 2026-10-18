@@ -1,5 +1,6 @@
 import {createRenderPlan, validateRenderPlan, overrideRenderPlan, resolveRenderPlan, RENDERER_LABELS, RENDERERS} from '../engine/render-policy.js';
 import './render-panel.css';
+import {mountExportSheet} from './export-panel.js';
 
 function sceneId(value) { return typeof value === 'string' ? value : value?.id ?? value?.scene; }
 function timeLabel(seconds) {
@@ -19,9 +20,10 @@ function field(parent, title, options) {
   return select;
 }
 
-/** Export-only renderer controls; live scene preview always stays in Three.js. */
+/** Shared final-render intent for full-resolution Render View and delivered files. */
 export function mountRenderPanel({container, getScene, getParameters = () => ({}), getExportSettings = () => ({}), publicDemo = false, capabilities = {}, onChange = () => {}}) {
   if (!container?.append || typeof getScene !== 'function') throw new TypeError('Render panel needs a container and scene callback.');
+  const destroyExportSheet = mountExportSheet();
   const scenePlans = new Map();
   let capState = capabilities;
   let activeScene = null;
@@ -31,14 +33,14 @@ export function mountRenderPanel({container, getScene, getParameters = () => ({}
   root.className = 'render-policy-panel';
   root.setAttribute('aria-label', 'Final renderer');
   const heading = document.createElement('header'); heading.className = 'render-policy-heading';
-  const title = document.createElement('strong'); title.textContent = 'Final renderer';
-  const scope = document.createElement('span'); scope.className = 'render-policy-scope'; scope.textContent = 'Export only';
+  const title = document.createElement('strong'); title.textContent = 'Render engine';
+  const scope = document.createElement('span'); scope.className = 'render-policy-scope'; scope.textContent = 'Final look';
   heading.append(title, scope); root.append(heading);
-  const renderer = field(root, 'Renderer', RENDERERS.map(id => [id, id === 'auto' ? 'Auto · recommended' : RENDERER_LABELS[id]]));
+  const renderer = field(root, 'Renderer', RENDERERS.map(id => [id, id === 'auto' ? 'Auto · scene recommendation' : RENDERER_LABELS[id]]));
   const cycleFields = document.createElement('div'); cycleFields.className = 'render-policy-cycles'; root.append(cycleFields);
-  const quality = field(cycleFields, 'Render quality', [['draft', 'Draft · fast check'], ['balanced', 'Balanced'], ['final', 'Final']]);
+  const quality = field(cycleFields, 'Render quality', [['draft', 'Draft · 16 samples'], ['balanced', 'Balanced · 64 samples'], ['final', 'Final · 128 samples']]);
   const advanced = document.createElement('details'); advanced.className = 'render-policy-advanced';
-  const advancedTitle = document.createElement('summary'); advancedTitle.textContent = 'Advanced render settings'; advanced.append(advancedTitle); cycleFields.append(advanced);
+  const advancedTitle = document.createElement('summary'); advancedTitle.textContent = 'Sampling & device'; advanced.append(advancedTitle); cycleFields.append(advanced);
   const sampleLabel = document.createElement('label'); sampleLabel.className = 'render-policy-field';
   const sampleCaption = document.createElement('span'); sampleCaption.textContent = 'Cycles samples';
   const samples = document.createElement('input'); samples.type = 'number'; samples.min = '1'; samples.max = '4096'; samples.step = '1'; samples.inputMode = 'numeric'; samples.setAttribute('aria-label', 'Cycles samples'); samples.title = 'More samples reduce noise and take longer to render.';
@@ -46,27 +48,27 @@ export function mountRenderPanel({container, getScene, getParameters = () => ({}
   const device = field(advanced, 'Render device', [['auto', 'Auto · verified GPU or CPU'], ['gpu', 'GPU · if verified by Blender'], ['cpu', 'CPU']]);
   const workers = field(advanced, 'Parallel workers', [['auto', 'Auto · bounded for this computer'], ['1', '1 worker'], ['2', '2 workers']]);
   const denoiseLabel = document.createElement('label'); denoiseLabel.className = 'render-policy-denoise';
-  const denoise = document.createElement('input'); denoise.type = 'checkbox'; denoiseLabel.append(denoise, document.createTextNode('Reduce image noise')); advanced.append(denoiseLabel);
+  const denoise = document.createElement('input'); denoise.type = 'checkbox'; denoiseLabel.append(denoise, document.createTextNode('Denoise')); advanced.append(denoiseLabel);
   const status = document.createElement('p'); status.className = 'render-policy-status'; status.setAttribute('role', 'status'); status.setAttribute('aria-live', 'polite');
   const rationale = document.createElement('p'); rationale.className = 'render-policy-note';
   const cost = document.createElement('p'); cost.className = 'render-policy-note render-policy-cost';
-  const preview = document.createElement('small'); preview.className = 'render-policy-note'; preview.textContent = 'This setting affects exports. Preview quality is separate.';
+  const preview = document.createElement('small'); preview.className = 'render-policy-note'; preview.textContent = 'Final look uses this engine in Render View. Interactive preview stays real time.';
   const adaptation = document.createElement('small'); adaptation.className = 'render-policy-note render-policy-adaptation';
-  adaptation.textContent = 'Cycles: PULSE only. Materials and lighting are adapted; contrast and saturation carry over. Depth of field, fisheye, bloom and ambient occlusion do not carry over.';
+  adaptation.textContent = 'PULSE Cycles adapts materials and lighting. Depth of field, fisheye, bloom and ambient occlusion are not included.';
   const mixedNote = document.createElement('small'); mixedNote.className = 'render-policy-note render-policy-mixed-note';
   const warnings = document.createElement('p'); warnings.className = 'render-policy-note render-policy-warning';
   const details = document.createElement('details'); details.className = 'render-policy-advanced render-policy-details';
-  const detailsTitle = document.createElement('summary'); detailsTitle.textContent = 'Renderer details';
+  const detailsTitle = document.createElement('summary'); detailsTitle.textContent = 'Engine details';
   const estimateNote = document.createElement('p'); estimateNote.className = 'render-policy-note';
-  details.append(detailsTitle, rationale, estimateNote, preview);
-  const outcome = document.createElement('div'); outcome.className = 'render-policy-outcome'; outcome.append(status, warnings, cost);
+  details.append(detailsTitle, rationale, warnings, estimateNote, preview, adaptation, mixedNote);
+  const outcome = document.createElement('div'); outcome.className = 'render-policy-outcome'; outcome.append(status, cost);
   root.insertBefore(outcome, cycleFields);
-  root.append(adaptation, mixedNote, details); container.append(root);
+  root.append(details); container.append(root);
 
   function context() {
     return {scene: sceneId(getScene()), publicDemo, capabilities: capState, ...getExportSettings()};
   }
-  function selection() { return resolveRenderPlan(plan, context()); }
+  function selection(contextOverrides = {}) { return resolveRenderPlan(plan, {...context(), ...contextOverrides}); }
   function sync() {
     if (destroyed) return;
     const resolved = selection();
@@ -80,16 +82,22 @@ export function mountRenderPanel({container, getScene, getParameters = () => ({}
     for (const input of cycleFields.querySelectorAll('input,select')) input.disabled = publicDemo;
     root.dataset.renderer = resolved.selectedRenderer;
     root.dataset.available = String(resolved.runnable);
-    status.textContent = `${RENDERER_LABELS[resolved.selectedRenderer]} · ${resolved.runnable ? 'ready locally' : 'local setup required'}`;
+    status.textContent = `${RENDERER_LABELS[resolved.selectedRenderer]} · ${resolved.runnable ? 'ready' : 'unavailable'}`;
+    scope.textContent = publicDemo ? 'Browser + local' : 'Final look';
     rationale.textContent = [resolved.reason, resolved.runnable ? resolved.availability : ''].filter(Boolean).join(' ');
     warnings.textContent = [...new Set([!resolved.runnable && resolved.availability, ...resolved.warnings].filter(Boolean))].join(' ');
     warnings.hidden = !warnings.textContent;
     cost.textContent = resolved.estimateSeconds !== null ? `Estimated render: ${timeLabel(resolved.estimateSeconds)}` : '';
     cost.hidden = !cost.textContent;
     estimateNote.textContent = resolved.estimateNote;
-    if (publicDemo) {status.textContent = 'Browser video · Three.js / Canvas';}
+    if (publicDemo) {
+      const nativeEngine = ['cycles', 'mixed'].includes(resolved.selectedRenderer);
+      status.textContent = nativeEngine ? `${RENDERER_LABELS[resolved.selectedRenderer]} · local app required` : 'Browser export · ready';
+      root.dataset.available = String(!nativeEngine);
+      preview.textContent = 'Browser video uses Three.js / Canvas. Native final renders run in the local app.';
+    }
     const mixed = renderer.querySelector('option[value="mixed"]');
-    mixed.textContent = plan.composite.enabled && plan.composite.planFile ? 'Mixed · prepared compositing plan' : 'Mixed · requires a compositing plan';
+    mixed.textContent = plan.composite.enabled && plan.composite.planFile ? 'Mixed · prepared' : 'Mixed · local plan required';
   }
   function changed(next) {
     plan = validateRenderPlan(next); scenePlans.set(activeScene, structuredClone(plan)); sync(); onChange(structuredClone(plan), selection());
@@ -128,6 +136,6 @@ export function mountRenderPanel({container, getScene, getParameters = () => ({}
     },
     setCapabilities(next) {capState = next ?? {}; sync(); return selection();},
     refresh,
-    destroy() {destroyed = true; root.remove();}
+    destroy() {destroyed = true; destroyExportSheet(); root.remove();}
   };
 }

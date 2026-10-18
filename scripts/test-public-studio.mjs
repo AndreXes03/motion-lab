@@ -32,10 +32,10 @@ try{
  const resolutions=await page.locator('#export-resolution option').evaluateAll(options=>options.map(option=>option.value));assert.deepEqual(resolutions,['1280x720','1920x1080']);
  assert.equal(await page.locator('#export-format').isDisabled(),true,'The public format reflects browser recorder capability');assert.ok(['mp4','webm'].includes(await page.locator('#export-format').inputValue()));assert.equal(await page.locator('#export-format option').count(),1,'Public export must not offer local-only ProRes');
  await page.locator('#export-resolution').selectOption('1920x1080');assert.match(await page.locator('#export-settings-note').textContent(),/1920 × 1080/);
- await page.locator('#export-settings summary').click();
- await page.locator('#export-dock').evaluate(el=>el.open=true);assert.equal(await page.locator('.render-policy-panel').isVisible(),true);
- await page.getByLabel('Renderer',{exact:true}).selectOption('cycles');await page.locator('#tab-code').click();const recipe=JSON.parse(await page.locator('#code-content').textContent());assert.equal(recipe.parameters.renderPolicy.renderer,'cycles');
- assert.equal(recipe.parameters.previewQuality,undefined);assert.equal(await page.locator('#preview-quality').isVisible(),true);
+ await page.locator('#export-settings-close').click();
+ await page.locator('#export-settings summary').click();assert.equal(await page.locator('.render-policy-panel').isVisible(),true);
+ await page.getByLabel('Renderer',{exact:true}).selectOption('cycles');await page.locator('#export-settings-close').click();await page.locator('#tab-code').click();const recipe=JSON.parse(await page.locator('#code-content').textContent());assert.equal(recipe.parameters.renderPolicy.renderer,'cycles');
+ assert.equal(recipe.parameters.previewQuality,undefined);assert.equal(await page.locator('#final-frame-view').isVisible(),true);assert.match(await page.locator('#final-frame-view').innerText(),/local Studio/);await page.locator('#preview-mode-interactive').click();
  assert.equal(await page.locator('#render-final').isDisabled(),false,'A local renderer recipe selection must not disable the separate browser renderer');
  await page.locator('#export-dock').evaluate(el=>el.open=false);await page.locator('#tab-motion').click();assert.ok((await page.locator('#motion-control option').allTextContents()).some(x=>x.includes('Camera')));
  await page.locator('#tab-look').click();assert.ok(await page.locator('.panel-preset').count()>0);
