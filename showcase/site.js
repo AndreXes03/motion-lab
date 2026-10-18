@@ -8,6 +8,15 @@ for (const button of document.querySelectorAll('[data-open-downloads]')) {
   });
 }
 downloadDialog.addEventListener('close', () => downloadOpener?.focus());
+downloadDialog.addEventListener('keydown', event => {
+  if (event.key !== 'Tab') return;
+  const links = [...downloadDialog.querySelectorAll('button:not([disabled]), a[href]')];
+  const first = links[0], last = links.at(-1);
+  if (event.shiftKey && document.activeElement === first || !event.shiftKey && document.activeElement === last) {
+    event.preventDefault();
+    (event.shiftKey ? last : first).focus();
+  }
+});
 for (const link of document.querySelectorAll('[data-download-file]')) {
   // Copies served from /showcase/ and from a site root share the same downloads directory.
   link.href = assetPrefix + 'downloads/' + link.dataset.downloadFile;

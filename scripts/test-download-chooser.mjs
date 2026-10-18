@@ -4,7 +4,7 @@ import { readFile, mkdir } from 'node:fs/promises';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { chromium } from 'playwright';
-const root = fileURLToPath(new URL('..', import.meta.url));
+const root = path.resolve(fileURLToPath(new URL('..', import.meta.url)));
 const mime = { '.html': 'text/html', '.css': 'text/css', '.js': 'text/javascript', '.zip': 'application/zip', '.json': 'application/json' };
 const server = http.createServer(async (req, res) => {
   try {
