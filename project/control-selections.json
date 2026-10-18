@@ -6,18 +6,34 @@
         "energy",
         "fov",
         "lensDistortion",
+        "dofEnabled",
+        "dofAuto",
+        "dofFocus",
+        "dofStrength",
+        "dofMaxBlur",
         "key",
         "fill",
         "rim",
+        "environment",
+        "keyColor",
+        "rimColor",
         "shell",
         "knob",
         "display",
+        "shellRoughness",
+        "aberrationPx",
         "exposure",
-        "grain",
+        "colorContrast",
+        "colorSaturation",
         "bloomStrength",
         "aoIntensity",
-        "colorContrast",
-        "colorSaturation"
+        "grain",
+        "grainSize",
+        "vignette",
+        "bloomThreshold",
+        "bloomRadius",
+        "shutterAngle",
+        "antialias"
       ],
       "panels": [
         {
@@ -31,11 +47,24 @@
         },
         {
           "id": "lens",
-          "title": "Film lens",
+          "title": "Camera lens",
           "category": "lens",
           "controls": [
             "fov",
             "lensDistortion"
+          ],
+          "advanced": false
+        },
+        {
+          "id": "focus",
+          "title": "Depth of field",
+          "category": "lens",
+          "controls": [
+            "dofEnabled",
+            "dofAuto",
+            "dofFocus",
+            "dofStrength",
+            "dofMaxBlur"
           ],
           "advanced": false
         },
@@ -46,7 +75,18 @@
           "controls": [
             "key",
             "fill",
-            "rim"
+            "rim",
+            "environment"
+          ],
+          "advanced": false
+        },
+        {
+          "id": "light-color",
+          "title": "Light colors",
+          "category": "lights",
+          "controls": [
+            "keyColor",
+            "rimColor"
           ],
           "advanced": false
         },
@@ -57,101 +97,198 @@
           "controls": [
             "shell",
             "knob",
-            "display"
+            "display",
+            "shellRoughness"
           ],
           "advanced": false
         },
         {
-          "id": "finishing",
-          "title": "Image finishing",
+          "id": "optics",
+          "title": "Optical detail",
+          "category": "lens",
+          "controls": [
+            "aberrationPx"
+          ],
+          "advanced": true
+        },
+        {
+          "id": "grade",
+          "title": "Color & exposure",
           "category": "compositing",
           "controls": [
             "exposure",
-            "grain",
-            "bloomStrength",
-            "aoIntensity",
             "colorContrast",
             "colorSaturation"
           ],
-          "advanced": true
-        }
-      ],
-      "rationale": "Prioritize object energy, optical framing, studio lights and radio finishes. Keep raw transforms and detailed compositing in the complete tool catalog."
-    },
-    "procedural": {
-      "controls": [
-        "title",
-        "accent",
-        "density",
-        "speed",
-        "grain",
-        "grainSize",
-        "colorContrast",
-        "colorSaturation"
-      ],
-      "panels": [
+          "advanced": false
+        },
         {
-          "id": "graphics",
-          "title": "Graphic system",
-          "category": "graphics",
+          "id": "light-finish",
+          "title": "Bloom & contact",
+          "category": "compositing",
           "controls": [
-            "title",
-            "accent",
-            "density"
+            "bloomStrength",
+            "aoIntensity"
           ],
           "advanced": false
         },
         {
-          "id": "motion",
-          "title": "Procedural motion",
-          "category": "motion",
-          "controls": [
-            "speed"
-          ],
-          "advanced": false
-        },
-        {
-          "id": "finishing",
-          "title": "Film texture",
+          "id": "texture",
+          "title": "Texture & vignette",
           "category": "compositing",
           "controls": [
             "grain",
             "grainSize",
-            "colorContrast",
-            "colorSaturation"
-          ],
-          "advanced": true
-        }
-      ],
-      "rationale": "Expose typography, element density and motion pace for the graphic sequence. Keep grain finishing in an advanced panel."
-    },
-    "pop": {
-      "controls": [
-        "speed",
-        "cameraMotion",
-        "fisheye",
-        "accent",
-        "grain",
-        "colorContrast",
-        "colorSaturation"
-      ],
-      "panels": [
-        {
-          "id": "motion",
-          "title": "Lettering and camera",
-          "category": "motion",
-          "controls": [
-            "speed",
-            "cameraMotion"
+            "vignette"
           ],
           "advanced": false
         },
         {
-          "id": "lens",
-          "title": "Pop lens",
-          "category": "lens",
+          "id": "bloom-detail",
+          "title": "Bloom detail",
+          "category": "compositing",
           "controls": [
-            "fisheye"
+            "bloomThreshold",
+            "bloomRadius"
+          ],
+          "advanced": true
+        },
+        {
+          "id": "sampling",
+          "title": "Image sampling",
+          "category": "compositing",
+          "controls": [
+            "shutterAngle",
+            "antialias"
+          ],
+          "advanced": true
+        }
+      ],
+      "rationale": "Cover the radio material, typography, camera focus, all studio lights and finished image in both workspace modes. Reserve optical and sampling detail for disclosure panels; raw object transforms remain in the selected-object inspector and full catalog."
+    },
+    "procedural": {
+      "controls": [
+        "title",
+        "typeScale",
+        "accent",
+        "density",
+        "shapeScale",
+        "particleSize",
+        "strokeWidth",
+        "speed",
+        "waveAmplitude",
+        "beatStrength",
+        "overlayOpacity",
+        "echoOpacity",
+        "colorContrast",
+        "colorSaturation",
+        "grain",
+        "grainSize"
+      ],
+      "panels": [
+        {
+          "id": "graphics",
+          "title": "Type & palette",
+          "category": "graphics",
+          "controls": [
+            "title",
+            "typeScale",
+            "accent"
+          ],
+          "advanced": false
+        },
+        {
+          "id": "layout",
+          "title": "Shapes & detail",
+          "category": "graphics",
+          "controls": [
+            "density",
+            "shapeScale",
+            "particleSize",
+            "strokeWidth"
+          ],
+          "advanced": false
+        },
+        {
+          "id": "motion",
+          "title": "Graphic motion",
+          "category": "motion",
+          "controls": [
+            "speed",
+            "waveAmplitude",
+            "beatStrength"
+          ],
+          "advanced": false
+        },
+        {
+          "id": "overlays",
+          "title": "Overlays & echoes",
+          "category": "compositing",
+          "controls": [
+            "overlayOpacity",
+            "echoOpacity"
+          ],
+          "advanced": false
+        },
+        {
+          "id": "grade",
+          "title": "Color grade",
+          "category": "compositing",
+          "controls": [
+            "colorContrast",
+            "colorSaturation"
+          ],
+          "advanced": false
+        },
+        {
+          "id": "texture",
+          "title": "Film texture",
+          "category": "compositing",
+          "controls": [
+            "grain",
+            "grainSize"
+          ],
+          "advanced": false
+        }
+      ],
+      "rationale": "Expose every planned 2D control: typography, palette, shape density/scale, line and particle detail, pace, wave/beat performance, overlays and finishing. Easy and Pro retain the same creative capabilities, with target curves providing the precision layer."
+    },
+    "pop": {
+      "controls": [
+        "typeScale",
+        "captionScale",
+        "halftoneSize",
+        "burstScale",
+        "windowScale",
+        "accent",
+        "speed",
+        "cameraMotion",
+        "tickerSpeed",
+        "fisheye",
+        "colorContrast",
+        "colorSaturation",
+        "grain",
+        "grainSize"
+      ],
+      "panels": [
+        {
+          "id": "type",
+          "title": "Type & captions",
+          "category": "graphics",
+          "controls": [
+            "typeScale",
+            "captionScale"
+          ],
+          "advanced": false
+        },
+        {
+          "id": "graphics",
+          "title": "Pop motifs",
+          "category": "graphics",
+          "controls": [
+            "halftoneSize",
+            "burstScale",
+            "windowScale"
           ],
           "advanced": false
         },
@@ -165,18 +302,47 @@
           "advanced": false
         },
         {
-          "id": "finishing",
+          "id": "motion",
+          "title": "Lettering & camera",
+          "category": "motion",
+          "controls": [
+            "speed",
+            "cameraMotion",
+            "tickerSpeed"
+          ],
+          "advanced": false
+        },
+        {
+          "id": "lens",
+          "title": "Pop lens",
+          "category": "lens",
+          "controls": [
+            "fisheye"
+          ],
+          "advanced": false
+        },
+        {
+          "id": "grade",
+          "title": "Color grade",
+          "category": "compositing",
+          "controls": [
+            "colorContrast",
+            "colorSaturation"
+          ],
+          "advanced": false
+        },
+        {
+          "id": "texture",
           "title": "Film texture",
           "category": "compositing",
           "controls": [
             "grain",
-            "colorContrast",
-            "colorSaturation"
+            "grainSize"
           ],
-          "advanced": true
+          "advanced": false
         }
       ],
-      "rationale": "Focus on lettering energy, 2D camera intensity, lens curvature and sticker accent. Grain remains an optional finishing tool."
+      "rationale": "Expose all planned 2D and lettering controls: title/caption sizing, halftone/burst/window motifs, palette, scene and ticker motion, camera/lens and texture. Preserve the authored default collage and give both workspace modes the same creative coverage."
     },
     "starter": {
       "controls": [
@@ -221,37 +387,47 @@
           "advanced": false
         },
         {
-          "id": "finishing",
-          "title": "Image finishing",
+          "id": "grade",
+          "title": "Color grade",
           "category": "compositing",
           "controls": [
             "colorContrast",
             "colorSaturation"
           ],
-          "advanced": true
+          "advanced": false
         }
       ],
-      "rationale": "Expose reusable product colors, the actual lens and key/fill lighting for a compact product starting point."
+      "rationale": "Include all implemented product materials, lens, key/fill lighting and grade controls. Camera and product animation are edited in Motion; avoid unsupported material or renderer settings."
     },
     "pulse": {
       "controls": [
-        "mechanismMotion",
+        "speakerVibration",
+        "recordSpeed",
+        "cameraFraming",
         "lensStrength",
         "focusBlur",
         "keyLight",
         "fillLight",
+        "rimLight",
+        "shellRoughness",
+        "metalRoughness",
+        "backgroundBrightness",
+        "ledBrightness",
+        "keySize",
+        "mechanismMotion",
         "exposure",
-        "bloomStrength",
         "colorContrast",
-        "colorSaturation"
+        "colorSaturation",
+        "bloomStrength"
       ],
       "panels": [
         {
           "id": "motion",
-          "title": "Speaker and platter",
+          "title": "Speaker & record",
           "category": "motion",
           "controls": [
-            "mechanismMotion"
+            "speakerVibration",
+            "recordSpeed"
           ],
           "advanced": false
         },
@@ -260,6 +436,7 @@
           "title": "Macro lens",
           "category": "lens",
           "controls": [
+            "cameraFraming",
             "lensStrength",
             "focusBlur"
           ],
@@ -271,24 +448,71 @@
           "category": "lights",
           "controls": [
             "keyLight",
-            "fillLight"
+            "fillLight",
+            "rimLight"
           ],
           "advanced": false
         },
         {
-          "id": "finishing",
-          "title": "Highlight finishing",
+          "id": "materials",
+          "title": "Product surfaces",
+          "category": "appearance",
+          "controls": [
+            "shellRoughness",
+            "metalRoughness"
+          ],
+          "advanced": false
+        },
+        {
+          "id": "stage",
+          "title": "Stage & display",
+          "category": "appearance",
+          "controls": [
+            "backgroundBrightness",
+            "ledBrightness"
+          ],
+          "advanced": false
+        },
+        {
+          "id": "light-shape",
+          "title": "Light shape",
+          "category": "lights",
+          "controls": [
+            "keySize"
+          ],
+          "advanced": true
+        },
+        {
+          "id": "motion-balance",
+          "title": "Motion balance",
+          "category": "motion",
+          "controls": [
+            "mechanismMotion"
+          ],
+          "advanced": true
+        },
+        {
+          "id": "grade",
+          "title": "Color & exposure",
           "category": "compositing",
           "controls": [
             "exposure",
-            "bloomStrength",
             "colorContrast",
             "colorSaturation"
           ],
-          "advanced": true
+          "advanced": false
+        },
+        {
+          "id": "highlights",
+          "title": "Highlight bloom",
+          "category": "compositing",
+          "controls": [
+            "bloomStrength"
+          ],
+          "advanced": false
         }
       ],
-      "rationale": "Expose the speaker/platter mechanism, authored lens and focus, and studio lights. Keep exposure and highlight finishing together in an advanced panel."
+      "rationale": "Cover separate speaker/record performance, framing and macro focus, key/fill/rim lighting, real surface roughness, display/background brightness and finishing in both modes. Keep aggregate mechanism gain and light shape in secondary panels; preserve authored camera cuts and neutral material defaults."
     },
     "camera": {
       "controls": [
@@ -298,9 +522,10 @@
         "keyLight",
         "fillLight",
         "exposure",
-        "grainStrength",
         "colorContrast",
-        "colorSaturation"
+        "colorSaturation",
+        "bloomStrength",
+        "grainStrength"
       ],
       "panels": [
         {
@@ -333,25 +558,34 @@
           "advanced": false
         },
         {
-          "id": "finishing",
-          "title": "Film finishing",
+          "id": "grade",
+          "title": "Color & exposure",
           "category": "compositing",
           "controls": [
             "exposure",
-            "grainStrength",
             "colorContrast",
             "colorSaturation"
           ],
-          "advanced": true
+          "advanced": false
+        },
+        {
+          "id": "finish",
+          "title": "Bloom & grain",
+          "category": "compositing",
+          "controls": [
+            "bloomStrength",
+            "grainStrength"
+          ],
+          "advanced": false
         }
       ],
-      "rationale": "Expose miniature vehicle motion, optical treatment and studio lights while preserving the film cuts. Offer exposure and grain as advanced finishing; bloom is available in the complete catalog."
+      "rationale": "Include every implemented city-motion, lens, focus, lighting and image control. Bloom and grain are normal finishing tools in both modes, while authored camera cuts remain intact."
     },
     "dot": {
       "controls": [
         "actingStrength",
-        "lensMotion",
         "characterScale",
+        "lensMotion",
         "glowStrength",
         "colorContrast",
         "colorSaturation"
@@ -359,10 +593,11 @@
       "panels": [
         {
           "id": "character",
-          "title": "Character acting",
+          "title": "Character performance",
           "category": "character",
           "controls": [
-            "actingStrength"
+            "actingStrength",
+            "characterScale"
           ],
           "advanced": false
         },
@@ -376,32 +611,30 @@
           "advanced": false
         },
         {
-          "id": "character-size",
-          "title": "Character framing",
-          "category": "character",
-          "controls": [
-            "characterScale"
-          ],
-          "advanced": true
-        },
-        {
-          "id": "finishing",
-          "title": "Character glow",
+          "id": "finish",
+          "title": "Glow & color",
           "category": "compositing",
           "controls": [
             "glowStrength",
             "colorContrast",
             "colorSaturation"
           ],
-          "advanced": true
+          "advanced": false
         }
       ],
-      "rationale": "Prioritize character acting and camera motion. Character size and glow are optional advanced adjustments for the existing composition."
+      "rationale": "Expose every implemented character, framing and finish control in both modes. Character scale and glow are creative essentials; no artificial 3D light or material controls for this canvas scene."
     },
     "replay": {
       "controls": [
         "cardSpread",
         "cardTilt",
+        "cardScale",
+        "cardDepth",
+        "editorialScale",
+        "posterSpacing",
+        "revealSpeed",
+        "orbitScale",
+        "orbitSpeed",
         "finishPush",
         "threadStrength",
         "colorContrast",
@@ -409,12 +642,35 @@
       ],
       "panels": [
         {
-          "id": "graphics",
+          "id": "cards",
           "title": "Editorial cards",
           "category": "graphics",
           "controls": [
             "cardSpread",
-            "cardTilt"
+            "cardTilt",
+            "cardScale",
+            "cardDepth"
+          ],
+          "advanced": false
+        },
+        {
+          "id": "editorial",
+          "title": "Editorial layout",
+          "category": "graphics",
+          "controls": [
+            "editorialScale",
+            "posterSpacing"
+          ],
+          "advanced": false
+        },
+        {
+          "id": "motion",
+          "title": "Reveal & orbit",
+          "category": "motion",
+          "controls": [
+            "revealSpeed",
+            "orbitScale",
+            "orbitSpeed"
           ],
           "advanced": false
         },
@@ -432,14 +688,22 @@
           "title": "Connecting threads",
           "category": "compositing",
           "controls": [
-            "threadStrength",
+            "threadStrength"
+          ],
+          "advanced": false
+        },
+        {
+          "id": "grade",
+          "title": "Color grade",
+          "category": "compositing",
+          "controls": [
             "colorContrast",
             "colorSaturation"
           ],
-          "advanced": true
+          "advanced": false
         }
       ],
-      "rationale": "Prioritize card spacing/tilt and the final composition push. Keep connecting threads advanced and leave card size in the complete catalog to protect the editorial lockup."
+      "rationale": "Expose every planned editorial control: card spacing/tilt/scale/depth, composition scale and poster spacing, reveal pace, orbit scale/speed, final camera push, connecting threads and grade. The same planned controls are available in Easy and Pro; neutral values preserve the editorial film."
     }
   }
 }

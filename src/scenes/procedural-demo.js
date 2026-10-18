@@ -1,6 +1,7 @@
+import {graphicControls,styleProceduralNodes} from './graphic-controls.js';
 import {renderProcedural,progress} from '../engine/procedural.js';
 import {sampleAnimationGroupTime} from '../engine/animation-groups.js';
-import recipe from '../../project/graphics.json';
+import recipe from '../../project/graphics.json' with {type:'json'};
 const W=1920,H=1080,TAU=Math.PI*2,INK='#090b10',WHITE='#eceee5';
 const clamp=(x,a=0,b=1)=>Math.max(a,Math.min(b,x)),mix=(a,b,t)=>a+(b-a)*t;
 const hash=i=>{let x=Math.imul(i+recipe.seed,1597334677);x^=x>>>16;return(x>>>0)/4294967296};
@@ -11,15 +12,15 @@ export const proceduralCuts=[1,2,3,4,5].map(i=>i*20/11);
 export function proceduralShutter(time,requested=210){return Math.min(5,Math.floor(Math.max(0,time)/(20/11)))===4?requested:0;}
 export function proceduralTempo(parameters={}){return parameters.sound?.tempo==='manual'?clamp(Number(parameters.sound.bpm)||132,60,180):132;}
 function buildNodes(t,parameters={}){
- const graphicsTime=sampleAnimationGroupTime(parameters,'graphics',t);
- const g={...recipe.defaults,...parameters.graphics},accent=/^#[0-9a-f]{6}$/i.test(g.accent)?g.accent:'#c2ff38',speed=clamp(Number(g.speed)||1,.25,2.5),density=clamp(Number(g.density)||10,4,18),bpm=proceduralTempo(parameters),beat=t*bpm/60,pulse=Math.exp(-(beat%1)*9),u=graphicsTime*speed;
+ const graphicsTime=sampleAnimationGroupTime(parameters,'graphics',t),controls=graphicControls('procedural',parameters);
+ const g={...recipe.defaults,...parameters.graphics},accent=/^#[0-9a-f]{6}$/i.test(g.accent)?g.accent:'#c2ff38',speed=clamp(Number(g.speed)||1,.25,2.5),density=clamp(Number(g.density)||10,4,18),bpm=proceduralTempo(parameters),beat=t*bpm/60,pulse=Math.exp(-(beat%1)*9)*controls.beatStrength,u=graphicsTime*speed;
  const chapter=Math.min(5,Math.floor(t/(20/11))),local=t-chapter*20/11,kick=1+.035*pulse,light=chapter===2,bg=light?WHITE:INK,fg=light?INK:WHITE;
  const nodes=[node('background','rect',{width:W,height:H,fill:bg,sound:false})],push=n=>nodes.push(n);
  const labels=['VECTOR FIELD','TOROIDAL ENGINE','ORDER / DISORDER','INTERFERENCE','KINETIC SYSTEM','MOTION LAB'];
  // Large forms are analytical functions of absolute time: repeat seeks are exact.
  if(chapter===0){
   const rows=Math.round(30+density*2.5);
-  for(let j=0;j<rows;j++){const points=[];for(let i=0;i<100;i++){const x=140+i*16.8,a=x/420+u*1.7+j*.035;const envelope=Math.sin(i/99*Math.PI);points.push([x,540+(j-rows/2)*10+envelope*(160*Math.sin(a)+105*Math.sin(a*1.8+j*.1-u*2))]);}
+  for(let j=0;j<rows;j++){const points=[];for(let i=0;i<100;i++){const x=140+i*16.8,a=x/420+u*1.7+j*.035;const envelope=Math.sin(i/99*Math.PI);points.push([x,540+(j-rows/2)*10+envelope*controls.waveAmplitude*(160*Math.sin(a)+105*Math.sin(a*1.8+j*.1-u*2))]);}
    push(path('flow.'+j,points,j%8===0?accent:fg,j%8===0?3:1.1,{opacity:.3+.6*j/rows}));
   }
   for(let j=0;j<28;j++){const f=(hash(j)+u*(.12+hash(j+70)*.1))%1,x=140+f*1660,y=540+Math.sin(f*4+u*1.7)*170+(hash(j+22)-.5)*220;push(node('flow.head.'+j,'circle',{x,y,radius:j%4===0?5:2,fill:accent,sound:j%7===0}));}
@@ -39,7 +40,7 @@ function buildNodes(t,parameters={}){
   push(text('swarm.count',`${cols*rows} ELEMENTS / ONE RULE`,110,928,24,INK));
  }
  if(chapter===3){
-  for(let family=0;family<2;family++)for(let j=0;j<40+density;j++){const pts=[];for(let i=0;i<=100;i++){let x=120+i*16.8,y=255+j*11+100*Math.sin(x*.006+u*2+family*2)+70*Math.sin(j*.12-u*3+family);pts.push([x,y]);}push(path('wave.'+family+'.'+j,pts,family?accent:'#6481ff',1.8,{blend:'screen',opacity:.7}));}
+  for(let family=0;family<2;family++)for(let j=0;j<40+density;j++){const pts=[];for(let i=0;i<=100;i++){let x=120+i*16.8,y=255+j*11+100*Math.sin(x*.006+u*2+family*2)*controls.waveAmplitude+70*Math.sin(j*.12-u*3+family)*controls.waveAmplitude;pts.push([x,y]);}push(path('wave.'+family+'.'+j,pts,family?accent:'#6481ff',1.8,{blend:'screen',opacity:.7}));}
   for(let i=0;i<9;i++)push(node('interference.marker.'+i,'circle',{x:200+i*190,y:530+180*Math.sin(i*.7+u*3),radius:7+4*pulse,stroke:WHITE,lineWidth:2}));
   push(text('interference.word','SUPERPOSITION',110,890,110,WHITE,{maxWidth:1680}));
  }
@@ -60,6 +61,7 @@ function buildNodes(t,parameters={}){
  // Traveling slit punctuates each chapter; its clip geometry drives adaptive wind SFX.
  const cut=local<.11&&chapter>0,slide=cut?1-progress(local,0,.11,'outCubic'):0;
  push(node('edit.slit','group',{clip:{type:'rect',width:W*slide,height:H},children:[node('edit.color','rect',{width:W,height:H,fill:accent})]}));
+ styleProceduralNodes(nodes,controls);
  return parameters.graphics?.cleanPreview?nodes.filter(n=>n.type!=='text'&&!/^lab\.(top\.rule|meter\.|tick\.)/.test(n.id)):nodes;
 }
 export function createProceduralDemo(config){const nodes=[];return{nodes,render(ctx,time,parameters={}){nodes.splice(0,nodes.length,...buildNodes(Number(time)||0,parameters));renderProcedural(ctx,Number(time)||0,{width:W,height:H,nodes,seed:recipe.seed});},nodesAt:buildNodes,config:{seed:recipe.seed,duration:config?.duration??10,width:W,height:H,graphics:recipe.defaults}};}

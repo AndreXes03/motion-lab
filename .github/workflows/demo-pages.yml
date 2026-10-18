@@ -44,6 +44,7 @@ jobs:
         run: |
           mkdir -p _site/demo _site/examples _site/studio
           cp -R dist/. _site/studio/
+          cp -R public/brand _site/brand
           cp showcase/index.html _site/index.html
           cp showcase/site.css showcase/site.js _site/
           cp examples/procedural-field.html examples/procedural-live.js _site/examples/

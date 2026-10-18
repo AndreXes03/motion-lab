@@ -86,6 +86,17 @@ for (const scene of sceneIds) {
   assert.ok(recommended.controls.some(id=>catalog.find(c=>c.id===id)?.animatable), `${scene} chosen tools include a usable animation parameter`);
   assert.deepEqual(recommended.controls, saved.controls, `${scene} default selection follows project/control-selections.json`);
   assert.deepEqual(alias.controls, recommended.controls, `${scene} essential alias preserves the recommended selection`);
+  const sceneKind = studioProjects.find(item => item.id === scene)?.kind;
+  if (['2d', 'hybrid'].includes(sceneKind)) {
+    // The public capability catalog is the agent's editing contract. A new 2D
+    // parameter must be discoverable in both modes, even if its panel is closed.
+    const missing = ids.filter(id => !recommended.controls.includes(id));
+    assert.deepEqual(missing, [], `${scene}: every planned 2D control needs a default panel; missing ${missing.join(', ')}`);
+    // This authoring requirement does not restrict a user's custom saved layout.
+    const first = recommended.controls[0];
+    const custom = validateControlManifest({version: 1, scene, controls: [first]}, scene);
+    assert.deepEqual(custom.controls, [first], `${scene}: custom layouts may still hide controls without deleting values or tracks`);
+  }
   assert.deepEqual(recommended.rationale, saved.rationale, `${scene} manifest carries the selection rationale`);
   assert.ok(recommended.controls.length > 0 && recommended.controls.every(id => all.controls.includes(id)), `${scene} recommended controls are a non-empty subset of the full catalog`);
   assert.deepEqual(validateControlManifest(recommended, scene), recommended);

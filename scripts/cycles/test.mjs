@@ -23,3 +23,8 @@ for(const grade of [{colorContrast:1,colorSaturation:1},{colorContrast:1.4,color
  const input=new Uint8ClampedArray([24,80,240,31,255,1,64,127]);const expected=new Uint8ClampedArray(input);applyDisplayGrade({getImageData:()=>({data:expected}),putImageData:()=>{}},2,1,grade);const actual=Buffer.from(input);gradePixels(actual,grade);assert.deepEqual([...actual],[...expected]);assert.equal(actual[3],31);assert.equal(actual[7],127);
 }
 console.log('Transparent pass guards and exact shared display grade passed');
+const progressive=normalizeCyclesOptions({command:'frame',out:'/tmp/progressive.png',progressive:'on',width:1920,height:1080,samples:64});assert.equal(progressive.progressive,true);assert.equal(progressive.width,1920);assert.equal(progressive.samples,64);
+assert.equal(normalizeCyclesOptions({command:'frame'}).progressive,false);
+assert.throws(()=>normalizeCyclesOptions({command:'export',progressive:true}),/viewport frames only/);
+const progressiveCommand=buildCyclesCommand({kind:'frame',snapshotPath:'/tmp/project.json',outputPath:'/tmp/frame.png',settings:{progressive:true}});assert.deepEqual(progressiveCommand.args.slice(-2),['--progressive','on']);
+console.log('Progressive Cycles option is frame-only, opt-in and preserves final output settings');

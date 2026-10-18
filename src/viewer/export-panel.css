@@ -1,0 +1,56 @@
+/* A dedicated delivery sheet: essentials first, precision controls on demand. */
+#export-settings>summary {display:flex;align-items:center;justify-content:center;gap:9px;width:auto;min-width:92px;height:34px;padding:0 13px;border:1px solid #d7f56b;border-radius:7px;background:#d7f56b;color:#171a13;font-size:12px;font-weight:650;list-style:none;cursor:pointer}
+#export-settings>summary::-webkit-details-marker {display:none}
+#export-settings>summary:hover,#export-settings[open]>summary {background:#e2ff82;border-color:#e2ff82;color:#171a13}
+#export-settings>summary:focus-visible {outline:2px solid #d7f56b;outline-offset:4px}
+#export-settings #export-dialog {position:fixed;inset:0;box-sizing:border-box;width:min(760px,calc(100vw - 40px));height:fit-content;max-height:calc(100dvh - 40px);margin:auto;padding:0;overflow:auto;overscroll-behavior:contain;scrollbar-width:thin;background:linear-gradient(140deg,#252729f8,#191b1dfc 68%);color:#f1f2eb;border:1px solid #ffffff25;border-radius:18px;box-shadow:0 32px 100px #0009;backdrop-filter:blur(28px);-webkit-backdrop-filter:blur(28px);text-align:left;font-size:12px}
+#export-settings #export-dialog:not([open]) {display:none}
+#export-dialog::backdrop {background:#060807a8;backdrop-filter:blur(7px);-webkit-backdrop-filter:blur(7px)}
+#export-dialog .export-sheet-heading {display:flex;align-items:center;justify-content:space-between;gap:20px;padding:25px 28px 0}
+#export-dialog .export-sheet-heading .eyebrow {font-size:9px;letter-spacing:1.8px;color:#9aa6b4}
+#export-dialog h2 {font-size:25px;line-height:1.2;font-weight:560;letter-spacing:-.8px;margin:7px 0 0}
+#export-dialog #export-settings-close {display:grid;place-items:center;flex:none;width:32px;height:32px;padding:0;border:1px solid #ffffff17;border-radius:50%;background:#ffffff05;color:#c1c5ba;font-size:22px;font-weight:400}
+#export-dialog #export-settings-close:hover {background:#ffffff0e;color:#fff}
+#export-dialog .export-intro {margin:10px 28px 23px;font-size:11px;line-height:1.5;color:#9d9fa1;max-width:620px}
+#export-dialog .export-sheet-body {display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);padding:0 28px 26px;gap:30px;align-items:start}
+#export-dialog .export-output {min-width:0}
+#export-dialog .export-output>h3 {margin:0 0 18px;font-size:13px;font-weight:600;color:#e6e7e9}
+#export-dialog .export-renderer {border-left:1px solid #ffffff12;padding-left:28px;min-width:0;align-self:stretch}
+#export-dialog .export-field {display:block;position:relative;min-width:0;margin:0 0 16px;color:#adafb3;font-size:11px;font-weight:450;line-height:1.4}
+#export-dialog .export-field>select,#export-dialog .export-field>input {box-sizing:border-box;width:100%;min-width:0;min-height:38px;margin:7px 0 0;padding:9px 11px;border:1px solid #ffffff1b;border-radius:7px;background:#121417a8;color:#e8e9ed;font:inherit;font-size:12px}
+#export-dialog .export-field>select:hover,#export-dialog .export-field>input:hover {border-color:#ffffff30}
+#export-dialog .export-field>select:focus-visible,#export-dialog .export-field>input:focus-visible {outline:2px solid #d7f56b;outline-offset:2px}
+#export-dialog .export-unit {position:absolute;right:0;top:0;color:#7d848d;font-size:10px}
+#export-dialog .export-encoding {margin-top:21px;border-top:1px solid #ffffff12;padding-top:15px}
+#export-dialog .export-encoding>summary {display:flex;align-items:center;justify-content:space-between;gap:15px;cursor:pointer;list-style:none;font-size:11px;color:#a2aab4;min-height:20px}
+#export-dialog .export-encoding>summary::-webkit-details-marker {display:none}
+#export-dialog .export-encoding>summary::after {content:'+';font-size:15px;color:#7d8794}
+#export-dialog .export-encoding[open]>summary::after {content:'−'}
+#export-dialog .export-encoding-fields {padding-top:18px}
+#export-dialog .export-checkbox {display:flex;align-items:center;gap:8px;font-size:11px;color:#b0bac7}
+#export-dialog .export-checkbox input {margin:0;accent-color:#d7f56b}
+#export-dialog .export-sheet-footer {position:sticky;bottom:0;display:flex;align-items:center;justify-content:space-between;gap:24px;padding:18px 28px;border-top:1px solid #ffffff15;background:#191c20f5;backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px)}
+#export-dialog #export-settings-note {max-width:430px;margin:0;font-size:10px;line-height:1.55;color:#929eae;font-weight:400;white-space:normal}
+#export-dialog #render-final {display:flex;align-items:center;justify-content:center;gap:12px;flex:none;min-height:40px;min-width:145px;padding:10px 16px;border-radius:8px;font-size:12px}
+#export-dialog [hidden] {display:none!important}
+body #export-dock {background:#121518;border-top-color:#ffffff12;color:#a7b1bf}
+body #export-dock>summary {padding:10px 22px;background:#171b20;color:#bbc7d7}
+body #export-dock>summary>.studio-icon {font-size:12px}
+body #export-dock .delivery {padding-top:16px}
+body #export-dock .delivery p {color:#becbdd;line-height:1.5}
+body #export-dock .delivery .eyebrow {font-size:8px;color:#8294ae}
+body #export-dock #export-folder {color:#8c9ab0}
+body #export-dock .export-row {border-top-color:#ffffff10}
+body #export-dock .export-row small {color:#8798ad}
+body #export-dock .export-row>div>strong {color:#d5dfed}
+@media(max-width:620px) {
+ #export-settings #export-dialog {width:calc(100vw - 24px);max-height:calc(100dvh - 24px);border-radius:14px}
+ #export-dialog .export-sheet-heading {padding:22px 20px 0}
+ #export-dialog h2 {font-size:23px}
+ #export-dialog .export-intro {margin:10px 20px 23px}
+ #export-dialog .export-sheet-body {grid-template-columns:1fr;gap:24px;padding:0 20px 24px}
+ #export-dialog .export-renderer {padding:22px 0 0;border-left:0;border-top:1px solid #ffffff12}
+ #export-dialog .export-sheet-footer {gap:14px;padding:16px 20px}
+ #export-dialog #render-final {min-width:122px;padding-inline:12px}
+ #export-dialog #export-settings-note {font-size:9px}
+}

@@ -244,7 +244,7 @@ async function sourceFingerprint() {
 
 function jobManifest(job) {
   return {
-    id: job.id, kind: job.kind, scene: job.scene, status: job.status,
+    id: job.id, kind: job.kind, purpose: job.purpose ?? 'export', scene: job.scene, status: job.status,
     progress: job.progress, frames: job.frames, total: job.total, phase: job.phase, samples: job.samples, totalSamples: job.totalSamples,
     createdAt: job.createdAt, startedAt: job.startedAt,
     finishedAt: job.finishedAt, time: job.time, sourceHash: job.sourceHash,
@@ -280,7 +280,7 @@ async function loadPersistedJobs() {
         error = 'Render file is missing from the output folder.';
       }
       const job = {
-        id, kind: record.kind, scene: record.scene, status,
+        id, kind: record.kind, purpose: record.purpose ?? 'export', scene: record.scene, status,
         progress: status === 'completed' ? 100 : Math.max(0, Math.min(99, Number(record.progress) || 0)),
         frames: Math.max(0, Number(record.frames) || (status === 'completed' ? (record.kind === 'frame' ? 1 : sceneConfig(record.scene??'bax').duration * (record.settings?.fps ?? config.fps)) : 0)),
         total: Math.max(1, Number(record.total) || (record.kind === 'frame' ? 1 : sceneConfig(record.scene??'bax').duration * (record.settings?.fps ?? config.fps))),
@@ -296,7 +296,7 @@ async function loadPersistedJobs() {
         sourceHash: record.sourceHash ?? null, sourceHashAfter: record.sourceHashAfter ?? null,
         parameters: record.parameters ?? {}, settings: record.settings ?? null, engine:record.engine??'threejs', rendererSelection:record.rendererSelection??null
       };
-      if (job.status === 'completed' && job.destination !== 'downloads') {
+      if (job.status === 'completed' && job.destination !== 'downloads' && job.purpose !== 'viewport') {
         try { await publishDownload(job); await writeJobManifest(job); }
         catch { /* Keep historical files accessible if Downloads is unavailable. */ }
       }
@@ -311,7 +311,7 @@ function publicJob(job) {
   const { sourceHash, sourceHashAfter, pid, logs, snapshotPath, manifestPath, parameters, ...publicFields } = job;
   return {
     ...publicFields,
-    previewUrl: job.frames > 0 ? `/api/studio/jobs/${job.id}/preview?frame=${job.previewFrame??job.frames}` : null,
+    previewUrl: job.previewStage ? `/api/studio/jobs/${job.id}/preview?stage=${job.previewStage}` : job.frames > 0 ? `/api/studio/jobs/${job.id}/preview?frame=${job.previewFrame??job.frames}` : null,
     filename: path.basename(job.outputPath),
     outputPath: job.outputPath
   };
@@ -334,6 +334,9 @@ function launchJob(job, invocation, spawnFn) {
     if (!line.trim()) return;
     try {
       const event = JSON.parse(line);
+      if(event.type==='preview'&&job.purpose==='viewport'&&job.engine==='cycles'&&[1,2].includes(event.stage)){
+        job.previewStage=event.stage;job.previewWidth=event.width;job.previewHeight=event.height;job.previewSamples=event.samples;job.phase='refining';job.progress=Math.max(job.progress,Number(event.percent)||0);
+      }
       if (['progress','frame'].includes(event.type)) {
         if (Number.isFinite(event.percent)) job.progress = Math.max(0, Math.min(99, event.percent));
         if (Number.isFinite(event.frames)) job.frames = Math.max(job.frames ?? 0, Math.min(job.total, event.frames));
@@ -342,7 +345,7 @@ function launchJob(job, invocation, spawnFn) {
         if(job.engine==='cycles'&&event.type==='frame'&&Number.isInteger(event.frame)&&event.frame>0&&event.frame<=job.total)job.previewFrame=event.frame;
         if (Number.isFinite(event.sample)) job.samples = Math.max(job.samples ?? 0, Math.min(job.totalSamples ?? event.totalSamples ?? 1, event.sample));
         if (Number.isFinite(event.totalSamples)) job.totalSamples = Math.max(1, event.totalSamples);
-        if (['sampling', 'rendering', 'encoding','baking','freezing'].includes(event.phase)) job.phase = event.phase;
+        if (['sampling', 'rendering', 'encoding','baking','freezing','refining','final'].includes(event.phase)) job.phase = event.phase;
       }
       if (event.type === 'error') job.error = event.message || 'Render failed';
     } catch { /* CLI diagnostics can include non-JSON lines; retain as logs. */ }
@@ -370,7 +373,7 @@ function launchJob(job, invocation, spawnFn) {
           job.phase = 'failed';
           job.error = 'Project sources changed during rendering; the output is not marked complete.';
         } else {
-          await publishDownload(job);
+          if (job.purpose !== 'viewport') await publishDownload(job);
           job.status = 'completed'; job.phase = 'completed'; job.progress = 100; job.frames = job.total; job.samples = job.totalSamples; job.url = `/api/studio/jobs/${job.id}/file`;
           job.downloadUrl = `/api/studio/jobs/${job.id}/download`;
         }
@@ -400,7 +403,7 @@ export function createStudioApi({ spawnFn = nodeSpawn, revealFn = revealWithFind
       if (req.method === 'GET' && route === '/studio') {
         await loadPersistedJobs();
         const [versions] = await Promise.all([listVersions()]);
-        const currentJobs = [...jobs.values()].sort((a, b) => String(b.createdAt).localeCompare(String(a.createdAt))).map(publicJob);
+        const currentJobs = [...jobs.values()].filter(job => job.purpose !== 'viewport').sort((a, b) => String(b.createdAt).localeCompare(String(a.createdAt))).map(publicJob);
         return send(res, 200, { versions, jobs: currentJobs, outputDirectory: DOWNLOAD_DIR });
       }
       if(req.method==='GET'&&route==='/studio/capabilities')return send(res,200,{capabilities:await capabilitiesFn()});
@@ -432,14 +435,17 @@ export function createStudioApi({ spawnFn = nodeSpawn, revealFn = revealWithFind
         await loadPersistedJobs();
         const job = jobs.get(previewMatch[1]);
         if (!job) return send(res, 404, { error: 'Job not found' });
+        const stageQuery=new URL(req.url,'http://127.0.0.1').searchParams.get('stage');
+        const progressiveStage=stageQuery===null?null:Number(stageQuery);
+        if(stageQuery!==null&&(![1,2].includes(progressiveStage)||job.purpose!=='viewport'||job.engine!=='cycles'||progressiveStage>(job.previewStage??0)))return send(res,404,{error:'Progressive frame not ready'});
         const fullFrame = job.kind === 'frame' && job.status === 'completed';
         const cyclesPreview=job.engine==='cycles'&&Number.isInteger(job.previewFrame);
         const mixedPreview=job.engine==='mixed'&&Number.isInteger(job.previewFrame);
-        const previewPath = fullFrame ? job.outputPath : mixedPreview?path.join(RENDER_DIR,`${job.id}${job.extension}.mixed`,`frame-${String(job.previewFrame).padStart(6,'0')}.png`):cyclesPreview?path.join(RENDER_DIR,'cycles',`${job.id}${job.extension}.cycles`,'frames',`frame-${String(job.previewFrame).padStart(6,'0')}.png`):path.join(RENDER_DIR, `${job.id}${job.extension}.progress.jpg`);
+        const previewPath = progressiveStage ? path.join(RENDER_DIR,'cycles',`${job.id}${job.extension}.cycles`,`preview-stage-${progressiveStage}.png`) : fullFrame ? job.outputPath : mixedPreview?path.join(RENDER_DIR,`${job.id}${job.extension}.mixed`,`frame-${String(job.previewFrame).padStart(6,'0')}.png`):cyclesPreview?path.join(RENDER_DIR,'cycles',`${job.id}${job.extension}.cycles`,'frames',`frame-${String(job.previewFrame).padStart(6,'0')}.png`):path.join(RENDER_DIR, `${job.id}${job.extension}.progress.jpg`);
         const info = await stat(previewPath).catch(() => null);
         if (!info?.isFile()) return send(res, 404, { error: 'Render preview not ready' });
         res.statusCode = 200;
-        res.setHeader('Content-Type', fullFrame||cyclesPreview||mixedPreview ? 'image/png' : 'image/jpeg');
+        res.setHeader('Content-Type', progressiveStage||fullFrame||cyclesPreview||mixedPreview ? 'image/png' : 'image/jpeg');
         res.setHeader('Content-Length', info.size);
         res.setHeader('Cache-Control', 'no-store, max-age=0');
         createReadStream(previewPath).pipe(res);
@@ -479,8 +485,9 @@ export function createStudioApi({ spawnFn = nodeSpawn, revealFn = revealWithFind
         return send(res, 201, version);
       }
       if (route === '/studio/render') {
-        if (!isRecord(body) || Object.keys(body).some(k => !['kind', 'time', 'parameters', 'settings'].includes(k))) return send(res, 400, { error: 'Expected kind, time, parameters, and optional settings' });
+        if (!isRecord(body) || Object.keys(body).some(k => !['kind', 'time', 'parameters', 'settings', 'purpose'].includes(k))) return send(res, 400, { error: 'Expected kind, time, parameters, and optional settings' });
         if (!['frame', 'preview', 'export'].includes(body.kind)) return send(res, 400, { error: 'kind must be frame, preview, or export' });
+        if (body.purpose !== undefined && (body.purpose !== 'viewport' || body.kind !== 'frame')) return send(res, 400, { error: 'Viewport jobs must be single frames' });
         if (activeRenderId) return send(res, 409, { error: 'Another local render is already running' });
         const time = body.time ?? 0;
         const selectedConfig=sceneConfig(body.parameters?.scene??'bax');if (typeof time !== 'number' || !Number.isFinite(time) || time < 0 || time > selectedConfig.duration) return send(res, 400, { error: `time must be a number from 0 to ${selectedConfig.duration} seconds` });
@@ -513,13 +520,13 @@ export function createStudioApi({ spawnFn = nodeSpawn, revealFn = revealWithFind
         await writeFile(snapshotPath, `${JSON.stringify(snapshot, null, 2)}\n`, { flag: 'wx' });
         const total = body.kind === 'frame' ? 1 : Math.round(selectedConfig.duration * fps);
         const totalSamples = body.kind === 'frame'&&selection.selectedRenderer==='threejs' ? settings.temporalSamples : 0;
-        const job = { id, kind: body.kind, scene: parameters.scene, status: 'running', progress: 0, frames: 0, total, samples: 0, totalSamples, phase: 'rendering', createdAt: new Date().toISOString(), time, url: null, downloadUrl: null, error: null, extension, settings, sourceHash, outputPath, snapshotPath, manifestPath: path.join(RENDER_DIR,`${id}${extension}.job.json`), parameters,engine:selection.selectedRenderer,rendererSelection:selection };
+        const job = { id, kind: body.kind, purpose: body.purpose ?? 'export', scene: parameters.scene, status: 'running', progress: 0, frames: 0, total, samples: 0, totalSamples, phase: 'rendering', createdAt: new Date().toISOString(), time, url: null, downloadUrl: null, error: null, extension, settings, sourceHash, outputPath, snapshotPath, manifestPath: path.join(RENDER_DIR,`${id}${extension}.job.json`), parameters,engine:selection.selectedRenderer,rendererSelection:selection };
         jobs.set(id, job);
         await writeJobManifest(job);
         const args = [body.kind, '--out', outputPath, '--snapshot', snapshotPath];
         if (body.kind === 'frame') args.push('--time', String(time), '--width', String(width), '--height', String(height), '--fps', String(fps), '--temporal-samples', String(temporalSamples));
         else args.push('--temporal-samples', String(snapshot.temporalSamples), '--fps', String(fps), '--format', settings.format, ...(settings.bitrateMbps === null ? [] : ['--bitrate-mbps', String(settings.bitrateMbps)]));
-        const invocation=selection.selectedRenderer==='mixed'?buildMixedCommand({kind:body.kind,snapshotPath,outputPath,root:ROOT,audioPath:plan.composite.audioFile??undefined,audioOffset:plan.composite.audioOffset}):selection.selectedRenderer==='cycles'?buildCyclesCommand({kind:body.kind,snapshotPath,outputPath,root:ROOT,settings:{width,height,fps,cyclesSamples:plan.cycles.samples,device:plan.cycles.device,workers:plan.cycles.workers,denoise:plan.cycles.denoise,motionBlur:temporalSamples>1,shutter:Math.max(0,Math.min(1,(parameters.look?.post?.shutterAngle??180)/360)),composite:'titles'}}):{command:process.execPath,args:[CLI,...args],cwd:ROOT};
+        const invocation=selection.selectedRenderer==='mixed'?buildMixedCommand({kind:body.kind,snapshotPath,outputPath,root:ROOT,audioPath:plan.composite.audioFile??undefined,audioOffset:plan.composite.audioOffset}):selection.selectedRenderer==='cycles'?buildCyclesCommand({kind:body.kind,snapshotPath,outputPath,root:ROOT,settings:{width,height,fps,progressive:body.purpose==='viewport',cyclesSamples:plan.cycles.samples,device:plan.cycles.device,workers:plan.cycles.workers,denoise:plan.cycles.denoise,motionBlur:temporalSamples>1,shutter:Math.max(0,Math.min(1,(parameters.look?.post?.shutterAngle??180)/360)),composite:'titles'}}):{command:process.execPath,args:[CLI,...args],cwd:ROOT};
         launchJob(job, invocation, spawnFn);
         reservation = null;
         return send(res, 202, { id });

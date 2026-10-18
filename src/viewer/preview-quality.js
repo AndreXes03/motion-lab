@@ -39,7 +39,7 @@ function mobileViewport() {
 }
 
 /** Mount the preview-quality selector and expose a render policy for the viewer. */
-export function mountPreviewQuality({container, getScene, onChange = () => {}, onModeChange = () => {}}) {
+export function mountPreviewQuality({container, getScene, getOutputSettings = () => ({width:1920,height:1080}), onChange = () => {}, onModeChange = () => {}}) {
   if (!container?.append || typeof getScene !== 'function') {
     throw new TypeError('Preview quality requires a container and getScene callback.');
   }
@@ -47,6 +47,7 @@ export function mountPreviewQuality({container, getScene, onChange = () => {}, o
   let interactiveMode = loadMode();
   let mode = interactiveMode;
   let renderState = 'pending';
+  let renderPhase = '';
   let renderMilliseconds = null;
   let samples = [];
   // A tier stays in place until costs recover well below the downgrade limit.
@@ -59,7 +60,7 @@ export function mountPreviewQuality({container, getScene, onChange = () => {}, o
   const interactiveButton = document.createElement('button'); interactiveButton.type = 'button'; interactiveButton.id = 'preview-mode-interactive';
   interactiveButton.setAttribute('aria-label', 'Interactive'); interactiveButton.title = 'Interactive preview'; interactiveButton.innerHTML = icon('play');
   const renderButton = document.createElement('button'); renderButton.type = 'button'; renderButton.id = 'preview-mode-render';
-  renderButton.setAttribute('aria-label', 'Render view'); renderButton.title = 'Full-resolution Three.js / Canvas preview; final renderer may differ'; renderButton.innerHTML = icon('frame');
+  renderButton.setAttribute('aria-label', 'Render view'); renderButton.title = 'Full-resolution frame · selected final renderer'; renderButton.innerHTML = icon('frame');
   modes.append(interactiveButton, renderButton);
   const qualityControl = document.createElement('div'); qualityControl.className = 'preview-interactive-quality';
   const label = document.createElement('label');
@@ -92,8 +93,9 @@ export function mountPreviewQuality({container, getScene, onChange = () => {}, o
     let quality = 'full';
 
     if (mode === 'render') {
-      width = interacting ? 640 : isMobile ? 1280 : 1920;
-      return {width, height: Math.round(width * 9 / 16), quality: 'full', label: 'Render view'};
+      const output = getOutputSettings();
+      width = interacting ? 640 : output.width;
+      return {width, height: interacting ? Math.round(width * output.height / output.width) : output.height, quality: 'full', label: 'Render view'};
     }
 
     if (mode === 'balanced') width = 640;
@@ -122,7 +124,7 @@ export function mountPreviewQuality({container, getScene, onChange = () => {}, o
     toolbar.setAttribute('aria-busy', String(isRender && renderState === 'rendering'));
     if (isRender) {
       const duration = renderMilliseconds === null ? '' : renderMilliseconds < 1000 ? ` · ${Math.round(renderMilliseconds)} ms` : ` · ${(renderMilliseconds / 1000).toFixed(1)} s`;
-      status.textContent = renderState === 'pending' ? 'Waiting to refine…' : renderState === 'rendering' ? 'Rendering…' : `${setting.width} × ${setting.height}${duration}`;
+      status.textContent = renderState === 'pending' ? (renderPhase === 'waiting' ? 'Renderer busy…' : 'Waiting to refine…') : renderState === 'rendering' ? (['freezing','baking','starting','preparing'].includes(renderPhase) ? 'Preparing scene…' : renderPhase === 'refining' ? 'Refining…' : renderPhase === 'final' ? 'Final pass…' : 'Rendering…') : renderState === 'error' ? 'Render failed' : renderState === 'unavailable' ? 'Local renderer required' : `${setting.width} × ${setting.height}${duration}`;
     } else status.textContent = `${setting.width} × ${setting.height}${setting.quality === 'fast' ? ' · simplified effects' : ''}`;
   }
 
@@ -167,9 +169,9 @@ export function mountPreviewQuality({container, getScene, onChange = () => {}, o
     onChange({mode, previousMode, interactiveMode});
   }
 
-  function setRenderState(state, ms) {
-    if (!['pending', 'rendering', 'ready'].includes(state)) throw new RangeError(`Unknown preview render state: ${state}`);
-    renderState = state;
+  function setRenderState(state, ms, phase = '') {
+    if (!['pending', 'rendering', 'ready', 'error', 'unavailable'].includes(state)) throw new RangeError(`Unknown preview render state: ${state}`);
+    renderState = state; renderPhase = phase;
     renderMilliseconds = state === 'ready' && Number.isFinite(ms) && ms >= 0 ? ms : null;
     updateStatus();
   }

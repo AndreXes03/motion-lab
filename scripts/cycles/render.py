@@ -7,6 +7,8 @@ metrics_name='metrics.json' if worker=='main' else 'metrics-'+worker+'.json'
 start=time.perf_counter()
 with open(os.path.join(HERE,'scene.json')) as f:data=json.load(f)
 options=data['options']
+sys.path.insert(0, os.path.dirname(__file__))
+from progressive import preview_stages
 def emit(type,**values):print('MOTION_CYCLES '+json.dumps({'type':type,**values}),flush=True)
 bpy.ops.wm.read_factory_settings(use_empty=True)
 scene=bpy.context.scene;scene.render.engine='CYCLES';scene.cycles.samples=options['samples'];scene.cycles.use_adaptive_sampling=True;scene.cycles.adaptive_threshold=.015;scene.cycles.use_denoising=options['denoise'];scene.cycles.max_bounces=options['bounces']
@@ -230,6 +232,15 @@ selected=json.loads(os.environ['MOTION_CYCLES_FRAMES'])
 emit('progress',phase='rendering',setupSeconds=setup,device=device,meshes=len(objects),omittedShaderLayers=omitted)
 for frame in selected:
     prepare(frame);filename=os.path.join(HERE,'frames','frame-%06d.png'%frame)
+    for stage in preview_stages(options):
+        scene.render.resolution_x=stage['width'];scene.render.resolution_y=stage['height'];scene.cycles.samples=stage['samples']
+        preview=os.path.join(HERE,'preview-raw-%d.png'%stage['stage'])
+        scene.render.filepath=preview+'.part.png'
+        emit('progress',phase='refining',stage=stage['stage'],percent=20+(stage['stage']-1)*20)
+        bpy.ops.render.render(write_still=True);os.replace(scene.render.filepath,preview)
+        emit('preview',phase='refining',path=preview,device=device,**stage)
+    scene.render.resolution_x=options['width'];scene.render.resolution_y=options['height'];scene.cycles.samples=options['samples']
+    if options.get('progressive'):emit('progress',phase='final',percent=65)
     scene.render.filepath=filename+'.part.png'
     begin=time.perf_counter();bpy.ops.render.render(write_still=True);seconds=time.perf_counter()-begin;os.replace(scene.render.filepath,filename);records.append({'frame':frame,'seconds':seconds})
     report={'device':device,'blender':bpy.app.version_string,'worker':worker,'setupSeconds':setup,'renders':records,'omittedShaderLayers':omitted}

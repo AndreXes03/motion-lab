@@ -55,7 +55,7 @@ This is a screen-space effect: transparent surfaces and blurred edges are approx
 
 ## Simple offline compositing
 
-Motion Lab can combine **already rendered 8-bit sRGB PNG frames** from Cycles, Three.js or a 2D graphics pass. It does not render Three.js again, start Blender, convert shaders, or infer assets. A scene author or user supplies the frame layers and timing. This local command requires the installed Node dependencies; it does not execute on the static public website.
+Framevolve can combine **already rendered 8-bit sRGB PNG frames** from Cycles, Three.js or a 2D graphics pass. It does not render Three.js again, start Blender, convert shaders, or infer assets. A scene author or user supplies the frame layers and timing. This local command requires the installed Node dependencies; it does not execute on the static public website.
 
 The renderer strategy is stored separately in `parameters.renderPolicy`. Its `composite` metadata can point to this executable plan through `planFile`; selecting a strategy alone does not supply the actual frame layers. A mixed renderer job needs available inputs and a validated plan. Disabled composition should bypass this stage and preserve the selected renderer's output.
 

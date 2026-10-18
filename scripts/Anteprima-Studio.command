@@ -4,7 +4,7 @@ set -e
 export PATH="/opt/homebrew/bin:/usr/local/bin:$PATH"
 cd -- "${0:A:h}/.."
 if [[ ! -x node_modules/.bin/vite ]]; then
-  print 'Dipendenze mancanti: esegui npm ci nella cartella Motion Lab.'
+  print 'Dipendenze mancanti: esegui npm ci nella cartella Framevolve.'
   read -r '?Premi Invio per chiudere.'
   exit 1
 fi

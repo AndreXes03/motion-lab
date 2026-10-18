@@ -98,6 +98,7 @@ export function renderControl(def, {value, onInput = () => {}, onCommit = () => 
     if (number !== input) {
       number.addEventListener('input', () => emit(number, false));
       number.addEventListener('change', () => emit(number, true));
+      number.addEventListener('blur', () => emit(number, true));
     }
   } else {
     input = document.createElement(def.type === 'select' ? 'select' : 'input');
