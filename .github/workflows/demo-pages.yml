@@ -1,4 +1,4 @@
-name: Publish Motion Lab demo
+name: Publish Framevolve demo
 on:
   push:
     branches: [main]
