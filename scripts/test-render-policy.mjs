@@ -67,3 +67,8 @@ for (const invalid of [
 ]) assert.throws(() => validateRenderPlan(invalid));
 assert.equal({}.polluted, undefined);
 console.log('Render policy: recipe round trips, measured estimates, user overrides, local capability gates, mixed plan readiness, prepared audio metadata and unsafe-input checks passed.');
+
+const editedParameters={scene:'pulse',edit:{version:1,clips:[{id:'trim',sourceStart:1,sourceEnd:4,duration:3}]}};
+assert.equal(resolveRenderPlan({...photoreal,renderer:'cycles'},{...context,parameters:editedParameters}).runnable,false,'Edited timelines cannot silently use unadapted Cycles');
+assert.equal(resolveRenderPlan({...photoreal,renderer:'auto'},{...context,parameters:editedParameters}).selectedRenderer,'threejs','Auto preserves edited timeline with supported renderer');
+assert.equal(resolveRenderPlan({...photoreal,renderer:'threejs'},{...context,parameters:editedParameters}).runnable,true);

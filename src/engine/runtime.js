@@ -6,7 +6,7 @@ import {applyDisplayGrade} from './display-grade.js';
 import {evaluateParameterAnimation} from './parameter-animation.js';
 import {createProductStarter} from '../scenes/product-starter.js';
 import {createLaunchDemo} from '../scenes/launch-demo.js';
-import {sceneConfig,sceneIds,isNewScene,sceneRegistry} from '../scene-registry.js';
+import {sceneConfig,sceneIds,isNewScene} from '../scene-registry.js';
 import {dotSoundTelemetry} from '../scenes/dot-sound.js';
 import {createMascotDemo,mascotShutterAt} from '../scenes/mascot-demo.js';
 import {createDemo as createPulseDemo,shutterAngleAt as pulseShutterAt,temporalSamplesAt as pulseTemporalSamplesAt} from '../scenes/pulse-demo.js';
@@ -14,7 +14,7 @@ import {createAfterhoursDemo,afterhoursShutter} from '../scenes/afterhours-demo.
 import {createReplayDemo} from '../scenes/replay-demo.js';
 import {createPopDemo} from '../scenes/pop-demo.js';
 import {sampleProceduralMotion} from './sound-procedural.js';
-import {createProceduralDemo,proceduralTempo,proceduralCuts,proceduralShutter} from '../scenes/procedural-demo.js';
+import {createProceduralDemo,proceduralTempo,proceduralShutter} from '../scenes/procedural-demo.js';
 import * as T from 'three';
 import {config} from '../config.js';
 import savedLook from '../../project/look.json';
@@ -23,11 +23,12 @@ import {createScene as createObjects} from '../scenes/objects.js';
 import {createComposite} from './composite.js';
 import {applyFilmGrain} from './film-grain.js';
 import {smooth} from './timeline.js';
+import {validateEditorialEdit,editorialDuration,mapEditorialTime,editorialCuts,isIdentityEditorialEdit} from './editorial.js';
 export function createRuntime(canvas,{initialScene="objects"}={}){initialScene=canonicalScene(initialScene);
  if(!sceneIds.includes(initialScene))throw new Error('Unknown scene: '+initialScene);
  let disposed=false,renderRevision=0;
  function assertAlive(){if(disposed)throw new Error('Cannot use a disposed runtime');}
- let activeScene=initialScene;const studies={};const studyFactories={starter:createProductStarter,launch:createLaunchDemo,dot:createMascotDemo,pulse:createPulseDemo,camera:createAfterhoursDemo,replay:createReplayDemo};
+ let activeScene=initialScene,activeEdit;const studies={};const studyFactories={starter:createProductStarter,launch:createLaunchDemo,dot:createMascotDemo,pulse:createPulseDemo,camera:createAfterhoursDemo,replay:createReplayDemo};
  const graphics=createProceduralDemo(config); let pop;
  let renderer,scene,camera,update,drawOverlay,composite,proceduralCanvas,proceduralContext;
  let look=structuredClone(savedLook);const ctx=canvas.getContext('2d',{willReadFrequently:true});let width=0,height=0,rendererWidth=0,rendererHeight=0;const diagnosticHidden=[];const reviews=createReviewMaterials();
@@ -39,6 +40,7 @@ export function createRuntime(canvas,{initialScene="objects"}={}){initialScene=c
   if(canonicalScene(snapshot.scene)!==snapshot.scene)snapshot=migrateLegacyScene(snapshot);
   const id=snapshot.scene??activeScene;
   if(!sceneIds.includes(id))throw new Error('Unknown scene: '+id);
+  if(snapshot.edit!==undefined)snapshot.edit=validateEditorialEdit(snapshot.edit,id);
   await document.fonts.ready;
   if(disposed)throw new Error('Cannot prepare a disposed runtime');
   const study=isNewScene(id)?(studies[id]??=studyFactories[id]()):id==='pop'?(pop??=createPopDemo()):id==='procedural'?graphics:null;
@@ -47,24 +49,31 @@ export function createRuntime(canvas,{initialScene="objects"}={}){initialScene=c
   return true;
  }
  function init3d(){assertAlive();if(renderer)return;renderer=new T.WebGLRenderer({antialias:true,alpha:false,preserveDrawingBuffer:true,powerPreference:'high-performance'});renderer.setPixelRatio(1);renderer.shadowMap.enabled=true;renderer.shadowMap.type=T.PCFSoftShadowMap;renderer.toneMapping=T.ACESFilmicToneMapping;renderer.outputColorSpace=T.SRGBColorSpace;const createScene=config.scene==='objects'?createObjects:createSignal;({scene,camera,update,drawOverlay}=createScene(renderer,config));composite=createComposite(renderer,scene,camera,{...config,look:savedLook.post});}
- function finishFrame(targetCtx,time,w,h,parameters={}){assertAlive();parameters=evaluateParameterAnimation({...parameters,scene:parameters.scene??activeScene},time);const id=parameters.scene??activeScene;if(!parameters.review||parameters.review==='beauty')applyDisplayGrade(targetCtx,w,h,parameters.look?.post);if(id==='camera'){const study=studies.camera??=studyFactories.camera();study.finishFrame?.(targetCtx,time,w,h,parameters);return;}if(isNewScene(id)&&id!=='replay')return;const activeLook=parameters.look||look;if(parameters.review&&parameters.review!=='beauty')return;applyFilmGrain(targetCtx,time,w,h,{amount:id==='replay'?.018:activeLook.post.grain??0,size:id==='replay'?1.1:activeLook.post.grainSize??1.1,fps:parameters.renderSample?.fps??config.fps});}
+ function finishSourceFrame(targetCtx,time,w,h,parameters={}){assertAlive();parameters=evaluateParameterAnimation({...parameters,scene:parameters.scene??activeScene},time);const id=parameters.scene??activeScene;if(!parameters.review||parameters.review==='beauty')applyDisplayGrade(targetCtx,w,h,parameters.look?.post);if(id==='camera'){const study=studies.camera??=studyFactories.camera();study.finishFrame?.(targetCtx,time,w,h,parameters);return;}if(isNewScene(id)&&id!=='replay')return;const activeLook=parameters.look||look;if(parameters.review&&parameters.review!=='beauty')return;applyFilmGrain(targetCtx,time,w,h,{amount:id==='replay'?.018:activeLook.post.grain??0,size:id==='replay'?1.1:activeLook.post.grainSize??1.1,fps:parameters.renderSample?.fps??config.fps});}
+ function finishFrame(targetCtx,time,w,h,parameters={}){assertAlive();parameters={...parameters,scene:parameters.scene??activeScene};finishSourceFrame(targetCtx,mapEditorialTime(time,parameters),w,h,parameters);}
  function render(time,{width:w=config.width,height:h=config.height,parameters={},previewQuality='full',previewReview}={}){
  assertAlive();
  if(canonicalScene(parameters.scene)!==parameters.scene)parameters=migrateLegacyScene(parameters);
  if(!Number.isFinite(time))throw new Error('Render time must be finite');
  if(!Number.isSafeInteger(w)||w<1||!Number.isSafeInteger(h)||h<1)throw new Error('Render dimensions must be positive safe integers');
  if(parameters.scene && !sceneIds.includes(parameters.scene))throw new Error('Unknown scene: '+parameters.scene);
+ const outputTime=time,edit=parameters.edit===undefined?undefined:validateEditorialEdit(parameters.edit,parameters.scene??activeScene);
+ parameters={...parameters,scene:parameters.scene??activeScene,...(edit?{edit}:{})};
+ time=mapEditorialTime(time,parameters);activeEdit=edit;
+ if(Number.isFinite(parameters.renderSample?.frameTime))parameters={...parameters,renderSample:{...parameters.renderSample,frameTime:mapEditorialTime(parameters.renderSample.frameTime,parameters)}};
+ const outputDuration=editorialDuration(parameters);
+ const frameInfo=(sourceTime,cfg,extras={})=>{const time=edit?Math.max(0,Math.min(outputDuration,outputTime)):sourceTime;return {...extras,time,...(edit?{sourceTime}:{}),frame:Math.max(0,Math.min(Math.ceil(outputDuration*cfg.fps)-1,Math.floor(time*cfg.fps))),width:w,height:h};};
  renderRevision++;
  activeScene=parameters.scene??activeScene;if(previewReview!==undefined)parameters={...parameters,review:resolvePreviewReview(activeScene,previewReview)};parameters=evaluateParameterAnimation({...parameters,scene:activeScene},time);if(previewQuality==='fast'){parameters=structuredClone(parameters);parameters.previewQuality='fast';if(parameters.look?.post)Object.assign(parameters.look.post,{dofEnabled:false,bloomStrength:0,bloomEnabled:false,aoIntensity:0,antialias:false});if(parameters.sceneControls)Object.assign(parameters.sceneControls,{focusBlur:0,bloomStrength:0});}
- if(isNewScene(activeScene)){const cfg=sceneConfig(activeScene),t=Math.max(0,Math.min(cfg.duration,time));const study=studies[activeScene]??=studyFactories[activeScene]();if(canvas.width!==w||canvas.height!==h){canvas.width=w;canvas.height=h;}if(activeScene==='pulse')study.render(ctx,t,w,h,parameters);else study.render(ctx,t,parameters,w,h);if(parameters.renderSample?.grain!==false)finishFrame(ctx,t,w,h,parameters);width=0;height=0;return{scene:activeScene,time:t,frame:Math.min(cfg.duration*cfg.fps-1,Math.floor(t*cfg.fps)),width:w,height:h};}
- if(parameters.scene==='pop'){pop??=createPopDemo();if(canvas.width!==w||canvas.height!==h){canvas.width=w;canvas.height=h;}const t=Math.max(0,Math.min(config.duration,time));pop.render(ctx,t,parameters,w,h);width=0;height=0;if(parameters.renderSample?.grain!==false)finishFrame(ctx,t,w,h,parameters);return {scene:'pop',time:t,frame:Math.min(config.duration*config.fps-1,Math.floor(t*config.fps)),width:w,height:h};}
+ if(isNewScene(activeScene)){const cfg=sceneConfig(activeScene),t=Math.max(0,Math.min(cfg.duration,time));const study=studies[activeScene]??=studyFactories[activeScene]();if(canvas.width!==w||canvas.height!==h){canvas.width=w;canvas.height=h;}if(activeScene==='pulse')study.render(ctx,t,w,h,parameters);else study.render(ctx,t,parameters,w,h);if(parameters.renderSample?.grain!==false)finishSourceFrame(ctx,t,w,h,parameters);width=0;height=0;return frameInfo(t,cfg,{scene:activeScene});}
+ if(parameters.scene==='pop'){pop??=createPopDemo();if(canvas.width!==w||canvas.height!==h){canvas.width=w;canvas.height=h;}const t=Math.max(0,Math.min(config.duration,time));pop.render(ctx,t,parameters,w,h);width=0;height=0;if(parameters.renderSample?.grain!==false)finishSourceFrame(ctx,t,w,h,parameters);return frameInfo(t,config,{scene:'pop'});}
  if(parameters.scene==='procedural'){const t=Math.max(0,Math.min(config.duration,time));if(canvas.width!==w||canvas.height!==h){canvas.width=w;canvas.height=h;}// Keep procedural rasterization separate: WebGL draws change Chrome's 2D raster backend.
  proceduralCanvas??=document.createElement('canvas');proceduralContext??=proceduralCanvas.getContext('2d',{willReadFrequently:true});
  if(proceduralCanvas.width!==w||proceduralCanvas.height!==h){proceduralCanvas.width=w;proceduralCanvas.height=h;}
  proceduralContext.save();proceduralContext.scale(w/config.width,h/config.height);try{graphics.render(proceduralContext,t,parameters);}finally{proceduralContext.restore();}
- ctx.putImageData(proceduralContext.getImageData(0,0,w,h),0,0);width=0;height=0;if(parameters.renderSample?.grain!==false)finishFrame(ctx,t,w,h,parameters);return {scene:'procedural',time:t,frame:Math.min(config.duration*config.fps-1,Math.floor(t*config.fps)),width:w,height:h};}
+ ctx.putImageData(proceduralContext.getImageData(0,0,w,h),0,0);width=0;height=0;if(parameters.renderSample?.grain!==false)finishSourceFrame(ctx,t,w,h,parameters);return frameInfo(t,config,{scene:'procedural'});}
  init3d();
- if(width!==w||height!==h){width=w;height=h;canvas.width=w;canvas.height=h;}
+ if(width!==w||height!==h||canvas.width!==w||canvas.height!==h){width=w;height=h;canvas.width=w;canvas.height=h;}
  // A 2D scene switch invalidates the output canvas, not retained GPU targets.
  if(rendererWidth!==w||rendererHeight!==h){rendererWidth=w;rendererHeight=h;renderer.setSize(w,h,false);composite.setSize(w,h);camera.aspect=w/h;camera.updateProjectionMatrix()}
  for(const o of diagnosticHidden)o.visible=true;diagnosticHidden.length=0;
@@ -73,12 +82,12 @@ export function createRuntime(canvas,{initialScene="objects"}={}){initialScene=c
  ctx.fillStyle=config.palette.ink;ctx.font='600 18px Arial';ctx.fillText(config.text.eyebrow,88,80);ctx.textAlign='right';ctx.fillText('DESIGNED TO BE PLAYED.',1832,80);ctx.textAlign='left';
  const a=smooth((t-config.animation.reveal[0])/(config.animation.reveal[1]-config.animation.reveal[0]));ctx.globalAlpha=a;ctx.save();ctx.translate(0,25*(1-a));ctx.font='900 150px Arial';config.text.title.split('\n').forEach((line,i)=>ctx.fillText(line,80,426+i*140));ctx.font='500 21px Arial';ctx.fillText(config.text.footer,88,632);ctx.fillStyle='#ff570c';ctx.fillRect(88,674,64,6);ctx.restore();
  ctx.globalAlpha=1;ctx.fillStyle=config.palette.ink;ctx.font='500 15px Arial';ctx.fillText('01 — SOUND, IN YOUR HANDS.',88,1005);ctx.textAlign='right';ctx.fillText('FORM STUDY  /  2026',1832,1005);}
- ctx.restore();if(parameters.renderSample?.grain!==false)finishFrame(ctx,t,w,h,parameters);return {time:t,frame:Math.min(config.duration*config.fps-1,Math.floor(t*config.fps)),width:w,height:h};
+ ctx.restore();if(parameters.renderSample?.grain!==false)finishSourceFrame(ctx,t,w,h,parameters);return frameInfo(t,config);
  }
  function sampleAuthoredAnimation(parameters,groupId,{start=0,end=sceneConfig(parameters.scene??activeScene).duration,count=25,restoreTime=0,previewQuality='full'}={}){
   assertAlive();
   const id=parameters.scene??activeScene,original=structuredClone(parameters),baseline=structuredClone(parameters),oldSize={width:canvas.width,height:canvas.height};
-  delete baseline.animation;delete baseline.inspect;delete baseline.review;
+  delete baseline.animation;delete baseline.inspect;delete baseline.review;delete baseline.edit;
   if(!Number.isFinite(start)||!Number.isFinite(end)||start<0||end<=start||end>sceneConfig(id).duration||!Number.isInteger(count)||count<2||count>100)throw new Error('Invalid authored motion inspection window');
   const native=getAuthoredAnimationTracks(id,groupId,{motion:baseline.motion}),frames=[];let channels=[];
   try{
@@ -116,11 +125,17 @@ export function createRuntime(canvas,{initialScene="objects"}={}){initialScene=c
   if(!sceneIds.includes(parameters.scene))throw new Error('Unknown scene: '+parameters.scene);
   // Telemetry is held in memory; reject accidental unbounded allocations while
   // allowing substantially higher rates than the usual 60–120 Hz inspection.
-  if(Math.ceil(sceneConfig(parameters.scene).duration*rate)+1>100000)throw new Error('Motion sampling exceeds the 100000-frame limit');
-  const id=parameters.scene??activeScene;if(isNewScene(id)){const cfg=sceneConfig(id);if(id==='dot')return dotSoundTelemetry(rate);if(id==='replay'){const study=studies[id]??=studyFactories[id]();return{...sampleProceduralMotion(t=>study.nodesAt(t,evaluateParameterAnimation({...parameters,scene:id},t)),{duration:cfg.duration,rate,width:1920,height:1080,seed:16}),musicBpm:120};}const frames=Array.from({length:Math.ceil(cfg.duration*rate)+1},(_,i)=>({time:Math.min(cfg.duration,i/rate),camera:{position:[0,0,0],quaternion:[0,0,0,1]},objects:{}}));return{duration:cfg.duration,rate,frames,cuts:sceneRegistry[id].cuts};}
+  const duration=editorialDuration(parameters),sourceTimeAt=time=>mapEditorialTime(time,parameters),cuts=editorialCuts(parameters),edited=!isIdentityEditorialEdit(parameters.edit,parameters.scene);
+  if(Math.ceil(duration*rate)+1>100000)throw new Error('Motion sampling exceeds the 100000-frame limit');
+  const id=parameters.scene??activeScene;if(isNewScene(id)){if(id==='dot'){
+   const telemetry=dotSoundTelemetry(rate);if(!edited)return telemetry;
+   const events=[];let offset=0;
+   for(const clip of validateEditorialEdit(parameters.edit,id).clips){const stretch=clip.duration/(clip.sourceEnd-clip.sourceStart);for(const event of telemetry.authoredEvents){if(event.time<clip.sourceStart||event.time>=clip.sourceEnd)continue;events.push({...event,time:offset+(event.time-clip.sourceStart)*stretch,duration:Math.min(event.duration,clip.sourceEnd-event.time)*stretch,...(event.shapeRate?{shapeRate:event.shapeRate/stretch}:{})});}offset+=clip.duration;}
+   return {...telemetry,duration,cuts,authoredEvents:events,curves:{camera:new Array(Math.ceil(duration*rate)).fill(0)}};
+  }if(id==='replay'){const study=studies[id]??=studyFactories[id]();return{...sampleProceduralMotion(t=>study.nodesAt(t,evaluateParameterAnimation({...parameters,scene:id},t)),{duration,rate,width:1920,height:1080,seed:16,sourceTimeAt}),cuts:edited?cuts:[],musicBpm:120};}const frames=Array.from({length:Math.ceil(duration*rate)+1},(_,i)=>({time:Math.min(duration,i/rate),camera:{position:[0,0,0],quaternion:[0,0,0,1]},objects:{}}));return{duration,rate,frames,cuts};}
 
-  if(parameters.scene==='pop'){pop??=createPopDemo();return {...sampleProceduralMotion(t=>pop.nodesAt(t,evaluateParameterAnimation(parameters,t)),{duration:config.duration,rate,width:1920,height:1080,seed:42}),musicBpm:120};}
-  if(parameters.scene==='procedural')return {...sampleProceduralMotion(t=>graphics.nodesAt(t,evaluateParameterAnimation(parameters,t)),{duration:config.duration,rate,width:1920,height:1080,seed:graphics.config.seed}),musicBpm:proceduralTempo(parameters)};
+  if(parameters.scene==='pop'){pop??=createPopDemo();return {...sampleProceduralMotion(t=>pop.nodesAt(t,evaluateParameterAnimation(parameters,t)),{duration,rate,width:1920,height:1080,seed:42,sourceTimeAt}),cuts:edited?cuts:[],musicBpm:120};}
+  if(parameters.scene==='procedural')return {...sampleProceduralMotion(t=>graphics.nodesAt(t,evaluateParameterAnimation(parameters,t)),{duration,rate,width:1920,height:1080,seed:graphics.config.seed,sourceTimeAt}),cuts:edited?cuts:[],musicBpm:proceduralTempo(parameters)};
   init3d();const previousAspect=camera.aspect;const frames=[],v=new T.Vector3(),q=new T.Quaternion();
   const names=['device.root','dial.rotor','objects.kinetic','objects.gyro.outer-gimbal-pivot','objects.gyro.inner-gimbal-pivot','objects.gyro.rotor','objects.emblem','objects.cover.hinge'];
   const profiles={'dial.rotor':'dial','objects.cover.hinge':'hinge','objects.gyro.rotor':'rotor','objects.gyro.outer-gimbal-pivot':'bearing','objects.gyro.inner-gimbal-pivot':'bearing'};
@@ -128,16 +143,16 @@ export function createRuntime(canvas,{initialScene="objects"}={}){initialScene=c
   for(const key of Object.keys(parameters.motion?.tracks||{}))if(!key.startsWith('camera.'))names.push(key.replace(/\.(position|rotation)(\.[xyz])?$/,''));
   scene.traverse(o=>{if(o.userData.sound)names.push(o.name);});
   const targets=[...new Set(names)].map(name=>scene.getObjectByName(name)).filter(Boolean);
-  for(let i=0;i<=Math.ceil(config.duration*rate);i++){
-   const t=Math.min(config.duration,i/rate);camera.aspect=16/9;
+  for(let i=0;i<=Math.ceil(duration*rate);i++){
+   const outputTime=Math.min(duration,i/rate),t=sourceTimeAt(outputTime);camera.aspect=16/9;
    const sampled=evaluateParameterAnimation({...parameters,scene:id},t);update(t,{...sampled,look:sampled.look||look});scene.updateMatrixWorld(true);camera.updateMatrixWorld(true);
    const objects={};for(const object of targets){object.getWorldPosition(v);const position=v.toArray();const distance=v.distanceTo(camera.position);v.project(camera);object.getWorldQuaternion(q);
     const visibility=v.z< -1||v.z>1?0:Math.max(0,1-Math.max(0,Math.abs(v.x)-.75)*1.6)*Math.max(0,1-Math.max(0,Math.abs(v.y)-.8)*1.6)/(1+distance*.13);
     objects[object.name]={position,quaternion:q.toArray(),localPosition:object.position.toArray(),localQuaternion:object.quaternion.toArray(),localRotation:object.rotation.toArray().slice(0,3),soundProfile:object.userData.sound?.profile||profiles[object.name]||'generic',pan:Math.max(-.9,Math.min(.9,v.x*.75)),visibility};
    }
-   frames.push({time:t,camera:{position:camera.position.toArray(),quaternion:camera.quaternion.toArray()},objects});
+   frames.push({time:outputTime,camera:{position:camera.position.toArray(),quaternion:camera.quaternion.toArray()},objects});
   }
-  camera.aspect=previousAspect;camera.updateProjectionMatrix();return {duration:config.duration,rate,frames,cuts:parameters.motion?.cuts||[]};
+  camera.aspect=previousAspect;camera.updateProjectionMatrix();return {duration,rate,frames,cuts};
  }
  function pickObject(x,y){if(!scene||!camera)return null;const ray=new T.Raycaster();scene.updateMatrixWorld(true);camera.updateMatrixWorld(true);ray.setFromCamera(new T.Vector2(x*2-1,1-y*2),camera);for(const hit of ray.intersectObjects(scene.children,true)){let object=hit.object;if(!object.visible)continue;while(object){if(['device.root','objects.emblem','objects.kinetic'].includes(object.name))return object.name;if(!object.visible)break;object=object.parent;}}return null;}
  function dispose(){
@@ -152,9 +167,9 @@ export function createRuntime(canvas,{initialScene="objects"}={}){initialScene=c
  // preparation was in flight. Awaiting ready still guarantees asset decoding.
  const ready=prepare({scene:initialScene}).then(()=>{if(renderRevision===0)render(0,{parameters:{scene:initialScene}});return true});
  const selectedScene=parameters=>canonicalScene(parameters.scene??activeScene);
- return {get config(){return sceneConfig(activeScene)},ready,prepare,render,dispose,pickObject,finishFrame,sampleMotion,sampleAuthoredAnimation,
-  temporalSamplesAt:(time,samples,parameters={})=>selectedScene(parameters)==='pulse'?pulseTemporalSamplesAt(time,samples):samples,
-  shutterAngleAt(time,parameters={}){const id=selectedScene(parameters);return isNewScene(id)?(id==='pulse'?pulseShutterAt(time):id==='camera'?afterhoursShutter(time):id==='dot'?mascotShutterAt(time):id==='starter'?270:0):id==='procedural'?proceduralShutter(time,parameters.look?.post?.shutterAngle??210):parameters.look?.post?.shutterAngle??210;},
-  cutTimes(parameters={}){const id=selectedScene(parameters);return isNewScene(id)?sceneRegistry[id].cuts:id==='procedural'?proceduralCuts:parameters.motion?.cuts??[];},
+ return {get config(){return {...sceneConfig(activeScene),duration:editorialDuration({scene:activeScene,edit:activeEdit})}},ready,prepare,render,dispose,pickObject,finishFrame,sampleMotion,sampleAuthoredAnimation,
+  temporalSamplesAt:(time,samples,parameters={})=>selectedScene(parameters)==='pulse'?pulseTemporalSamplesAt(mapEditorialTime(time,{...parameters,scene:selectedScene(parameters)}),samples):samples,
+  shutterAngleAt(time,parameters={}){const id=selectedScene(parameters);time=mapEditorialTime(time,{...parameters,scene:id});return isNewScene(id)?(id==='pulse'?pulseShutterAt(time):id==='camera'?afterhoursShutter(time):id==='dot'?mascotShutterAt(time):id==='starter'?270:0):id==='procedural'?proceduralShutter(time,parameters.look?.post?.shutterAngle??210):parameters.look?.post?.shutterAngle??210;},
+  cutTimes(parameters={}){return editorialCuts({...parameters,scene:selectedScene(parameters)});},
   get scene(){init3d();return scene},get camera(){assertAlive();if(isNewScene(activeScene))return studies[activeScene]?.camera;if(activeScene==='pop')return pop?.camera;init3d();return camera},setLook(next){look=structuredClone(next)},getLook(){return structuredClone(look)}};
 }

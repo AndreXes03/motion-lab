@@ -6,7 +6,7 @@ import os from 'node:os';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { test } from 'node:test';
-import { checkNode, HEALTH_PATH, parseArgs, paths } from './launch-studio.mjs';
+import { checkNode, HEALTH_PATH, launch,parseArgs, paths,studioIsBusy } from './launch-studio.mjs';
 import { installerArgs, installLauncher } from './install-mac-launcher.mjs';
 
 const helper = fileURLToPath(new URL('./launch-studio.mjs', import.meta.url));
@@ -34,9 +34,19 @@ async function fixture(t) {
   await writeFile(path.join(root, 'node_modules/vite/package.json'), '{"name":"vite","type":"module","main":"fake.mjs"}');
   await writeFile(path.join(root, 'node_modules/vite/fake.mjs'), `
 import http from 'node:http';
+import {readFile} from 'node:fs/promises';
 export async function createServer(options) {
  const middleware=[];
- const server=http.createServer((req,res)=>{
+ let maintenance;
+ const activity=async()=>{try{return JSON.parse(await readFile(options.root+'/.motion-cache/test-active.json','utf8'));}catch{return {activeJobs:[],jobs:[]};}};
+ const server=http.createServer(async(req,res)=>{
+  if(req.url==='/api/studio'){res.setHeader('Content-Type','application/json');res.end(JSON.stringify(await activity()));return;}
+  if(req.url==='/api/studio/maintenance'&&req.method==='POST'){
+   let raw='';for await(const chunk of req)raw+=chunk;const body=JSON.parse(raw);
+   if(body.action==='acquire'){if((await activity()).activeJobs?.length||(maintenance&&maintenance!==body.token)){res.statusCode=409;res.end('{}');return;}maintenance=body.token;}
+   else if(maintenance===body.token)maintenance=null;
+   res.end(JSON.stringify({released:!maintenance}));return;
+  }
   let i=0; const next=()=>{const fn=middleware[i++];if(fn)fn(req,res,next);else{res.statusCode=200;res.end('<h1>Motion Lab fixture</h1>');}};next();
  });
  const api={middlewares:{use(fn){middleware.push(fn);}}};
@@ -47,10 +57,11 @@ export async function createServer(options) {
   await mkdir(path.join(root,'public/brand'),{recursive:true});await writeFile(path.join(root,'public/brand/framevolve.icns'),'test-icon');
   await mkdir(path.join(root,'licenses/legacy'),{recursive:true});await writeFile(path.join(root,'LICENSE'),'Framevolve Free Use License');await writeFile(path.join(root,'licenses/legacy/MIT.txt'),'Legacy MIT notice');
   const port = await freePort();
+  const extraPorts=[];
   t.after(async () => {
-    try { await command(root, port, 'stop'); } finally { await rm(base, { recursive: true, force: true }); }
+    try { for(const extra of extraPorts)await command(root,extra,'stop');await command(root, port, 'stop'); } finally { await rm(base, { recursive: true, force: true }); }
   });
-  return { base, root, port };
+  return { base, root, port,extraPorts };
 }
 
 test('Node e argomenti: requisiti espliciti e percorsi assoluti', () => {
@@ -86,6 +97,26 @@ test('due doppio clic contemporanei avviano un solo servizio', async t => {
   for (const result of results) assert.equal(result.code, 0, result.stderr);
   assert.equal(results.filter(result => result.stdout.includes('avviato')).length, 1);
   assert.equal(results.filter(result => result.stdout.includes('riutilizzato')).length, 1);
+});
+
+test('export/viewport attivi e altre porte bloccano update e stop; ricontrollo prima del riavvio',async t=>{
+ const f=await fixture(t),secondPort=await freePort();
+ f.extraPorts.push(secondPort);
+ await command(f.root,f.port);await command(f.root,secondPort);
+ const initial=JSON.parse(await readFile(paths(f.root,f.port).state));
+ const second=JSON.parse(await readFile(paths(f.root,secondPort).state));
+ const activity=path.join(f.root,'.motion-cache/test-active.json');
+ const options={root:f.root,port:f.port,action:'start',open:false};let updates=0;
+ await writeFile(activity,JSON.stringify({jobs:[],activeJobs:[{id:'viewport',purpose:'viewport',status:'running'}]}));
+ const blocked=await launch(options,{updateFn:async()=>{updates++;return {state:'updated'};}});
+ assert.equal(blocked.updates.state,'busy');assert.equal(updates,0);
+ assert.equal(JSON.parse(await readFile(paths(f.root,secondPort).state)).pid,second.pid);
+ assert.equal((await command(f.root,f.port,'stop')).code,1);
+ await writeFile(activity,JSON.stringify({jobs:[],activeJobs:[]}));
+ const delayed=await launch(options,{updateFn:async()=>{updates++;await writeFile(activity,JSON.stringify({jobs:[],activeJobs:[{status:'queued'}]}));return {state:'updated'};}});
+ assert.equal(delayed.updates.state,'restart-deferred');assert.equal(delayed.pid,initial.pid);
+ await writeFile(activity,JSON.stringify({jobs:[],activeJobs:[]}));
+ assert.equal(studioIsBusy({jobs:[]}),true,'Older API cannot prove viewport idleness');
 });
 
 test('porta estranea occupata: nessun riuso, stop o processo aggiuntivo', async t => {

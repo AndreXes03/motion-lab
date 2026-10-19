@@ -11,6 +11,7 @@ import ffprobe from 'ffprobe-static';
 import sharp from 'sharp';
 import {normalizeCyclesOptions,parseCyclesArgs,adaptations} from './cycles/options.mjs';
 import {findBlender} from './cycles/studio.mjs';
+import {resolveMusicAsset} from './music-assets.mjs';
 import {sourceDigest,hashFile,isSourceArtifact} from './cycles/cache.mjs';
 import {gradePixels} from './cycles/finish.mjs';
 import {sampleRuntimeSound,renderProceduralAudio} from './cycles/audio.mjs';
@@ -26,7 +27,7 @@ for(const [signal,code] of [['SIGINT',130],['SIGTERM',143]])process.once(signal,
 async function run(program,args,{cwd=ROOT,env=process.env,onEvent}={}){
  return new Promise((resolve,reject)=>{const child=spawn(program,args,{cwd,env});children.add(child);let stdout='',stderr='',pending='';child.stdout.on('data',d=>{stdout=(stdout+d).slice(-64000);pending+=d;const lines=pending.split('\n');pending=lines.pop();for(const line of lines){if(line.startsWith('MOTION_CYCLES ')){try{onEvent?.(JSON.parse(line.slice(14)));}catch(e){child.kill('SIGTERM');reject(e);}}}});child.stderr.on('data',d=>{stderr=(stderr+d).slice(-64000);});child.on('error',reject);child.on('close',code=>{children.delete(child);if(code!==0||interrupted)reject(Error(stderr.slice(-4000)||stdout.slice(-4000)||'Process stopped'));else resolve(stdout);});});
 }
-async function freeze(destination){await mkdir(destination,{recursive:true});for(const folder of ['src','project','public','scripts/cycles'])if(await exists(path.join(ROOT,folder)))await cp(path.join(ROOT,folder),path.join(destination,folder),{recursive:true,filter:isSourceArtifact});for(const file of ['package.json','package-lock.json','scripts/cycles.mjs'])await copyFile(path.join(ROOT,file),path.join(destination,file));await symlink(path.join(ROOT,'node_modules'),path.join(destination,'node_modules'),'dir');await writeFile(path.join(destination,'cycles-bake.html'),'<!doctype html><meta charset="utf-8"><title>Motion Lab Cycles bake</title>');}
+async function freeze(destination,options){await mkdir(destination,{recursive:true});for(const folder of ['src','project','public','scripts/cycles'])if(await exists(path.join(ROOT,folder)))await cp(path.join(ROOT,folder),path.join(destination,folder),{recursive:true,filter:isSourceArtifact});for(const file of ['package.json','package-lock.json','scripts/cycles.mjs','scripts/music-assets.mjs'])await copyFile(path.join(ROOT,file),path.join(destination,file));if(options.parameters.music&&!options.audio){const asset=await resolveMusicAsset({root:ROOT,track:options.parameters.music}),folder=path.join(destination,'project/references/music');await mkdir(folder,{recursive:true});await copyFile(asset.path,path.join(folder,asset.assetId+'.audio'));await writeFile(path.join(folder,asset.assetId+'.json'),JSON.stringify({assetId:asset.assetId,name:asset.name,mimeType:asset.mimeType,bytes:asset.bytes,duration:asset.duration}));}await symlink(path.join(ROOT,'node_modules'),path.join(destination,'node_modules'),'dir');await writeFile(path.join(destination,'cycles-bake.html'),'<!doctype html><meta charset="utf-8"><title>Motion Lab Cycles bake</title>');}
 async function bake(directory,frozen,options){
  for(const folder of ['baked','frames','geometries'])await mkdir(path.join(directory,folder),{recursive:true});
  server=await createServer({root:frozen,configFile:false,cacheDir:path.join(directory,'vite-cache'),server:{host:'127.0.0.1',port:0,hmr:false,watch:null},logLevel:'error'});await server.listen();
@@ -36,7 +37,7 @@ async function bake(directory,frozen,options){
  await page.exposeFunction('reportBake',value=>emit('progress',value));
  await page.goto(`http://127.0.0.1:${server.httpServer.address().port}/cycles-bake.html`);
  const report=await page.evaluate(async options=>(await import('/scripts/cycles/bake-browser.js')).bakeScene(options),options);
- if(options.command!=='frame'&&!options.audio&&options.parameters.sound?.enabled)await writeFile(path.join(directory,'sound-telemetry.json'),JSON.stringify(await sampleRuntimeSound(page,options.parameters)));
+ if(options.command!=='frame'&&!options.audio&&(options.parameters.sound?.enabled||(options.parameters.music&&options.parameters.sound?.enabled!==false)))await writeFile(path.join(directory,'sound-telemetry.json'),JSON.stringify(await sampleRuntimeSound(page,options.parameters)));
  if(errors.length)throw Error(errors.join('\n'));await browser.close();browser=null;await server.close();server=null;return report;
 }
 async function validFrame(filename,options){try{const info=await sharp(filename).raw().toBuffer({resolveWithObject:true});return info.info.width===options.width&&info.info.height===options.height&&(options.background!=='transparent'||info.info.channels===4);}catch{return false;}}
@@ -67,6 +68,7 @@ async function finishFrames(directory,options,frozen){
 }
 async function main(){
  const input=parseCyclesArgs(process.argv.slice(2));const snapshot=input.snapshot?JSON.parse(await readFile(input.snapshot,'utf8')):{};const options=normalizeCyclesOptions(input,snapshot);const blender=await findBlender(input.blender);
+ if(options.command!=='frame'&&!options.audio&&options.parameters.music)await resolveMusicAsset({root:ROOT,track:options.parameters.music});
  const directory=options.out+'.cycles';manifestPath=options.out+'.job.json';await mkdir(path.dirname(options.out),{recursive:true});
  if(await exists(options.out)&&!options.resume)throw Error('Output already exists; choose a new --out or matching --resume on');
  const sourceHash=await sourceDigest(ROOT), audioHash=options.audio?await hashFile(options.audio):null, fingerprint=hash(stable({...options,resume:false,out:null,workers:1,blender,sourceHash,audioHash}));
@@ -81,7 +83,7 @@ async function main(){
  const priorManifest=reuseFrames&&await exists(manifestPath)?JSON.parse(await readFile(manifestPath,'utf8')):null;
  manifest={schemaVersion:1,engine:'cycles',status:'running',path:options.out,sourceHash,fingerprint,sourceSnapshot:frozen,settings:options,adaptations,createdAt:new Date().toISOString(),frames:0,total:options.count};await updateManifest({phase:'freezing',...(priorManifest?.fingerprint===fingerprint?{device:priorManifest.device}:{}),...(baked?{sourceReport:JSON.parse(await readFile(path.join(directory,'export-report.json'),'utf8'))}:{})});emit('progress',{phase:'freezing',percent:0});
  await writeFile(options.out+'.project.json',JSON.stringify({schemaVersion:2,command:options.command,parameters:options.parameters,settings:{...options},config:{scene:options.scene,duration:13.9,width:options.width,height:options.height,fps:options.fps},start:options.start,end:options.start+options.duration,time:options.time},null,2));
- if(!baked){if(await exists(frozen))await rm(frozen,{recursive:true});await freeze(frozen);if(await sourceDigest(frozen)!==sourceHash)throw Error('Scene source changed while freezing; retry using a fresh output path');await writeFile(recipePath,JSON.stringify({fingerprint,baked:false}));await updateManifest({phase:'baking'});const sourceReport=await bake(directory,frozen,options);await updateManifest({sourceReport});await writeFile(recipePath,JSON.stringify({fingerprint,baked:true}));}
+ if(!baked){if(await exists(frozen))await rm(frozen,{recursive:true});await freeze(frozen,options);if(await sourceDigest(frozen)!==sourceHash)throw Error('Scene source changed while freezing; retry using a fresh output path');await writeFile(recipePath,JSON.stringify({fingerprint,baked:false}));await updateManifest({phase:'baking'});const sourceReport=await bake(directory,frozen,options);await updateManifest({sourceReport});await writeFile(recipePath,JSON.stringify({fingerprint,baked:true}));}
  const pending=[];let completed=0;for(let frame=1;frame<=options.count;frame++){if(reuseFrames&&await validFrame(path.join(directory,'frames',`frame-${String(frame).padStart(6,'0')}.png`),options))completed++;else pending.push(frame);}
  const started=Date.now();await updateManifest({phase:'rendering',frames:completed});
  let manifestWrites=Promise.resolve(),previewWrites=Promise.resolve();
@@ -100,7 +102,7 @@ async function main(){
  for(let frame=1;frame<=options.count;frame++)if(!await validFrame(path.join(directory,'frames',`frame-${String(frame).padStart(6,'0')}.png`),options))throw Error('Incomplete or invalid Cycles frame '+frame);
  await updateManifest({phase:'encoding'});emit('progress',{phase:'encoding',frames:completed,total:options.count,percent:92});const sequence=await finishFrames(directory,options,frozen),temporary=options.out+'.part'+path.extname(options.out);
  let audioPath=options.audio,audioOffset=options.start;
- if(options.command!=='frame'&&!audioPath&&options.parameters.sound?.enabled){
+ if(options.command!=='frame'&&!audioPath&&(options.parameters.sound?.enabled||(options.parameters.music&&options.parameters.sound?.enabled!==false))){
   const audio=await renderProceduralAudio({frozenRoot:frozen,telemetryPath:path.join(directory,'sound-telemetry.json'),destination:path.join(directory,'procedural-sound.wav'),parameters:options.parameters,start:options.start,duration:options.count/options.fps});audioPath=audio.path;audioOffset=0;await updateManifest({audio});
  }else if(audioPath)await updateManifest({audio:{kind:'explicit-source',path:audioPath}});
  if(options.command==='frame')await copyFile(path.join(sequence,'frame-000001.png'),temporary);

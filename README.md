@@ -52,7 +52,7 @@ In the local Studio, Three.js previews 3D and Canvas previews procedural 2D. Aut
 
 The local app renders videos with Three.js as its standard route. Blender Cycles is an optional local path currently supported for PULSE; it is scene-specific and requires a successful local capability check. Other scenes need their own conversion and visual review. Mixed-render jobs combine prepared local image or frame-sequence inputs through an explicit compositing plan in Studio; choosing “mixed” alone does not create those inputs. See [renderer selection](docs/RENDERER_SELECTION.md) and [compositing](docs/COMPOSITING.md).
 
-Framevolve also supports procedural music and movement-driven 2D or 3D sound effects. Read the [sound design guide](docs/SOUND_DESIGN.md).
+Framevolve also supports procedural music, imported tracks, same-scene shot editing and movement-driven 2D or 3D sound effects. Read the [editing and music guide](docs/EDITING_AND_MUSIC.md) and [sound design guide](docs/SOUND_DESIGN.md).
 
 ## For the curious
 

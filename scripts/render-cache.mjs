@@ -27,12 +27,12 @@ export async function sourceFingerprint(root) {
     for (const entry of entries.sort((a,b) => a.name.localeCompare(b.name))) {
       const name = path.join(relative, entry.name);
       if (entry.isDirectory()) {
-        if (!['project/history','project/versions'].includes(name.split(path.sep).join('/'))) await visit(name);
+        if (!['project/history','project/versions','project/references/music'].includes(name.split(path.sep).join('/'))) await visit(name);
       } else await addFile(name);
     }
   }
   for (const folder of ['src','project','public']) await visit(folder);
-  for (const file of ['scripts/cli.mjs','scripts/cli-frame.mjs','scripts/render-cache.mjs','scripts/atomic-output.mjs','index.html','vite.config.js','package.json','package-lock.json']) await addFile(file, true);
+  for (const file of ['scripts/cli.mjs','scripts/cli-frame.mjs','scripts/render-cache.mjs','scripts/atomic-output.mjs','scripts/music-assets.mjs','index.html','vite.config.js','package.json','package-lock.json']) await addFile(file, true);
   return digest.digest('hex');
 }
 

@@ -37,22 +37,24 @@ export function sampleGraph(nodes,time,{width=1920,height=1080,seed=1}={}){
  }
  return objects;
 }
-export function sampleProceduralMotion(nodesAt,{duration=10,rate=60,width=1920,height=1080,seed=1}={}){
- const frames=[],registry=new Map();for(let i=0;i<=Math.ceil(duration*rate);i++){const time=Math.min(duration,i/rate),objects=sampleGraph(nodesAt(time),time,{width,height,seed});for(const [id,o]of Object.entries(objects))if(!registry.has(id))registry.set(id,o);frames.push({time,camera:{position:[0,0,10],quaternion:[0,0,0,1]},objects});}
+export function sampleProceduralMotion(nodesAt,{duration=10,rate=60,width=1920,height=1080,seed=1,sourceTimeAt=time=>time}={}){
+ const frames=[],registry=new Map();for(let i=0;i<=Math.ceil(duration*rate);i++){const time=Math.min(duration,i/rate),sourceTime=sourceTimeAt(time),objects=sampleGraph(nodesAt(sourceTime),sourceTime,{width,height,seed});for(const [id,o]of Object.entries(objects))if(!registry.has(id))registry.set(id,o);frames.push({time,camera:{position:[0,0,10],quaternion:[0,0,0,1]},objects});}
  for(const f of frames)for(const[id,o]of registry)if(!f.objects[id])f.objects[id]={...o,visibility:0,opacity:0};
  return {kind:'procedural',duration,rate,frames,cuts:[]};
 }
 export function planProceduralSound(telemetry,settings){
  const {frames,rate,duration}=telemetry,dt=1/rate,events=[],curves={camera:Array(frames.length).fill(0)},candidates=[];
+ const crossesCut=i=>(telemetry.cuts||[]).some(t=>t>frames[i-1].time&&t<=frames[i].time);
  const dist=(a,b)=>Math.hypot(...a.map((v,i)=>v-b[i]));
  for(const name of Object.keys(frames[0].objects)){
   const samples=frames.map(f=>f.objects[name]),transition=samples[0].transition;
-  const speed=samples.map((o,i)=>{if(!i)return 0;const p=samples[i-1];if(o.visibility<.025&&p.visibility<.025)return 0;const dot=Math.min(1,Math.abs(o.quaternion.reduce((s,v,k)=>s+v*p.quaternion[k],0)));return (dist(o.position,p.position)+2*Math.acos(dot)*.35+dist(o.size,p.size)*8)/dt;});curves[name]=speed;
+  const speed=samples.map((o,i)=>{if(!i||crossesCut(i))return 0;const p=samples[i-1];if(o.visibility<.025&&p.visibility<.025)return 0;const dot=Math.min(1,Math.abs(o.quaternion.reduce((s,v,k)=>s+v*p.quaternion[k],0)));return (dist(o.position,p.position)+2*Math.acos(dot)*.35+dist(o.size,p.size)*8)/dt;});curves[name]=speed;
   if(transition){
    let first=null;for(let i=1;i<speed.length;i++){curves.camera[i]+=speed[i];if(speed[i]>.06&&first===null)first=i-1;if(first!==null&&(speed[i]<=.06||i===speed.length-1)){const last=i,span=(last-first)*dt,peak=Math.max(...speed.slice(first,last+1)),extent=speed.slice(first,last+1).reduce((s,x)=>s+x*dt,0);if(span>.04)events.push({module:'camera',kind:settings.cameraKit,time:first*dt,duration:span,gain:.38*peak/(peak+8),pan:0,pitch:1,source:name,peakSpeed:peak,extent,shape:speed.slice(first,last+1).map(v=>v/peak),shapeRate:rate});first=null;}}
    continue;
   }
   for(let i=1;i<samples.length;i++){
+   if(crossesCut(i))continue;
    const o=samples[i],p=samples[i-1];if(o.visibility<.06)continue;
    if(p.visibility<.14&&o.visibility>=.14&&o.renderKind!=='path')candidates.push({module:'accents',graphic:'pop',kind:settings.accentKit,time:i*dt,duration:.12,gain:.16*o.importance,pan:o.pan,pitch:o.renderKind==='text'?.75:1.3,source:name,score:o.importance});
    if(i>5&&speed[i]<.04&&speed[i-1]>=.04&&Math.max(...speed.slice(i-5,i))>.4)candidates.push({module:'accents',graphic:'settle',kind:settings.accentKit,time:i*dt,duration:.1,gain:.13*o.importance,pan:o.pan,pitch:.9,source:name,score:o.importance*.8});

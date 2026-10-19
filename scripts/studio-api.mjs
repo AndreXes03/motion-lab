@@ -1,4 +1,7 @@
 import {migrateLegacyScene} from '../src/engine/legacy-scene.js';
+import {createMaintenanceLease,isActiveJob,interruptedState,processMayBeAlive,recoveryState} from './job-recovery.mjs';
+import {writeAtomicOutput} from './atomic-output.mjs';
+import {sourceFingerprint as renderSourceFingerprint} from './render-cache.mjs';
 import {createCommercialBrief,validateCommercialBrief} from '../src/engine/commercial-brief.js';
 import {studyControlDefinitions} from '../src/engine/scene-capabilities.js';
 import {resolveControlManifest} from '../src/engine/control-catalog.js';
@@ -18,6 +21,9 @@ import { fileURLToPath } from 'node:url';
 import { readProject, ROOT, validateLook } from './project-store.mjs';
 import { studioProjects } from '../src/engine/project-controls.js';
 import { normalizeSound } from '../src/engine/sound-design.js';
+import {normalizeMusicTrack} from '../src/engine/music-track.js';
+import {editorialDuration,validateEditorialEdit} from '../src/engine/editorial.js';
+import {storeMusicAsset,resolveMusicAsset} from './music-assets.mjs';
 import { config } from '../src/config.js';
 
 const SCRIPT_DIR = path.dirname(fileURLToPath(import.meta.url));
@@ -35,7 +41,7 @@ async function publishDownload(job) {
 }
 const MAX_BODY = 2 * 1024 * 1024;
 const MAX_JSON_DEPTH = 32;
-const ALLOWED_PARAMETERS = new Set(['scene', 'look', 'motion', 'graphics', 'studio', 'display', 'shell', 'knob', 'objectMotion', 'objectEdits', 'review', 'inspect', 'sound', 'animation', 'product', 'sceneControls', 'renderPolicy', 'commercial']);
+const ALLOWED_PARAMETERS = new Set(['scene', 'look', 'motion', 'graphics', 'studio', 'display', 'shell', 'knob', 'objectMotion', 'objectEdits', 'review', 'inspect', 'sound', 'animation', 'product', 'sceneControls', 'renderPolicy', 'commercial', 'music', 'edit']);
 const LOOK_SECTIONS = {
   camera: new Set(['fov','fovScale','distance','keepSubjectSize']),
   lighting: new Set(['preset', 'key', 'fill', 'rim', 'environment', 'keyPosition', 'keyTarget', 'rimPosition', 'keyAngle', 'keyPenumbra', 'keyColor', 'rimColor']),
@@ -45,7 +51,11 @@ const LOOK_SECTIONS = {
 };
 const jobs = new Map();
 let activeRenderId = null;
+const waitingInvocations=new Map(),pendingAdmissions=new Set();
+const MAX_WAITING_JOBS=8;
 let persistedJobsLoaded = false;
+const maintenance=createMaintenanceLease();
+function assertRenderAvailable(){if(maintenance.active())throw apiError(409,'Studio is updating. Retry after the update finishes.');}
 let cyclesProbe,cyclesProbeAt=0;
 async function rendererCapabilities(){
   if(!cyclesProbe||Date.now()-cyclesProbeAt>60000){cyclesProbeAt=Date.now();cyclesProbe=getCyclesCapabilities({root:ROOT});}
@@ -130,6 +140,8 @@ export async function validateStudioParameters(input) {
     }
   }
   if(input.sound !== undefined)normalized.sound=normalizeSound(input.sound);
+  if(input.music !== undefined)normalized.music=normalizeMusicTrack(input.music);
+  if(input.edit !== undefined)normalized.edit=validateEditorialEdit(input.edit,scene);
   if (input.graphics !== undefined) {
     if (!['procedural','pop'].includes(scene) || !isRecord(input.graphics) || Object.keys(input.graphics).some(k => !['title', 'accent', 'density', 'speed', ...(scene==='pop'?['cameraMotion','fisheye']:[])].includes(k))) throw new Error('graphics is only supported for procedural and pop scenes');
     const g = input.graphics;
@@ -229,6 +241,7 @@ async function listVersions() {
 
 async function sourceFingerprint() {
   const hash = createHash('sha256');
+  hash.update(await renderSourceFingerprint(ROOT));
   const addFile = async file => { const info = await stat(file).catch(() => null); if (info?.isFile()) { hash.update(path.relative(ROOT, file)); hash.update(await readFile(file)); } };
   const walk = async dir => {
     const entries = (await readdir(dir, { withFileTypes: true })).sort((a, b) => a.name.localeCompare(b.name));
@@ -239,11 +252,10 @@ async function sourceFingerprint() {
       else if (entry.isFile()) await addFile(file);
     }
   };
-  for (const dir of ['src', 'project']) await walk(path.join(ROOT, dir));
   await walk(path.join(ROOT,'scripts','cycles'));
   await walk(path.join(ROOT,'scripts','mixed'));
   await walk(path.join(ROOT,'scripts','lib'));
-  for (const file of ['index.html', 'package.json', 'package-lock.json', 'vite.config.js', 'scripts/cli.mjs', 'scripts/project-store.mjs','scripts/cycles.mjs','scripts/mixed-studio.mjs']) await addFile(path.join(ROOT, file));
+  for (const file of ['index.html', 'package.json', 'package-lock.json', 'vite.config.js', 'scripts/cli.mjs', 'scripts/cli-frame.mjs','scripts/render-cache.mjs','scripts/atomic-output.mjs','scripts/music-assets.mjs','scripts/job-recovery.mjs','scripts/project-store.mjs','scripts/cycles.mjs','scripts/mixed-studio.mjs']) await addFile(path.join(ROOT, file));
   return hash.digest('hex');
 }
 
@@ -254,12 +266,13 @@ function jobManifest(job) {
     createdAt: job.createdAt, startedAt: job.startedAt,
     finishedAt: job.finishedAt, time: job.time, sourceHash: job.sourceHash,
     sourceHashAfter: job.sourceHashAfter ?? null, error: job.error,
-    parameters: job.parameters, settings: job.settings ?? null, destination: job.destination, engine:job.engine??'threejs', rendererSelection:job.rendererSelection??null
+    parameters: job.parameters, settings: job.settings ?? null, destination: job.destination, engine:job.engine??'threejs', rendererSelection:job.rendererSelection??null,
+    pid:job.pid??null,attempt:job.attempt??1
   };
 }
 
 async function writeJobManifest(job) {
-  await writeFile(job.manifestPath, `${JSON.stringify(jobManifest(job), null, 2)}\n`);
+  await writeAtomicOutput(job.manifestPath, `${JSON.stringify(jobManifest(job), null, 2)}\n`);
 }
 
 async function loadPersistedJobs() {
@@ -272,15 +285,11 @@ async function loadPersistedJobs() {
     const [, id, ext] = match;
     try {
       const record = JSON.parse(await readFile(path.join(RENDER_DIR, entry.name), 'utf8'));
-      if (record.id !== id || !['frame', 'preview', 'export'].includes(record.kind) || !['completed', 'failed', 'running'].includes(record.status)) continue;
+      if (record.id !== id || !['frame', 'preview', 'export'].includes(record.kind) || !['completed', 'failed', 'running','queued','interrupted'].includes(record.status)) continue;
       const outputPath = record.destination === 'downloads' ? downloadPath(id, `.${ext}`) : path.join(RENDER_DIR,...(record.engine==='cycles'?['cycles']:[]), `${id}.${ext}`);
       const output = await stat(outputPath).catch(() => null);
-      let status = record.status;
-      let error = record.error ?? null;
-      if (status === 'running') {
-        status = 'failed';
-        error = 'Viewer stopped before this render finished.';
-      } else if (status === 'completed' && !output?.isFile()) {
+      let {status,error}=interruptedState(record);
+      if (status === 'completed' && !output?.isFile()) {
         status = 'failed';
         error = 'Render file is missing from the output folder.';
       }
@@ -291,7 +300,7 @@ async function loadPersistedJobs() {
         total: Math.max(1, Number(record.total) || (record.kind === 'frame' ? 1 : sceneConfig(record.scene??'objects').duration * (record.settings?.fps ?? config.fps))),
         samples: Math.max(0, Number(record.samples) || (status === 'completed' && record.kind === 'frame' ? (record.settings?.temporalSamples ?? 1) : 0)),
         totalSamples: Math.max(0, Number(record.totalSamples) || (record.kind === 'frame' ? (record.settings?.temporalSamples ?? 1) : 0)),
-        phase: status === 'completed' ? 'completed' : status === 'failed' ? 'failed' : (record.phase || 'rendering'),
+        phase: status === 'interrupted' ? 'interrupted' : status === 'completed' ? 'completed' : 'failed',
         createdAt: record.createdAt, startedAt: record.startedAt,
         finishedAt: record.finishedAt ?? null, time: record.time ?? 0,
         url: status === 'completed' ? `/api/studio/jobs/${id}/file` : null,
@@ -299,6 +308,8 @@ async function loadPersistedJobs() {
         error, extension: `.${ext}`, outputPath, destination: record.destination,
         manifestPath: path.join(RENDER_DIR, entry.name),
         sourceHash: record.sourceHash ?? null, sourceHashAfter: record.sourceHashAfter ?? null,
+        snapshotPath:path.join(RENDER_DIR,`.${id}.snapshot.json`),snapshotAvailable:Boolean(await stat(path.join(RENDER_DIR,`.${id}.snapshot.json`)).catch(()=>null)),
+        pid:Number.isInteger(record.pid)?record.pid:null,attempt:Math.max(1,Number(record.attempt)||1),
         parameters: record.parameters ?? {}, settings: record.settings ?? null, engine:record.engine??'threejs', rendererSelection:record.rendererSelection??null
       };
       if (job.status === 'completed' && job.destination !== 'downloads' && job.purpose !== 'viewport') {
@@ -312,14 +323,46 @@ async function loadPersistedJobs() {
   persistedJobsLoaded = true;
 }
 
-function publicJob(job) {
+function publicJob(job,currentSource) {
   const { sourceHash, sourceHashAfter, pid, logs, snapshotPath, manifestPath, parameters, ...publicFields } = job;
   return {
     ...publicFields,
+    ...recoveryState(job,currentSource),
+    queuePosition:job.status==='queued'?[...waitingInvocations.keys()].indexOf(job.id)+1:0,
     previewUrl: job.previewStage ? `/api/studio/jobs/${job.id}/preview?stage=${job.previewStage}` : job.frames > 0 ? `/api/studio/jobs/${job.id}/preview?frame=${job.previewFrame??job.frames}` : null,
     filename: path.basename(job.outputPath),
     outputPath: job.outputPath
   };
+}
+
+async function refreshRecovery(job){
+  if(!job||!['failed','interrupted'].includes(job.status))return;
+  job.snapshotAvailable=Boolean(job.snapshotPath&&await stat(job.snapshotPath).catch(()=>null));
+  job.recoveryActive=job.status==='interrupted'&&processMayBeAlive(job.pid);
+}
+
+function activeJobs() {
+  for(const job of jobs.values())job.recoveryActive=job.status==='interrupted'&&processMayBeAlive(job.pid);
+  const active=[...jobs.values()].filter(isActiveJob).map(job=>({id:job.id,status:job.status,purpose:job.purpose??'export',recoveryActive:job.recoveryActive}));
+  if(activeRenderId&&!active.some(job=>job.id===activeRenderId))active.push({id:activeRenderId,status:'queued',purpose:'preparing'});
+  for(const id of pendingAdmissions)active.push({id,status:'queued',purpose:'preparing'});
+  return active;
+}
+
+async function drainRenderQueue(){
+  if(activeRenderId||maintenance.active())return;
+  const next=waitingInvocations.entries().next().value;if(!next)return;
+  const [id,{invocation,spawnFn,fingerprintFn=sourceFingerprint}]=next;waitingInvocations.delete(id);
+  const job=jobs.get(id);activeRenderId=id;
+  try{if(job.sourceHash!==await fingerprintFn())throw Error('Project sources changed while queued. Start a new render from the saved recipe.');await launchJob(job,invocation,spawnFn,fingerprintFn);}
+  catch(error){job.status='failed';job.phase='failed';job.error=error.message;job.pid=null;job.finishedAt=new Date().toISOString();await writeJobManifest(job);if(activeRenderId===id)activeRenderId=null;await drainRenderQueue();}
+}
+
+function retryInvocation(job,snapshot) {
+  const settings=snapshot.settings??job.settings??{},parameters=snapshot.parameters,plan=validateRenderPlan(parameters.renderPolicy);
+  if(job.engine==='cycles')return buildCyclesCommand({kind:job.kind,snapshotPath:job.snapshotPath,outputPath:job.outputPath,root:ROOT,settings:{width:settings.width,height:settings.height,fps:settings.fps,cyclesSamples:plan.cycles.samples,device:plan.cycles.device,workers:plan.cycles.workers,denoise:plan.cycles.denoise,motionBlur:settings.temporalSamples>1,shutter:Math.max(0,Math.min(1,(parameters.look?.post?.shutterAngle??180)/360)),composite:'titles',resume:true}});
+  if(job.engine==='mixed')return buildMixedCommand({kind:job.kind,snapshotPath:job.snapshotPath,outputPath:job.outputPath,root:ROOT,audioPath:plan.composite.audioFile??undefined,audioOffset:plan.composite.audioOffset});
+  return {command:process.execPath,args:[CLI,job.kind,'--out',job.outputPath,'--snapshot',job.snapshotPath,...(job.kind==='frame'?[]:['--resume','on'])],cwd:ROOT};
 }
 
 function revealWithFinder(job, spawnFn = nodeSpawn) {
@@ -330,7 +373,7 @@ function revealWithFinder(job, spawnFn = nodeSpawn) {
   });
 }
 
-function launchJob(job, invocation, spawnFn) {
+async function launchJob(job, invocation, spawnFn,fingerprintFn=sourceFingerprint) {
   job.status = 'running'; job.progress = 0; job.phase = 'rendering'; job.startedAt = new Date().toISOString(); activeRenderId = job.id;
   const child = spawnFn(invocation.command, invocation.args, { cwd: invocation.cwd??ROOT, shell: false, windowsHide: true, stdio: ['ignore', 'pipe', 'pipe'] });
   job.pid = child.pid;
@@ -363,7 +406,7 @@ function launchJob(job, invocation, spawnFn) {
   });
   child.stderr.on('data', chunk => { stderr = (stderr + chunk.toString()).slice(-16000); });
   child.on('error', error => {
-    job.status = 'failed'; job.phase = 'failed'; job.error = error.message; job.finishedAt = new Date().toISOString(); job.progress = 0; activeRenderId = null;
+    job.status = 'failed'; job.phase = 'failed'; job.error = error.message; job.finishedAt = new Date().toISOString(); job.progress = 0; job.pid=null;
   });
   child.on('close', async code => {
     if (buffer) consumeLine(buffer);
@@ -371,7 +414,7 @@ function launchJob(job, invocation, spawnFn) {
       if (code !== 0) {
         job.status = 'failed'; job.phase = 'failed'; job.error ||= stderr.trim() || `Render CLI exited with code ${code}`;
       } else {
-        const current = await sourceFingerprint();
+        const current = await fingerprintFn();
         job.sourceHashAfter = current;
         if (current !== job.sourceHash) {
           job.status = 'failed';
@@ -385,21 +428,26 @@ function launchJob(job, invocation, spawnFn) {
       }
     } catch (error) { job.status = 'failed'; job.phase = 'failed'; job.error = error.message; }
     job.finishedAt = new Date().toISOString();
+    job.pid=null;
     job.logs = stdout.slice(-8000);
     try {
       await writeJobManifest(job);
     } catch (error) {
       job.status = 'failed'; job.url = null; job.error = `Could not write render manifest: ${error.message}`;
     }
-    activeRenderId = null;
+    if(activeRenderId===job.id)activeRenderId = null;
+    await drainRenderQueue();
   });
+  // The queued manifest already exists. A PID-journal failure must not release
+  // the serial render slot while this child is still alive.
+  await writeJobManifest(job).catch(error=>{job.persistenceWarning='Could not save running state: '+error.message;});
 }
 
-export function createStudioApi({ spawnFn = nodeSpawn, revealFn = revealWithFinder, capabilitiesFn=rendererCapabilities } = {}) {
+export function createStudioApi({ spawnFn = nodeSpawn, revealFn = revealWithFinder, capabilitiesFn=rendererCapabilities, musicRoot=ROOT,sourceFingerprintFn=sourceFingerprint } = {}) {
   return async function studioApi(req, res, next) {
     const route = new URL(req.url ?? '/', 'http://127.0.0.1').pathname;
     if (!route.startsWith('/studio')) return next();
-    let reservation = null;
+    let reservation = null,preparedJob=null;
     try {
       const host = req.headers.host;
       if (req.headers.origin && (!host || new URL(req.headers.origin).host !== host)) return send(res, 403, { error: 'Same-origin local requests only' });
@@ -408,8 +456,22 @@ export function createStudioApi({ spawnFn = nodeSpawn, revealFn = revealWithFind
       if (req.method === 'GET' && route === '/studio') {
         await loadPersistedJobs();
         const [versions] = await Promise.all([listVersions()]);
-        const currentJobs = [...jobs.values()].filter(job => job.purpose !== 'viewport').sort((a, b) => String(b.createdAt).localeCompare(String(a.createdAt))).map(publicJob);
-        return send(res, 200, { versions, jobs: currentJobs, outputDirectory: DOWNLOAD_DIR });
+        const source=await sourceFingerprintFn();
+        await Promise.all([...jobs.values()].map(refreshRecovery));
+        const active=activeJobs();
+        const currentJobs = [...jobs.values()].filter(job => job.purpose !== 'viewport').sort((a, b) => String(b.createdAt).localeCompare(String(a.createdAt))).map(job=>publicJob(job,source));
+        return send(res, 200, { versions, jobs: currentJobs, activeJobs:active, maintenance:maintenance.active(),outputDirectory: DOWNLOAD_DIR });
+      }
+      if(req.method==='POST'&&route==='/studio/music-assets'){
+        const name=decodeURIComponent(String(req.headers['x-music-name']??'Imported music'));
+        const asset=await storeMusicAsset({root:musicRoot,stream:req,name,mimeType:String(req.headers['content-type']??'').split(';')[0],contentLength:req.headers['content-length']});
+        return send(res,201,{asset});
+      }
+      const musicMatch=route.match(/^\/studio\/music-assets\/([a-f0-9]{64})$/);
+      if(req.method==='GET'&&musicMatch){
+        const asset=await resolveMusicAsset({root:musicRoot,assetId:musicMatch[1]});
+        res.statusCode=200;res.setHeader('Content-Type',asset.mimeType);res.setHeader('Content-Length',asset.bytes);res.setHeader('Cache-Control','private, no-store');
+        createReadStream(asset.path).pipe(res);return;
       }
       if(req.method==='GET'&&route==='/studio/capabilities')return send(res,200,{capabilities:await capabilitiesFn()});
       if (req.method === 'GET' && route.startsWith('/studio/versions/')) {
@@ -472,11 +534,34 @@ export function createStudioApi({ spawnFn = nodeSpawn, revealFn = revealWithFind
         if (!safeId(id)) return send(res, 400, { error: 'Invalid job id' });
         const job = jobs.get(id);
         if (!job) return send(res, 404, { error: 'Job not found' });
-        return send(res, 200, publicJob(job));
+        await refreshRecovery(job);return send(res, 200, publicJob(job,await sourceFingerprintFn()));
       }
       if (req.method !== 'POST') return send(res, 404, { error: 'Unknown studio endpoint' });
 
       const body = await readJson(req);
+      if(route==='/studio/maintenance'){
+        if(!isRecord(body)||Object.keys(body).some(key=>!['action','token'].includes(key))||!['acquire','release'].includes(body.action))throw apiError(400,'Expected maintenance action and token');
+        await loadPersistedJobs();
+        return send(res,200,body.action==='acquire'?maintenance.acquire(body.token,activeJobs().length>0):maintenance.release(body.token));
+      }
+      const retryMatch=route.match(/^\/studio\/jobs\/([a-f0-9-]{36})\/retry$/);
+      if(retryMatch){
+        if(!isRecord(body)||Object.keys(body).length)throw apiError(400,'Retry uses the original saved snapshot; no overrides are accepted.');
+        assertRenderAvailable();await loadPersistedJobs();
+        if(activeRenderId||activeJobs().length)throw apiError(409,'Another local render is already running');
+        const job=jobs.get(retryMatch[1]);if(!job)throw apiError(404,'Job not found');
+        reservation=`pending:${randomUUID()}`;activeRenderId=reservation;
+        await refreshRecovery(job);const source=await sourceFingerprintFn(),state=recoveryState(job,source);
+        if(!state.canRetry)throw apiError(409,state.retryReason??'Only failed or interrupted jobs can be retried.');
+        let snapshot;try{snapshot=JSON.parse(await readFile(job.snapshotPath,'utf8'));}catch{throw apiError(404,'Original saved render snapshot is missing or unreadable');}
+        if(!isRecord(snapshot)||JSON.stringify(snapshot.parameters)!==JSON.stringify(job.parameters)||JSON.stringify(snapshot.settings??null)!==JSON.stringify(job.settings??null))throw apiError(409,'The original saved render snapshot changed; start a new render.');
+        await validateStudioParameters(snapshot.parameters);
+        const invocation=retryInvocation(job,snapshot);
+        preparedJob=job;job.status='queued';job.phase='queued';job.error=null;job.finishedAt=null;job.attempt=(job.attempt??1)+1;job.sourceHashAfter=null;job.destination=undefined;job.recoveryActive=false;
+        await writeJobManifest(job);
+        activeRenderId=null;waitingInvocations.set(job.id,{invocation,spawnFn,fingerprintFn:sourceFingerprintFn});await drainRenderQueue();reservation=null;
+        return send(res,202,{id:job.id,attempt:job.attempt});
+      }
       if (route === '/studio/versions') {
         if (!isRecord(body) || Object.keys(body).some(k => !['name', 'parameters'].includes(k))) return send(res, 400, { error: 'Expected name and parameters' });
         const name = safeName(body.name);
@@ -493,17 +578,24 @@ export function createStudioApi({ spawnFn = nodeSpawn, revealFn = revealWithFind
         if (!isRecord(body) || Object.keys(body).some(k => !['kind', 'time', 'parameters', 'settings', 'purpose'].includes(k))) return send(res, 400, { error: 'Expected kind, time, parameters, and optional settings' });
         if (!['frame', 'preview', 'export'].includes(body.kind)) return send(res, 400, { error: 'kind must be frame, preview, or export' });
         if (body.purpose !== undefined && (body.purpose !== 'viewport' || body.kind !== 'frame')) return send(res, 400, { error: 'Viewport jobs must be single frames' });
-        if (activeRenderId) return send(res, 409, { error: 'Another local render is already running' });
+        assertRenderAvailable();await loadPersistedJobs();
+        const activity=activeJobs();
+        if(activity.some(job=>job.recoveryActive))throw apiError(409,'A previous render process may still be running. Wait before starting another.');
+        if(body.kind==='frame'&&(activeRenderId||waitingInvocations.size||pendingAdmissions.size))return send(res,409,{error:'Another local render is already running'});
+        if(waitingInvocations.size+pendingAdmissions.size>=MAX_WAITING_JOBS)throw apiError(429,'The export queue is full (8 waiting jobs).');
         const time = body.time ?? 0;
-        const selectedConfig=sceneConfig(body.parameters?.scene??'objects');if (typeof time !== 'number' || !Number.isFinite(time) || time < 0 || time > selectedConfig.duration) return send(res, 400, { error: `time must be a number from 0 to ${selectedConfig.duration} seconds` });
+        const selectedConfig={...sceneConfig(body.parameters?.scene??'objects'),duration:editorialDuration(body.parameters??{})};if (typeof time !== 'number' || !Number.isFinite(time) || time < 0 || time > selectedConfig.duration) return send(res, 400, { error: `time must be a number from 0 to ${selectedConfig.duration} seconds` });
         reservation = `pending:${randomUUID()}`;
-        activeRenderId = reservation;
+        pendingAdmissions.add(reservation);
         const parameters = await validateStudioParameters(body.parameters);
+        if(body.kind!=='frame'&&parameters.music)await resolveMusicAsset({root:musicRoot,track:parameters.music});
         const settings = validateRenderSettings(body.kind, body.settings);if(['dot','replay'].includes(parameters.scene))settings.temporalSamples=1;else if(['pulse','camera'].includes(parameters.scene)&&body.settings?.temporalSamples===undefined)settings.temporalSamples=4;
+        if(body.kind!=='frame'&&Math.round(selectedConfig.duration*settings.fps)<1)throw Error('The edited export must contain at least one output frame');
         const plan=validateRenderPlan(parameters.renderPolicy);
         const needsProbe=plan.renderer!=='threejs'&&(plan.renderer!=='auto'||plan.preferredRenderer!=='threejs'||plan.intent==='photoreal');
-        const selection=resolveRenderPlan(plan,{scene:parameters.scene,kind:body.kind,...settings,duration:selectedConfig.duration,capabilities:needsProbe?await capabilitiesFn():{threejs:{available:true}}});
+        const selection=resolveRenderPlan(plan,{parameters,scene:parameters.scene,kind:body.kind,...settings,duration:selectedConfig.duration,capabilities:needsProbe?await capabilitiesFn():{threejs:{available:true}}});
         if(!selection.runnable)throw Error(selection.availability);
+        if(selection.selectedRenderer==='mixed'&&parameters.music)throw Error('Imported music requires Three.js or Cycles. Mixed exports use their prepared soundtrack.');
         if(selection.selectedRenderer==='cycles'){
           if(body.kind!=='frame'&&settings.format!=='mp4')throw Error('Cycles currently exports MP4 video and PNG frames. Select MP4 or Three.js for WebM/ProRes.');
           if(settings.width<64||settings.height<64)throw Error('Cycles frames require at least 64 × 64 pixels.');
@@ -521,24 +613,32 @@ export function createStudioApi({ spawnFn = nodeSpawn, revealFn = revealWithFind
         const fps = settings?.fps ?? config.fps;
         const temporalSamples = settings?.temporalSamples ?? 1;
         const snapshot = { schemaVersion: 2, command: body.kind, config: { ...selectedConfig, width, height, fps }, parameters, width, height, fps, settings, time, start: 0, end: selectedConfig.duration, temporalSamples };
-        const sourceHash = await sourceFingerprint();
+        const sourceHash = await sourceFingerprintFn();
         await writeFile(snapshotPath, `${JSON.stringify(snapshot, null, 2)}\n`, { flag: 'wx' });
         const total = body.kind === 'frame' ? 1 : Math.round(selectedConfig.duration * fps);
         const totalSamples = body.kind === 'frame'&&selection.selectedRenderer==='threejs' ? settings.temporalSamples : 0;
-        const job = { id, kind: body.kind, purpose: body.purpose ?? 'export', scene: parameters.scene, status: 'running', progress: 0, frames: 0, total, samples: 0, totalSamples, phase: 'rendering', createdAt: new Date().toISOString(), time, url: null, downloadUrl: null, error: null, extension, settings, sourceHash, outputPath, snapshotPath, manifestPath: path.join(RENDER_DIR,`${id}${extension}.job.json`), parameters,engine:selection.selectedRenderer,rendererSelection:selection };
+        const job = { id, kind: body.kind, purpose: body.purpose ?? 'export', scene: parameters.scene, status: 'queued', snapshotAvailable:true, attempt:1, progress: 0, frames: 0, total, samples: 0, totalSamples, phase: 'queued', createdAt: new Date().toISOString(), time, url: null, downloadUrl: null, error: null, extension, settings, sourceHash, outputPath, snapshotPath, manifestPath: path.join(RENDER_DIR,`${id}${extension}.job.json`), parameters,engine:selection.selectedRenderer,rendererSelection:selection };
         jobs.set(id, job);
+        preparedJob=job;
         await writeJobManifest(job);
         const args = [body.kind, '--out', outputPath, '--snapshot', snapshotPath];
         if (body.kind === 'frame') args.push('--time', String(time), '--width', String(width), '--height', String(height), '--fps', String(fps), '--temporal-samples', String(temporalSamples));
-        else args.push('--temporal-samples', String(snapshot.temporalSamples), '--fps', String(fps), '--format', settings.format, ...(settings.bitrateMbps === null ? [] : ['--bitrate-mbps', String(settings.bitrateMbps)]));
+        else args.push('--resume','on','--temporal-samples', String(snapshot.temporalSamples), '--fps', String(fps), '--format', settings.format, ...(settings.bitrateMbps === null ? [] : ['--bitrate-mbps', String(settings.bitrateMbps)]));
         const invocation=selection.selectedRenderer==='mixed'?buildMixedCommand({kind:body.kind,snapshotPath,outputPath,root:ROOT,audioPath:plan.composite.audioFile??undefined,audioOffset:plan.composite.audioOffset}):selection.selectedRenderer==='cycles'?buildCyclesCommand({kind:body.kind,snapshotPath,outputPath,root:ROOT,settings:{width,height,fps,progressive:body.purpose==='viewport',cyclesSamples:plan.cycles.samples,device:plan.cycles.device,workers:plan.cycles.workers,denoise:plan.cycles.denoise,motionBlur:temporalSamples>1,shutter:Math.max(0,Math.min(1,(parameters.look?.post?.shutterAngle??180)/360)),composite:'titles'}}):{command:process.execPath,args:[CLI,...args],cwd:ROOT};
-        launchJob(job, invocation, spawnFn);
+        waitingInvocations.set(job.id,{invocation,spawnFn,fingerprintFn:sourceFingerprintFn});
+        pendingAdmissions.delete(reservation);
+        await drainRenderQueue();
         reservation = null;
-        return send(res, 202, { id });
+        return send(res, 202, { id,status:job.status,queuePosition:job.status==='queued'?[...waitingInvocations.keys()].indexOf(id)+1:0 });
       }
       return send(res, 404, { error: 'Unknown studio endpoint' });
     } catch (error) {
       if (reservation && activeRenderId === reservation) activeRenderId = null;
+      if(reservation)pendingAdmissions.delete(reservation);
+      if(preparedJob?.status==='queued'&&!waitingInvocations.has(preparedJob.id)&&activeRenderId!==preparedJob.id){
+        preparedJob.status='failed';preparedJob.phase='failed';preparedJob.error=error.message;preparedJob.finishedAt=new Date().toISOString();
+        await writeJobManifest(preparedJob).catch(()=>{});
+      }
       return send(res, error.status ?? 400, { error: error.message || 'Studio API error' });
     }
   };

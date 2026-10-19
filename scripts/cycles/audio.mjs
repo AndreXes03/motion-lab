@@ -1,6 +1,7 @@
 import {readFile,writeFile} from 'node:fs/promises';
 import path from 'node:path';
 import {pathToFileURL} from 'node:url';
+import {renderSoundtrack,sliceSoundtrack} from '../music-assets.mjs';
 /** Use exactly the source snapshot's runtime telemetry; prevent its initial raster preview. */
 export async function sampleRuntimeSound(page,parameters){
  return page.evaluate(async parameters=>{
@@ -10,7 +11,8 @@ export async function sampleRuntimeSound(page,parameters){
  },parameters);
 }
 export async function renderProceduralAudio({frozenRoot,telemetryPath,destination,parameters,start=0,duration}){
- const {planSound,renderSound,encodeWav}=await import(pathToFileURL(path.join(frozenRoot,'src/engine/sound-design.js')).href);
- const telemetry=JSON.parse(await readFile(telemetryPath,'utf8'));const plan=planSound(telemetry,parameters.sound),result=renderSound(plan);const end=duration===undefined?result.channels[0].length:Math.round((start+duration)*result.sampleRate),channels=result.channels.map(c=>c.slice(Math.round(start*result.sampleRate),end));await writeFile(destination,encodeWav(channels,result.sampleRate));
- return {path:destination,kind:'procedural',sampleRate:result.sampleRate,channels:result.channels.length,duration:channels[0].length/result.sampleRate,sourceStart:start,events:plan.events.length,telemetrySource:'runtime.sampleMotion',settings:plan.settings};
+ const engine=await import(pathToFileURL(path.join(frozenRoot,'src/engine/sound-design.js')).href);
+ const {encodeWav}=engine;
+ const telemetry=JSON.parse(await readFile(telemetryPath,'utf8'));const result=await renderSoundtrack({root:frozenRoot,telemetry,parameters,engine}),plan=result.plan;const channels=sliceSoundtrack(result,{start,duration:duration??result.channels[0].length/result.sampleRate-start});await writeFile(destination,encodeWav(channels,result.sampleRate));
+ return {path:destination,kind:parameters.music?'imported-music-and-effects':'procedural',sampleRate:result.sampleRate,channels:result.channels.length,duration:channels[0].length/result.sampleRate,sourceStart:start,events:plan.events.length,telemetrySource:'runtime.sampleMotion',settings:plan.settings};
 }
