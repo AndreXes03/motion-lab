@@ -2,7 +2,7 @@ import {icon} from './studio-icons.js';
 import {sceneConfig} from '../scene-registry.js';
 import {getAuthoredAnimationProtocol} from '../engine/authored-animation.js';
 import {resolveControlManifest} from '../engine/control-catalog.js';
-const sceneSources={starter:'product-starter.js',dot:'mascot-demo.js',pulse:'pulse-demo.js',camera:'afterhours-demo.js',replay:'replay-demo.js',objects:'objects.js',pop:'pop-demo.js',procedural:'procedural-demo.js'};
+const sceneSources={launch:'launch-demo.js',starter:'product-starter.js',dot:'mascot-demo.js',pulse:'pulse-demo.js',camera:'afterhours-demo.js',replay:'replay-demo.js',objects:'objects.js',pop:'pop-demo.js',procedural:'procedural-demo.js'};
 /** A focused view of the live recipe. Native values appear once, in their actual write shape. */
 export function buildAnimationHandoff(scene,parameters,config=sceneConfig(scene)){
   const protocol=getAuthoredAnimationProtocol(scene,{motion:parameters.motion,animation:parameters.animation});
@@ -36,6 +36,8 @@ const objects=[['device.root','Radio','Material · display'],['objects.kinetic',
 export function mountInspector({runtime,getScene,getState,getParameters,getTime,getPreviewOptions,pause,draw,restore,onEdit,onSeek,onWorkspaceChange=()=>{},onSelectionChange=()=>{}}){
   let selection='composition',tab='look',reference=structuredClone(getState()),comparing=false,previous=structuredClone(getState()),history=[],future=[],pending=null,replaying=false,sourceRequest=0;
   const image=$('comparison-image'),canvas=$('renderCanvas');
+  let referenceRuntime,referenceCanvas,preparedReference,comparisonRequest=0;
+  function clearReferenceRuntime(){comparisonRequest++;referenceRuntime?.dispose();referenceRuntime=null;referenceCanvas=null;preparedReference=null;}
   if(!$('code-view').querySelector('option[value="animation"]'))$('code-view').add(new Option('Animation handoff','animation'));
   const names={composition:'Composition',camera:'Camera',lighting:'Lights',...Object.fromEntries(objects.map(o=>[o[0],o[1]]))};
   const versions=document.querySelector('.versions');$('inspector-versions').append(versions);versions.open=true;
@@ -102,13 +104,25 @@ export function mountInspector({runtime,getScene,getState,getParameters,getTime,
   }
   $('mobile-selection').onchange=()=>select($('mobile-selection').value);
   canvas.addEventListener('click',e=>{if(getScene()!=='objects'||comparing)return;pause();const r=canvas.getBoundingClientRect(),ratio=16/9;const w=Math.min(r.width,r.height*ratio),h=w/ratio,x=(e.clientX-r.left-(r.width-w)/2)/w,y=(e.clientY-r.top-(r.height-h)/2)/h;if(x<0||x>1||y<0||y>1)return;const id=runtime.pickObject(x,y);if(id)select(id);});
-  $('pin-reference').onclick=()=>{pause();reference=structuredClone(getState());$('edit-status').textContent='Reference updated';$('pin-reference').textContent='Reference pinned';draw();};
-  function stopCompare(){comparing=false;$('compare-toggle').setAttribute('aria-pressed','false');for(const id of ['comparison-layer','comparison-current','comparison-divider','comparison-line'])$(id).hidden=true;}
-  $('compare-toggle').onclick=()=>{pause();comparing=!comparing;if(comparing){$('compare-toggle').setAttribute('aria-pressed','true');for(const id of ['comparison-layer','comparison-current','comparison-divider','comparison-line'])$(id).hidden=false;draw();}else{stopCompare();draw();}};
+  $('pin-reference').onclick=()=>{pause();stopCompare();clearReferenceRuntime();reference=structuredClone(getState());$('edit-status').textContent='Reference updated';$('pin-reference').textContent='Reference pinned';draw();};
+  function stopCompare(){comparisonRequest++;comparing=false;$('compare-toggle').setAttribute('aria-pressed','false');for(const id of ['comparison-layer','comparison-current','comparison-divider','comparison-line'])$(id).hidden=true;}
+  $('compare-toggle').onclick=async()=>{
+    pause();if(comparing){comparisonRequest++;stopCompare();draw();return;}
+    const request=++comparisonRequest,source=reference;
+    if(source.parameters.scene==='launch'&&preparedReference!==source){
+      referenceRuntime?.dispose();referenceCanvas=document.createElement('canvas');
+      const {createRuntime}=await import('../engine/runtime.js');if(request!==comparisonRequest)return;
+      const pending=createRuntime(referenceCanvas,{initialScene:'launch'});referenceRuntime=pending;
+      try{await pending.ready;await pending.prepare(source.parameters);}
+      catch(error){if(request===comparisonRequest){$('edit-status').textContent='Reference: '+error.message;clearReferenceRuntime();}return;}
+      if(request!==comparisonRequest)return;preparedReference=source;
+    }
+    if(request!==comparisonRequest)return;comparing=true;$('compare-toggle').setAttribute('aria-pressed','true');for(const id of ['comparison-layer','comparison-current','comparison-divider','comparison-line'])$(id).hidden=false;draw();
+  };
   function updateSplit(){const value=$('comparison-divider').value;$('comparison-layer').style.clipPath=`inset(0 ${100-value}% 0 0)`;$('comparison-line').style.left=value+'%';}
   $('comparison-divider').oninput=updateSplit;updateSplit();
-  function renderComparison(time){if(!comparing)return;runtime.render(time,{...(getPreviewOptions?.()??{width:960,height:540}),parameters:reference.parameters});image.src=canvas.toDataURL('image/png');runtime.render(time,{...(getPreviewOptions?.()??{width:960,height:540}),parameters:getParameters()});}
-  function resetScene(){stopCompare();history=[];future=[];selection='composition';pending=null;queueMicrotask(()=>{reference=structuredClone(getState());previous=structuredClone(getState());$('edit-status').textContent='Original';record();});}
+  function renderComparison(time){if(!comparing)return;const options=getPreviewOptions?.()??{width:960,height:540};if(reference.parameters.scene==='launch'){if(preparedReference!==reference)return;referenceRuntime.render(time,{...options,parameters:reference.parameters});image.src=referenceCanvas.toDataURL('image/png');return;}runtime.render(time,{...options,parameters:reference.parameters});image.src=canvas.toDataURL('image/png');runtime.render(time,{...options,parameters:getParameters()});}
+  function resetScene(){stopCompare();clearReferenceRuntime();history=[];future=[];selection='composition';pending=null;queueMicrotask(()=>{reference=structuredClone(getState());previous=structuredClone(getState());$('edit-status').textContent='Original';record();});}
   async function updateCode(){
     const request=++sourceRequest,view=$('code-view').value;
     $('code-status').textContent='';
@@ -125,7 +139,7 @@ export function mountInspector({runtime,getScene,getState,getParameters,getTime,
     }
     $('code-description').textContent='Scene source · read only';
     try{
-      const module=await (getScene()==='starter'?import('../scenes/product-starter.js?raw'):getScene()==='dot'?import('../scenes/mascot-demo.js?raw'):getScene()==='pulse'?import('../scenes/pulse-demo.js?raw'):getScene()==='camera'?import('../scenes/afterhours-demo.js?raw'):getScene()==='replay'?import('../scenes/replay-demo.js?raw'):getScene()==='objects'?import('../scenes/objects.js?raw'):getScene()==='pop'?import('../scenes/pop-demo.js?raw'):import('../scenes/procedural-demo.js?raw'));
+      const module=await (getScene()==='launch'?import('../scenes/launch-demo.js?raw'):getScene()==='starter'?import('../scenes/product-starter.js?raw'):getScene()==='dot'?import('../scenes/mascot-demo.js?raw'):getScene()==='pulse'?import('../scenes/pulse-demo.js?raw'):getScene()==='camera'?import('../scenes/afterhours-demo.js?raw'):getScene()==='replay'?import('../scenes/replay-demo.js?raw'):getScene()==='objects'?import('../scenes/objects.js?raw'):getScene()==='pop'?import('../scenes/pop-demo.js?raw'):import('../scenes/procedural-demo.js?raw'));
       if(request===sourceRequest)$('code-content').textContent=module.default;
     }catch(error){if(request===sourceRequest){$('code-content').textContent='';$('code-status').textContent=error.message;}}
   }

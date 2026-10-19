@@ -741,6 +741,83 @@
         }
       ],
       "rationale": "Expose every planned editorial control: card spacing/tilt/scale/depth, composition scale and poster spacing, reveal pace, orbit scale/speed, final camera push, connecting threads and grade. The same planned controls are available in Easy and Pro; neutral values preserve the editorial film. Pair the perspective lens with real camera distance and subject-size compensation."
+    },
+    "launch": {
+      "controls": [
+        "typeScale",
+        "screenshotScale",
+        "screenshotPanX",
+        "screenshotPanY",
+        "revealSpeed",
+        "motionStrength",
+        "framingZoom",
+        "framingX",
+        "framingY",
+        "cameraMotion",
+        "backgroundGlow",
+        "cardShadow",
+        "detailOpacity",
+        "colorContrast",
+        "colorSaturation"
+      ],
+      "panels": [
+        {
+          "id": "graphics",
+          "title": "Graphics",
+          "category": "graphics",
+          "controls": [
+            "typeScale",
+            "screenshotScale",
+            "screenshotPanX",
+            "screenshotPanY"
+          ],
+          "advanced": false
+        },
+        {
+          "id": "motion",
+          "title": "Motion",
+          "category": "motion",
+          "controls": [
+            "revealSpeed",
+            "motionStrength",
+            "cameraMotion"
+          ],
+          "advanced": false
+        },
+        {
+          "id": "lens",
+          "title": "Lens",
+          "category": "lens",
+          "controls": [
+            "framingZoom",
+            "framingX",
+            "framingY"
+          ],
+          "advanced": false
+        },
+        {
+          "id": "appearance",
+          "title": "Appearance",
+          "category": "appearance",
+          "controls": [
+            "backgroundGlow",
+            "cardShadow"
+          ],
+          "advanced": false
+        },
+        {
+          "id": "compositing",
+          "title": "Compositing",
+          "category": "compositing",
+          "controls": [
+            "detailOpacity",
+            "colorContrast",
+            "colorSaturation"
+          ],
+          "advanced": false
+        }
+      ],
+      "rationale": "All 15 implemented LAUNCH controls are exposed in Easy and Pro: graphic layout, independent motion, real 2D framing, appearance and finishing. Logo, palette and copy are edited in the commercial brief. A pure 2D scene has no perspective lens or fictitious lighting."
     }
   }
 }

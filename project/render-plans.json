@@ -8,7 +8,20 @@
       "preferredRenderer": "cycles",
       "rationale": "PULSE has a validated Cycles adapter for physical materials and lighting. Three.js keeps the interactive preview fast; final Cycles surfaces and lens effects can differ.",
       "quality": "balanced",
-      "cycles": { "samples": 96, "denoise": true, "device": "auto", "workers": "auto" }
+      "cycles": {
+        "samples": 96,
+        "denoise": true,
+        "device": "auto",
+        "workers": "auto"
+      }
+    },
+    "launch": {
+      "renderer": "threejs",
+      "source": "agent",
+      "intent": "motion-graphics",
+      "preferredRenderer": "threejs",
+      "rationale": "LAUNCH uses the deterministic Canvas adapter in the standard Three.js/Canvas pipeline. Text and embedded screenshots stay editable; no Cycles conversion is implemented for this 2D scene.",
+      "quality": "balanced"
     }
   }
 }
