@@ -139,7 +139,7 @@ export function createComposite(renderer, scene, camera, config) {
   const dofPass=new BokehPass(scene,camera,{focus:8,aperture:.001,maxblur:.012});
   dofPass.enabled=false;dofPass.materialBokeh.toneMapped=false;
   composer.addPass(dofPass);
-  const focusRay=new Raycaster(),focusPoint=new Vector3();let dofSettings={};
+  const focusRay=new Raycaster(),focusPoint=new Vector3(),focusCenter=new Vector2();let dofSettings={},reviewMode;
   composer.addPass(bloomPass);
   composer.addPass(outputPass);
   composer.addPass(finishPass);
@@ -150,27 +150,36 @@ export function createComposite(renderer, scene, camera, config) {
   aaPass.uniforms.resolution.value.set(1 / width, 1 / height);
   composer.addPass(aaPass);
 
+  function updateEnabledPasses(){
+    const clean=reviewMode&&reviewMode!=='beauty';
+    bloomPass.enabled=!clean&&dofSettings.bloomEnabled!==false;
+    aoPass.enabled=!clean&&aoPass.blendIntensity>0;
+    dofPass.enabled=!clean&&dofSettings.dofEnabled===true;
+    finishPass.enabled=!clean;highlights.enabled=!clean;
+  }
+
   let disposed=false;
   return {
-    dispose(){if(disposed)return;disposed=true;for(const pass of composer.passes)pass.dispose?.();noiseTex.dispose();composer.dispose();},
+    dispose(){if(disposed)return;disposed=true;for(const pass of composer.passes)pass.dispose?.();composer.dispose();},
     applyLook(next) {
-      dofSettings=next;dofPass.enabled=next.dofEnabled===true;
+      dofSettings=next;
       dofPass.uniforms.aperture.value=(next.dofStrength??.35)*.006;
       dofPass.uniforms.maxblur.value=(next.dofMaxBlur??12)/1080;
       aaPass.enabled=next.antialias!==false;
       bloomPass.strength=next.bloomStrength;bloomPass.threshold=next.bloomThreshold;bloomPass.radius=next.bloomRadius;
-      aoPass.blendIntensity=next.aoIntensity??.4;aoPass.enabled=aoPass.blendIntensity>0;
+      aoPass.blendIntensity=next.aoIntensity??.4;
       for(const key of ['aberrationPx','vignette','lensDistortion','fisheye','edgeSoftness'])finishPass.uniforms[key].value=next[key]??LOOK[key];
+      updateEnabledPasses();
     },
     setReview(mode) {
-      const clean=mode&&mode!=='beauty';bloomPass.enabled=!clean&&dofSettings.bloomEnabled!==false;finishPass.enabled=!clean;highlights.enabled=!clean;if(clean){aoPass.enabled=false;dofPass.enabled=false;}
+      reviewMode=mode;updateEnabledPasses();
     },
     render() {
       if(dofPass.enabled){
         scene.updateMatrixWorld(true);camera.updateMatrixWorld(true);
         let focus=dofSettings.dofFocus??8;
         if(dofSettings.dofAuto!==false){
-          focusRay.setFromCamera(new Vector2(0,0),camera);
+          focusRay.setFromCamera(focusCenter,camera);
           const hit=focusRay.intersectObjects(scene.children,true).find(hit=>{
             for(let o=hit.object;o;o=o.parent)if(!o.visible)return false;
             const m=Array.isArray(hit.object.material)?hit.object.material[hit.face?.materialIndex??0]:hit.object.material;

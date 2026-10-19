@@ -33,11 +33,12 @@ export function normalizeCyclesOptions(input={}, snapshot={}) {
   if (command!=='frame'&&(width%2||height%2)) throw Error('MP4 dimensions must be even');
   const fps=numeric(input.fps??saved.fps??snapshot.fps,'fps',30,1,120,true);
   const sceneDuration=13.9, start=numeric(input.start??snapshot.start,'start',0,0,sceneDuration);
-  const duration=numeric(input.duration??(input.end!==undefined?Number(input.end)-start:undefined)??(snapshot.end!==undefined?snapshot.end-start:undefined),'duration',sceneDuration-start,1/fps,sceneDuration-start);
+  const duration=numeric(input.duration??(input.end!==undefined?Number(input.end)-start:undefined)??(snapshot.end!==undefined?snapshot.end-start:undefined),'duration',sceneDuration-start,command==='frame'?0:1/fps,sceneDuration-start);
   const time=numeric(input.time??snapshot.time,'time',0,0,sceneDuration);
   const device=input.device??saved.device??'auto';
-  if(!['auto','metal','gpu','cpu'].includes(device))throw Error('device must be auto, metal or cpu');
-  const workers=numeric(input.workers==='auto'?1:input.workers??saved.workers,'workers',1,1,2,true);
+  if(!['auto','metal','gpu','cpu'].includes(device))throw Error('device must be auto, gpu, metal or cpu');
+  const requestedWorkers=input.workers??saved.workers;
+  const workers=numeric(requestedWorkers==='auto'?1:requestedWorkers,'workers',1,1,2,true);
   const composite=input.composite??saved.composite??'none';if(!['none','titles'].includes(composite))throw Error('composite must be none or titles');
   const finish=input.finish??saved.finish??'display';if(!['raw','display'].includes(finish))throw Error('finish must be raw or display');
   const background=input.background??saved.background??'scene';if(!['scene','transparent'].includes(background))throw Error('background must be scene or transparent');
@@ -46,7 +47,7 @@ export function normalizeCyclesOptions(input={}, snapshot={}) {
   const progressive=bool(input.progressive,'progressive',false);if(progressive&&command!=='frame')throw Error('Progressive rendering is for viewport frames only');
   const out=input.out?path.resolve(input.out):null;
   if(out&&path.extname(out).toLowerCase()!==(command==='frame'?'.png':sequenceOnly?'.json':'.mp4'))throw Error('Output extension must match frame (.png) or video (.mp4)');
-  return {version:1,command,scene,parameters,width,height,fps,start,duration,time,count:command==='frame'?1:Math.ceil(duration*fps-1e-8),samples:numeric(input.samples??saved.cyclesSamples??saved.samples,'samples',96,1,4096,true),bounces:numeric(input.bounces??saved.bounces,'bounces',8,1,32,true),device:device==='gpu'?'metal':device,workers,motionBlur:bool(input['motion-blur']??saved.motionBlur,'motion blur',true),shutter:numeric(input.shutter??saved.shutter,'shutter',.5,0,1),background,finish,sequenceOnly,progressive,denoise:bool(input.denoise??saved.denoise,'denoise',true),resume:bool(input.resume,'resume',false),composite,audio:input.audio?path.resolve(input.audio):null,out};
+  return {version:1,command,scene,parameters,width,height,fps,start,duration,time,count:command==='frame'?1:Math.ceil(duration*fps-1e-8),samples:numeric(input.samples??saved.cyclesSamples??saved.samples,'samples',96,1,4096,true),bounces:numeric(input.bounces??saved.bounces,'bounces',8,1,32,true),device,workers,motionBlur:bool(input['motion-blur']??saved.motionBlur,'motion blur',true),shutter:numeric(input.shutter??saved.shutter,'shutter',.5,0,1),background,finish,sequenceOnly,progressive,denoise:bool(input.denoise??saved.denoise,'denoise',true),resume:bool(input.resume,'resume',false),composite,audio:(input.audio??saved.audio)?path.resolve(input.audio??saved.audio):null,out};
 }
 export function parseCyclesArgs(args) {
   const input={command:args[0]};

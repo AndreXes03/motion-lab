@@ -1,6 +1,8 @@
 #!/usr/bin/env node
 import {applyRenderQuality} from '../src/engine/render-quality.js';
 import {openFrameCache,sourceFingerprint} from './render-cache.mjs';
+import {withAtomicOutput,writeAtomicOutput} from './atomic-output.mjs';
+import {renderCliFrame} from './cli-frame.mjs';
 import {sceneConfig,sceneIds} from '../src/scene-registry.js';
 import { createServer } from 'vite';
 import {planSound,renderSound,encodeWav,normalizeSound} from '../src/engine/sound-design.js';
@@ -11,7 +13,7 @@ import sharp from 'sharp';
 import ffprobe from 'ffprobe-static';
 import { spawn } from 'node:child_process';
 import { createHash } from 'node:crypto';
-import { mkdir, writeFile, readFile, rename } from 'node:fs/promises';
+import { mkdir, writeFile, readFile } from 'node:fs/promises';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
@@ -56,7 +58,8 @@ async function startVite(port = 0) {
   // Isolated renders may share node_modules, but must not invalidate each
   // other's optimized dependencies while their browser is loading.
   const server = await createServer({ root: ROOT, cacheDir: path.join(ROOT, '.motion-cache', 'vite'), server: { host: '127.0.0.1', port, strictPort: port !== 0, hmr: port !== 0, watch: port === 0 ? null : {} }, logLevel: 'error' });
-  await server.listen();
+  try { await server.listen(); }
+  catch (error) { await server.close(); throw error; }
   const address = server.httpServer.address();
   return { server, url: `http://127.0.0.1:${address.port}/` };
 }
@@ -73,61 +76,34 @@ async function openMotion(browser, url, width, height) {
   return page;
 }
 async function renderPng(page, time, width, height, parameters = {}, temporalSamples = 1, fps = DEFAULT.fps, reportSamples = false) {
-  const dataUrl = await page.evaluate(async ({ time, width, height, parameters, temporalSamples, fps, duration, reportSamples }) => {
-    const canvas = document.querySelector('#renderCanvas');
-    if (!canvas) throw new Error('#renderCanvas disappeared');
-    const shutterAngle=window.motion.shutterAngleAt?.(time,parameters)??parameters.look?.post?.shutterAngle??210;
-    const sampleCount=temporalSamples===1?1:Math.min(64,Math.max(1,Math.round(window.motion.temporalSamplesAt?.(time,temporalSamples,parameters)??temporalSamples)));
-    if (sampleCount === 1 || shutterAngle === 0) {
-      await window.motion.render(time, { width, height, parameters:{...parameters,renderSample:{fps}} });
-    } else {
-      const ctx = canvas.getContext('2d');
-      const accumulated = new Float32Array(width * height * 4);
-      const linear=new Float32Array(256);for(let i=0;i<256;i++){const s=i/255;linear[i]=s<=.04045?s/12.92:Math.pow((s+.055)/1.055,2.4);}
-      const {shutterSamples}=await import('/src/engine/temporal.js');
-      const schedule=shutterSamples(time,{fps,duration,samples:sampleCount,shutterAngle,cuts:window.motion.cutTimes?.(parameters)??parameters.motion?.cuts??[],profile:parameters.look?.post?.shutterProfile??'cosine'});
-      for (let i = 0; i < schedule.length; i++) {
-        const sample = schedule[i];
-        await window.motion.render(sample.time, { width, height, parameters:{...parameters,renderSample:{frameTime:time,grain:false,fps}} });
-        const pixels = ctx.getImageData(0, 0, width, height).data;
-        for (let p = 0; p < accumulated.length; p++) accumulated[p] += (p%4===3?pixels[p]/255:linear[pixels[p]]) * sample.weight;
-        if (reportSamples) await window.__motionLabProgress({ phase: 'sampling', sample: i + 1, totalSamples: schedule.length, frames: 0, total: 1, percent: Math.floor((i + 1) / schedule.length * 80) });
-      }
-      const averaged = ctx.createImageData(width, height);
-      for (let p = 0; p < accumulated.length; p++){const l=accumulated[p];averaged.data[p]=255*(p%4===3?l:l<=.0031308?12.92*l:1.055*Math.pow(l,1/2.4)-.055);}
-      ctx.putImageData(averaged, 0, 0);
-      if(typeof window.motion.finishFrame!=='function')throw new Error('Multisample render requires motion.finishFrame for grain after integration');
-      await window.motion.finishFrame(ctx,time,width,height,{...parameters,renderSample:{fps}});
-    }
-    return canvas.toDataURL('image/png');
-  }, { time, width, height, parameters, temporalSamples, fps, duration: DEFAULT.duration, reportSamples });
+  const dataUrl = await page.evaluate(renderCliFrame, { time, width, height, parameters, temporalSamples, fps, duration: DEFAULT.duration, reportSamples });
   return Buffer.from(dataUrl.slice(dataUrl.indexOf(',') + 1), 'base64');
 }
 function outPath(value) { if (!value) throw new Error('This command requires --out <path>'); return path.resolve(process.cwd(), value); }
-async function writeImage(png, target) { await mkdir(path.dirname(target), { recursive: true }); await writeFile(target, png); }
-async function encodeFrames(frameDir, target, width, height, fps, format, bitrateMbps, audioPath=null) {
+async function writeImage(png, target) { await writeAtomicOutput(target, png); }
+async function encodeFrames(frameDir, target, width, height, fps, format, bitrateMbps, total, audioPath=null) {
   await mkdir(path.dirname(target), { recursive: true });
   const codec=format==='webm'?['-c:v','libvpx-vp9','-b:v',`${bitrateMbps}M`,'-pix_fmt','yuv420p']:format==='prores'?['-c:v','prores_ks','-profile:v','3','-pix_fmt','yuv422p10le','-movflags','+write_colr']:['-c:v','libx264','-preset','medium','-b:v',`${bitrateMbps}M`,'-pix_fmt','yuv420p','-movflags','+faststart'];
-  const args = ['-hide_banner','-loglevel','error','-y','-framerate',String(fps),'-i',path.join(frameDir,'frame-%06d.png'),...(audioPath?['-i',audioPath,'-map','0:v:0','-map','1:a:0','-c:a',format==='webm'?'libopus':format==='prores'?'pcm_s16le':'aac','-shortest']:[]),...codec,'-vf','scale=out_color_matrix=bt709:out_range=tv','-color_primaries','bt709','-color_trc','bt709','-colorspace','bt709','-color_range','tv','-f',format==='prores'?'mov':format,target];
-  await run(ffmpegPath, args);
+  await withAtomicOutput(target, async staged => {
+    const args = ['-hide_banner','-loglevel','error','-y','-framerate',String(fps),'-i',path.join(frameDir,'frame-%06d.png'),...(audioPath?['-i',audioPath,'-map','0:v:0','-map','1:a:0','-c:a',format==='webm'?'libopus':format==='prores'?'pcm_s16le':'aac','-shortest']:[]),...codec,'-frames:v',String(total),'-vf','scale=out_color_matrix=bt709:out_range=tv','-color_primaries','bt709','-color_trc','bt709','-colorspace','bt709','-color_range','tv','-f',format==='prores'?'mov':format,staged];
+    await run(ffmpegPath, args);
+  });
 }
 async function writeProgressJpeg(page, png, target) {
   const jpeg = await sharp(png).resize({width:1280,height:1280,fit:'inside',withoutEnlargement:true}).jpeg({quality:76}).toBuffer();
-  const temporary = `${target}.tmp-${process.pid}`;
-  await writeFile(temporary, jpeg);
-  await rename(temporary, target);
+  await writeAtomicOutput(target, jpeg);
 }
 function run(bin, args) {
   return new Promise((resolve, reject) => {
     const child = spawn(bin, args, { stdio: ['ignore', 'ignore', 'pipe'] }); let err = '';
-    child.stderr.on('data', d => { err += d.toString(); });
+    child.stderr.on('data', d => { err = (err + d.toString()).slice(-65536); });
     child.on('error', reject);
     child.on('close', code => code === 0 ? resolve() : reject(new Error(`${path.basename(bin)} exited ${code}: ${err.trim()}`)));
   });
 }
 async function exportVideo(page, target, width, height, parameters, start, end, temporalSamples, fps, format, bitrateMbps, cacheOptions) {
   const cache = await openFrameCache(ROOT, {source:cacheOptions.resume?await sourceFingerprint(ROOT):null,
-    width,height,parameters,start,end,temporalSamples,fps,browser:page.context().browser().version()},cacheOptions);
+    width,height,parameters,start,end,temporalSamples,fps,duration:DEFAULT.duration,browser:page.context().browser().version(),platform:process.platform,architecture:process.arch,node:process.version},cacheOptions);
   const frameDir = cache.directory;
   const total = Math.round((end - start) * fps);
   const previewPath = `${target}.progress.jpg`;
@@ -153,17 +129,21 @@ async function exportVideo(page, target, width, height, parameters, start, end, 
       const channels=result.channels.map(c=>c.slice(Math.round(start*result.sampleRate),Math.round(end*result.sampleRate)));
       audioPath=path.join(frameDir,'sound.wav');await writeFile(audioPath,encodeWav(channels,result.sampleRate));
     }
-    await encodeFrames(frameDir, target, width, height, fps, format, bitrateMbps,audioPath);
+    await encodeFrames(frameDir, target, width, height, fps, format, bitrateMbps,total,audioPath);
     success = true;
   } finally { await cache.close(success); }
 }
 async function contactSheet(page, target, samples, width, height, parameters, fps) {
-  const cellW = Math.min(640, width); const cellH = Math.round(cellW * height / width);
+  const cellScale = Math.min(1,640/width,640/height);
+  const cellW = Math.max(1,Math.round(width*cellScale)), cellH = Math.max(1,Math.round(height*cellScale));
   const cols = Math.min(3, samples); const rows = Math.ceil(samples / cols);
   const shots = [];
   for (let i = 0; i < samples; i++) {
     const time = DEFAULT.duration * i / Math.max(1, samples - 1);
-    shots.push({ time, png: (await renderPng(page, time, width, height, parameters, 1, fps)).toString('base64') });
+    const png = await renderPng(page, time, width, height, parameters, 1, fps);
+    // Keep thumbnails, not sixty full-resolution PNG/base64 copies, in both
+    // processes. Portrait contact sheets also stay within canvas limits.
+    shots.push({ time, png: (await sharp(png).resize(cellW,cellH).png().toBuffer()).toString('base64') });
   }
   const data = await page.evaluate(async ({ shots, cellW, cellH, cols, rows }) => {
     const c = document.createElement('canvas'); c.width = cols * cellW; c.height = rows * (cellH + 28);
@@ -236,7 +216,7 @@ async function main() {
     if(!parameters.motion)parameters.motion=JSON.parse(await readFile(path.join(ROOT,'project/motion.json'),'utf8'));
   }
   if(['preview','export'].includes(command))await checkEncoder(format);
-  const saveSnapshot=async()=>{if(target&&command!=='verify'&&command!=='viewer')await writeFile(target+'.project.json',JSON.stringify({schemaVersion:2,command,config:{...DEFAULT,width,height,fps},parameters,width,height,fps,format,bitrateMbps,settings:{width,height,fps,format,bitrateMbps,temporalSamples},start,end,time,samples,temporalSamples,createdAt:new Date().toISOString()},null,2));};
+  const saveSnapshot=async()=>{if(target&&command!=='verify'&&command!=='viewer')await writeAtomicOutput(target+'.project.json',JSON.stringify({schemaVersion:2,command,config:{...DEFAULT,width,height,fps},parameters,width,height,fps,format,bitrateMbps,settings:{width,height,fps,format,bitrateMbps,temporalSamples},start,end,time,samples,temporalSamples,createdAt:new Date().toISOString()},null,2));};
   const { server, url } = await startVite(command === 'viewer' ? 4173 : 0);
   let browser;
   try {
@@ -251,14 +231,15 @@ async function main() {
       await writeImage(png, target);
       await writeProgressJpeg(page, png, `${target}.progress.jpg`);
       output('progress', { phase: 'rendering', frames: 1, total: 1, previewFrame: 1, sample: temporalSamples, totalSamples: temporalSamples, percent: 98 });
+      await saveSnapshot();
       output('complete', { path: target, time, width, height, temporalSamples });
     } else if (command === 'contact') {
-      await contactSheet(page, target, samples, width, height, parameters, fps); output('complete', { path: target, samples, width, height });
+      await contactSheet(page, target, samples, width, height, parameters, fps); await saveSnapshot(); output('complete', { path: target, samples, width, height });
     } else if (command === 'preview' || command === 'export') {
       const frames = Math.round((end - start) * fps);
       const w = width;
       const h = height;
-      await exportVideo(page, target, w, h, parameters, start, end, temporalSamples, fps, format, bitrateMbps,{resume:opts.resume==='on',keepFrames:opts['keep-frames']==='on'}); output('complete', { path: target, width: w, height: h, fps, format, bitrateMbps, duration: end - start, frames, start, end, temporalSamples });
+      await exportVideo(page, target, w, h, parameters, start, end, temporalSamples, fps, format, bitrateMbps,{resume:opts.resume==='on',keepFrames:opts['keep-frames']==='on'}); await saveSnapshot(); output('complete', { path: target, width: w, height: h, fps, format, bitrateMbps, duration: end - start, frames, start, end, temporalSamples });
     } else if (command === 'verify') {
       const interveningTimes = [DEFAULT.duration*.85, DEFAULT.duration*.05, DEFAULT.duration*.55].filter(t => t <= DEFAULT.duration && t !== time);
       for (const seekTime of interveningTimes) await renderPng(page, seekTime, width, height, parameters, temporalSamples, fps);
@@ -297,7 +278,6 @@ async function main() {
       output('verification', result);
       if (!valid) process.exitCode = 2;
     }
-    await saveSnapshot();
   } finally { await browser?.close().catch(() => {}); await server.close(); }
 }
 main().catch(e => fail(e.message));

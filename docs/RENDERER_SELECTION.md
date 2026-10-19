@@ -50,7 +50,7 @@ parameters.renderPolicy = {
 
 ## Local capability contract
 
-The integrated local API exposes `GET /api/studio/capabilities` and returns `{capabilities: {...}}`. The Cycles helper supplies Blender's actual device probe; do not infer GPU support from installation or RAM/CPU usage.
+The integrated local API exposes `GET /api/studio/capabilities` and returns `{capabilities: {...}}`. The Cycles helper probes Blender's available Metal, OptiX, CUDA, HIP and oneAPI backends; do not infer GPU support from installation or RAM/CPU usage. `gpu` accepts any verified supported GPU backend, while `metal` requires a verified Metal device. `auto` selects an available supported GPU or falls back to CPU.
 
 ```js
 {

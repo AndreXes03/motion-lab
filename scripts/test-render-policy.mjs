@@ -27,6 +27,13 @@ assert.equal(unsupported.runnable, false, 'Explicit unsupported renderer blocks 
 assert.equal(resolveRenderPlan(overrideRenderPlan(photoreal, 'cycles'), {...context, publicDemo: true}).runnable, false);
 assert.equal(resolveRenderPlan(standard, {...context, publicDemo: true}).runnable, false);
 assert.equal(resolveRenderPlan({...photoreal, renderer: 'cycles', cycles: {device: 'gpu'}}, {...context, capabilities: {cycles: {...caps.cycles, device: 'CPU', devices: [{type: 'CPU', name: 'CPU'}]}}}).runnable, false);
+const cudaCapabilities = {threejs: {available: true}, cycles: {available: true, scenes: ['pulse'], device: 'CUDA', devices: [{type: 'CUDA', name: 'Verified NVIDIA GPU'}], limits: {workers: 2}, measured: {...caps.cycles.measured, device: 'CUDA'}}};
+const cudaContext = {...context, capabilities: cudaCapabilities};
+assert.equal(resolveRenderPlan({...photoreal, renderer: 'cycles', cycles: {device: 'gpu'}}, cudaContext).runnable, true, 'Generic GPU selection accepts any verified supported GPU backend.');
+assert.equal(resolveRenderPlan({...photoreal, renderer: 'cycles', cycles: {device: 'metal'}}, cudaContext).runnable, false, 'Metal selection requires a verified Metal device.');
+assert.equal(estimateRenderSeconds({...photoreal, cycles: {device: 'gpu'}}, cudaContext), 800, 'Generic GPU estimates accept a benchmark from a supported GPU backend.');
+assert.equal(estimateRenderSeconds({...photoreal, cycles: {device: 'metal'}}, cudaContext), null, 'Metal estimates require a Metal benchmark.');
+assert.equal(resolveRenderPlan({...photoreal, renderer: 'cycles', cycles: {device: 'metal'}}, context).runnable, true, 'Metal remains available with a verified Metal device.');
 
 const mixed = createRenderPlan({renderer: 'mixed', composite: {enabled: true, planFile: 'project/pulse-composite.json'}, layers: [{id: 'product', renderer: 'cycles', role: 'beauty'}, {id: 'graphics', renderer: 'threejs', role: 'overlay', opacity: .7}], shots: [{id: 'hero', start: 0, end: 4, renderer: 'cycles'}]});
 assert.equal(resolveRenderPlan(mixed, context).runnable, false, 'Metadata alone never enables a mixed export.');

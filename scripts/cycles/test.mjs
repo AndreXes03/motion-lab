@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import {normalizeCyclesOptions,parseCyclesArgs} from './options.mjs';
 import {buildCyclesCommand,getCyclesCapabilities} from './studio.mjs';
 const o=normalizeCyclesOptions({command:'export',out:'/tmp/test.mp4',width:1440,height:1920,fps:30,duration:1,device:'gpu',workers:2},{parameters:{scene:'pulse',sceneControls:{keyLight:1.5},animation:{groups:{mechanisms:{rate:.5}}}}});
-assert.equal(o.count,30);assert.equal(o.device,'metal');assert.equal(o.parameters.sceneControls.keyLight,1.5);assert.equal(o.parameters.animation.groups.mechanisms.rate,.5);
+assert.equal(o.count,30);assert.equal(o.device,'gpu');assert.equal(o.parameters.sceneControls.keyLight,1.5);assert.equal(o.parameters.animation.groups.mechanisms.rate,.5);
 assert.throws(()=>normalizeCyclesOptions({scene:'camera'}),/PULSE only/);
 assert.throws(()=>normalizeCyclesOptions({command:'export',width:101}),/even/);
 assert.throws(()=>normalizeCyclesOptions({samples:0}),/samples/);

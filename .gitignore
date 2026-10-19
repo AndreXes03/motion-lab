@@ -22,3 +22,7 @@ project/references/
 # Local review outputs and the internal task plan.
 outputs/
 /project/next-task.json
+
+# Python adapter bytecode is generated locally.
+__pycache__/
+*.py[cod]
