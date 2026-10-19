@@ -2,7 +2,7 @@ import {createHash} from 'node:crypto';
 import {createReadStream} from 'node:fs';
 import {readdir,stat} from 'node:fs/promises';
 import path from 'node:path';
-export const isSourceArtifact=filename=>!filename.split(path.sep).includes('__pycache__')&&!/\.py[co]$/.test(filename);
+export const isSourceArtifact=filename=>!filename.split(path.sep).includes('__pycache__')&&!/\.py[co]$/.test(filename)&&!/(^|\/)project\/references\/music(?:\/|$)/.test(filename.split(path.sep).join('/'));
 export async function hashFile(filename){const hash=createHash('sha256');for await(const chunk of createReadStream(filename))hash.update(chunk);return hash.digest('hex');}
 export async function sourceDigest(directory){
  const hash=createHash('sha256');
@@ -19,6 +19,6 @@ export async function sourceDigest(directory){
   }
  }
  for(const folder of ['src','project','public','scripts/cycles'])await visit(folder);
- for(const name of ['scripts/cycles.mjs','package.json','package-lock.json'])await file(name);
+ for(const name of ['scripts/cycles.mjs','scripts/music-assets.mjs','package.json','package-lock.json'])await file(name);
  return hash.digest('hex');
 }

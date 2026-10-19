@@ -17,7 +17,7 @@ try{
  await writeFile(blender,'#!/bin/sh\nexit 88\n');await chmod(blender,0o755);
  await mkdir(path.join(frozen,'scripts'),{recursive:true});await mkdir(path.join(directory,'frames'),{recursive:true});
  for(const folder of ['src','project','public','scripts/cycles'])await symlink(path.join(root,folder),path.join(frozen,folder),'dir');
- for(const file of ['package.json','package-lock.json','scripts/cycles.mjs'])await symlink(path.join(root,file),path.join(frozen,file));
+ for(const file of ['package.json','package-lock.json','scripts/cycles.mjs','scripts/music-assets.mjs'])await symlink(path.join(root,file),path.join(frozen,file));
  const input={command:'frame',out,width:64,height:64,samples:1,resume:'on'},options=normalizeCyclesOptions(input),sourceHash=await sourceDigest(root);
  const fingerprint=createHash('sha256').update(stable({...options,resume:false,out:null,workers:1,blender,sourceHash,audioHash:null})).digest('hex');
  await writeFile(path.join(directory,'recipe.json'),JSON.stringify({fingerprint,baked:true}));

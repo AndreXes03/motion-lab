@@ -89,12 +89,14 @@ export function mountPreviewQuality({container, getScene, getOutputSettings = ()
     const {kind} = sceneInfo(getScene());
     const isMobile = mobileViewport();
     const isTwoDimensional = kind === '2d';
+    const requestedOutput = getOutputSettings();
+    const output = Number.isFinite(requestedOutput?.width) && requestedOutput.width > 0 && Number.isFinite(requestedOutput?.height) && requestedOutput.height > 0 ? requestedOutput : {width: 1920, height: 1080};
+    const aspect = output.height / output.width;
     let width;
     let quality = 'full';
 
     if (mode === 'render') {
-      const output = getOutputSettings();
-      width = interacting ? 640 : output.width;
+      width = interacting ? Math.min(640, output.width) : output.width;
       return {width, height: interacting ? Math.round(width * output.height / output.width) : output.height, quality: 'full', label: 'Render view'};
     }
 
@@ -104,13 +106,16 @@ export function mountPreviewQuality({container, getScene, getOutputSettings = ()
     else if (interacting) width = isTwoDimensional ? 640 : 480;
     else width = isTwoDimensional ? 960 : 640;
 
+    // Auto sacrifices expensive effects only during interaction or sustained
+    // overload. Pausing always requests a fresh, full-effect refinement.
+    if (mode === 'auto' && interacting && !isTwoDimensional) quality = 'fast';
     if (mode === 'auto' && !interacting) {
       if (adaptiveTier >= 2) width = Math.min(width, 384);
       else if (adaptiveTier >= 1) width = Math.min(width, 480);
     }
     if (isMobile) width = Math.min(width, 480);
 
-    const height = Math.round(width * 9 / 16);
+    const height = Math.max(1, Math.round(width * aspect));
     return {width, height, quality, label: MODE_LABELS[mode]};
   }
 
@@ -138,13 +143,13 @@ export function mountPreviewQuality({container, getScene, getOutputSettings = ()
     const cost = median(samples);
     const previousTier = adaptiveTier;
     if (adaptiveTier === 0) {
-      if (cost > 180) adaptiveTier = 2;
-      else if (cost > 100) adaptiveTier = 1;
+      if (cost > 95) adaptiveTier = 2;
+      else if (cost > 55) adaptiveTier = 1;
     } else if (adaptiveTier === 1) {
-      if (cost > 180) adaptiveTier = 2;
-      else if (cost < 75) adaptiveTier = 0;
-    } else if (cost < 140) {
-      adaptiveTier = cost < 75 ? 0 : 1;
+      if (cost > 95) adaptiveTier = 2;
+      else if (cost < 36) adaptiveTier = 0;
+    } else if (cost < 60) {
+      adaptiveTier = cost < 36 ? 0 : 1;
     }
     if (adaptiveTier !== previousTier) updateStatus();
   }

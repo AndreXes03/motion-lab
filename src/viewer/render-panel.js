@@ -66,7 +66,7 @@ export function mountRenderPanel({container, getScene, getParameters = () => ({}
   root.append(details); container.append(root);
 
   function context() {
-    return {scene: sceneId(getScene()), publicDemo, capabilities: capState, ...getExportSettings()};
+    return {parameters:getParameters(),scene: sceneId(getScene()), publicDemo, capabilities: capState, ...getExportSettings()};
   }
   function selection(contextOverrides = {}) { return resolveRenderPlan(plan, {...context(), ...contextOverrides}); }
   function sync() {

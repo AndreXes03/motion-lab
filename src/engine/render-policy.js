@@ -1,3 +1,4 @@
+import {isIdentityEditorialEdit} from './editorial.js';
 /** Renderer choice is recipe metadata. Availability must come from local preflight. */
 export const RENDERERS = Object.freeze(['auto', 'threejs', 'cycles', 'mixed']);
 export const RENDERER_LABELS = Object.freeze({auto: 'Auto', threejs: 'Three.js', cycles: 'Cycles', mixed: 'Mixed'});
@@ -115,6 +116,8 @@ function supported(capability, scene) {
 }
 function availability(engine, plan, context) {
   if (context.publicDemo) return {available: false, reason: 'Final renderer jobs run in the local app. Browser video uses the real-time Three.js/Canvas path; Cycles and prepared Mixed renders are not executed on this site.'};
+  if(engine!=='threejs'&&!isIdentityEditorialEdit(context.parameters?.edit??context.edit,context.scene))return {available:false,reason:'Edited shot timelines currently render with Three.js/Canvas. Restore the original edit to use Cycles or prepared Mixed inputs.'};
+  if(engine==='mixed'&&context.parameters?.music)return {available:false,reason:'Imported songs use the Three.js/Canvas or supported Cycles export. Mixed inputs keep their separately prepared soundtrack.'};
   const caps = context.capabilities ?? {};
   if (engine === 'threejs') return {available: caps.threejs?.available !== false, reason: caps.threejs?.reason ?? 'Available in the local app.'};
   if (engine === 'cycles') {

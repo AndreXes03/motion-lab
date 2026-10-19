@@ -37,6 +37,9 @@ try {
   await mkdir(path.join(root,'project/history'),{recursive:true});
   await writeFile(path.join(root,'project/history/old-project.json'),'old incidental snapshot');
   assert.equal(await sourceFingerprint(root),beforeHistory,'Incidental history must not invalidate frame caches');
+  await mkdir(path.join(root,'project/references/music'),{recursive:true});
+  await writeFile(path.join(root,'project/references/music/other-song.wav'),'unselected content-addressed track');
+  assert.equal(await sourceFingerprint(root),beforeHistory,'Unselected imported music must not invalidate frame caches');
   const newSource=await openFrameCache(root,{...recipe,source:updated},{resume:true});assert.equal(await newSource.read(0),null);await newSource.close(true);
   assert.equal(applyRenderQuality({quality:'premium'})['temporal-samples'],48);
   assert.equal(applyRenderQuality({quality:'premium','temporal-samples':2})['temporal-samples'],2);

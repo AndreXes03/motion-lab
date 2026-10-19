@@ -33,3 +33,10 @@
 #sound-tools .sound-timbre[hidden],#sound-tools .sound-actions button[hidden]{display:none!important}
 
 #sound-tools.sound-panel>summary{display:none}
+#sound-tools .sound-music-actions{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;margin:8px 0}
+#sound-tools .sound-music-actions button{min-height:32px;padding:7px 8px;border:1px solid #3e5a50;border-radius:6px;background:#1b2924;color:#c5e6d9;font:inherit;font-size:12px;cursor:pointer}
+#sound-tools .sound-music-actions button:hover{border-color:#87c7b0}
+#sound-tools .sound-music-actions button:disabled{opacity:.45;cursor:default}
+#sound-tools .sound-music-actions button[hidden]{display:none}
+#sound-tools .sound-music-name,#sound-tools .sound-music-note{margin:8px 0;color:#aeb9c6;font-size:11px;line-height:1.5;overflow-wrap:anywhere}
+#sound-tools .sound-waveform{display:block;width:100%;height:76px;border:1px solid #30363e;border-radius:5px;background:#171d20}

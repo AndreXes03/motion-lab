@@ -3,6 +3,8 @@ import {readFile} from 'node:fs/promises';
 import {spawnSync} from 'node:child_process';
 import {fileURLToPath} from 'node:url';
 import vm from 'node:vm';
+import * as editorial from '../src/engine/editorial.js';
+import {dotSoundTelemetry} from '../src/scenes/dot-sound.js';
 
 // Test actual runtime orchestration with explicit scene/Canvas/GPU doubles.
 // These checks do not exercise WebGL or claim pixel/visual correctness.
@@ -15,7 +17,7 @@ const source=await readFile(new URL('../src/engine/runtime.js',import.meta.url),
 const deferred=()=>{let resolve;const promise=new Promise(r=>{resolve=r;});return {promise,resolve};};
 
 async function harness({fonts=Promise.resolve(),prepare=async()=>true}={}){
- const calls={frames:[],prepared:[],gpu:0,sizes:[],targets:[],disposed:0,contextsLost:0};
+ const calls={frames:[],prepared:[],evaluated:[],finishes:[],hints:[],gpu:0,sizes:[],targets:[],disposed:0,contextsLost:0};
  const config={scene:'objects',width:1920,height:1080,duration:10,fps:30,palette:{ink:'#000'},text:{eyebrow:'',title:'',footer:''},animation:{reveal:[0,1]}};
  const savedLook={post:{exposure:1,grain:0}};
  const sceneRegistry=Object.fromEntries(['objects','procedural','pop','launch','starter','dot','pulse','camera','replay'].map(id=>[id,{duration:10,cuts:[0,5,10]}]));
@@ -25,7 +27,7 @@ async function harness({fonts=Promise.resolve(),prepare=async()=>true}={}){
  const camera={aspect:16/9,updateProjectionMatrix(){}};
  const scene={traverse(){},traverseVisible(){}};
  const factory=id=>()=>({
-  render(...args){calls.frames.push({scene:id,time:args[1]});},
+  render(...args){calls.frames.push({scene:id,time:args[1],...(args[2]?.edit?{parameters:args[2]}:{})});},
   prepare:async parameters=>{calls.prepared.push(parameters);await prepare(parameters);},
   nodesAt(){return [];},config:{seed:1},dispose(){calls.disposed++;},
  });
@@ -40,13 +42,14 @@ async function harness({fonts=Promise.resolve(),prepare=async()=>true}={}){
   './authored-animation.js':{getAuthoredAnimationTracks:()=>[],getAuthoredCameraChannels:()=>[],buildSampledAuthoredTracks:()=>[]},
   './animation.js':{sampleTrack:()=>0},
   './display-grade.js':{applyDisplayGrade(){}},
-  './parameter-animation.js':{evaluateParameterAnimation:p=>p},
+  './parameter-animation.js':{evaluateParameterAnimation:(p,time)=>{calls.evaluated.push(time);return p;}},
+  './editorial.js':editorial,
   '../scenes/product-starter.js':{createProductStarter:factory('starter')},
   '../scenes/launch-demo.js':{createLaunchDemo:factory('launch')},
   '../scene-registry.js':{sceneConfig:id=>({...config,...sceneRegistry[id],scene:id}),sceneIds:Object.keys(sceneRegistry),isNewScene,sceneRegistry},
-  '../scenes/dot-sound.js':{dotSoundTelemetry:rate=>({rate})},
+  '../scenes/dot-sound.js':{dotSoundTelemetry},
   '../scenes/mascot-demo.js':{createMascotDemo:factory('dot'),mascotShutterAt:()=>72},
-  '../scenes/pulse-demo.js':{createDemo:factory('pulse'),shutterAngleAt:()=>180,temporalSamplesAt:(_,n)=>n},
+  '../scenes/pulse-demo.js':{createDemo:factory('pulse'),shutterAngleAt:t=>{calls.hints.push(t);return 180;},temporalSamplesAt:(t,n)=>{calls.hints.push(t);return n;}},
   '../scenes/afterhours-demo.js':{createAfterhoursDemo:factory('camera'),afterhoursShutter:()=>55},
   '../scenes/replay-demo.js':{createReplayDemo:factory('replay')},
   '../scenes/pop-demo.js':{createPopDemo:factory('pop')},
@@ -57,7 +60,7 @@ async function harness({fonts=Promise.resolve(),prepare=async()=>true}={}){
   '../../project/look.json':{default:savedLook},
   '../scenes/signal.js':{createScene},'../scenes/objects.js':{createScene},
   './composite.js':{createComposite:()=>({setSize(w,h){calls.targets.push([w,h]);},applyLook(){},setReview(){},render(time){calls.frames.push({scene:'objects',time});},dispose(){calls.disposed++;}})},
-  './film-grain.js':{applyFilmGrain(){}},'./timeline.js':{smooth:x=>x},
+  './film-grain.js':{applyFilmGrain:(_ctx,time)=>calls.finishes.push(time)},'./timeline.js':{smooth:x=>x},
  };
  const context=vm.createContext({structuredClone,document:{fonts:{ready:fonts},createElement:makeCanvas}});
  const module=new vm.SourceTextModule(source,{context,identifier:'runtime.js'});
@@ -90,6 +93,11 @@ async function harness({fonts=Promise.resolve(),prepare=async()=>true}={}){
  runtime.render(2,opts('objects'));runtime.render(3,opts('procedural'));runtime.render(2,opts('objects'));
  assert.deepEqual(h.calls.sizes,[[480,270]],'Same-size scene switches retain GPU buffers');
  assert.deepEqual(h.calls.targets,[[480,270]],'Same-size scene switches retain postprocess targets');
+ h.canvas.width=240;h.canvas.height=135;
+ runtime.render(2,opts('objects'));
+ assert.equal(h.canvas.width,480);assert.equal(h.canvas.height,270,'An externally displayed cached frame cannot leave the next render at its canvas size');
+ assert.deepEqual(h.calls.sizes,[[480,270]],'Restoring output size after a cache display retains GPU buffers');
+ assert.deepEqual(h.calls.targets,[[480,270]],'Restoring output size after a cache display retains postprocess targets');
  runtime.render(2,{...opts('objects'),width:960,height:540});
  assert.deepEqual(h.calls.targets,[[480,270],[960,540]],'Actual size changes resize postprocess targets');
  for(const rate of [Infinity,NaN,0,-1])assert.throws(()=>runtime.sampleMotion({},rate),/rate must be finite and positive/);
@@ -122,5 +130,31 @@ async function harness({fonts=Promise.resolve(),prepare=async()=>true}={}){
  assert.equal(h.calls.prepared.at(-1).commercial.brand.name,'Original','Preparation captures the recipe before waiting');
  runtime.dispose();
  assert.throws(()=>h.createRuntime(h.canvas,{initialScene:'missing'}),/Unknown scene/);
+}
+{
+ const h=await harness(),runtime=h.createRuntime(h.canvas,{initialScene:'procedural'});await runtime.ready;
+ const parameters={scene:'procedural',edit:{version:1,clips:[{id:'later',sourceStart:6,sourceEnd:8,duration:4}]},renderSample:{frameTime:1}};
+ const original=structuredClone(parameters),frame=runtime.render(1,{width:480,height:270,parameters});
+ assert.equal(frame.time,1);assert.equal(frame.sourceTime,6.5);assert.equal(frame.frame,30);
+ assert.equal(h.calls.frames.at(-1).time,6.5);
+ assert.equal(h.calls.frames.at(-1).parameters.renderSample.frameTime,6.5,'Graphics exposure center follows source time');
+ assert.deepEqual(h.calls.evaluated.slice(-2),[6.5,6.5],'Animation and finishing map exactly once');
+ assert.equal(h.calls.finishes.at(-1),6.5);
+ runtime.finishFrame({},1,480,270,parameters);assert.equal(h.calls.finishes.at(-1),6.5,'External temporal finishing maps once');
+ assert.equal(runtime.config.duration,4);assert.deepEqual(parameters,original);
+ const telemetry=runtime.sampleMotion(parameters,60);assert.equal(telemetry.duration,4);assert.equal(telemetry.sourceTimeAt(1),6.5);
+ const pulse={...parameters,scene:'pulse'};runtime.shutterAngleAt(1,pulse);runtime.temporalSamplesAt(1,8,pulse);assert.deepEqual(h.calls.hints,[6.5,6.5]);
+ runtime.render(1,{parameters:{scene:'procedural'}});assert.equal(runtime.config.duration,10,'Removing the edit restores authored duration');
+ runtime.dispose();
+}
+{
+ const h=await harness(),runtime=h.createRuntime(h.canvas,{initialScene:'dot'});await runtime.ready;
+ const original=dotSoundTelemetry(60),identity={scene:'dot',edit:editorial.defaultEditorialEdit('dot')};
+ assert.deepEqual(runtime.sampleMotion(identity),original,'Identity edit preserves authored sound exactly');
+ const parameters={scene:'dot',edit:{version:1,clips:[{id:'cue',sourceStart:6,sourceEnd:8,duration:4}]}};
+ const telemetry=runtime.sampleMotion(parameters),sourceCue=original.authoredEvents.find(e=>e.time===6.33),outputCue=telemetry.authoredEvents.find(e=>Math.abs(e.time-.66)<1e-9);
+ assert.equal(telemetry.duration,4);assert.ok(outputCue);assert.equal(outputCue.duration,sourceCue.duration*2);
+ assert.ok(telemetry.authoredEvents.every(e=>e.time>=0&&e.time<4&&e.time+e.duration<=4+1e-12));
+ runtime.dispose();
 }
 console.log('Runtime orchestration passed: startup ordering, prepare snapshots, retained GPU allocation, active-scene sampling, argument validation and terminal disposal. Dependency-isolated checks; no WebGL/pixel validation.');

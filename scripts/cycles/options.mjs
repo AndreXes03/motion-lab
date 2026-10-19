@@ -1,4 +1,6 @@
 import path from 'node:path';
+import {isIdentityEditorialEdit} from '../../src/engine/editorial.js';
+import {normalizeMusicTrack} from '../../src/engine/music-track.js';
 const bool = (v, name, fallback) => {
   if (v === undefined) return fallback;
   if ([true, 'on', 'true'].includes(v)) return true;
@@ -26,7 +28,7 @@ export function normalizeCyclesOptions(input={}, snapshot={}) {
   if (input.parameters) Object.assign(parameters,typeof input.parameters==='string'?JSON.parse(input.parameters):input.parameters);
   const scene=input.scene??parameters.scene??snapshot.config?.scene??'pulse';
   if(!supportedScenes.includes(scene)) throw Error(`Cycles has a validated adapter for PULSE only; ${scene} is unsupported`);
-  parameters.scene=scene; delete parameters.previewQuality;
+  parameters.scene=scene;if(parameters.music!==undefined)parameters.music=normalizeMusicTrack(parameters.music);if(!isIdentityEditorialEdit(parameters.edit,scene))throw Error('Cycles does not support edited shot timelines. Select Three.js for this edit.'); delete parameters.previewQuality;
   // Raster-only review controls are not the output rendering mode.
   delete parameters.review; delete parameters.renderSample;
   const width=numeric(input.width??saved.width??snapshot.width,'width',1920,64,4096,true), height=numeric(input.height??saved.height??snapshot.height,'height',1080,64,4096,true);

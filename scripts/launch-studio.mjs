@@ -2,7 +2,7 @@
 import { spawn, spawnSync } from 'node:child_process';
 import { randomUUID } from 'node:crypto';
 import { closeSync, openSync } from 'node:fs';
-import { mkdir, readFile, realpath, rename, rm, stat, writeFile } from 'node:fs/promises';
+import { mkdir, readFile, readdir, realpath, rename, rm, stat, writeFile } from 'node:fs/promises';
 import http from 'node:http';
 import net from 'node:net';
 import { createRequire } from 'node:module';
@@ -82,6 +82,37 @@ async function ownedHealth(root, port) {
   return state && result?.app === APP && result.root === root && result.port === port && result.instance === state.instance && result.pid === state.pid && Number.isInteger(result.pid) && result.pid > 1 ? result : null;
 }
 
+export function studioIsBusy(data) {
+  // Older servers omitted viewport jobs. They cannot prove that an update is safe.
+  if (!Array.isArray(data?.activeJobs)) return true;
+  return data.activeJobs.some(job=>['running','queued'].includes(job.status)||job.recoveryActive===true);
+}
+
+async function studioRequest(port,body) {
+  const response=await fetch(`http://127.0.0.1:${port}/api/studio${body?'/maintenance':''}`,{signal:AbortSignal.timeout(1500),...(body?{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)}:{})});
+  if(!response.ok)throw Error('Studio sta lavorando o non supporta un aggiornamento sicuro.');
+  return response.json();
+}
+
+async function ownedInstances(root) {
+  const entries=await readdir(paths(root,4173).cache,{withFileTypes:true});
+  const instances=[];
+  for(const entry of entries){const match=entry.isFile()&&entry.name.match(/^launcher-(\d+)\.json$/);if(!match)continue;const instance=await ownedHealth(root,Number(match[1]));if(instance)instances.push(instance);}
+  return instances;
+}
+
+async function acquireMaintenance(instances) {
+  const leases=[];
+  try {
+    for(const instance of instances){
+      if(studioIsBusy(await studioRequest(instance.port)))throw Error('Studio sta lavorando; aggiornamento rimandato.');
+      const token=randomUUID();await studioRequest(instance.port,{action:'acquire',token});leases.push({port:instance.port,token});
+    }
+    return leases;
+  }catch(error){await releaseMaintenance(leases);throw error;}
+}
+async function releaseMaintenance(leases){await Promise.allSettled(leases.map(({port,token})=>studioRequest(port,{action:'release',token})));}
+
 async function portAvailable(port) {
   return new Promise((resolve, reject) => {
     const server = net.createServer();
@@ -123,7 +154,7 @@ async function serve({ root, port, instance }) {
   console.log(`Motion Lab pronto: http://127.0.0.1:${port}/ · ${root}`);
 }
 
-export async function launch(options) {
+export async function launch(options,{updateFn=updateStudio}={}) {
   const root = await validateRepo(options.root);
   const { port, action } = options, files = paths(root, port), url = `http://127.0.0.1:${port}/`;
   if (action === '--serve') return serve({ ...options, root });
@@ -135,7 +166,11 @@ export async function launch(options) {
   if (action === 'stop') {
     const running = await ownedHealth(root, port);
     if (!running) { console.log('Nessuna istanza propria da fermare. Altri processi non vengono toccati.'); return { stopped: false }; }
-    process.kill(running.pid, 'SIGTERM');
+    const leases=await acquireMaintenance([running]);
+    try {
+      if(studioIsBusy(await studioRequest(port)))throw Error('Studio sta lavorando; arresto rimandato.');
+      process.kill(running.pid, 'SIGTERM');
+    } finally {await releaseMaintenance(leases);}
     if (!await waitFor(async () => !await ownedHealth(root, port), 5000)) throw Error(`Studio non si è fermato. Controlla ${files.log}; nessun arresto forzato eseguito.`);
     console.log('Studio fermato.'); return { stopped: true };
   }
@@ -143,17 +178,20 @@ export async function launch(options) {
   await mkdir(files.cache, { recursive: true });
   let running = await ownedHealth(root, port), reused = Boolean(running), locked = false;
   let updates;
-  if(running){
-    let active;
-    try{const response=await fetch(`http://127.0.0.1:${port}/api/studio`,{signal:AbortSignal.timeout(1500)});if(!response.ok)throw Error();const data=await response.json();active=(data.jobs??[]).some(job=>['running','queued'].includes(job.status));}
-    catch{active=true;}
-    if(active)updates={state:'busy',note:'Aggiornamento rimandato: Studio sta lavorando o il suo stato non è verificabile.'};
-  }
-  updates ??= options.update===false?{state:'not-requested'}:await updateStudio({root});
-  if(updates.lock){if(!await waitFor(async()=>{try{await stat(updates.lock);return false;}catch{return true;}},15000))throw Error('Aggiornamento ancora in corso; riprova tra poco.');updates=await updateStudio({root});}
-  if(updates.state==='updated'||updates.installed){
-    if(running){process.kill(running.pid,'SIGTERM');if(!await waitFor(async()=>!await ownedHealth(root,port),5000))throw Error('Riavvio dopo aggiornamento non confermato.');running=null;reused=false;}
-  }
+  let leases=[];
+  try {
+    if(options.update===false)updates={state:'not-requested'};
+    else {
+      try {leases=await acquireMaintenance(await ownedInstances(root));}
+      catch(error){updates={state:'busy',note:error.message};console.error('Framevolve: '+error.message);}
+      updates??=await updateFn({root});
+      if(updates.lock){if(!await waitFor(async()=>{try{await stat(updates.lock);return false;}catch{return true;}},15000))throw Error('Aggiornamento ancora in corso; riprova tra poco.');updates=await updateFn({root});}
+      if((updates.state==='updated'||updates.installed)&&running){
+        if(studioIsBusy(await studioRequest(port)))updates={...updates,state:'restart-deferred',note:'Riavvio rimandato: Studio sta lavorando.'};
+        else {process.kill(running.pid,'SIGTERM');if(!await waitFor(async()=>!await ownedHealth(root,port),5000))throw Error('Riavvio dopo aggiornamento non confermato.');running=null;reused=false;}
+      }
+    }
+  }finally{await releaseMaintenance(leases);}
   await validateRepo(root,true);
   if (!running) {
     try { await mkdir(files.lock); locked = true; }

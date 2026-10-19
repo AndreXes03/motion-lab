@@ -1,4 +1,5 @@
 import {sceneRegistry} from '../scene-registry.js';
+import {editorialDuration} from '../engine/editorial.js';
 import {createBrowserRecorderSession} from './browser-export-session.js';
 
 // The browser chooses an actual supported container. A WebM recording is never
@@ -28,17 +29,18 @@ export function getBrowserExportCapabilities(environment = globalThis) {
  };
 }
 
-export function normalizeBrowserExportSettings(scene, settings = {}) {
+export function normalizeBrowserExportSettings(scene, settings = {}, parameters = {}) {
  const metadata = sceneRegistry[scene];
  if(!metadata)throw new Error(`Unknown export scene: ${scene}`);
+ const duration=editorialDuration({...parameters,scene});
  if(!settings || typeof settings !== 'object' || Array.isArray(settings))throw new Error('Invalid browser export settings');
  const result = {width:settings.width ?? 1280,height:settings.height ?? 720,fps:settings.fps ?? 30,
-  start:settings.start ?? 0,duration:settings.duration ?? metadata.duration,bitrateMbps:settings.bitrateMbps ?? 10};
+  start:settings.start ?? 0,duration:settings.duration ?? duration,bitrateMbps:settings.bitrateMbps ?? 10};
  for(const key of ['width','height'])if(!Number.isInteger(result[key]) || result[key]<64 || result[key]>1920 || result[key]%2)throw new Error(`Export ${key} must be an even integer from 64 to 1920`);
  if(result.width*result.height>1920*1080)throw new Error('Browser export is limited to 1080p pixel area');
  if(!Number.isInteger(result.fps)||result.fps<1||result.fps>60)throw new Error('Export fps must be an integer from 1 to 60');
- if(!Number.isFinite(result.start)||result.start<0||result.start>=metadata.duration)throw new Error('Invalid export start time');
- if(!Number.isFinite(result.duration)||result.duration<1/result.fps||result.start+result.duration>metadata.duration+1e-9)throw new Error('Export duration must fit inside the authored film');
+ if(!Number.isFinite(result.start)||result.start<0||result.start>=duration)throw new Error('Invalid export start time');
+ if(!Number.isFinite(result.duration)||result.duration<1/result.fps||result.start+result.duration>duration+1e-9)throw new Error('Export duration must fit inside the authored film or editorial timeline');
  if(!Number.isFinite(result.bitrateMbps)||result.bitrateMbps<1||result.bitrateMbps>20)throw new Error('Export bitrate must be from 1 to 20 Mbps');
  return result;
 }
@@ -81,7 +83,7 @@ export async function readRecordedVideoMetadata(blob,{signal}={}) {
 export async function exportBrowserVideo({scene,parameters={},settings={},onProgress=()=>{},signal,audioBuffer,audioStream}={}) {
  const capabilities=getBrowserExportCapabilities();
  if(!capabilities.available)throw new Error(capabilities.reason);
- const chosen=scene ?? parameters.scene ?? 'objects',options=normalizeBrowserExportSettings(chosen,settings);
+ const chosen=scene ?? parameters.scene ?? 'objects',options=normalizeBrowserExportSettings(chosen,settings,parameters);
  const snapshot=structuredClone(parameters);
  snapshot.scene=chosen;delete snapshot.previewQuality;
  checkAbort(signal);

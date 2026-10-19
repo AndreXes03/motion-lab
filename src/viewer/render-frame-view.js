@@ -40,7 +40,7 @@ export function createRenderFrameView({
           emit({status: 'ready', url: job.url, jobId: job.id, progress: 100, elapsedMs: now() - request.startedAt}, request);
         }
         finish(request);
-      } else if (job.status === 'failed' || job.status === 'cancelled') {
+      } else if (job.status === 'failed' || job.status === 'cancelled' || job.status === 'interrupted') {
         throw new Error(job.error || 'Frame render failed.');
       } else {
         if (now() - request.startedAt > timeoutMs) throw new Error('Frame render timed out. Check the local render job before retrying.');

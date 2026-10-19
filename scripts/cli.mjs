@@ -5,7 +5,10 @@ import {withAtomicOutput,writeAtomicOutput} from './atomic-output.mjs';
 import {renderCliFrame} from './cli-frame.mjs';
 import {sceneConfig,sceneIds} from '../src/scene-registry.js';
 import { createServer } from 'vite';
-import {planSound,renderSound,encodeWav,normalizeSound} from '../src/engine/sound-design.js';
+import {encodeWav,normalizeSound} from '../src/engine/sound-design.js';
+import {normalizeMusicTrack} from '../src/engine/music-track.js';
+import {editorialDuration,validateEditorialEdit} from '../src/engine/editorial.js';
+import {renderSoundtrack,resolveMusicAsset,sliceSoundtrack} from './music-assets.mjs';
 import { config } from '../src/config.js';
 import { chromium } from 'playwright';
 import ffmpegPath from 'ffmpeg-static';
@@ -123,10 +126,10 @@ async function exportVideo(page, target, width, height, parameters, start, end, 
     }
     output('progress', { phase: 'encoding', frames: total, total, percent: 99 });
     let audioPath=null;
-    if(parameters.sound?.enabled){
+    if(parameters.sound?.enabled||(parameters.music&&parameters.sound?.enabled!==false)){
       const telemetry=await page.evaluate(p=>window.motion.sampleMotion(p),parameters);
-      const result=renderSound(planSound(telemetry,parameters.sound));
-      const channels=result.channels.map(c=>c.slice(Math.round(start*result.sampleRate),Math.round(end*result.sampleRate)));
+      const result=await renderSoundtrack({root:ROOT,telemetry,parameters});
+      const channels=sliceSoundtrack(result,{start,duration:total/fps});
       audioPath=path.join(frameDir,'sound.wav');await writeFile(audioPath,encodeWav(channels,result.sampleRate));
     }
     await encodeFrames(frameDir, target, width, height, fps, format, bitrateMbps,total,audioPath);
@@ -187,6 +190,10 @@ async function main() {
   const saved={...sidecar,...requested};
   const parameters={...sidecar.parameters,...requested.parameters,...explicitParameters};
   DEFAULT=sceneConfig(parameters.scene??saved.config?.scene??config.scene);parameters.scene=DEFAULT.scene;
+  if(parameters.edit!==undefined)parameters.edit=validateEditorialEdit(parameters.edit,parameters.scene);
+  if(parameters.music!==undefined)parameters.music=normalizeMusicTrack(parameters.music);
+  DEFAULT={...DEFAULT,duration:editorialDuration(parameters)};
+  if(['preview','export'].includes(command)&&parameters.music)await resolveMusicAsset({root:ROOT,track:parameters.music});
   if(opts.sound!==undefined){if(!['on','off'].includes(opts.sound))throw Error('--sound must be on or off');parameters.sound=normalizeSound({...parameters.sound,enabled:opts.sound==='on'});}
   if(parameters.sound!==undefined)parameters.sound=normalizeSound(parameters.sound);
   const number=(key,savedValue,fallback)=>{const n=Number(opts[key]??savedValue??fallback);if(!Number.isFinite(n))throw new Error(`--${key} must be finite`);return n;};
@@ -207,7 +214,9 @@ async function main() {
   if(!Number.isInteger(samples)||samples<2||samples>60)throw new Error('--samples must be an integer from 2 to 60');
   if (time < 0 || time > DEFAULT.duration) throw new Error(`--time must be between 0 and ${DEFAULT.duration} seconds`);
   if (start < 0 || end > DEFAULT.duration || end <= start) throw new Error(`--start and --end must satisfy 0 <= start < end <= ${DEFAULT.duration}`);
+  if(['preview','export'].includes(command)&&Math.round((end-start)*fps)<1)throw Error('The edited export must contain at least one output frame');
   for (const [name, value] of [['--start', start], ['--end', end]]) {
+    if(name==='--end'&&opts.end===undefined&&Math.abs(end-DEFAULT.duration)<1e-7)continue;
     if (Math.abs(value * fps - Math.round(value * fps)) > 1e-7) throw new Error(`${name} must align to a ${1 / fps}-second frame boundary`);
   }
   if (!ffmpegPath) throw new Error('ffmpeg-static did not provide an executable');
