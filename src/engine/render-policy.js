@@ -120,7 +120,10 @@ function availability(engine, plan, context) {
   if (engine === 'cycles') {
     const cap = caps.cycles;
     if (!supported(cap, context.scene)) return {available: false, reason: cap?.reason || (cap?.available ? 'Cycles currently supports the PULSE scene only.' : 'Blender preflight is required before Cycles can render locally.')};
-    if (['gpu', 'metal'].includes(plan.cycles.device) && !cap.devices?.some(device => ['METAL', 'CUDA', 'OPTIX', 'HIP', 'ONEAPI'].includes(String(device.type).toUpperCase()))) return {available: false, reason: 'No compatible GPU was verified by Blender. Select Auto or CPU.'};
+    const gpuTypes = ['METAL', 'CUDA', 'OPTIX', 'HIP', 'ONEAPI'];
+    const verifiedDevices = cap.devices ?? [];
+    if (plan.cycles.device === 'gpu' && !verifiedDevices.some(device => gpuTypes.includes(String(device.type).toUpperCase()))) return {available: false, reason: 'No compatible GPU was verified by Blender. Select Auto or CPU.'};
+    if (plan.cycles.device === 'metal' && !verifiedDevices.some(device => String(device.type).toUpperCase() === 'METAL')) return {available: false, reason: 'A verified Metal device is required for the Metal renderer. Select Auto or CPU.'};
     if (typeof plan.cycles.workers === 'number' && plan.cycles.workers > (cap.limits?.workers ?? 2)) return {available: false, reason: 'This computer allows fewer parallel Cycles workers. Select Auto.'};
     return {available: true, reason: `Local Blender ready · ${cap.device || 'device selected at render time'}.`};
   }
@@ -140,7 +143,9 @@ export function estimateRenderSeconds(plan, context = {}) {
   if (benchmark.device && context.capabilities.cycles.device && String(benchmark.device).toUpperCase() !== String(context.capabilities.cycles.device).toUpperCase()) return null;
   const measuredDevice = String(benchmark.device ?? context.capabilities.cycles.device ?? '').toUpperCase();
   if (normalized.cycles.device === 'cpu' && measuredDevice !== 'CPU') return null;
-  if (['gpu', 'metal'].includes(normalized.cycles.device) && !['METAL', 'CUDA', 'OPTIX', 'HIP', 'ONEAPI'].includes(measuredDevice)) return null;
+  const gpuTypes = ['METAL', 'CUDA', 'OPTIX', 'HIP', 'ONEAPI'];
+  if (normalized.cycles.device === 'gpu' && !gpuTypes.includes(measuredDevice)) return null;
+  if (normalized.cycles.device === 'metal' && measuredDevice !== 'METAL') return null;
   return Math.ceil(benchmark.secondsPerFrame * width * height / (benchmark.width * benchmark.height) * normalized.cycles.samples / benchmark.samples * frameCount);
 }
 

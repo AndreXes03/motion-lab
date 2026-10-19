@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 import {spawn} from 'node:child_process';
 import {createHash} from 'node:crypto';
-import {access,cp,mkdir,readFile,readdir,writeFile,open,rm,copyFile,symlink,rename} from 'node:fs/promises';
+import {access,cp,mkdir,readFile,writeFile,open,rm,copyFile,symlink,rename} from 'node:fs/promises';
 import path from 'node:path';
 import {fileURLToPath,pathToFileURL} from 'node:url';
 import {createServer} from 'vite';
@@ -11,6 +11,7 @@ import ffprobe from 'ffprobe-static';
 import sharp from 'sharp';
 import {normalizeCyclesOptions,parseCyclesArgs,adaptations} from './cycles/options.mjs';
 import {findBlender} from './cycles/studio.mjs';
+import {sourceDigest,hashFile,isSourceArtifact} from './cycles/cache.mjs';
 import {gradePixels} from './cycles/finish.mjs';
 import {sampleRuntimeSound,renderProceduralAudio} from './cycles/audio.mjs';
 const ROOT=path.resolve(path.dirname(fileURLToPath(import.meta.url)),'..');
@@ -25,12 +26,12 @@ for(const [signal,code] of [['SIGINT',130],['SIGTERM',143]])process.once(signal,
 async function run(program,args,{cwd=ROOT,env=process.env,onEvent}={}){
  return new Promise((resolve,reject)=>{const child=spawn(program,args,{cwd,env});children.add(child);let stdout='',stderr='',pending='';child.stdout.on('data',d=>{stdout=(stdout+d).slice(-64000);pending+=d;const lines=pending.split('\n');pending=lines.pop();for(const line of lines){if(line.startsWith('MOTION_CYCLES ')){try{onEvent?.(JSON.parse(line.slice(14)));}catch(e){child.kill('SIGTERM');reject(e);}}}});child.stderr.on('data',d=>{stderr=(stderr+d).slice(-64000);});child.on('error',reject);child.on('close',code=>{children.delete(child);if(code!==0||interrupted)reject(Error(stderr.slice(-4000)||stdout.slice(-4000)||'Process stopped'));else resolve(stdout);});});
 }
-async function sourceDigest(directory){const chunks=[];async function visit(relative){for(const entry of (await readdir(path.join(directory,relative),{withFileTypes:true})).sort((a,b)=>a.name.localeCompare(b.name))){const name=path.join(relative,entry.name);if(entry.isDirectory())await visit(name);else if(!entry.isSymbolicLink())chunks.push(name,await readFile(path.join(directory,name)));}}for(const folder of ['src','project','public','scripts/cycles'])if(await exists(path.join(directory,folder)))await visit(folder);for(const name of ['scripts/cycles.mjs','package-lock.json'])chunks.push(name,await readFile(path.join(directory,name)));return hash(Buffer.concat(chunks.map(x=>typeof x==='string'?Buffer.from(x):x)));}
-async function freeze(destination){await mkdir(destination,{recursive:true});for(const folder of ['src','project','public','scripts/cycles'])if(await exists(path.join(ROOT,folder)))await cp(path.join(ROOT,folder),path.join(destination,folder),{recursive:true});for(const file of ['package.json','package-lock.json','scripts/cycles.mjs'])await copyFile(path.join(ROOT,file),path.join(destination,file));await symlink(path.join(ROOT,'node_modules'),path.join(destination,'node_modules'),'dir');await writeFile(path.join(destination,'cycles-bake.html'),'<!doctype html><meta charset="utf-8"><title>Motion Lab Cycles bake</title>');}
+async function freeze(destination){await mkdir(destination,{recursive:true});for(const folder of ['src','project','public','scripts/cycles'])if(await exists(path.join(ROOT,folder)))await cp(path.join(ROOT,folder),path.join(destination,folder),{recursive:true,filter:isSourceArtifact});for(const file of ['package.json','package-lock.json','scripts/cycles.mjs'])await copyFile(path.join(ROOT,file),path.join(destination,file));await symlink(path.join(ROOT,'node_modules'),path.join(destination,'node_modules'),'dir');await writeFile(path.join(destination,'cycles-bake.html'),'<!doctype html><meta charset="utf-8"><title>Motion Lab Cycles bake</title>');}
 async function bake(directory,frozen,options){
  for(const folder of ['baked','frames','geometries'])await mkdir(path.join(directory,folder),{recursive:true});
  server=await createServer({root:frozen,configFile:false,cacheDir:path.join(directory,'vite-cache'),server:{host:'127.0.0.1',port:0,hmr:false,watch:null},logLevel:'error'});await server.listen();
- browser=await chromium.launch({executablePath:process.env.CHROME_PATH??'/Applications/Google Chrome.app/Contents/MacOS/Google Chrome',headless:true});const page=await browser.newPage();const errors=[];page.on('pageerror',e=>errors.push(e.message));
+ const chrome=process.env.CHROME_PATH??(await exists('/Applications/Google Chrome.app/Contents/MacOS/Google Chrome')?'/Applications/Google Chrome.app/Contents/MacOS/Google Chrome':undefined);
+ browser=await chromium.launch({executablePath:chrome,headless:true});const page=await browser.newPage();const errors=[];page.on('pageerror',e=>errors.push(e.message));
  await page.exposeFunction('saveBake',async(name,contents)=>{if(!/^(scene\.json|export-report\.json|baked\/snapshot_\d{4,}\.json|geometries\/\d+\.json)$/.test(name))throw Error('Unexpected bake path');await writeFile(path.join(directory,name),contents);});
  await page.exposeFunction('reportBake',value=>emit('progress',value));
  await page.goto(`http://127.0.0.1:${server.httpServer.address().port}/cycles-bake.html`);
@@ -68,17 +69,20 @@ async function main(){
  const input=parseCyclesArgs(process.argv.slice(2));const snapshot=input.snapshot?JSON.parse(await readFile(input.snapshot,'utf8')):{};const options=normalizeCyclesOptions(input,snapshot);const blender=await findBlender(input.blender);
  const directory=options.out+'.cycles';manifestPath=options.out+'.job.json';await mkdir(path.dirname(options.out),{recursive:true});
  if(await exists(options.out)&&!options.resume)throw Error('Output already exists; choose a new --out or matching --resume on');
- const sourceHash=await sourceDigest(ROOT), fingerprint=hash(stable({...options,resume:false,out:null,workers:1,blender,sourceHash}));
+ const sourceHash=await sourceDigest(ROOT), audioHash=options.audio?await hashFile(options.audio):null, fingerprint=hash(stable({...options,resume:false,out:null,workers:1,blender,sourceHash,audioHash}));
  await mkdir(directory,{recursive:true});lockPath=path.join(directory,'lock.json');let lock;
  try{lock=await open(lockPath,'wx');}catch(e){if(e.code!=='EEXIST')throw e;const prior=JSON.parse(await readFile(lockPath,'utf8'));if(!Number.isInteger(prior.pid)||prior.pid<1)throw Error('Invalid existing Cycles lock; inspect output directory');try{process.kill(prior.pid,0);throw Error('Matching output is already rendering');}catch(probe){if(probe.code!=='ESRCH')throw probe;}await rm(lockPath);lock=await open(lockPath,'wx');}
  ownsLock=true;await lock.writeFile(JSON.stringify({pid:process.pid}));await lock.close();
  const recipePath=path.join(directory,'recipe.json');let baked=false;if(options.resume&&await exists(options.out)&&!await exists(recipePath))throw Error('Cannot resume an existing output without its matching Cycles recipe cache');
  if(await exists(recipePath)){const recipe=JSON.parse(await readFile(recipePath,'utf8'));if(!options.resume||recipe.fingerprint!==fingerprint)throw Error('Existing Cycles cache does not match this source and recipe. Choose a fresh output path.');baked=recipe.baked===true;}
+ const reuseFrames=options.resume&&baked;
  const frozen=path.join(directory,'source');
- manifest={schemaVersion:1,engine:'cycles',status:'running',path:options.out,sourceHash,fingerprint,sourceSnapshot:frozen,settings:options,adaptations,createdAt:new Date().toISOString(),frames:0,total:options.count};await updateManifest({phase:'freezing'});emit('progress',{phase:'freezing',percent:0});
+ if(baked&&await sourceDigest(frozen)!==sourceHash)throw Error('Frozen Cycles source is incomplete or changed. Choose a fresh output path.');
+ const priorManifest=reuseFrames&&await exists(manifestPath)?JSON.parse(await readFile(manifestPath,'utf8')):null;
+ manifest={schemaVersion:1,engine:'cycles',status:'running',path:options.out,sourceHash,fingerprint,sourceSnapshot:frozen,settings:options,adaptations,createdAt:new Date().toISOString(),frames:0,total:options.count};await updateManifest({phase:'freezing',...(priorManifest?.fingerprint===fingerprint?{device:priorManifest.device}:{}),...(baked?{sourceReport:JSON.parse(await readFile(path.join(directory,'export-report.json'),'utf8'))}:{})});emit('progress',{phase:'freezing',percent:0});
  await writeFile(options.out+'.project.json',JSON.stringify({schemaVersion:2,command:options.command,parameters:options.parameters,settings:{...options},config:{scene:options.scene,duration:13.9,width:options.width,height:options.height,fps:options.fps},start:options.start,end:options.start+options.duration,time:options.time},null,2));
  if(!baked){if(await exists(frozen))await rm(frozen,{recursive:true});await freeze(frozen);if(await sourceDigest(frozen)!==sourceHash)throw Error('Scene source changed while freezing; retry using a fresh output path');await writeFile(recipePath,JSON.stringify({fingerprint,baked:false}));await updateManifest({phase:'baking'});const sourceReport=await bake(directory,frozen,options);await updateManifest({sourceReport});await writeFile(recipePath,JSON.stringify({fingerprint,baked:true}));}
- const pending=[];let completed=0;for(let frame=1;frame<=options.count;frame++){if(options.resume&&await validFrame(path.join(directory,'frames',`frame-${String(frame).padStart(6,'0')}.png`),options))completed++;else pending.push(frame);}
+ const pending=[];let completed=0;for(let frame=1;frame<=options.count;frame++){if(reuseFrames&&await validFrame(path.join(directory,'frames',`frame-${String(frame).padStart(6,'0')}.png`),options))completed++;else pending.push(frame);}
  const started=Date.now();await updateManifest({phase:'rendering',frames:completed});
  let manifestWrites=Promise.resolve(),previewWrites=Promise.resolve();
  const publishPreview=async event=>{
@@ -90,8 +94,9 @@ async function main(){
   emit('preview',{stage:event.stage,width:event.width,height:event.height,samples:event.samples,phase:'refining',percent:25+event.stage*15});
  };
  const jobs=Array.from({length:Math.min(options.workers,pending.length)},(_,worker)=>pending.filter((_,i)=>i%options.workers===worker));
- await Promise.all(jobs.map((frames,worker)=>run(blender,['--background','--factory-startup','--python',path.join(frozen,'scripts/cycles/render.py')],{cwd:directory,env:{...process.env,MOTION_CYCLES_DIR:directory,MOTION_CYCLES_WORKER:String(worker),MOTION_CYCLES_FRAMES:JSON.stringify(frames)},onEvent:event=>{if(event.type==='preview'){previewWrites=previewWrites.then(()=>publishPreview(event));previewWrites.catch(()=>{});}else if(event.type==='frame'){completed++;emit('frame',{...event,frames:completed,total:options.count,percent:20+Math.floor(completed/options.count*70)});manifestWrites=manifestWrites.then(()=>updateManifest({frames:completed,device:event.device,percent:20+Math.floor(completed/options.count*70)}));}else emit(event.type,event);}})));
+ const workerResults=await Promise.allSettled(jobs.map((frames,worker)=>run(blender,['--background','--factory-startup','--python-exit-code','1','--python',path.join(frozen,'scripts/cycles/render.py')],{cwd:directory,env:{...process.env,PYTHONDONTWRITEBYTECODE:'1',MOTION_CYCLES_DIR:directory,MOTION_CYCLES_WORKER:String(worker),MOTION_CYCLES_FRAMES:JSON.stringify(frames)},onEvent:event=>{if(event.type==='preview'){previewWrites=previewWrites.then(()=>publishPreview(event));previewWrites.catch(()=>{});}else if(event.type==='frame'){completed++;emit('frame',{...event,frames:completed,total:options.count,percent:20+Math.floor(completed/options.count*70)});manifestWrites=manifestWrites.then(()=>updateManifest({frames:completed,device:event.device,percent:20+Math.floor(completed/options.count*70)}));manifestWrites.catch(()=>{});}else emit(event.type,event);}}).catch(error=>{for(const child of children)child.kill('SIGTERM');throw error;})));
  await manifestWrites;await previewWrites;
+ const failedWorker=workerResults.find(result=>result.status==='rejected');if(failedWorker)throw failedWorker.reason;
  for(let frame=1;frame<=options.count;frame++)if(!await validFrame(path.join(directory,'frames',`frame-${String(frame).padStart(6,'0')}.png`),options))throw Error('Incomplete or invalid Cycles frame '+frame);
  await updateManifest({phase:'encoding'});emit('progress',{phase:'encoding',frames:completed,total:options.count,percent:92});const sequence=await finishFrames(directory,options,frozen),temporary=options.out+'.part'+path.extname(options.out);
  let audioPath=options.audio,audioOffset=options.start;

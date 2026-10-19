@@ -22,7 +22,7 @@
     "test:controls:browser": "node scripts/test-adaptive-controls-browser.mjs",
     "test:controls:contract": "node scripts/test-scene-control-contract.mjs",
     "controls": "node scripts/controls.mjs",
-    "prebuild": "node scripts/test-commercial-brief.mjs && node scripts/test-launch-scene.mjs && node scripts/test-camera-lens.mjs && node scripts/test-scene-control-contract.mjs && node scripts/test-motion-workflow.mjs && node scripts/test-render-policy.mjs && node scripts/cycles/test.mjs && node scripts/test-browser-export.mjs && node scripts/test-workspace-model.mjs && node scripts/test-authored-motion-protocol.mjs && node scripts/test-motion-source-seek.mjs && node scripts/test-motion-curve-preview.mjs && node scripts/test-render-frame-view.mjs && node scripts/test-pulse-controls.mjs && node scripts/test-graphic-controls.mjs && node scripts/test-curve-interaction.mjs && node scripts/test-studio-update.mjs",
+    "prebuild": "node scripts/test-runtime-core.mjs && node scripts/test-finishing.mjs && node scripts/test-cli-offline.mjs && node scripts/test-render-cache.mjs && node scripts/cycles/test-runtime.mjs && node scripts/test-commercial-brief.mjs && node scripts/test-launch-scene.mjs && node scripts/test-camera-lens.mjs && node scripts/test-scene-control-contract.mjs && node scripts/test-motion-workflow.mjs && node scripts/test-render-policy.mjs && node scripts/cycles/test.mjs && node scripts/test-browser-export.mjs && node scripts/test-workspace-model.mjs && node scripts/test-authored-motion-protocol.mjs && node scripts/test-motion-source-seek.mjs && node scripts/test-motion-curve-preview.mjs && node scripts/test-render-frame-view.mjs && node scripts/test-pulse-controls.mjs && node scripts/test-graphic-controls.mjs && node scripts/test-curve-interaction.mjs && node scripts/test-studio-update.mjs",
     "test:controls:scenes": "node scripts/test-scene-tools-browser.mjs",
     "test:motion:workflow": "node scripts/test-motion-workflow.mjs",
     "test:render-policy": "node scripts/test-render-policy.mjs",
@@ -40,7 +40,9 @@
     "test:motion:fluid": "node scripts/test-fluid-editor-browser.mjs",
     "studio": "node scripts/launch-studio.mjs",
     "test:commercial": "node scripts/test-commercial-brief.mjs && node scripts/test-launch-scene.mjs && node scripts/test-commercial-integration.mjs",
-    "test:commercial:browser": "node scripts/test-asset-readiness.mjs"
+    "test:commercial:browser": "node scripts/test-asset-readiness.mjs",
+    "test:render-engines": "node scripts/test-runtime-core.mjs && node scripts/test-finishing.mjs && node scripts/test-cli-offline.mjs && node scripts/test-render-cache.mjs && node scripts/cycles/test-runtime.mjs && node scripts/test-temporal.mjs && node scripts/test-render-policy.mjs && node scripts/cycles/test.mjs && node scripts/test-browser-export.mjs",
+    "benchmark:finishing": "node scripts/benchmark-finishing.mjs"
   },
   "keywords": [
     "threejs",

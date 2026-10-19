@@ -1,4 +1,5 @@
 import {sceneRegistry} from '../scene-registry.js';
+import {createBrowserRecorderSession} from './browser-export-session.js';
 
 // The browser chooses an actual supported container. A WebM recording is never
 // renamed to MP4; the returned recorder MIME determines the download extension.
@@ -44,23 +45,33 @@ export function normalizeBrowserExportSettings(scene, settings = {}) {
 
 const abortError = () => new DOMException('Video export cancelled', 'AbortError');
 function checkAbort(signal){if(signal?.aborted)throw abortError();}
-function delay(milliseconds,signal){
+function delay(milliseconds,signal,session){
  checkAbort(signal);
  return new Promise((resolve,reject)=>{
-  const abort=()=>{clearTimeout(timer);signal.removeEventListener('abort',abort);reject(abortError());};
-  const timer=setTimeout(()=>{signal?.removeEventListener('abort',abort);resolve();},Math.max(0,milliseconds));
+  let done=false;
+  let unsubscribe=()=>{};
+  const finish=(error)=>{if(done)return;done=true;clearTimeout(timer);signal?.removeEventListener('abort',abort);unsubscribe();error?reject(error):resolve();};
+  const abort=()=>finish(abortError());
+  const timer=setTimeout(()=>finish(),Math.max(0,milliseconds));
   signal?.addEventListener('abort',abort,{once:true});
+  if(session)unsubscribe=session.onFailure(finish);
  });
 }
 
-export async function readRecordedVideoMetadata(blob) {
+export async function readRecordedVideoMetadata(blob,{signal}={}) {
+ checkAbort(signal);
  const video=document.createElement('video'),url=URL.createObjectURL(blob);
- try{return await new Promise(resolve=>{
-  const finish=()=>{clearTimeout(timeout);resolve({encodedDuration:Number.isFinite(video.duration)&&video.duration>0?video.duration:null,
+ try{return await new Promise((resolve,reject)=>{
+  let done=false;
+  const finish=error=>{if(done)return;done=true;clearTimeout(timeout);signal?.removeEventListener('abort',abort);video.onloadedmetadata=video.onerror=null;
+   if(error){reject(error);return;}resolve({encodedDuration:Number.isFinite(video.duration)&&video.duration>0?video.duration:null,
    encodedWidth:video.videoWidth || null,encodedHeight:video.videoHeight || null});};
-  const timeout=setTimeout(finish,1500);
-  video.onloadedmetadata=finish;video.onerror=finish;video.preload='metadata';video.src=url;
- });}finally{video.removeAttribute('src');video.load();URL.revokeObjectURL(url);}
+  const abort=()=>finish(abortError());
+  const timeout=setTimeout(()=>finish(),1500);
+  signal?.addEventListener('abort',abort,{once:true});
+  video.onloadedmetadata=()=>finish();video.onerror=()=>finish();video.preload='metadata';
+  try{video.src=url;}catch(error){finish(error);}
+ });}finally{video.removeAttribute('src');try{video.load();}catch{/* A failed media element still releases its URL. */}URL.revokeObjectURL(url);}
 }
 
 /** Real-time browser recording, with its own runtime and a frozen recipe.
@@ -76,9 +87,9 @@ export async function exportBrowserVideo({scene,parameters={},settings={},onProg
  checkAbort(signal);
  if(audioBuffer && audioStream)throw new Error('Choose an AudioBuffer or an audio stream, not both');
  const canvas=document.createElement('canvas');canvas.width=options.width;canvas.height=options.height;
- let runtime,stream,recorder,audioContext,audioSource,recordingStopped,recorderError;
- const ownedAudioTracks=[],chunks=[];
- let byteLength=0,framesRendered=0,droppedFrameSlots=0,recordingStarted=0,recordingWallSeconds=0;
+ let runtime,stream,recorder,session,audioContext,audioSource;
+ const ownedAudioTracks=[];
+ let framesRendered=0,droppedFrameSlots=0,recordingStarted=0,recordingWallSeconds=0;
  const report=data=>onProgress({...data,width:options.width,height:options.height,fps:options.fps});
  try{
   // Create/resume while the export button still supplies user activation.
@@ -98,6 +109,7 @@ export async function exportBrowserVideo({scene,parameters={},settings={},onProg
   if(!videoTrack)throw new Error('The browser did not create a canvas video track');
   if(typeof videoTrack.requestFrame!=='function'){
    stream.getTracks().forEach(track=>track.stop());stream=canvas.captureStream(options.fps);videoTrack=stream.getVideoTracks()[0];
+   if(!videoTrack)throw new Error('The browser did not create a canvas video track');
   }
   if(audioBuffer){
    const destination=audioContext.createMediaStreamDestination();
@@ -106,27 +118,33 @@ export async function exportBrowserVideo({scene,parameters={},settings={},onProg
   }else if(audioStream){
    const tracks=audioStream.getAudioTracks?.();
    if(!tracks?.length||tracks.some(track=>track.readyState==='ended'))throw new Error('The requested audio stream has no live audio track');
-   ownedAudioTracks.push(...tracks.map(track=>track.clone()));
+   for(const track of tracks)ownedAudioTracks.push(track.clone());
   }
   for(const track of ownedAudioTracks)stream.addTrack(track);
-  for(const mimeType of capabilities.mimeTypes){
-   try{recorder=new MediaRecorder(stream,{mimeType,videoBitsPerSecond:Math.round(options.bitrateMbps*1e6),audioBitsPerSecond:192000});break;}catch{/* Try the next genuinely supported container. */}
+  let selectedMimeType;
+  for(const candidate of capabilities.mimeTypes){
+   try{
+    recorder=new MediaRecorder(stream,{mimeType:candidate,videoBitsPerSecond:Math.round(options.bitrateMbps*1e6),audioBitsPerSecond:192000});
+    session=createBrowserRecorderSession(recorder);
+    checkAbort(signal);recorder.start(250);selectedMimeType=candidate;break;
+   }catch(error){
+    if(recorder?.state && recorder.state!=='inactive')try{recorder.stop();}catch{/* The failed recorder cannot be reused. */}
+    session?.dispose();session=null;
+    if(error?.name==='AbortError')throw error;
+    recorder=null; // A supported MIME can still fail during construction or start.
+   }
   }
   if(!recorder)throw new Error('This browser could not start a video recorder');
-  const mimeType=recorder.mimeType || capabilities.mimeType,extension=extensionFor(mimeType);
-  recordingStopped=new Promise(resolve=>{
-   recorder.ondataavailable=event=>{if(event.data?.size){chunks.push(event.data);byteLength+=event.data.size;if(byteLength>256*1024*1024){recorderError=new Error('Browser recording exceeded the 256 MB memory limit');if(recorder.state!=='inactive')recorder.stop();}}};
-   recorder.onerror=event=>{recorderError=event.error || new Error('Browser video recording failed');resolve();};
-   recorder.onstop=resolve;
-  });
-  checkAbort(signal);
-  recorder.start(250);recordingStarted=performance.now();
+  const mimeType=recorder.mimeType || selectedMimeType,extension=extensionFor(mimeType);
+  recordingStarted=performance.now();checkAbort(signal);
   audioSource?.start(0,options.start,options.duration);
-  videoTrack.requestFrame?.();framesRendered=1;
+  if(typeof videoTrack.requestFrame==='function')videoTrack.requestFrame();
+  else runtime.render(options.start,{width:options.width,height:options.height,parameters:snapshot,previewQuality:'full'});
+  framesRendered=1;
   report({phase:'recording',percent:0,mimeType,extension,framesRendered,droppedFrameSlots});
   let lastSlot=0;
   while(true){
-   checkAbort(signal);if(recorderError)throw recorderError;
+   checkAbort(signal);if(session.error)throw session.error;
    const elapsed=(performance.now()-recordingStarted)/1000;
    if(elapsed>=options.duration)break;
    const slot=Math.floor(elapsed*options.fps);
@@ -137,16 +155,17 @@ export async function exportBrowserVideo({scene,parameters={},settings={},onProg
     report({phase:'recording',percent:Math.min(99,elapsed/options.duration*100),mimeType,extension,framesRendered,droppedFrameSlots});
    }
    const nextTime=Math.min(options.duration,(lastSlot+1)/options.fps)*1000;
-   await delay(Math.max(0,nextTime-(performance.now()-recordingStarted)),signal);
+   await delay(Math.max(0,nextTime-(performance.now()-recordingStarted)),signal,session);
   }
   recordingWallSeconds=(performance.now()-recordingStarted)/1000;
   droppedFrameSlots+=Math.max(0,Math.ceil(options.duration*options.fps)-1-lastSlot);
-  if(recorder.state!=='inactive')recorder.stop();await recordingStopped;
-  checkAbort(signal);if(recorderError)throw recorderError;
-  const blob=new Blob(chunks,{type:mimeType});
+  checkAbort(signal);if(session.error)throw session.error;
+  session.stop();await session.waitForStop(30000,signal);
+  checkAbort(signal);if(session.error)throw session.error;
+  const blob=new Blob(session.chunks,{type:mimeType});
   if(!blob.size)throw new Error('The browser produced an empty video');
   report({phase:'finalizing',percent:99,mimeType,extension,framesRendered,droppedFrameSlots});
-  const metadata=await readRecordedVideoMetadata(blob);checkAbort(signal);
+  const metadata=await readRecordedVideoMetadata(blob,{signal});checkAbort(signal);
   const result={blob,mimeType,extension,filename:`framevolve-${chosen}.${extension}`,mode:'realtime',renderer:'threejs',
    width:options.width,height:options.height,fpsRequested:options.fps,durationRequested:options.duration,
    recordingWallSeconds,framesRendered,droppedFrameSlots,hasAudio:ownedAudioTracks.length>0,...metadata};
@@ -154,6 +173,7 @@ export async function exportBrowserVideo({scene,parameters={},settings={},onProg
  }finally{
   try{audioSource?.stop();}catch{/* A source may already have reached its buffer end. */}
   if(recorder?.state!=='inactive'&&recorder?.state){try{recorder.stop();}catch{/* Already stopped by an encoder error. */}}
+  session?.dispose();
   stream?.getTracks().forEach(track=>track.stop());ownedAudioTracks.forEach(track=>track.stop());
   if(audioContext)await audioContext.close().catch(()=>{});
   runtime?.dispose?.();canvas.width=canvas.height=1;

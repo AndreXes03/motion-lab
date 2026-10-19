@@ -9,6 +9,7 @@ with open(os.path.join(HERE,'scene.json')) as f:data=json.load(f)
 options=data['options']
 sys.path.insert(0, os.path.dirname(__file__))
 from progressive import preview_stages
+from devices import select_device
 def emit(type,**values):print('MOTION_CYCLES '+json.dumps({'type':type,**values}),flush=True)
 bpy.ops.wm.read_factory_settings(use_empty=True)
 scene=bpy.context.scene;scene.render.engine='CYCLES';scene.cycles.samples=options['samples'];scene.cycles.use_adaptive_sampling=True;scene.cycles.adaptive_threshold=.015;scene.cycles.use_denoising=options['denoise'];scene.cycles.max_bounces=options['bounces']
@@ -16,18 +17,8 @@ scene.render.resolution_x=options['width'];scene.render.resolution_y=options['he
 scene.render.image_settings.file_format='PNG';scene.render.image_settings.color_mode='RGBA' if options.get('background')=='transparent' else 'RGB';scene.render.film_transparent=options.get('background')=='transparent';scene.render.image_settings.color_depth='8';scene.render.use_motion_blur=options['motionBlur'];scene.render.motion_blur_shutter=options['shutter']
 scene.render.use_persistent_data=True
 scene.view_settings.view_transform='Filmic';scene.view_settings.look='Medium High Contrast';scene.view_settings.exposure=math.log2(1.05)
-device='CPU'
-if options['device']!='cpu':
- try:
-  p=bpy.context.preferences.addons['cycles'].preferences;p.compute_device_type='METAL';p.get_devices();names=[]
-  for d in p.devices:
-   d.use=d.type=='METAL'
-   if d.use:names.append(d.name)
-  if names:scene.cycles.device='GPU';device='Metal: '+', '.join(names)
-  elif options['device']=='metal':raise RuntimeError('No Metal device is available')
- except Exception as e:
-  if options['device']=='metal':raise
-  emit('progress',phase='device',warning=str(e),device='CPU')
+device,device_warning=select_device(bpy.context.preferences.addons['cycles'].preferences,scene,options['device'])
+if device_warning:emit('progress',phase='device',warning=device_warning,device=device)
 def matrix(a):return Matrix([a[i:i+4] for i in range(0,16,4)]).transposed()
 images={}
 def image(id,role):
@@ -176,6 +167,12 @@ for sample in range(data['report']['snapshotCount']):
         obj=lights[key];track(obj,'hide_render',[0],frame);ld=obj.data;track(ld,'color',light['color'],frame);track(ld,'energy',[light['intensity']*(light['width']*light['height']*math.pi if type=='AREA' else 4*math.pi if type=='POINT' else 1)],frame);animate_transform(obj,light['matrix'],frame)
     previous_lights=visible_lights
     if sample%120==0:emit('progress',phase='importing',sample=sample,totalSamples=data['report']['snapshotCount'])
+def create_curve(owner, path, channel):
+    action=owner.animation_data.action
+    # Blender 5 removes Action.fcurves; the current helper also assigns its slot.
+    if hasattr(action,'fcurve_ensure_for_datablock'):
+        return action.fcurve_ensure_for_datablock(owner,path,index=channel)
+    return action.fcurves.new(path,index=channel)
 emit('progress',phase='animation',tracks=len(tracks))
 for t in tracks.values():
     owner=t['owner'];points=t['points'];path=t['path']
@@ -188,7 +185,7 @@ for t in tracks.values():
     owner.animation_data_create()
     if not owner.animation_data.action:owner.animation_data.action=bpy.data.actions.new(owner.name+' animation')
     for channel in range(len(points[0][1])):
-        fc=owner.animation_data.action.fcurves.new(path,index=channel);fc.keyframe_points.add(len(points))
+        fc=create_curve(owner,path,channel);fc.keyframe_points.add(len(points))
         co=array('f',(v for frame,values in points for v in (frame,values[channel])));fc.keyframe_points.foreach_set('co',co)
         for k in fc.keyframe_points:k.interpolation='CONSTANT' if path=='hide_render' else 'LINEAR'
         fc.update()
