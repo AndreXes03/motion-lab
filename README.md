@@ -14,6 +14,8 @@ A free-to-use, source-available studio for making editable 2D, hybrid and 3D mot
 
 Build a scene with your coding agent. Shape its motion, lens, materials, lighting and grade in Framevolve. The agent works on the same scene code and recipe; the studio gives you a visual way to direct the next pass.
 
+**Launching a product?** Start with the [founder guide](docs/FOUNDER_START.md). The included commercial skill helps your coding agent ask the essential questions, recommend a direction, show one real product benefit and build an editable first preview. You do not need to specify cameras, animation curves or rendering settings.
+
 [![PULSE — Blender Cycles](demo/pulse-poster.jpg)](https://andrexes03.github.io/motion-lab/demo/pulse-1080.mp4)
 
 PULSE · Blender Cycles · 1080p · 30 fps · 12.9 seconds. Click the frame to watch the film.
@@ -46,7 +48,7 @@ The public web demo opens a small 3D study at 640 × 360. Try the materials, cam
 
 In the local Studio, Three.js previews 3D and Canvas previews procedural 2D. Auto, Fast, Balanced and Sharp change only interactive preview quality. They do not change saved parameters or final render settings.
 
-The local app renders videos with Three.js as its standard route. Blender Cycles is an optional local path currently supported for PULSE; it is scene-specific and requires a successful local capability check. Other scenes need their own conversion and visual review. Mixed-render jobs combine prepared local image or frame-sequence inputs through an explicit compositing plan in Studio; choosing “mixed” alone does not create those inputs. See [renderer selection](docs/RENDERER_SELECTION.md) and [compositing](docs/COMPOSITING.md).
+The local app renders videos with Three.js as its standard route. Blender Cycles is an optional local path currently supported for PULSE and LOOP; it is scene-specific and requires a successful local capability check. Other scenes need their own conversion and visual review. Mixed-render jobs combine prepared local image or frame-sequence inputs through an explicit compositing plan in Studio; choosing “mixed” alone does not create those inputs. See [renderer selection](docs/RENDERER_SELECTION.md) and [compositing](docs/COMPOSITING.md).
 
 Framevolve also supports procedural music and movement-driven 2D or 3D sound effects. Read the [sound design guide](docs/SOUND_DESIGN.md).
 
@@ -84,6 +86,7 @@ Video renders go to Downloads. Windows and Linux have not been validated. Read [
 | Render and compositing workflow | [Usage](docs/USAGE.md) · [Compositing](docs/COMPOSITING.md) · [Scripts](scripts/README.md) |
 | Sound | [Sound design](docs/SOUND_DESIGN.md) |
 | Coding-agent workflow | [Agent workflow](docs/AGENT_WORKFLOW.md) · [Product-film skill](.agents/skills/motion-lab-product-film/SKILL.md) |
+| First commercial for your product | [Founder guide and starter prompt](docs/FOUNDER_START.md) |
 | Checks and limitations | [Validation](docs/VALIDATION.md) |
 | Licenses | [Third-party assets](THIRD_PARTY.md) |
 

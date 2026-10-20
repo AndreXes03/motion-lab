@@ -1,52 +1,47 @@
 ---
 name: motion-lab-product-film
-description: Build and refine tactile product films in this Three.js Motion Lab repository, from model construction and impact choreography to verified web and social exports.
+description: Create or refine Framevolve product commercials and founder launch videos, from a beginner-friendly brief and visible product proof to varied 2D/3D shots, editable motion and verified local exports.
 ---
 
-# Motion Lab product films
+# Framevolve product commercials
 
-Work in the existing renderer. Preserve the user's selected objects, palette, edit and publication scope. Use `src/engine/studio-baseline.js`, `studio-lookdev.js` and `composite.js`; read [3D look development](../../../docs/3d-lookdev.md) for their current interfaces. Never promise path-traced or reference-equivalent quality from this raster pipeline.
+Act as a director and an implementer. Turn a founder's product, audience and desired action into a film that makes one benefit visible. The founder should not have to specify lenses, easing curves, render engines or lighting rigs to get a strong first version.
 
-## Start from implemented components
+Preserve supplied product identity, approved decisions and publication scope. These lessons come from iterative product-commercial work, including LOOP. Generalize its craft; choose its high-energy style only when it fits the brief. A quiet, trustworthy service and a bold hardware launch need different rhythms.
 
-For a new product scene, read [the product kit](../../../docs/PRODUCT_KIT.md) and copy `src/scenes/product-starter.js`. Import through `src/product-kit/index.js`. Prefer existing film assets (`camera`, `turntable`, `headphones`) or configurable optical cells, rotary controls and housing panels before constructing another bespoke model. The kit combines stage lighting/materials/compositing with independent absolute-time camera and impact motion. Its starter is available in the studio and CLI as `starter`.
+## Load the relevant guidance
 
-Use a scene-owned material kit and its `variant()` function; keep shared texture ownership explicit. Reuse functions, not the absolute shot times or scene-specific object names from PULSE/CAMERA. Inspect the copied starter's real output before adapting it; the kit does not guarantee art direction automatically. For changes to shared code, run `npm run test:product-kit` and the targeted browser check. Do not rerender unchanged full films just to test a helper.
+- **New commercial, launch video or incomplete founder brief:** read [Founder discovery](references/founder-discovery.md). Reuse known answers; ask only missing consequential questions.
+- **Storyboards, art direction, motion or a weak first cut:** read [Commercial direction](references/commercial-direction.md). It covers shot variety, pacing, product-driven graphics, typography, UI demonstrations, materials, music and endings.
+- **Scene construction, render choices, refinement or delivery:** read [Production and review](references/production-and-review.md) and the relevant engine documentation it links.
+- **Small correction to an existing film:** keep the current brief and cut. Load only the affected guidance; do not restart discovery or add a new concept.
 
-## Spend effort where it shows
+The beginner-facing entry is [Start a founder commercial](../../../docs/FOUNDER_START.md). This is a workflow with the user's coding agent, not an in-app AI wizard or a promise of one-click generation.
 
-Identify a small set of visible weaknesses before editing. Compare the same frame and framing before/after. More polygons, samples or bloom cannot repair a poor silhouette or unconvincing construction.
+## Working loop
 
-- Make the object understandable in layers: load-bearing chassis, housing, gasket, control, optic/display, connectors. Give each a plausible thickness, edge treatment and assembly path.
-- Add components that survive the final shot size. A visible recessed connector, open speaker basket or curved lens cell is more useful than hundreds of invisible screws. Use instancing for repeated parts.
-- Match surface response to function: matte molded ABS, rubber seals, satin plastic, brushed metal, ceramic, clear optics. Set texture frequency in object scale. Small normal-map relief is not displacement; use geometry for silhouette changes and real openings.
-- Shape glossy reflections with lighting and environment cards. Keep broad faces partly dark; check neutral rubber separately from colored rims. Avoid solving unreadable metal by increasing bloom globally.
+1. **Distill the brief.** Establish who should care, the one takeaway, a demonstrable product moment and one next action. Separate supplied facts, creative assumptions and unresolved claims. For “you choose,” recommend suitable defaults and proceed on reversible work.
+2. **Make a compact direction card.** State the hook, visual proof, tone, format, music direction and constraints in plain language. Then make a shot plan: purpose, dominant subject, framing, motion, light/material signature and transition into the next shot. Do not make the founder direct every shot.
+3. **Prove the look cheaply.** Show representative frames and a short motion passage, including the hardest close-up or UI-to-result interaction. Keep the footage understandable with sound muted. A contact sheet reveals repetitive compositions; it cannot prove good timing.
+4. **Build with control.** Work in the installed renderer and existing project. Use deterministic absolute-time animation, implemented scene controls and an authored tool layout. Expose useful curve and shot parameters for refinement without overwhelming the normal workspace.
+5. **Review against the brief and recurring feedback.** Fix meaning, repetition and framing before surface polish or sample count. Verify the full compressed film and the actual delivery destination.
 
-## Choreograph the shot, not isolated sliders
+## Quality baseline
 
-Use wide camera travel and close foreground parallax when the framing calls for energy. A fisheye pass bends the frame but does not replace a real camera move. Apply `fisheye`, `edgeSoftness`, restrained chromatic aberration and vignette selectively; preserve the optical center and graphic overlays. Check all intermediate close-passage frames for intersections and cropped subjects.
+- A strong opening shows a product, problem or result immediately. For a short social launch, aim for a clear hook within the first 3–4 seconds and an early visual payoff; adapt to the message and supplied edit.
+- Different shots must reveal different things. A new background behind the same front three-quarter orbit does not create variety.
+- Energy has shape: acceleration near a cut, readable movement between accents, a deliberate recovery. Continuous life can come from a light or reflection; it does not require every element to move quickly.
+- Graphics inherit something meaningful from the product: its silhouette, path, mechanism, data or visible outcome. Decorative complexity alone is not a product demonstration.
+- Simplified UI shows **action → visible consequence**. Bind the right effect to the right control. A Finish action changes finish; a Motion action changes motion.
+- Materials, geometry, framing and light establish quality. Bloom, blur, grain and high sampling cannot rescue weak construction or obscure a defect.
+- Use typography and closing branding with restraint. Preserve the client's exact logo; derive an ending from the film's motion when useful. Brand-only and brand-plus-CTA endings serve different briefs.
+- Keep the approved track and decisions unless asked to change them. Match actual musical accents, not just a guessed BPM. Review each alternate edit independently.
+- Report configured, previewed, rendering, exported and verified as different states. A finished file, a visually reviewed film and the user's creative approval are separate facts.
 
-Place the velocity peak at the cut or collision. Match outgoing/incoming screen direction and scale; avoid stopping both shots at the edit. Prefer an accelerating power/exponential approach for a hit, followed by a short damped recoil. Keep spring overshoot on the allowed side of a contact constraint. Coupled parts share a motion phase. Reset transforms from authored values at every sampled time so arbitrary seeking remains deterministic.
+## Repository contract
 
-Measure the whole moving assembly for clearances, including hidden support parts. If motion is constrained animation, describe it as such. Keep floors in penumbra or use `shadowGroundMaterial`; do not expose an arbitrary finite slab. Decorative particles need a clear purpose and depth hierarchy; omit them when they obscure the hero mechanism.
+Read [AGENTS.md](../../../AGENTS.md) for scene controls, animation groups, renderer intent and validation. For new 3D scenes, start with [the product kit](../../../docs/PRODUCT_KIT.md) and `src/scenes/product-starter.js`; reuse functions and materials, not another film's absolute shot times or identity.
 
-## Efficient review and delivery
+Check [renderer support](../../../docs/RENDERER_SELECTION.md) against the installed code and local capability. Three.js/Canvas preview is not Cycles. New products do not automatically inherit a validated Cycles converter from an existing scene. Do not claim photoreal or path-traced output until the actual exported result has been inspected.
 
-1. Render a few same-time clean/clay and beauty frames, then a short 540p clip around the change. `scripts/quality.mjs --scene camera` or `pulse` covers important macro/assembly poses. Inspect fast intermediate frames, not only endpoints.
-2. Freeze a source snapshot before a long export. `--quality premium` is 1080p/48 samples; `--quality supersampled` is 1440p/48 samples for a clean downsample to 1080p. Both support matching-frame resume. See the [iteration workflow](../../../docs/3d-lookdev.md#shorter-iteration-loop). Higher temporal sampling smooths motion blur; shutter angle sets its length.
-3. Render with `--sound off` when preserving an existing mix. Mux the explicitly selected soundtrack without altering picture color. Stock music is separately licensed: keep standalone source tracks out of Git. Start music-led mixes with only a few short contact cues well below the music; do not fill every cut with a whoosh. Review the SFX stem separately, then in the mix. Loudness measurements do not establish good sound design.
-4. Use `scripts/export-social.mjs --video master.mp4 --out x.mp4 --target x` for a compatible H.264/AAC delivery, or `--target web` for a higher-quality website copy. This is an encode, not an improvement to scene geometry. Keep the larger master.
-5. Validate frame count, duration, audio, resolution, complete decode and arbitrary seek. Inspect the final compressed picture. Technical validation is distinct from creative approval; follow the user's current publication authorization, do not invent a new approval step.
-6. `scripts/prepare-demo.mjs` can validate and install PULSE/CAMERA master files with posters, hashes and backups. It does not upload. Preserve unrelated films and keep public source free of private reference material.
-
-A useful handoff states what changed visibly, which export was inspected, any remaining limitation, and which destinations were actually updated. Do not describe a queued job or a preview as a finished master.
-
-## Optional photorealism stills
-
-For an explicitly requested photorealism test or hero still, read [Photorealism](../../../docs/PHOTOREALISM.md). Reuse a product-kit asset and compare the same scene through `scripts/photoreal.mjs`; start at 640 × 480 / 64 samples, then export the selected still at 1440 × 1080 / 1024 samples. For an explicitly requested high-quality still, use 2880 × 2160 / 2048 samples after approving the small framing test. Install its pinned dependencies separately. Inspect both actual exported files and the metrics; a sample counter alone does not prove the captured image came from path tracing. Keep the explicit canvas presentation, bounded GPU readback checkpoints and duplicate-image guard. The sample counter can advance before queued GPU work completes; do not publish timing without those checkpoints.
-
-Art-direct the still before raising sample count: choose a close foreground feature, useful wide-angle perspective, distinct functional finishes and a controlled warm/cool light hierarchy. Keep extra model details in the experimental instance. Avoid a generic wide catalog shot when a dramatic macro was requested.
-
-Inspect bevels, long perforated-panel triangles, screen legibility and every new surface at crop scale. Do not bend a sparsely triangulated perforated plate: it produces visible ridges. Do not claim a glossy emissive display is a validated refractive glass simulation.
-
-Report the clearcoat adaptation, shader/material limits and remaining noise. Do not silently replace the working film renderer or claim animation, glass, motion-blur or production compositing parity. Preserve source material and texture ownership. Publish only within the user's authorized scope; embed a verified public image URL when mobile access is requested.
+Keep unrelated scenes, approved masters and private references intact. Expensive renders follow the user's quality/time budget and existing authorization; routine reversible improvements do not need repeated permission. This skill does not grant permission to publish, purchase assets, generate paid music or message anyone.

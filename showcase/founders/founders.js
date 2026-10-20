@@ -1,4 +1,5 @@
 import {films, publishedFilms} from './films.js';
+import {buildFounderBrief} from './brief.js';
 
 // The same static files work in the repository preview and at /motion-lab/founders/.
 const localPreview = location.pathname.includes('/showcase/founders');
@@ -175,18 +176,7 @@ briefForm.addEventListener('submit', event => {
     input.setCustomValidity(value(name) ? '' : 'Please add a few words.');
     if (!input.reportValidity()) return;
   }
-  briefOutput.value = [
-    'Help me create a launch video in Framevolve.',
-    '',
-    `Product: ${value('product')}`,
-    `Main message: ${value('message')}`,
-    `Look and feel: ${value('vibe')}`,
-    `Closing call to action: ${value('cta')}`,
-    `Reference: ${value('reference') || 'No reference yet. Suggest a direction based on the product and message.'}`,
-    '',
-    'I will provide my logo and product screenshots separately. Ask me for any missing assets or audience details before building.',
-    'Start by proposing a simple story. Keep the product and its message central, and give me focused controls to refine the result in Framevolve.'
-  ].join('\n');
+  briefOutput.value = buildFounderBrief(Object.fromEntries(data));
   document.querySelector('#brief-result').hidden = false;
   copyStatus.textContent = '';
   briefOutput.focus({preventScroll: true});
