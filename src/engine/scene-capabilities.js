@@ -13,6 +13,21 @@ const finish=[
  gain('bloomStrength','Highlight bloom',0,8,.05,'Compositing','Gain of the authored highlight bloom. Zero disables bloom.')
 ];
 export const studyControlDefinitions={
+ launch:[
+  gain('typeScale','Type size',.75,1.2,.05,'Graphics','Size of the commercial headlines; text remains fitted within its layout.'),
+  gain('screenshotScale','Screen size',.65,1.3,.05,'Graphics','Scale of screenshot content inside the product card.'),
+  {...gain('screenshotPanX','Screen horizontal position',-1,1,.01,'Graphics','Horizontal offset of screenshot content inside the product card.'),default:0},
+  {...gain('screenshotPanY','Screen vertical position',-1,1,.01,'Graphics','Vertical offset of screenshot content inside the product card.'),default:0},
+  {...gain('revealSpeed','Reveal speed',.5,2,.05,'Motion','Speed of entrances inside each shot, preserving the edit.'),category:'motion'},
+  {...gain('motionStrength','Movement',0,1.5,.05,'Motion','Travel and rotation of the graphic elements.'),category:'motion'},
+  gain('framingZoom','Composition zoom',.8,1.2,.01,'Lens','Scale of the 2D composition; no perspective distortion.'),
+  {...gain('framingX','Framing horizontal',-1,1,.01,'Lens','Horizontal translation of the 2D composition.'),default:0},
+  {...gain('framingY','Framing vertical',-1,1,.01,'Lens','Vertical translation of the 2D composition.'),default:0},
+  gain('cameraMotion','Camera movement',0,1.5,.05,'Lens','Strength of the authored 2D framing motion.'),
+  gain('backgroundGlow','Backdrop glow',0,2,.05,'Appearance','Strength of the flat radial backdrop gradient.'),
+  gain('cardShadow','Card shadow',0,2,.05,'Appearance','Strength of the product card shadow.'),
+  gain('detailOpacity','Graphic detail',0,1,.05,'Compositing','Opacity of decorative rules and grid details.')
+ ],
  procedural:[
   gain('typeScale','Type size',.7,1.2,.05,'Graphics','Scale of headlines; interface labels retain their size.'),
   gain('shapeScale','Composition size',.6,1.4,.05,'Graphics','Scale of the generated shapes around the canvas centre.'),

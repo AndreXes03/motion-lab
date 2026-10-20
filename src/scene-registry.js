@@ -3,6 +3,7 @@ import {studyControlDefinitions} from './engine/scene-capabilities.js';
 import {config} from './config.js';
 /** Browser/Node-safe scene metadata shared by viewer, CLI and export service. */
 export const sceneRegistry={
+ launch:{duration:24,title:'LAUNCH / Your product story',kind:'2d',shutterAngle:0,cuts:[0,4,9,14,19,24],source:'launch-demo.js'},
  starter:{duration:6,title:'Product starter',kind:'3d',shutterAngle:270,cuts:[0,6],source:'product-starter.js'},
  objects:{duration:10,title:'Objects in play'},procedural:{duration:10,title:'Procedural motion'},pop:{duration:10,title:'Pop motion'},
  dot:{shutterAngle:72,duration:16,title:'DOT / Character study',kind:'hybrid',cuts:[0,6.32,16],source:'mascot-demo.js'},
@@ -11,11 +12,14 @@ export const sceneRegistry={
  replay:{duration:15,title:'REPLAY / Editorial motion',kind:'hybrid',cuts:[0,2.4,5.4,7.7,9.4,11.4,13.2],source:'replay-demo.js'}
 };
 export const sceneIds=Object.keys(sceneRegistry);
-export const isNewScene=id=>['dot','pulse','camera','replay','starter'].includes(id);
+export const isNewScene=id=>['dot','pulse','camera','replay','starter','launch'].includes(id);
 export function sceneConfig(id='objects'){id=canonicalScene(id);if(!sceneRegistry[id])throw Error('Unknown scene: '+id);return {...config,...sceneRegistry[id],scene:id,id};}
 export const newStudioProjects=Object.entries(sceneRegistry).filter(([id])=>isNewScene(id)).map(([id,s])=>({id,title:s.title,kind:s.kind,subtitle:'Editable reference study',duration:s.duration,controls:studyControlDefinitions[id]??[],presets:[{id:'original',label:'Original',values:{}}],moments:s.cuts.filter(t=>t<s.duration).map((time,i)=>({time,label:String(i+1).padStart(2,'0')}))}));
 
 const starter=newStudioProjects.find(p=>p.id==='starter');
+const launch=newStudioProjects.find(p=>p.id==='launch');
+launch.subtitle='Your logo, screenshots and message. One editable 24-second commercial.';
+launch.moments=[{time:2,label:'Hook'},{time:6,label:'Product'},{time:11,label:'Feature 2'},{time:16,label:'Feature 3'},{time:21,label:'Call to action'}];
 starter.subtitle='Reusable materials, lighting, hardware and motion';
 starter.controls=[
  {id:'accent',label:'Control color',type:'color',default:'#d7f56b',help:'Satin plastic controls.'},

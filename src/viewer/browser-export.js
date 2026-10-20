@@ -91,6 +91,7 @@ export async function exportBrowserVideo({scene,parameters={},settings={},onProg
   report({phase:'preparing',percent:0});
   const {createRuntime}=await import('../engine/runtime.js');checkAbort(signal);
   runtime=createRuntime(canvas,{initialScene:chosen});await runtime.ready;checkAbort(signal);
+  await runtime.prepare(snapshot);checkAbort(signal);
   runtime.render(options.start,{width:options.width,height:options.height,parameters:snapshot,previewQuality:'full'});
   stream=canvas.captureStream(0);
   let videoTrack=stream.getVideoTracks()[0];

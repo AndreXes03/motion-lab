@@ -1,4 +1,5 @@
 import {migrateLegacyScene} from '../src/engine/legacy-scene.js';
+import {createCommercialBrief,validateCommercialBrief} from '../src/engine/commercial-brief.js';
 import {studyControlDefinitions} from '../src/engine/scene-capabilities.js';
 import {resolveControlManifest} from '../src/engine/control-catalog.js';
 import {validateParameterAnimation} from '../src/engine/parameter-animation.js';
@@ -34,7 +35,7 @@ async function publishDownload(job) {
 }
 const MAX_BODY = 2 * 1024 * 1024;
 const MAX_JSON_DEPTH = 32;
-const ALLOWED_PARAMETERS = new Set(['scene', 'look', 'motion', 'graphics', 'studio', 'display', 'shell', 'knob', 'objectMotion', 'objectEdits', 'review', 'inspect', 'sound', 'animation', 'product', 'sceneControls', 'renderPolicy']);
+const ALLOWED_PARAMETERS = new Set(['scene', 'look', 'motion', 'graphics', 'studio', 'display', 'shell', 'knob', 'objectMotion', 'objectEdits', 'review', 'inspect', 'sound', 'animation', 'product', 'sceneControls', 'renderPolicy', 'commercial']);
 const LOOK_SECTIONS = {
   camera: new Set(['fov','fovScale','distance','keepSubjectSize']),
   lighting: new Set(['preset', 'key', 'fill', 'rim', 'environment', 'keyPosition', 'keyTarget', 'rimPosition', 'keyAngle', 'keyPenumbra', 'keyColor', 'rimColor']),
@@ -112,6 +113,8 @@ export async function validateStudioParameters(input) {
   validateMotion(motion, new Set(Object.keys(defaults[1].tracks)),sceneConfig(scene).duration);
 
   const normalized = { ...structuredClone(input), scene, look, motion };
+  if (input.commercial !== undefined && scene !== 'launch') throw new Error('commercial is only supported for launch');
+  if (scene === 'launch') normalized.commercial = input.commercial === undefined ? createCommercialBrief() : validateCommercialBrief(input.commercial);
   if(input.animation!==undefined)normalized.animation=validateParameterAnimation(input.animation,scene);
   if(input.renderPolicy!==undefined)normalized.renderPolicy=validateRenderPlan(input.renderPolicy);
   if(input.sceneControls!==undefined){

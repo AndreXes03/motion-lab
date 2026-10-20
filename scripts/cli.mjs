@@ -16,7 +16,7 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
-const CHROME = '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome';
+const CHROME = process.env.CHROME_PATH || (process.platform==='darwin' ? '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome' : undefined);
 let DEFAULT = config;
 
 function output(type, payload = {}) { process.stdout.write(`${JSON.stringify({ type, ...payload })}\n`); }
@@ -242,6 +242,7 @@ async function main() {
   try {
     browser = await chromium.launch({ executablePath: CHROME, headless: command !== 'viewer', args: ['--disable-gpu-sandbox'] });
     const page = await openMotion(browser, command==='viewer'?url+'?scene='+(parameters.scene||'objects')+(opts.sound?'&sound='+opts.sound:''):url+'?render=1&scene='+parameters.scene, width, height);
+    await page.evaluate(parameters=>window.motion.prepare(parameters),parameters);
     output('ready', { command, url, width, height, start, end, temporalSamples, config: await page.evaluate(() => window.motion.config ?? null) });
     if (command === 'viewer') {
       await new Promise(resolve => { browser.on('disconnected', resolve); process.on('SIGINT', resolve); process.on('SIGTERM', resolve); });

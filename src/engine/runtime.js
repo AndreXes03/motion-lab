@@ -5,6 +5,7 @@ import {sampleTrack} from './animation.js';
 import {applyDisplayGrade} from './display-grade.js';
 import {evaluateParameterAnimation} from './parameter-animation.js';
 import {createProductStarter} from '../scenes/product-starter.js';
+import {createLaunchDemo} from '../scenes/launch-demo.js';
 import {sceneConfig,sceneIds,isNewScene,sceneRegistry} from '../scene-registry.js';
 import {dotSoundTelemetry} from '../scenes/dot-sound.js';
 import {createMascotDemo,mascotShutterAt} from '../scenes/mascot-demo.js';
@@ -23,10 +24,24 @@ import {createComposite} from './composite.js';
 import {applyFilmGrain} from './film-grain.js';
 import {smooth} from './timeline.js';
 export function createRuntime(canvas,{initialScene="objects"}={}){initialScene=canonicalScene(initialScene);
- let activeScene=initialScene;const studies={};const studyFactories={starter:createProductStarter,dot:createMascotDemo,pulse:createPulseDemo,camera:createAfterhoursDemo,replay:createReplayDemo};
+ let activeScene=initialScene;const studies={};const studyFactories={starter:createProductStarter,launch:createLaunchDemo,dot:createMascotDemo,pulse:createPulseDemo,camera:createAfterhoursDemo,replay:createReplayDemo};
  const graphics=createProceduralDemo(config); let pop;
  let renderer,scene,camera,update,drawOverlay,composite,proceduralCanvas,proceduralContext;
  let look=structuredClone(savedLook);const ctx=canvas.getContext('2d',{willReadFrequently:true});let width=0,height=0;const diagnosticHidden=[];const reviews=createReviewMaterials();
+ // Decode external recipe assets before a render sequence, while keeping render
+ // synchronous for timeline playback and deterministic temporal sampling.
+ async function prepare(parameters={}){
+  let snapshot=structuredClone(parameters);
+  if(canonicalScene(snapshot.scene)!==snapshot.scene)snapshot=migrateLegacyScene(snapshot);
+  const id=snapshot.scene??activeScene;
+  if(!sceneIds.includes(id))throw new Error('Unknown scene: '+id);
+  await document.fonts.ready;
+  if(disposed)throw new Error('Cannot prepare a disposed runtime');
+  const study=isNewScene(id)?(studies[id]??=studyFactories[id]()):id==='pop'?(pop??=createPopDemo()):id==='procedural'?graphics:null;
+  await study?.prepare?.({...snapshot,scene:id});
+  if(disposed)throw new Error('Cannot prepare a disposed runtime');
+  return true;
+ }
  function init3d(){if(renderer)return;renderer=new T.WebGLRenderer({antialias:true,alpha:false,preserveDrawingBuffer:true,powerPreference:'high-performance'});renderer.setPixelRatio(1);renderer.shadowMap.enabled=true;renderer.shadowMap.type=T.PCFSoftShadowMap;renderer.toneMapping=T.ACESFilmicToneMapping;renderer.outputColorSpace=T.SRGBColorSpace;const createScene=config.scene==='objects'?createObjects:createSignal;({scene,camera,update,drawOverlay}=createScene(renderer,config));composite=createComposite(renderer,scene,camera,{...config,look:savedLook.post});}
  function finishFrame(targetCtx,time,w,h,parameters={}){parameters=evaluateParameterAnimation({...parameters,scene:parameters.scene??activeScene},time);const id=parameters.scene??activeScene;if(!parameters.review||parameters.review==='beauty')applyDisplayGrade(targetCtx,w,h,parameters.look?.post);if(id==='camera'){const study=studies.camera??=studyFactories.camera();study.finishFrame?.(targetCtx,time,w,h,parameters);return;}if(isNewScene(id)&&id!=='replay')return;const activeLook=parameters.look||look;if(parameters.review&&parameters.review!=='beauty')return;applyFilmGrain(targetCtx,time,w,h,{amount:id==='replay'?.018:activeLook.post.grain??0,size:id==='replay'?1.1:activeLook.post.grainSize??1.1,fps:parameters.renderSample?.fps??config.fps});}
  function render(time,{width:w=config.width,height:h=config.height,parameters={},previewQuality='full',previewReview}={}){
@@ -116,5 +131,5 @@ export function createRuntime(canvas,{initialScene="objects"}={}){initialScene=c
   pop?.dispose?.();releaseScene(scene);composite?.dispose();reviews.dispose();renderer?.dispose();renderer?.forceContextLoss();
   if(proceduralCanvas){proceduralCanvas.width=1;proceduralCanvas.height=1;}canvas.width=1;canvas.height=1;
  }
- const ready=document.fonts.ready.then(()=>{render(0,{parameters:{scene:initialScene}});return true});return {get config(){return sceneConfig(activeScene)},ready,render,dispose,pickObject,finishFrame,sampleMotion,sampleAuthoredAnimation,temporalSamplesAt:(time,samples,parameters={})=>(parameters.scene??activeScene)==='pulse'?pulseTemporalSamplesAt(time,samples):samples,shutterAngleAt:(time,parameters={})=>isNewScene(parameters.scene??activeScene)?((parameters.scene??activeScene)==='pulse'?pulseShutterAt(time):(parameters.scene??activeScene)==='camera'?afterhoursShutter(time):(parameters.scene??activeScene)==='dot'?mascotShutterAt(time):(parameters.scene??activeScene)==='starter'?270:0):parameters.scene==='procedural'?proceduralShutter(time,parameters.look?.post?.shutterAngle??210):parameters.look?.post?.shutterAngle??210,cutTimes:(parameters={})=>isNewScene(parameters.scene??activeScene)?sceneRegistry[parameters.scene??activeScene].cuts:parameters.scene==='procedural'?proceduralCuts:parameters.motion?.cuts??[],get scene(){init3d();return scene},get camera(){if(isNewScene(activeScene))return studies[activeScene]?.camera;if(activeScene==='pop')return pop?.camera;init3d();return camera},setLook(next){look=structuredClone(next)},getLook(){return structuredClone(look)}};
+ const ready=prepare({scene:initialScene}).then(()=>{render(0,{parameters:{scene:initialScene}});return true});return {get config(){return sceneConfig(activeScene)},ready,prepare,render,dispose,pickObject,finishFrame,sampleMotion,sampleAuthoredAnimation,temporalSamplesAt:(time,samples,parameters={})=>(parameters.scene??activeScene)==='pulse'?pulseTemporalSamplesAt(time,samples):samples,shutterAngleAt:(time,parameters={})=>isNewScene(parameters.scene??activeScene)?((parameters.scene??activeScene)==='pulse'?pulseShutterAt(time):(parameters.scene??activeScene)==='camera'?afterhoursShutter(time):(parameters.scene??activeScene)==='dot'?mascotShutterAt(time):(parameters.scene??activeScene)==='starter'?270:0):parameters.scene==='procedural'?proceduralShutter(time,parameters.look?.post?.shutterAngle??210):parameters.look?.post?.shutterAngle??210,cutTimes:(parameters={})=>isNewScene(parameters.scene??activeScene)?sceneRegistry[parameters.scene??activeScene].cuts:parameters.scene==='procedural'?proceduralCuts:parameters.motion?.cuts??[],get scene(){init3d();return scene},get camera(){if(isNewScene(activeScene))return studies[activeScene]?.camera;if(activeScene==='pop')return pop?.camera;init3d();return camera},setLook(next){look=structuredClone(next)},getLook(){return structuredClone(look)}};
 }

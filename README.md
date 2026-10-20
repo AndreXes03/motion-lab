@@ -32,6 +32,10 @@ Five films show 2D graphics, hybrid compositions and detailed 3D scenes. Each on
 
 The PULSE, CAMERA, DOT and REPLAY films are 1920 × 1080 at 30 fps with sound design. PULSE and CAMERA include separately licensed music; see [credits](THIRD_PARTY.md).
 
+## Make a product commercial
+
+In local Studio, choose **New commercial** to turn your logo, screenshots, product messages and call to action into LAUNCH, an editable 24-second 2D film. Refine its layout, movement and finish, save versions and export through the existing local renderer. The starter is composed for 16:9; other aspect ratios preserve the layout with letterboxing. See the [founder workflow](docs/FOUNDER_WORKFLOW.md) for asset limits and coding-agent handoff.
+
 ## Shape the scene
 
 Every registered scene has an agent-selected set of controls and panel layout, chosen for its actual motion, lens, lights, materials or compositing needs. A complete control catalog remains available for deeper adjustments. The editor displays original OBJECTS keyframes and evaluated camera paths for procedural scenes, without changing the scene on opening. Curated light, compositing and interpolation presets are scene-specific and limited to four choices per palette.

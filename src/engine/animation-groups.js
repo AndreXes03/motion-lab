@@ -3,6 +3,7 @@ import {sampleParameterTrack} from './parameter-animation.js';
 import {clamp} from './timeline.js';
 
 const groupDefinitions={
+  launch:[['camera','Composition','2D framing movement within each shot.'],['screens','Product screens','Product card movement independent of text and cuts.'],['typography','Typography','Headline entrances independent of screens and cuts.']],
   objects:[['camera','Camera','Camera position, target and roll.'],['radio','Radio','Radio assembly and rotary controls.'],['gyro','Gyro','Gyro assembly and its constrained mechanism.'],['emblem','Emblem','Emblem assembly and cover mechanism.']],
   pulse:[['camera','Camera','Lens choreography within an authored shot.'],['mechanisms','Mechanisms','Speaker, record, connector and device movement.']],
   camera:[['camera','Camera','Camera flight within an authored shot.'],['city','City vehicles','Vehicle and fan motion independent of camera flight.']],
