@@ -13,6 +13,7 @@ Preserve supplied product identity, approved decisions and publication scope. Th
 
 - **New commercial, launch video or incomplete founder brief:** read [Founder discovery](references/founder-discovery.md). Reuse known answers; ask only missing consequential questions.
 - **Storyboards, art direction, motion or a weak first cut:** read [Commercial direction](references/commercial-direction.md). It covers shot variety, pacing, product-driven graphics, typography, UI demonstrations, materials, music and endings.
+- **Headlines / supers, font selection or stiff text animation:** read [Typography and motion](references/typography-and-motion.md). Compose around the product, then author the reveal and reading interval.
 - **Scene construction, render choices, refinement or delivery:** read [Production and review](references/production-and-review.md) and the relevant engine documentation it links.
 - **Small correction to an existing film:** keep the current brief and cut. Load only the affected guidance; do not restart discovery or add a new concept.
 
