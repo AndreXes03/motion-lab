@@ -54,6 +54,9 @@ Record **pass / needs revision / not checked** with frame/time evidence and a co
 | “Too fast / random.” | Restore readable intervals, slow the graphic proof and connect it to the product. Keep impact at selected transitions. |
 | “The UI is boring / rigid.” | Strengthen the demonstrated result and animate cursor, hover, press, control and consequence as one gesture. |
 | “Materials look cheap.” | Check surface scale, roughness contrast, thickness, bevels, texture and the reflected light shape before raising samples. |
+| “The fabric is flat / plastic.” | Check the crossing structure, pores, backing depth, tension and yarn scale in a neutral macro. Strengthening a texture alone can make it look more like embossed plastic. |
+| “The letters always arrive in reading order.” | Author a few stable clusters around a meaningful letter, word edge or product trajectory. Separate their timing from word travel, and verify that the variation is visible before the whole word lands. Randomizing every frame produces flicker, not choreography. |
+| “The supers look basic.” | Compare actual mixed-case words, distinctive glyphs, weight and spacing; then compose around the moving product and inspect entry/read/exit at real speed. Do not solve every complaint by changing color or picking a more decorative font. |
 | “The wide angle barely reads.” | Move nearer, add foreground depth and retune FOV/distance together; inspect clearance. |
 | “Glow is huge.” | Inspect the actual kernel/threshold and a bright-edge crop. Reduce spatial radius, not only intensity. |
 | “Wrong effect on the wrong panel.” | Map control → property → affected shot explicitly; restore unrelated accepted animation. |
@@ -71,6 +74,8 @@ Use a bounded improvement pass: identify the most consequential visible issues, 
 6. Check frame count, duration, dimensions, fps, audio, complete decode and arbitrary seek. Inspect each compressed musical/format variant, especially interpolated edges, rings, UI and type. A checked master does not automatically validate retimed alternatives.
 7. Install the correct local preview through the supported route and verify its source/version, playback and seek. Distinguish interactive Three.js from a prepared Cycles movie. Source changes must invalidate stale prepared previews rather than displaying them as the latest render.
 8. Verify actual destination copies and hashes when delivering files. Save representative screenshots and a concise report. `prepare-demo.mjs` handles supported PULSE/CAMERA demo installation with backups; it is not a generic installer for arbitrary scenes and does not publish.
+
+When the user requests a version without supers, preserve the master and generate the clean variant through headline-layer visibility, retaining the agreed UI, sound and official closing brand. Verify both variants independently. If a handoff to another chat is requested only after approval/export or after a font decision, record that condition and send the exact filenames, locations and chosen style only after it is satisfied. Draft work and a shortlist are not a chosen font or a delivered film.
 
 For shared component changes, run `npm run test:product-kit` and focused checks. For scene/control/render changes, follow the required contracts and build in AGENTS. Do not rerender unchanged films just to test a helper. A passing build is technical evidence only.
 

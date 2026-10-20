@@ -53,7 +53,13 @@ Design enough construction to reward close framing: chassis, shell thickness, se
 
 Differentiate functional surfaces through roughness, reflection shape, microtexture, edge response and color, not just separate base colors. Use satin molded housing, machined/brushed metal, rubber seals, thin woven fabric and clear components where appropriate. Match material scale to object scale.
 
-A speaker fabric should read as fine weave and subtle relief, not chunky rigid bars. A crown should have a believable grip and layered manufacturing detail. An exploded shot needs visible internal purpose—basket, diaphragm, coil, magnet or circuit when supported by references—not merely extra floating discs.
+Choose a deliberate contrast of finishes. A smooth, highly polished colored lacquer can be the expressive hero surface, supported by an absorbent textile and brushed or cut metal controls. Matte is not automatically more premium. For lacquer, remove conflicting orange-peel/bump maps, smooth the shoulder and lip tangents, and shape a few long reflections with area lights. Do not add microtexture everywhere simply to claim detail.
+
+A speaker fabric should read as fine weave and subtle relief, not chunky rigid bars. A crown should have a believable grip and layered manufacturing detail. For a precise consumer-hardware direction, contrast a smooth near-black polished cap with a fine matte machined grip, a narrow chamfer and one functional recessed index mark. Shape highlights with softboxes; copying logos or adding chrome everywhere does not create precision. An engraved mark should change the surface or recess, not float above it like a sticker. An exploded shot needs visible internal purpose—basket, diaphragm, coil, magnet or circuit when supported by references—not merely extra floating discs.
+
+If a textile still looks flat in the intended close-up, investigate construction before increasing contrast: crossing yarns, small openings, a dark acoustic backing, subtle strand variation and tension/curvature can matter more than a stronger normal map. True woven geometry is appropriate only when its scale survives the shot and the cost is justified. Check grazing light and a neutral inspection view for intersections, moire and plastic-looking fibres. A wider camera can be the better composition, but must not be the only repair for a defective surface.
+
+Use a shallower depth of field selectively to isolate a crown, coating edge or component in depth. Focus should track that feature as the camera moves. Compare a deep and a shallow proof; keep the important mechanism, type and enough identity readable. Do not lower the f-stop on every shot, and do not use defocus to conceal unresolved geometry.
 
 An authorized fictional product allows designed internal detail; a real product requires evidence or an explicit illustrative treatment. Do not redesign a customer's product while “improving” its finish.
 
@@ -89,11 +95,11 @@ If using frosted glass, composite a genuinely blurred sample of the image behind
 
 Write short, specific benefits or a meaningful bridge. Avoid filler such as “make it move more” if it adds no information. Maintain a consistent type system while varying composition, scale and brand/contrast color deliberately. A sequence of identical centered white titles flattens the edit.
 
-For a directional title passage, entering from right toward a readable center and leaving toward the left is a useful option. Put fast travel near the entry/exit cut and keep controlled reading drift in between. Tune position, opacity and letter timing as one system; generic easing on all channels often feels rigid or floaty.
+White type can be a strong deliberate choice; repeated central placement is the problem to investigate, not white itself. Compose the type with the product's silhouette and negative space. Compare the same frame with a title beside the product, above a shoulder, or split across its two sides. Splitting a short phrase around the product can make it the visual bridge between the words; keep reading order and a visible gap from key edges. Review the layout throughout the object's motion, not only at its best pose.
 
-Assemble letters in a short stagger only when it aids the reveal. Long stagger and bounce on every glyph destroy word recognition. The full important phrase must remain readable at the actual phone size. Check the entrance, reading interval and exit; a single attractive title frame is insufficient.
+Select the font using the actual words and case. “Tech” does not require a stencil, sci-fi or aggressively condensed face. A simple grotesque with distinctive terminals, counters or a few unusual lowercase letters can supply enough character. Show mixed-case and lowercase samples when these details carry the appeal; an all-caps comparison may hide the very difference the founder likes. Start with two or three materially different candidates, retain the user's favorite as a comparison anchor, and show more only when requested. Judge weight and spacing at the final viewing size. Verify the family from source or an authoritative specimen rather than guessing from a screenshot; keep the licensed source and do not embed a commercial webfont merely because another site serves it.
 
-Carry the product's speed or orientation into a super or procedural shape where it makes sense. Playfulness can be one purposeful deformation or unexpected scale change; not every title needs to be a gag.
+For choreography, read [Typography and motion](typography-and-motion.md): it distinguishes word travel, letter assembly, reading drift and exit, with alternatives to the automatic left-to-right reveal. Keep headline visibility separate from product/UI/brand so a clean version retains the workflow and closing identity.
 
 ## 9. Let music organize the pacing
 

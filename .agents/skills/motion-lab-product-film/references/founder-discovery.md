@@ -21,6 +21,8 @@ Ask the first three only where unanswered, then the asset/placement questions th
 
 Never ask a beginner to choose shader nodes, FOV, Gaussian sigma, sample counts or easing handles. Translate their intent into those choices yourself. For ambiguous feedback such as “not a close-up on the grille,” clarify whether they want stronger close-ups or want to avoid them; do not reverse the direction based on an ambiguous sentence.
 
+For typography, translate the chosen feeling into a contextual specimen rather than another technical questionnaire. If needed, ask “Should these words feel precise, bold, or playful?” using the actual phrase beside the product. Treat a preferred font and an approved animation as separate decisions; see [Typography and motion](typography-and-motion.md).
+
 ## Choose a route from evidence
 
 | What is available | Useful starting route | Keep honest |
