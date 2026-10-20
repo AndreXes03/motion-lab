@@ -23,3 +23,5 @@ The user has requested **LOOP first, PULSE second** once LOOP is perfected, and 
 The “Made in Framevolve” gallery includes every published film, even the film featured in the hero: currently PULSE, CAMERA and DOT.
 
 After explicit approval, add and verify the finished media, populate LOOP's metadata and set its status to `published`. The hero and gallery then derive the intended order from the same catalog: LOOP becomes the main film, and the gallery shows LOOP, PULSE, CAMERA and DOT. Also update the static hero fallback and social preview metadata in `index.html` to the approved LOOP poster. Inspect the public hero's first frame, playback and loop transition after deployment.
+
+The second section compares the familiar describe / see / refine pattern with Base44, using original app and film illustrations. It is a workflow analogy, not an integration or a claim that the upcoming founder flow is available. The existing availability details remain visible.
