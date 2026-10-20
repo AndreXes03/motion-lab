@@ -8,7 +8,13 @@ The founder workflow in PR #15 remains a preview at publication: the public demo
 
 The brief form builds text locally. It has no backend, analytics, file upload or persistence. The film dialog uses native controls, Escape dismissal and focus return. Hero playback respects reduced motion, data saving, visibility and explicit pause.
 
+The refined hero frames the real film as a launch reel. Three keyboard-accessible direction tabs (launch, feature, homepage) update an explicitly illustrative product scene and can seed the brief's mood and call to action without replacing user-written fields. The final lime CTA uses layered brand/product illustrations with reduced-motion support.
+
 Preview via an HTTP server at `showcase/founders/` from the repository root, or copy this folder to `_site/founders` alongside the existing published assets. `founders.js` resolves both paths. GitHub Pages assembles the static directory; no Sites dependency is used.
+
+## GPT Sites mirror
+
+The matching Site is `https://framevolve-for-founders.andreasalvo.chatgpt.site`. Its separate source checkout owns its hosting identity and deployment. Copy the HTML, both stylesheets, JavaScript and film catalog together; preserve identical design and behavior. Set `<meta name="framevolve-base" content="https://andrexes03.github.io/motion-lab/">` in the mirrored HTML so videos, branding, license and Studio links use the existing public GitHub assets. Update the mirror's canonical and `og:url` metadata to the Site origin and make fallback asset URLs absolute. No LOOP media is included on either surface until approved.
 
 ## Film order and LOOP release gate
 

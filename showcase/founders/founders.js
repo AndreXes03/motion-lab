@@ -2,7 +2,8 @@ import {films, publishedFilms} from './films.js';
 
 // The same static files work in the repository preview and at /motion-lab/founders/.
 const localPreview = location.pathname.includes('/showcase/founders');
-const base = new URL(localPreview ? '../../' : '../', location.href);
+const publishedBase = document.querySelector('meta[name="framevolve-base"]')?.content;
+const base = new URL(publishedBase || (localPreview ? '../../' : '../'), location.href);
 const asset = name => new URL(`demo/${name}`, base).href;
 for (const el of document.querySelectorAll('[data-brand]')) {
   const url = new URL(localPreview ? 'public/brand/framevolve-mark.png' : 'brand/framevolve-mark.png', base).href;
@@ -109,6 +110,49 @@ if ('IntersectionObserver' in window) {
 } else { heroVisible = true; updatePlayback(); }
 
 const briefForm = document.querySelector('#brief-form');
+const launchDirections = {
+  launch: {format:'THE BIG INTRODUCTION', overline:'MEET YOUR NEXT FAVORITE THING.', lines:['Small team.', 'Big entrance.'], sticker:'WE’RE LIVE ↗', vibe:'Playful and bold', cta:'Try it today'},
+  feature: {format:'THE FEATURE DROP', overline:'ONE LESS THING IN YOUR WAY.', lines:['Less friction.', 'More flow.'], sticker:'JUST SHIPPED ↗', vibe:'Fast and energetic', cta:'See what’s new'},
+  homepage: {format:'THE FIRST IMPRESSION', overline:'SHOW WHAT MAKES YOU DIFFERENT.', lines:['Oh, that’s', 'what it does.'], sticker:'TAKE A LOOK ↗', vibe:'Clean and confident', cta:'Explore the product'}
+};
+let selectedDirection = 'launch';
+const directionTabs = [...document.querySelectorAll('[data-moment]')];
+const selectDirection = id => {
+  const direction = launchDirections[id];
+  selectedDirection = id;
+  const preview = document.querySelector('#moment-preview');
+  preview.dataset.direction = id;
+  preview.setAttribute('aria-labelledby', `moment-tab-${id}`);
+  document.querySelector('#moment-format').textContent = direction.format;
+  document.querySelector('#moment-overline').textContent = direction.overline;
+  document.querySelector('#moment-sticker').textContent = direction.sticker;
+  const headline = document.querySelector('#moment-headline');
+  headline.replaceChildren(document.createTextNode(direction.lines[0]), document.createElement('br'), document.createTextNode(direction.lines[1]));
+  for (const tab of directionTabs) {
+    const selected = tab.dataset.moment === id;
+    tab.setAttribute('aria-selected', String(selected));
+    tab.tabIndex = selected ? 0 : -1;
+  }
+};
+for (const [index, tab] of directionTabs.entries()) {
+  tab.addEventListener('click', () => selectDirection(tab.dataset.moment));
+  tab.addEventListener('keydown', event => {
+    const delta = ['ArrowRight','ArrowDown'].includes(event.key) ? 1 : ['ArrowLeft','ArrowUp'].includes(event.key) ? -1 : 0;
+    let next = delta ? (index + delta + directionTabs.length) % directionTabs.length : event.key === 'Home' ? 0 : event.key === 'End' ? directionTabs.length - 1 : null;
+    if (next === null) return;
+    event.preventDefault();
+    directionTabs[next].focus();
+    selectDirection(directionTabs[next].dataset.moment);
+  });
+}
+document.querySelector('#use-direction').addEventListener('click', () => {
+  const direction = launchDirections[selectedDirection];
+  // Preserve the founder's own writing when exploring a different direction.
+  if (!briefForm.elements.cta.value.trim()) briefForm.elements.cta.value = direction.cta;
+  if (!briefForm.elements.vibe.dataset.userEdited) briefForm.elements.vibe.value = direction.vibe;
+  document.querySelector('.brief-drawer').open = true;
+});
+briefForm.elements.vibe.addEventListener('change', () => { briefForm.elements.vibe.dataset.userEdited = 'true'; });
 for (const link of document.querySelectorAll('a[href="#brief"]')) {
   link.addEventListener('click', () => { document.querySelector('.brief-drawer').open = true; });
 }
