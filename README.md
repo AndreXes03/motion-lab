@@ -8,7 +8,7 @@
 
 A free-to-use, source-available studio for making editable 2D, hybrid and 3D motion with code, scene-specific tools and local rendering.
 
-[See the films](https://andrexes03.github.io/motion-lab/) · [Open the browser studio](https://andrexes03.github.io/motion-lab/studio/) · [Setup](#run-motion-lab-locally) · [Guides](docs/README.md)
+[See the films](https://andrexes03.github.io/motion-lab/) · [For founders](https://andrexes03.github.io/motion-lab/founders/) · [Open the browser studio](https://andrexes03.github.io/motion-lab/studio/) · [Setup](#run-motion-lab-locally) · [Guides](docs/README.md)
 
 </div>
 
