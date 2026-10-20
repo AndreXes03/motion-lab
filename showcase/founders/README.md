@@ -14,14 +14,12 @@ Preview via an HTTP server at `showcase/founders/` from the repository root, or 
 
 ## GPT Sites mirror
 
-The matching Site is `https://framevolve-for-founders.andreasalvo.chatgpt.site`. Its separate source checkout owns its hosting identity and deployment. Copy the HTML, both stylesheets, JavaScript and film catalog together; preserve identical design and behavior. Set `<meta name="framevolve-base" content="https://andrexes03.github.io/motion-lab/">` in the mirrored HTML so videos, branding, license and Studio links use the existing public GitHub assets. Update the mirror's canonical and `og:url` metadata to the Site origin and make fallback asset URLs absolute. No LOOP media is included on either surface until approved.
+The matching Site is `https://framevolve-for-founders.andreasalvo.chatgpt.site`. Its separate source checkout owns its hosting identity and deployment. Copy the HTML, both stylesheets, JavaScript and film catalog together; preserve identical design and behavior. Set `<meta name="framevolve-base" content="https://andrexes03.github.io/motion-lab/">` in the mirrored HTML so videos, branding, license and Studio links use the existing public GitHub assets. Update the mirror's canonical and `og:url` metadata to the Site origin and make fallback asset URLs absolute. LOOP media is served from GitHub on both surfaces.
 
-## Film order and LOOP release gate
+## Approved film order
 
-The user has requested **LOOP first, PULSE second** once LOOP is perfected, and explicitly instructed us not to upload LOOP now. `films.js` records that order but gates LOOP as `awaiting-user-approval`, with no media paths. Only published entries with complete file, preview and poster metadata may appear or load. Until the user approves a finished LOOP export, PULSE remains featured, followed by CAMERA and DOT. Do not upload a draft or use unfinished LOOP material.
+The user approved publishing `V11/01_Principale_Electro.mp4` on 2026-10-20. LOOP is the featured film; the gallery order is LOOP, PULSE, CAMERA, DOT. The full film is a byte-identical copy of that approved 22-second 1080p export, with the first Electro soundtrack. A separate silent 720p preview reduces autoplay transfer, and the poster is extracted at 19.8 seconds. The same catalog drives the hero and gallery on both surfaces.
 
-The “Made in Framevolve” gallery includes every published film, even the film featured in the hero: currently PULSE, CAMERA and DOT.
-
-After explicit approval, add and verify the finished media, populate LOOP's metadata and set its status to `published`. The hero and gallery then derive the intended order from the same catalog: LOOP becomes the main film, and the gallery shows LOOP, PULSE, CAMERA and DOT. Also update the static hero fallback and social preview metadata in `index.html` to the approved LOOP poster. Inspect the public hero's first frame, playback and loop transition after deployment.
+The original landing is unchanged. `demo/render-manifest.json` records source hash and export metadata; check hero first-frame playback, repeat playback, full-film audio availability and mobile gallery layout after deployment.
 
 The second section compares the familiar describe / see / refine pattern with Base44, using original app and film illustrations. It is a workflow analogy, not an integration or a claim that the upcoming founder flow is available. The existing availability details remain visible.
