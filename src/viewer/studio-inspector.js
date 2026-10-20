@@ -2,7 +2,7 @@ import {icon} from './studio-icons.js';
 import {sceneConfig} from '../scene-registry.js';
 import {getAuthoredAnimationProtocol} from '../engine/authored-animation.js';
 import {resolveControlManifest} from '../engine/control-catalog.js';
-const sceneSources={starter:'product-starter.js',dot:'mascot-demo.js',pulse:'pulse-demo.js',camera:'afterhours-demo.js',replay:'replay-demo.js',objects:'objects.js',pop:'pop-demo.js',procedural:'procedural-demo.js'};
+const sceneSources={loop:'loop-launch.js',starter:'product-starter.js',dot:'mascot-demo.js',pulse:'pulse-demo.js',camera:'afterhours-demo.js',replay:'replay-demo.js',objects:'objects.js',pop:'pop-demo.js',procedural:'procedural-demo.js'};
 /** A focused view of the live recipe. Native values appear once, in their actual write shape. */
 export function buildAnimationHandoff(scene,parameters,config=sceneConfig(scene)){
   const protocol=getAuthoredAnimationProtocol(scene,{motion:parameters.motion,animation:parameters.animation});
@@ -125,7 +125,7 @@ export function mountInspector({runtime,getScene,getState,getParameters,getTime,
     }
     $('code-description').textContent='Scene source · read only';
     try{
-      const module=await (getScene()==='starter'?import('../scenes/product-starter.js?raw'):getScene()==='dot'?import('../scenes/mascot-demo.js?raw'):getScene()==='pulse'?import('../scenes/pulse-demo.js?raw'):getScene()==='camera'?import('../scenes/afterhours-demo.js?raw'):getScene()==='replay'?import('../scenes/replay-demo.js?raw'):getScene()==='objects'?import('../scenes/objects.js?raw'):getScene()==='pop'?import('../scenes/pop-demo.js?raw'):import('../scenes/procedural-demo.js?raw'));
+      const module=await (getScene()==='loop'?import('../scenes/loop-launch.js?raw'):getScene()==='starter'?import('../scenes/product-starter.js?raw'):getScene()==='dot'?import('../scenes/mascot-demo.js?raw'):getScene()==='pulse'?import('../scenes/pulse-demo.js?raw'):getScene()==='camera'?import('../scenes/afterhours-demo.js?raw'):getScene()==='replay'?import('../scenes/replay-demo.js?raw'):getScene()==='objects'?import('../scenes/objects.js?raw'):getScene()==='pop'?import('../scenes/pop-demo.js?raw'):import('../scenes/procedural-demo.js?raw'));
       if(request===sourceRequest)$('code-content').textContent=module.default;
     }catch(error){if(request===sourceRequest){$('code-content').textContent='';$('code-status').textContent=error.message;}}
   }

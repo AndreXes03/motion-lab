@@ -3,6 +3,7 @@ import {sampleParameterTrack} from './parameter-animation.js';
 import {clamp} from './timeline.js';
 
 const groupDefinitions={
+  loop:[['camera','Camera','Shot-specific camera travel; captions and cuts keep film time.'],['product','Speaker','Speaker turn and grille separation.'],['graphics','Graphics','Kinetic graphic phase.']],
   objects:[['camera','Camera','Camera position, target and roll.'],['radio','Radio','Radio assembly and rotary controls.'],['gyro','Gyro','Gyro assembly and its constrained mechanism.'],['emblem','Emblem','Emblem assembly and cover mechanism.']],
   pulse:[['camera','Camera','Lens choreography within an authored shot.'],['mechanisms','Mechanisms','Speaker, record, connector and device movement.']],
   camera:[['camera','Camera','Camera flight within an authored shot.'],['city','City vehicles','Vehicle and fan motion independent of camera flight.']],
@@ -20,7 +21,7 @@ export function getAnimationGroups(scene) {
   const duration=sceneRegistry[scene].duration;
   const cuts=[...new Set([0,...(sceneRegistry[scene].cuts??fallbackCuts[scene]??[]),duration])].filter(t=>t>=0&&t<=duration).sort((a,b)=>a-b);
   const windows=cuts.slice(0,-1).map((start,index)=>({label:`Shot ${index+1}`,start,end:cuts[index+1]}));
-  return groupDefinitions[scene].map(([id,label,description])=>({id,label,description,...(scene==='camera'&&id==='city'?{preferredWindow:{start:2.4,end:4.4}}:{}),windows:windows.map(window=>({...window}))}));
+  return groupDefinitions[scene].map(([id,label,description])=>({id,label,description,...(scene==='camera'&&id==='city'?{preferredWindow:{start:2.4,end:4.4}}:scene==='loop'?{preferredWindow:id==='camera'?{start:3,end:3.8}:id==='product'?{start:428/30,end:15.2}:{start:5.3,end:7.7}}:{}),windows:windows.map(window=>({...window}))}));
 }
 
 /** Map this group's pose clock only; film time, cuts and other groups stay fixed. */

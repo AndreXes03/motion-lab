@@ -1,7 +1,7 @@
 import {MeshStandardMaterial,MeshNormalMaterial,MeshBasicMaterial} from 'three';
 
 // Explicit adapter support: hybrid Canvas films do not necessarily expose a mesh scene.
-const meshScenes=new Set(['objects','starter','pulse','camera','pop']);
+const meshScenes=new Set(['objects','starter','pulse','camera','pop','loop','loop']);
 const modes=Object.freeze([
  {id:'beauty',label:'Final look'},
  {id:'clean',label:'Without effects'},

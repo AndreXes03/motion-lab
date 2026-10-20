@@ -741,6 +741,169 @@
         }
       ],
       "rationale": "Expose every planned editorial control: card spacing/tilt/scale/depth, composition scale and poster spacing, reveal pace, orbit scale/speed, final camera push, connecting threads and grade. The same planned controls are available in Easy and Pro; neutral values preserve the editorial film. Pair the perspective lens with real camera distance and subject-size compensation."
+    },
+    "loop": {
+      "controls": [
+        "motionAmount",
+        "explodeAmount",
+        "fovScale",
+        "cameraDistance",
+        "keepSubjectSize",
+        "keyLight",
+        "fillLight",
+        "paletteHue",
+        "shellRoughness",
+        "ledBrightness",
+        "typeScale",
+        "exposure",
+        "bloomStrength",
+        "colorContrast",
+        "colorSaturation",
+        "introZoom",
+        "introPullbackStart",
+        "introPullbackDuration",
+        "introSigma",
+        "introPan",
+        "introGlowSpeed",
+        "titleEntry",
+        "titleExit",
+        "letterStagger",
+        "letterRise",
+        "titleDrift",
+        "titleEaseX1",
+        "titleEaseY1",
+        "titleEaseX2",
+        "titleEaseY2",
+        "waveCount",
+        "waveTravel",
+        "waveSpeed",
+        "waveWarp",
+        "waveWeight",
+        "coatingScale",
+        "coatingEdge",
+        "renderAberration"
+      ],
+      "panels": [
+        {
+          "id": "motion",
+          "title": "Motion",
+          "category": "motion",
+          "controls": [
+            "motionAmount",
+            "explodeAmount"
+          ],
+          "advanced": false
+        },
+        {
+          "id": "lens",
+          "title": "Lens",
+          "category": "lens",
+          "controls": [
+            "fovScale",
+            "cameraDistance",
+            "keepSubjectSize"
+          ],
+          "advanced": false
+        },
+        {
+          "id": "lights",
+          "title": "Lights",
+          "category": "lights",
+          "controls": [
+            "keyLight",
+            "fillLight"
+          ],
+          "advanced": false
+        },
+        {
+          "id": "appearance",
+          "title": "Appearance",
+          "category": "appearance",
+          "controls": [
+            "paletteHue",
+            "shellRoughness",
+            "ledBrightness",
+            "coatingScale",
+            "coatingEdge"
+          ],
+          "advanced": false
+        },
+        {
+          "id": "graphics",
+          "title": "Graphics",
+          "category": "graphics",
+          "controls": [
+            "typeScale"
+          ],
+          "advanced": false
+        },
+        {
+          "id": "compositing",
+          "title": "Compositing",
+          "category": "compositing",
+          "controls": [
+            "exposure",
+            "bloomStrength",
+            "colorContrast",
+            "colorSaturation",
+            "renderAberration"
+          ],
+          "advanced": true
+        },
+        {
+          "id": "intro",
+          "title": "Opening · Gaussian zoom",
+          "category": "graphics",
+          "controls": [
+            "introZoom",
+            "introPullbackStart",
+            "introPullbackDuration",
+            "introSigma",
+            "introPan",
+            "introGlowSpeed"
+          ],
+          "advanced": false
+        },
+        {
+          "id": "title-timing",
+          "title": "Titles · Timing",
+          "category": "graphics",
+          "controls": [
+            "titleEntry",
+            "titleExit",
+            "letterStagger",
+            "letterRise",
+            "titleDrift"
+          ],
+          "advanced": false
+        },
+        {
+          "id": "title-curve",
+          "title": "Titles · Bezier curve",
+          "category": "graphics",
+          "controls": [
+            "titleEaseX1",
+            "titleEaseY1",
+            "titleEaseX2",
+            "titleEaseY2"
+          ],
+          "advanced": true
+        },
+        {
+          "id": "wave-field",
+          "title": "Waves · Procedural field",
+          "category": "graphics",
+          "controls": [
+            "waveCount",
+            "waveTravel",
+            "waveSpeed",
+            "waveWarp",
+            "waveWeight"
+          ],
+          "advanced": false
+        }
+      ],
+      "rationale": "38 implemented controls: motion, real lens and distance, per-shot lighting, tactile materials, organic coating field, Gaussian opening, title Bezier and contour ribbons; finishing separated from UI."
     }
   }
 }

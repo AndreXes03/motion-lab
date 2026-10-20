@@ -3,6 +3,7 @@ import {studyControlDefinitions} from './engine/scene-capabilities.js';
 import {config} from './config.js';
 /** Browser/Node-safe scene metadata shared by viewer, CLI and export service. */
 export const sceneRegistry={
+ loop:{duration:22,title:'LOOP / From brief to feeling',kind:'hybrid',shutterAngle:306,cuts:[0,3,119/30,4.8,5.3,7.7,259/30,9.6,316/30,12.4,13.3,428/30,15.2,470/30,17.1,18,568/30,20.6,22],source:'loop-launch.js'},
  starter:{duration:6,title:'Product starter',kind:'3d',shutterAngle:270,cuts:[0,6],source:'product-starter.js'},
  objects:{duration:10,title:'Objects in play'},procedural:{duration:10,title:'Procedural motion'},pop:{duration:10,title:'Pop motion'},
  dot:{shutterAngle:72,duration:16,title:'DOT / Character study',kind:'hybrid',cuts:[0,6.32,16],source:'mascot-demo.js'},
@@ -11,7 +12,7 @@ export const sceneRegistry={
  replay:{duration:15,title:'REPLAY / Editorial motion',kind:'hybrid',cuts:[0,2.4,5.4,7.7,9.4,11.4,13.2],source:'replay-demo.js'}
 };
 export const sceneIds=Object.keys(sceneRegistry);
-export const isNewScene=id=>['dot','pulse','camera','replay','starter'].includes(id);
+export const isNewScene=id=>['dot','pulse','camera','replay','starter','loop'].includes(id);
 export function sceneConfig(id='objects'){id=canonicalScene(id);if(!sceneRegistry[id])throw Error('Unknown scene: '+id);return {...config,...sceneRegistry[id],scene:id,id};}
 export const newStudioProjects=Object.entries(sceneRegistry).filter(([id])=>isNewScene(id)).map(([id,s])=>({id,title:s.title,kind:s.kind,subtitle:'Editable reference study',duration:s.duration,controls:studyControlDefinitions[id]??[],presets:[{id:'original',label:'Original',values:{}}],moments:s.cuts.filter(t=>t<s.duration).map((time,i)=>({time,label:String(i+1).padStart(2,'0')}))}));
 

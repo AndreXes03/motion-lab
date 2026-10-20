@@ -22,3 +22,6 @@ project/references/
 # Local review outputs and the internal task plan.
 outputs/
 /project/next-task.json
+
+# Local prepared Cycles movies and music are not source/public demo assets.
+/public/local-preview/

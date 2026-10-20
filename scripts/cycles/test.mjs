@@ -3,7 +3,7 @@ import {normalizeCyclesOptions,parseCyclesArgs} from './options.mjs';
 import {buildCyclesCommand,getCyclesCapabilities} from './studio.mjs';
 const o=normalizeCyclesOptions({command:'export',out:'/tmp/test.mp4',width:1440,height:1920,fps:30,duration:1,device:'gpu',workers:2},{parameters:{scene:'pulse',sceneControls:{keyLight:1.5},animation:{groups:{mechanisms:{rate:.5}}}}});
 assert.equal(o.count,30);assert.equal(o.device,'metal');assert.equal(o.parameters.sceneControls.keyLight,1.5);assert.equal(o.parameters.animation.groups.mechanisms.rate,.5);
-assert.throws(()=>normalizeCyclesOptions({scene:'camera'}),/PULSE only/);
+assert.throws(()=>normalizeCyclesOptions({scene:'camera'}),/PULSE and LOOP/);
 assert.throws(()=>normalizeCyclesOptions({command:'export',width:101}),/even/);
 assert.throws(()=>normalizeCyclesOptions({samples:0}),/samples/);
 assert.throws(()=>normalizeCyclesOptions({workers:3}),/workers/);
@@ -28,3 +28,5 @@ assert.equal(normalizeCyclesOptions({command:'frame'}).progressive,false);
 assert.throws(()=>normalizeCyclesOptions({command:'export',progressive:true}),/viewport frames only/);
 const progressiveCommand=buildCyclesCommand({kind:'frame',snapshotPath:'/tmp/project.json',outputPath:'/tmp/frame.png',settings:{progressive:true}});assert.deepEqual(progressiveCommand.args.slice(-2),['--progressive','on']);
 console.log('Progressive Cycles option is frame-only, opt-in and preserves final output settings');
+
+const loop=normalizeCyclesOptions({scene:'loop',command:'export'});assert.equal(loop.duration,22);assert.equal(loop.count,660);assert.equal(loop.sceneDuration,22);

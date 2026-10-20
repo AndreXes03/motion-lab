@@ -4,14 +4,14 @@ Framevolve keeps its interactive 3D preview in Three.js and its procedural 2D pr
 
 - **Auto** uses the agent's preference when local capabilities and the requested time budget permit it. Otherwise it selects Three.js and explains the reason.
 - **Three.js** preserves the working scene, procedural shaders and existing finish. It is the default for motion graphics and fast iteration.
-- **Cycles** uses the local Blender path for a supported scene. The first supported scene is PULSE; other scenes require an explicit converter and a quality check. Blender installation, available devices and scene support must be checked locally before exporting.
+- **Cycles** uses the local Blender path for a supported scene. Supported scenes are PULSE and LOOP; other scenes require an explicit converter and a quality check. Blender installation, available devices and scene support must be checked locally before exporting.
 - **Mixed** records a strategy for rendered layers or shots from different engines. It requires a prepared local compositing plan and verified inputs. Metadata by itself never starts a mixed render.
 
 In browsers with canvas recording support, the public Studio exports browser-rendered video at 720p or 1080p, PNG frames and JSON recipes. MP4 is offered when the browser supports its encoder; otherwise it offers WebM. Public video uses the real-time Three.js/Canvas path. Blender/Cycles and prepared file-based compositing run in the local app. The selector may preserve a requested local renderer in a downloaded recipe, but the public site does not execute Cycles or Mixed jobs.
 
 ## Full-resolution Render View
 
-**Render View** pauses playback and renders the current timeline position at the output dimensions selected in Export. **Final look** uses that resolved final engine: Three.js/Canvas renders directly in the browser; a selected Cycles or Mixed engine requests an actual local frame. Cycles still supports **PULSE only** and requires a successful Blender capability check. Its samples, device, denoising and motion-blur choice come from the same recipe and output settings as export. The frame may take time to finish; increasing display resolution does not turn a Three.js preview into Cycles.
+**Render View** pauses playback and renders the current timeline position at the output dimensions selected in Export. **Final look** uses that resolved final engine: Three.js/Canvas renders directly in the browser; a selected Cycles or Mixed engine requests an actual local frame. Cycles supports **PULSE and LOOP** and requires a successful Blender capability check. Its samples, device, denoising and motion-blur choice come from the same recipe and output settings as export. The frame may take time to finish; increasing display resolution does not turn a Three.js preview into Cycles.
 
 For viewport-only Cycles jobs, one Blender process first traces a quarter-resolution pass with up to 4 samples, then a half-resolution pass with up to 16 samples, and finally the requested full-resolution/sample settings. These are real render passes with the same scene, materials, display grade and titles; they are not blurred placeholders. Scene baking and Blender setup must complete before the first image can appear. Ordinary PNG/video exports keep their single final-quality path.
 
@@ -22,6 +22,16 @@ On the public site, an explicit Cycles or Mixed selection shows that the local r
 `src/viewer/render-frame-view.js` submits `POST /api/studio/render` with `kind: 'frame'` and `purpose: 'viewport'`, polls the job and verifies its actual engine before displaying its image. These cached viewport jobs remain under `renders/studio`, are omitted from export history, and are not automatically copied into Downloads. Regular export jobs retain their existing delivery behavior. The Preview PNG action downloads the completed displayed engine frame.
 
 ## Recipe contract
+
+### Local LOOP playback
+
+LOOP can also display a completed Cycles movie directly in the interactive viewport. The optional local `/local-preview/loop.json` manifest identifies a 22-second Cycles MP4 and the SHA-256 of the exact `loop-launch.js` and `loop-product-detail.js` sources joined by one newline. The **Cycles playback** toggle appears only when that manifest matches. The timeline, Play/Pause, looping and PNG capture use the actual movie; its edited soundtrack follows Enable audio, Master volume and Music volume. This is playback of a prepared render, not live path tracing.
+
+Changing scene controls, lens controls, grading, object edits or animation invalidates that prepared playback and returns to the editable scene. Use **Render view** for a new Cycles frame after edits; render a new movie to update playback. Clay, Wireframe and Normals remain interactive inspection views. This optional local media directory is ignored by Git and prepared playback is disabled in the public demo.
+
+The Audio panel's procedural sound controls and a prepared movie's edited soundtrack are separate. Music-style and sound-effect controls do not remix the finished MP4. The edited LOOP score is supplied explicitly to the Cycles CLI through `--audio`.
+
+### Stored policy
 
 ```js
 parameters.renderPolicy = {
@@ -93,3 +103,9 @@ Use `scripts/composite.mjs --plan project/pulse-composite.json --assets renders 
 `node scripts/test-render-frame-view.mjs` covers immutable full-resolution snapshots, progressive image delivery, request coalescing, serialized jobs, stale-result suppression, engine verification, local availability, renderer-busy retries and disposal. `python3 scripts/cycles/test-progressive.py` checks intermediate dimensions/sample bounds, final-setting preservation and isolation from ordinary exports.
 
 `node scripts/test-render-policy.mjs` covers recipe round trips, user overrides, optional Pulse support, device checks, bounded workers, public local-only behavior, approximate measured costs and budgets, mixed-plan readiness, prepared soundtrack paths/offsets, and unsafe input rejection. Compare representative Cycles output frames visually before calling a converted scene validated; technical readiness alone does not establish material or animation fidelity.
+
+### LOOP hybrid film
+
+LOOP bakes its native Canvas graphics separately, renders all product geometry with Cycles, and composites the graphics above that beauty pass. Full 2D sections bypass Blender rendering. LOOP beauty frames retain alpha and are composited over a separate animated Canvas linear gradient; the digital background does not receive scene lighting or perspective. Camera focus distance and aperture are transferred as physical Cycles depth of field; area and spot lights remain animated. Three.js preview post effects are not part of the Cycles conversion. The fictional startup brief and partial controls are authored examples, not recordings of generation latency.
+
+The optional local `loop-audio.json` manifest supplies the edited soundtrack to LOOP interactive playback and browser exports. Procedural music/SFX controls are hidden for that authored track; volume and WAV download remain available. Cycles CLI exports use the explicit `--audio` source.

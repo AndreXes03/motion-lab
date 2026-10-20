@@ -30,7 +30,7 @@ Preset categories are `lights`, `compositing` and `interpolation`. Keep at most 
 
 ## Local Cycles and compositing
 
-[cycles.mjs](cycles.mjs) bakes supported Three.js scene data, freezes source/settings and invokes the local Blender renderer. The current adapter supports **PULSE only**, with PNG frames and MP4 video. Install Blender separately or set `BLENDER_PATH`; device support comes from local preflight. A requested engine is not proof of a working device.
+[cycles.mjs](cycles.mjs) bakes supported Three.js scene data, freezes source/settings and invokes the local Blender renderer. The current adapter supports **PULSE and LOOP**, with PNG frames and MP4 video. LOOP composites its transparent Cycles product pass over independent Canvas gradients, then adds frosted UI panels and authored graphics. Install Blender separately or set `BLENDER_PATH`; device support comes from local preflight. A requested engine is not proof of a working device.
 
 ```sh
 npm run cycles -- frame --scene pulse --time 9.23 --width 384 --height 216 --samples 16 --device auto --out renders/pulse-cycles-proof.png

@@ -19,3 +19,9 @@
 @media(max-width:370px){.analogy-product-tile{top:135px;right:26px;width:54px;height:54px;font-size:41px}}
 
 @media(min-width:761px){.films .film-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
+
+.brief-context{margin:0 0 22px;border-top:1px solid #ffffff1a}
+.brief-context>summary{padding:16px 0;font-size:12px;letter-spacing:0;line-height:1.5}
+.brief-drawer .brief-context>summary>span{font-size:10px;color:var(--muted);transform:none}
+.brief-context[open]>summary{margin-bottom:6px}
+.brief-context .form-row select{margin-bottom:0}

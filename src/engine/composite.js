@@ -12,6 +12,9 @@ const LOOK = Object.freeze({
   bloomStrength: 0.12,
   bloomThreshold: 1.15,
   bloomRadius: 0.25,
+  compactGlowStrength: 0,
+  compactGlowRadiusPx: 2,
+  compactGlowThreshold: .78,
   aberrationPx: 1.1,
   grain: 0.002,
   vignette: 0.12,
@@ -29,7 +32,10 @@ const FinishShader = {
     vignette: { value: LOOK.vignette },
     lensDistortion: { value: 0 },
     fisheye: { value: 0 },
-    edgeSoftness: { value: 0 }
+    edgeSoftness: { value: 0 },
+    compactGlowStrength: { value: 0 },
+    compactGlowRadiusPx: { value: 2 },
+    compactGlowThreshold: { value: .78 }
   },
   vertexShader: /* glsl */`
     varying vec2 vUv;
@@ -46,6 +52,9 @@ const FinishShader = {
     uniform float lensDistortion;
     uniform float fisheye;
     uniform float edgeSoftness;
+    uniform float compactGlowStrength;
+    uniform float compactGlowRadiusPx;
+    uniform float compactGlowThreshold;
     varying vec2 vUv;
 
     void main() {
@@ -88,6 +97,17 @@ const FinishShader = {
         color = color*.6 + wings*.2;
       }
 
+      if (compactGlowStrength > 0.0) {
+        vec3 glow = vec3(0.0);
+        vec2 stepUV = vec2(compactGlowRadiusPx / 1920.0, compactGlowRadiusPx / 1080.0);
+        for (int y=-1; y<=1; y++) for (int x=-1; x<=1; x++) {
+          vec4 tap = texture2D(tDiffuse, clamp(lensUV + vec2(float(x),float(y))*stepUV,vec2(0.0),vec2(1.0)));
+          float bright = smoothstep(compactGlowThreshold,1.0,max(tap.r,max(tap.g,tap.b)));
+          float weight = (x==0 ? 2.0 : 1.0)*(y==0 ? 2.0 : 1.0)/16.0;
+          glow += tap.rgb*tap.a*bright*weight;
+        }
+        color += glow*compactGlowStrength;
+      }
       float falloff = smoothstep(0.28, 1.0, edge);
       color *= 1.0 - vignette * falloff;
       // Grain is applied once to the resolved frame, after motion integration.
@@ -121,7 +141,7 @@ export function createComposite(renderer, scene, camera, config) {
   const finishPass = new ShaderPass(FinishShader);
   finishPass.material.toneMapped = false;
   finishPass.uniforms.resolution.value.set(width, height);
-  for (const key of ['aberrationPx', 'vignette', 'lensDistortion', 'fisheye', 'edgeSoftness']) {
+  for (const key of ['aberrationPx', 'vignette', 'lensDistortion', 'fisheye', 'edgeSoftness', 'compactGlowStrength', 'compactGlowRadiusPx', 'compactGlowThreshold']) {
     finishPass.uniforms[key].value = look[key];
   }
 
@@ -160,7 +180,7 @@ export function createComposite(renderer, scene, camera, config) {
       aaPass.enabled=next.antialias!==false;
       bloomPass.strength=next.bloomStrength;bloomPass.threshold=next.bloomThreshold;bloomPass.radius=next.bloomRadius;
       aoPass.blendIntensity=next.aoIntensity??.4;aoPass.enabled=aoPass.blendIntensity>0;
-      for(const key of ['aberrationPx','vignette','lensDistortion','fisheye','edgeSoftness'])finishPass.uniforms[key].value=next[key]??LOOK[key];
+      for(const key of ['aberrationPx','vignette','lensDistortion','fisheye','edgeSoftness','compactGlowStrength','compactGlowRadiusPx','compactGlowThreshold'])finishPass.uniforms[key].value=next[key]??LOOK[key];
     },
     setReview(mode) {
       const clean=mode&&mode!=='beauty';bloomPass.enabled=!clean&&dofSettings.bloomEnabled!==false;finishPass.enabled=!clean;highlights.enabled=!clean;if(clean){aoPass.enabled=false;dofPass.enabled=false;}

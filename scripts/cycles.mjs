@@ -12,6 +12,7 @@ import sharp from 'sharp';
 import {normalizeCyclesOptions,parseCyclesArgs,adaptations} from './cycles/options.mjs';
 import {findBlender} from './cycles/studio.mjs';
 import {gradePixels} from './cycles/finish.mjs';
+import {composeLoopFrame} from './cycles/loop-compose.mjs';
 import {sampleRuntimeSound,renderProceduralAudio} from './cycles/audio.mjs';
 const ROOT=path.resolve(path.dirname(fileURLToPath(import.meta.url)),'..');
 const stable=value=>JSON.stringify(value,(_,v)=>v&&typeof v==='object'&&!Array.isArray(v)?Object.fromEntries(Object.keys(v).sort().map(k=>[k,v[k]])):v);
@@ -41,7 +42,7 @@ async function bake(directory,frozen,options){
 async function validFrame(filename,options){try{const info=await sharp(filename).raw().toBuffer({resolveWithObject:true});return info.info.width===options.width&&info.info.height===options.height&&(options.background!=='transparent'||info.info.channels===4);}catch{return false;}}
 async function finishFrames(directory,options,frozen){
  let sequence=path.join(directory,'frames');
- if(options.finish==='display'){
+ if(options.finish==='display'&&options.scene!=='loop'){
   const {evaluateParameterAnimation}=await import(pathToFileURL(path.join(frozen,'src/engine/parameter-animation.js')).href);
   const looks=Array.from({length:options.count},(_,i)=>evaluateParameterAnimation(options.parameters,options.command==='frame'?options.time:options.start+i/options.fps).look?.post??{});
   if(looks.some(look=>(look.colorContrast??1)!==1||(look.colorSaturation??1)!==1)){
@@ -52,6 +53,27 @@ async function finishFrames(directory,options,frozen){
   }
  }
 
+ // LOOP: composite authored Canvas overlays on the actual Cycles beauty frames.
+ if(options.scene==='loop'){
+  const base=directory.includes('progressive-')?path.dirname(directory):directory;
+  const destination=path.join(directory,'hybrid');await mkdir(destination,{recursive:true});
+  for(let i=0;i<options.count;i++){
+   const index=options.command==='frame'?1:i*2;
+   const snap=JSON.parse(await readFile(path.join(base,'baked',`snapshot_${String(index).padStart(4,'0')}.json`),'utf8'));
+   const name=`frame-${String(i+1).padStart(6,'0')}.png`;
+   if(snap.graphicOnly){await sharp(Buffer.from(snap.overlay.split(',')[1],'base64')).resize(options.width,options.height).png().toFile(path.join(destination,name));}
+   else{const composed=await composeLoopFrame({background:options.background==='transparent'?null:Buffer.from(snap.background.split(',')[1],'base64'),beauty:path.join(sequence,name),overlay:Buffer.from(snap.overlay.split(',')[1],'base64'),glassPanel:snap.glassPanel,width:options.width,height:options.height,optics:{aberrationPx:options.parameters.sceneControls?.renderAberration??1,glowStrength:.035*(options.parameters.sceneControls?.bloomStrength??1),glowRadiusPx:2,glowThreshold:.78}});await writeFile(path.join(destination,name),composed);}
+  }
+  if(options.finish==='display'){
+   const {evaluateParameterAnimation}=await import(pathToFileURL(path.join(frozen,'src/engine/parameter-animation.js')).href);
+   for(let i=0;i<options.count;i++){
+    const look=evaluateParameterAnimation(options.parameters,options.command==='frame'?options.time:options.start+i/options.fps).look?.post??{};
+    if((look.colorContrast??1)===1&&(look.colorSaturation??1)===1)continue;
+    const filename=path.join(destination,`frame-${String(i+1).padStart(6,'0')}.png`),{data,info}=await sharp(filename).ensureAlpha().raw().toBuffer({resolveWithObject:true});gradePixels(data,look,info.channels);await sharp(data,{raw:info}).png().toFile(filename+'.tmp');await rename(filename+'.tmp',filename);
+   }
+  }
+  return destination;
+ }
  // PULSE crisp titles are rendered independently; this never invokes the Three.js raster pipeline.
  if(options.composite==='titles'){
   const {default:ffmpegExecutable}=await import('ffmpeg-static');
@@ -76,7 +98,7 @@ async function main(){
  if(await exists(recipePath)){const recipe=JSON.parse(await readFile(recipePath,'utf8'));if(!options.resume||recipe.fingerprint!==fingerprint)throw Error('Existing Cycles cache does not match this source and recipe. Choose a fresh output path.');baked=recipe.baked===true;}
  const frozen=path.join(directory,'source');
  manifest={schemaVersion:1,engine:'cycles',status:'running',path:options.out,sourceHash,fingerprint,sourceSnapshot:frozen,settings:options,adaptations,createdAt:new Date().toISOString(),frames:0,total:options.count};await updateManifest({phase:'freezing'});emit('progress',{phase:'freezing',percent:0});
- await writeFile(options.out+'.project.json',JSON.stringify({schemaVersion:2,command:options.command,parameters:options.parameters,settings:{...options},config:{scene:options.scene,duration:13.9,width:options.width,height:options.height,fps:options.fps},start:options.start,end:options.start+options.duration,time:options.time},null,2));
+ await writeFile(options.out+'.project.json',JSON.stringify({schemaVersion:2,command:options.command,parameters:options.parameters,settings:{...options},config:{scene:options.scene,duration:options.sceneDuration,width:options.width,height:options.height,fps:options.fps},start:options.start,end:options.start+options.duration,time:options.time},null,2));
  if(!baked){if(await exists(frozen))await rm(frozen,{recursive:true});await freeze(frozen);if(await sourceDigest(frozen)!==sourceHash)throw Error('Scene source changed while freezing; retry using a fresh output path');await writeFile(recipePath,JSON.stringify({fingerprint,baked:false}));await updateManifest({phase:'baking'});const sourceReport=await bake(directory,frozen,options);await updateManifest({sourceReport});await writeFile(recipePath,JSON.stringify({fingerprint,baked:true}));}
  const pending=[];let completed=0;for(let frame=1;frame<=options.count;frame++){if(options.resume&&await validFrame(path.join(directory,'frames',`frame-${String(frame).padStart(6,'0')}.png`),options))completed++;else pending.push(frame);}
  const started=Date.now();await updateManifest({phase:'rendering',frames:completed});

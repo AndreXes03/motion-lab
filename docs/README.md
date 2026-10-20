@@ -5,6 +5,7 @@
 | Understand the engine | [Architecture](ARCHITECTURE.md) |
 | Run the viewer and render | [Usage](USAGE.md) |
 | Work with a coding agent | [Agent workflow](AGENT_WORKFLOW.md) |
+| Make a first product commercial as a founder | [Founder guide](FOUNDER_START.md) |
 | Explore the procedural demo | [Example and formulas](PROCEDURAL-EXAMPLE.md) |
 | Build procedural 2D graphics | [Procedural graphics](PROCEDURAL.md) |
 | Author scene tools, target curves and presets | [Scene controls and motion curves](ADAPTIVE_CONTROLS.md) |

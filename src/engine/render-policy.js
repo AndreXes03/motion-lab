@@ -119,7 +119,7 @@ function availability(engine, plan, context) {
   if (engine === 'threejs') return {available: caps.threejs?.available !== false, reason: caps.threejs?.reason ?? 'Available in the local app.'};
   if (engine === 'cycles') {
     const cap = caps.cycles;
-    if (!supported(cap, context.scene)) return {available: false, reason: cap?.reason || (cap?.available ? 'Cycles currently supports the PULSE scene only.' : 'Blender preflight is required before Cycles can render locally.')};
+    if (!supported(cap, context.scene)) return {available: false, reason: cap?.reason || (cap?.available ? 'Cycles has no adapter for this scene.' : 'Blender preflight is required before Cycles can render locally.')};
     if (['gpu', 'metal'].includes(plan.cycles.device) && !cap.devices?.some(device => ['METAL', 'CUDA', 'OPTIX', 'HIP', 'ONEAPI'].includes(String(device.type).toUpperCase()))) return {available: false, reason: 'No compatible GPU was verified by Blender. Select Auto or CPU.'};
     if (typeof plan.cycles.workers === 'number' && plan.cycles.workers > (cap.limits?.workers ?? 2)) return {available: false, reason: 'This computer allows fewer parallel Cycles workers. Select Auto.'};
     return {available: true, reason: `Local Blender ready · ${cap.device || 'device selected at render time'}.`};

@@ -127,6 +127,11 @@
         <label for="message">The one thing people should remember</label><input id="message" name="message" maxlength="240" required placeholder="Less scheduling. More doing.">
         <div class="form-row"><div><label for="vibe">Make it feel</label><select id="vibe" name="vibe"><option>Clean and confident</option><option>Playful and bold</option><option>Calm and considered</option><option>Fast and energetic</option></select></div><div><label for="cta">End with</label><input id="cta" name="cta" maxlength="80" required placeholder="Join the waitlist"></div></div>
         <label for="reference">A reference I like <span>(optional)</span></label><input id="reference" name="reference" maxlength="400" placeholder="A link, a brand, or just a description">
+        <details class="brief-context"><summary>Help choose the right approach <span>(optional)</span></summary>
+          <label for="audience">Who should care?</label><input id="audience" name="audience" maxlength="180" placeholder="Freelancers who spend too long scheduling">
+          <label for="proof">What could we show to prove the benefit?</label><input id="proof" name="proof" maxlength="240" placeholder="One action, product detail or before/after — or let the assistant help">
+          <div class="form-row"><div><label for="assets">What I already have</label><select id="assets" name="assets"><option value="">Help me work this out</option><option>App screenshots or a recording</option><option>Product photos</option><option>A product model and brand assets</option><option>An existing video to improve</option><option>Just an idea so far</option></select></div><div><label for="placement">First place people will see it</label><select id="placement" name="placement"><option value="">Recommend a format</option><option>Phone feed</option><option>Website</option><option>Presentation</option></select></div></div>
+        </details>
         <button class="button primary" type="submit">Build my launch brief <span aria-hidden="true">↗</span></button>
         <div id="brief-result" hidden><label for="brief-output">Your brief, ready to take with you</label><textarea id="brief-output" rows="10" readonly></textarea><button id="copy-brief" type="button" class="button small">Copy brief</button><p id="copy-status" class="micro" role="status"></p></div>
       </form>
