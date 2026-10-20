@@ -4,6 +4,7 @@ import {getAuthoredAnimationTracks,getAuthoredCameraChannels,buildSampledAuthore
 import {sampleTrack} from './animation.js';
 import {applyDisplayGrade} from './display-grade.js';
 import {evaluateParameterAnimation} from './parameter-animation.js';
+import {createLoopLaunch} from '../scenes/loop-launch.js';
 import {createProductStarter} from '../scenes/product-starter.js';
 import {sceneConfig,sceneIds,isNewScene,sceneRegistry} from '../scene-registry.js';
 import {dotSoundTelemetry} from '../scenes/dot-sound.js';
@@ -23,7 +24,7 @@ import {createComposite} from './composite.js';
 import {applyFilmGrain} from './film-grain.js';
 import {smooth} from './timeline.js';
 export function createRuntime(canvas,{initialScene="objects"}={}){initialScene=canonicalScene(initialScene);
- let activeScene=initialScene;const studies={};const studyFactories={starter:createProductStarter,dot:createMascotDemo,pulse:createPulseDemo,camera:createAfterhoursDemo,replay:createReplayDemo};
+ let activeScene=initialScene;const studies={};const studyFactories={loop:createLoopLaunch,starter:createProductStarter,dot:createMascotDemo,pulse:createPulseDemo,camera:createAfterhoursDemo,replay:createReplayDemo};
  const graphics=createProceduralDemo(config); let pop;
  let renderer,scene,camera,update,drawOverlay,composite,proceduralCanvas,proceduralContext;
  let look=structuredClone(savedLook);const ctx=canvas.getContext('2d',{willReadFrequently:true});let width=0,height=0;const diagnosticHidden=[];const reviews=createReviewMaterials();
@@ -116,5 +117,5 @@ export function createRuntime(canvas,{initialScene="objects"}={}){initialScene=c
   pop?.dispose?.();releaseScene(scene);composite?.dispose();reviews.dispose();renderer?.dispose();renderer?.forceContextLoss();
   if(proceduralCanvas){proceduralCanvas.width=1;proceduralCanvas.height=1;}canvas.width=1;canvas.height=1;
  }
- const ready=document.fonts.ready.then(()=>{render(0,{parameters:{scene:initialScene}});return true});return {get config(){return sceneConfig(activeScene)},ready,render,dispose,pickObject,finishFrame,sampleMotion,sampleAuthoredAnimation,temporalSamplesAt:(time,samples,parameters={})=>(parameters.scene??activeScene)==='pulse'?pulseTemporalSamplesAt(time,samples):samples,shutterAngleAt:(time,parameters={})=>isNewScene(parameters.scene??activeScene)?((parameters.scene??activeScene)==='pulse'?pulseShutterAt(time):(parameters.scene??activeScene)==='camera'?afterhoursShutter(time):(parameters.scene??activeScene)==='dot'?mascotShutterAt(time):(parameters.scene??activeScene)==='starter'?270:0):parameters.scene==='procedural'?proceduralShutter(time,parameters.look?.post?.shutterAngle??210):parameters.look?.post?.shutterAngle??210,cutTimes:(parameters={})=>isNewScene(parameters.scene??activeScene)?sceneRegistry[parameters.scene??activeScene].cuts:parameters.scene==='procedural'?proceduralCuts:parameters.motion?.cuts??[],get scene(){init3d();return scene},get camera(){if(isNewScene(activeScene))return studies[activeScene]?.camera;if(activeScene==='pop')return pop?.camera;init3d();return camera},setLook(next){look=structuredClone(next)},getLook(){return structuredClone(look)}};
+ const ready=document.fonts.ready.then(()=>{render(0,{parameters:{scene:initialScene}});return true});return {get config(){return sceneConfig(activeScene)},ready,render,dispose,pickObject,finishFrame,sampleMotion,sampleAuthoredAnimation,temporalSamplesAt:(time,samples,parameters={})=>(parameters.scene??activeScene)==='pulse'?pulseTemporalSamplesAt(time,samples):samples,shutterAngleAt:(time,parameters={})=>isNewScene(parameters.scene??activeScene)?((parameters.scene??activeScene)==='pulse'?pulseShutterAt(time):(parameters.scene??activeScene)==='camera'?afterhoursShutter(time):(parameters.scene??activeScene)==='dot'?mascotShutterAt(time):(parameters.scene??activeScene)==='starter'?270:(parameters.scene??activeScene)==='loop'?90:0):parameters.scene==='procedural'?proceduralShutter(time,parameters.look?.post?.shutterAngle??210):parameters.look?.post?.shutterAngle??210,cutTimes:(parameters={})=>isNewScene(parameters.scene??activeScene)?sceneRegistry[parameters.scene??activeScene].cuts:parameters.scene==='procedural'?proceduralCuts:parameters.motion?.cuts??[],get scene(){init3d();return scene},get camera(){if(isNewScene(activeScene))return studies[activeScene]?.camera;if(activeScene==='pop')return pop?.camera;init3d();return camera},setLook(next){look=structuredClone(next)},getLook(){return structuredClone(look)}};
 }

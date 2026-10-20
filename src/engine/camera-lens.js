@@ -1,5 +1,5 @@
 /** Shared physical lens/dolly controls. Defaults preserve every authored pose. */
-export const perspectiveScenes = ['objects','starter','pulse','camera','pop','replay','dot'];
+export const perspectiveScenes = ['objects','loop','starter','pulse','camera','pop','replay','dot'];
 const clamp=(n,min,max)=>Math.max(min,Math.min(max,n));
 export function resolveCameraLens(position,target,referenceFov,parameters={},explicitFov) {
  const settings=parameters.look?.camera??{};

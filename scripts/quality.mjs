@@ -24,7 +24,7 @@ async function main(){
  if(!Number.isFinite(time)||time<0||time>sceneConfig(options.scene??'objects').duration||!Number.isFinite(yaw)||![width,height].every(n=>Number.isInteger(n)&&n>=128&&n<=4096))throw new Error('Invalid time, yaw or dimensions');
  const output=path.resolve(ROOT,options.out??'renders/quality-board.png');
  const frameDir=path.join(path.dirname(output),path.basename(output,path.extname(output))+'-frames');await mkdir(frameDir,{recursive:true});
- const filmShots=options.scene==='pulse'?[['speaker','Speaker',.75],['led','LED optics',7.065],['pcb','PCB assembly',7.94]]:options.scene==='camera'?[['lens','Lens',5.03],['iris','Iris hardware',12.5],['impact','Iris seat',14.50]]:null;
+ const filmShots=options.scene==='loop'?[['hero','Near side array',8.0],['assembly','Internal assembly',9+28/30],['detail','Near wide lens',11.7]]:options.scene==='pulse'?[['speaker','Speaker',.75],['led','LED optics',7.065],['pcb','PCB assembly',7.94]]:options.scene==='camera'?[['lens','Lens',5.03],['iris','Iris hardware',12.5],['impact','Iris seat',14.50]]:null;
  const objects=filmShots??(options.scene==='pop'?[['pop.player','Player'],['type.PLAY','PLAY'],['type.BASS','BASS']]:[['device.root','Radio'],['objects.emblem','B smaltata'],['objects.kinetic','Giroscopio']]),reviews=['clean','clay'];
  const overlays=[],records=[],labelHeight=48;
  for(let row=0;row<reviews.length;row++)for(let col=0;col<objects.length;col++){

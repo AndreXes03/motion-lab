@@ -75,8 +75,8 @@
             "colorContrast": 1,
             "colorSaturation": 1,
             "exposure": 1.03,
-            "bloomStrength": 0.0,
-            "grain": 0.0
+            "bloomStrength": 0,
+            "grain": 0
           }
         },
         {
@@ -267,6 +267,72 @@
             "exposure": 1,
             "bloomStrength": 1.6,
             "grainStrength": 0.4
+          }
+        }
+      ]
+    },
+    "loop": {
+      "lights": [
+        {
+          "id": "loop-studio",
+          "label": "Studio",
+          "description": "Broad key and dark molded surfaces.",
+          "values": {
+            "keyLight": 1,
+            "fillLight": 1
+          }
+        },
+        {
+          "id": "loop-sculpt",
+          "label": "Sculpt",
+          "description": "Lower fill for more defined edges and shadows.",
+          "values": {
+            "keyLight": 1.15,
+            "fillLight": 0.45
+          }
+        },
+        {
+          "id": "loop-soft",
+          "label": "Soft",
+          "description": "More fill for a gentler product read.",
+          "values": {
+            "keyLight": 0.8,
+            "fillLight": 1.5
+          }
+        }
+      ],
+      "compositing": [
+        {
+          "id": "loop-original",
+          "label": "Original",
+          "description": "Authored palette with restrained light-ring bloom.",
+          "values": {
+            "exposure": 1.15,
+            "bloomStrength": 1,
+            "colorContrast": 1,
+            "colorSaturation": 1
+          }
+        },
+        {
+          "id": "loop-punch",
+          "label": "Punch",
+          "description": "A small saturation and contrast lift.",
+          "values": {
+            "exposure": 1.1,
+            "bloomStrength": 0.7,
+            "colorContrast": 1.1,
+            "colorSaturation": 1.12
+          }
+        },
+        {
+          "id": "loop-clean",
+          "label": "No glow",
+          "description": "Clean material detail without bloom.",
+          "values": {
+            "exposure": 1.15,
+            "bloomStrength": 0,
+            "colorContrast": 1,
+            "colorSaturation": 1
           }
         }
       ]

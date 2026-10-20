@@ -1,0 +1,7 @@
+.prepared-preview{position:absolute;inset:0;width:100%;height:100%;object-fit:contain;background:#02040a;z-index:3;pointer-events:none}
+.prepared-preview[hidden]{display:none}
+.viewport:has(.prepared-preview:not([hidden])) #preview-badge{z-index:5}
+.prepared-preview-toggle{font:inherit;font-size:10px;padding:6px 10px;white-space:nowrap;border:1px solid #ffffff24;border-radius:6px;background:#ffffff06;color:inherit}
+.prepared-preview-toggle[aria-pressed=true]{border-color:#d7f56b88;background:#d7f56b18;color:#d7f56b}
+.prepared-preview-toggle:disabled{opacity:.45}
+#preview-controls{display:flex;align-items:center;gap:8px;flex-wrap:wrap}

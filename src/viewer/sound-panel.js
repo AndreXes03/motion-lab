@@ -6,6 +6,8 @@ export function mountSoundPanel({runtime,parameters,onChange,onPause,getTime}){
  const panel=document.createElement('details');panel.className='finish-tools sound-panel';panel.id='sound-tools';panel.open=true;
  panel.innerHTML='<summary>Sound design</summary><div class="sound-heading"><h3>Sound design</h3><label class="finish-checkbox sound-enable"><input id="sound-enabled" type="checkbox" checked> Enable audio</label></div>';
  let settings={...soundDefaults},context,source,buffer,cacheKey='',generation=0,startTime=0,offset=0,building=null;
+ let activeScene='',editedTrack=null,decodedTrack=null;
+ const editedReady=import.meta.env.VITE_PUBLIC_DEMO==='true'?Promise.resolve():fetch('/local-preview/loop-audio.json').then(r=>r.ok?r.json():null).then(data=>{if(data?.scene==='loop'&&/^\/local-preview\/[a-zA-Z0-9._-]+\.mp3$/.test(data.url)){editedTrack=data;cacheKey='';setScene(activeScene);}}).catch(()=>{});
  const fields={};
  function section(title,{advanced=false}={}){
   const group=document.createElement(advanced?'details':'section');group.className=advanced?'sound-section sound-disclosure':'sound-section';
@@ -49,20 +51,27 @@ export function mountSoundPanel({runtime,parameters,onChange,onPause,getTime}){
   const p=parameters();
   const key=JSON.stringify(p);if(cacheKey===key&&buffer)return;
   status.textContent='Preparing audio…';await new Promise(r=>setTimeout(r,20));
+  await editedReady;if(p.scene==='loop'&&editedTrack){buffer=await editedBuffer(p);cacheKey=key;status.textContent='Edited soundtrack · LOOP';return;}
   const telemetry=runtime.sampleMotion(p),plan=planSound(telemetry,p.sound),rendered=renderSound(plan);
   buffer=context.createBuffer(2,rendered.channels[0].length,rendered.sampleRate);for(let c=0;c<2;c++)buffer.copyToChannel(rendered.channels[c],c);cacheKey=key;
   status.textContent=`${plan.bpm} BPM · ${plan.events.length} sound effects`;
  }
  async function play(time){stop();const token=generation;if(!settings.enabled)return false;building=prepare();await building;if(token!==generation||!buffer)return false;source=context.createBufferSource();source.buffer=buffer;source.connect(context.destination);offset=time;startTime=context.currentTime;source.start(0,Math.min(time,buffer.duration-.001));return true;}
- async function exportBuffer(p){await new Promise(resolve=>setTimeout(resolve,0));const rendered=renderSound(planSound(runtime.sampleMotion(p),p.sound));const result=new AudioBuffer({numberOfChannels:2,length:rendered.channels[0].length,sampleRate:rendered.sampleRate});for(let c=0;c<2;c++)result.copyToChannel(rendered.channels[c],c);return result;}
+ async function editedBuffer(p){
+  if(!context)context=new AudioContext({sampleRate:48000});
+  if(!decodedTrack){const response=await fetch(editedTrack.url);if(!response.ok)throw new Error('Soundtrack unavailable');decodedTrack=await context.decodeAudioData(await response.arrayBuffer());}
+  const result=context.createBuffer(decodedTrack.numberOfChannels,decodedTrack.length,decodedTrack.sampleRate),gain=((p.sound?.master??soundDefaults.master)/soundDefaults.master)*((p.sound?.music??soundDefaults.music)/soundDefaults.music);
+  for(let c=0;c<result.numberOfChannels;c++){const input=decodedTrack.getChannelData(c),output=result.getChannelData(c);for(let i=0;i<input.length;i++)output[i]=input[i]*gain;}return result;
+ }
+ async function exportBuffer(p){await editedReady;if(p.scene==='loop'&&editedTrack)return editedBuffer(p);await new Promise(resolve=>setTimeout(resolve,0));const rendered=renderSound(planSound(runtime.sampleMotion(p),p.sound));const result=new AudioBuffer({numberOfChannels:2,length:rendered.channels[0].length,sampleRate:rendered.sampleRate});for(let c=0;c<2;c++)result.copyToChannel(rendered.channels[c],c);return result;}
  function setScene(scene){
-  panel.hidden=false;
+  activeScene=scene;panel.hidden=false;const edited=scene==='loop'&&!!editedTrack;music.hidden=edited;variation.hidden=edited;
   // Mirrors runtime.sampleMotion: only OBJECTS emits local mechanical profiles;
   // DOT has fixed authored cues; these study adapters currently emit no SFX.
   const is2d=['procedural','pop','dot','replay'].includes(scene);
   const hasMotionEffects=!['starter','pulse','camera'].includes(scene);
   const authoredCues=scene==='dot';
-  mechanics.hidden=scene!=='objects';sfx.hidden=!hasMotionEffects;subtle.hidden=!hasMotionEffects;
+  mechanics.hidden=edited||scene!=='objects';sfx.hidden=edited||!hasMotionEffects;subtle.hidden=edited||!hasMotionEffects;if(edited)status.textContent='Edited soundtrack · LOOP';
   for(const key of ['dial','hinge','gyro'])fields[key].row.hidden=scene!=='objects';
   fields.objects.row.hidden=authoredCues;fields.density.row.hidden=authoredCues;
   const sceneLabels=is2d?{camera:'Transitions',objects:'Shapes and text',accents:'Entrances and stops'}:{camera:labels.camera,objects:labels.objects,accents:labels.accents};

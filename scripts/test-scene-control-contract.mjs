@@ -1,3 +1,4 @@
+import {supportedScenes as cyclesScenes} from './cycles/options.mjs';
 import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
 import { sceneIds, sceneRegistry } from '../src/scene-registry.js';
@@ -32,7 +33,7 @@ for (const [scene, recommendation] of Object.entries(renderDocument.scenes)) {
   const plan = validateRenderPlan(recommendation);
   assert.equal(plan.source, 'agent', `${scene} default renderer recommendation is agent-authored`);
   assert.ok(plan.rationale.trim(), `${scene} renderer recommendation has a rationale`);
-  if (plan.renderer === 'cycles' || plan.preferredRenderer === 'cycles') assert.equal(scene, 'pulse', 'Cycles recommendations require the implemented PULSE adapter');
+  if (plan.renderer === 'cycles' || plan.preferredRenderer === 'cycles') assert.ok(cyclesScenes.includes(scene), 'Cycles recommendations require an implemented adapter');
 }
 
 const selectionDocument = JSON.parse(await readFile(new URL('../project/control-selections.json', import.meta.url), 'utf8'));

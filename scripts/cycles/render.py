@@ -12,8 +12,11 @@ from progressive import preview_stages
 def emit(type,**values):print('MOTION_CYCLES '+json.dumps({'type':type,**values}),flush=True)
 bpy.ops.wm.read_factory_settings(use_empty=True)
 scene=bpy.context.scene;scene.render.engine='CYCLES';scene.cycles.samples=options['samples'];scene.cycles.use_adaptive_sampling=True;scene.cycles.adaptive_threshold=.015;scene.cycles.use_denoising=options['denoise'];scene.cycles.max_bounces=options['bounces']
+if options['samples'] >= 512:
+    scene.cycles.adaptive_threshold=.003
+    scene.cycles.adaptive_min_samples=min(256,options['samples']//4)
 scene.render.resolution_x=options['width'];scene.render.resolution_y=options['height'];scene.render.resolution_percentage=100;scene.render.fps=options['fps'];scene.frame_start=1;scene.frame_end=options['count']
-scene.render.image_settings.file_format='PNG';scene.render.image_settings.color_mode='RGBA' if options.get('background')=='transparent' else 'RGB';scene.render.film_transparent=options.get('background')=='transparent';scene.render.image_settings.color_depth='8';scene.render.use_motion_blur=options['motionBlur'];scene.render.motion_blur_shutter=options['shutter']
+scene.render.image_settings.file_format='PNG';scene.render.image_settings.color_mode='RGBA' if options.get('background')=='transparent' or options['scene']=='loop' else 'RGB';scene.render.film_transparent=options.get('background')=='transparent' or options['scene']=='loop';scene.render.image_settings.color_depth='8';scene.render.use_motion_blur=options['motionBlur'];scene.render.motion_blur_shutter=options['shutter']
 scene.render.use_persistent_data=True
 scene.view_settings.view_transform='Filmic';scene.view_settings.look='Medium High Contrast';scene.view_settings.exposure=math.log2(1.05)
 device='CPU'
@@ -51,6 +54,12 @@ for i,m in enumerate(data['materials']):
     material=bpy.data.materials.new(m['name'] or 'pulse_%d'%i);material.use_nodes=True;n=material.node_tree.nodes;l=material.node_tree.links;p=n.get('Principled BSDF')
     p.inputs['Base Color'].default_value=(*m['color'],1);p.inputs['Roughness'].default_value=m['roughness'];p.inputs['Metallic'].default_value=m['metalness']
     socket(p,'Emission','Emission Color').default_value=(*m['emissive'],1);p.inputs['Emission Strength'].default_value=m['emissiveIntensity'];socket(p,'Clearcoat','Coat Weight').default_value=m['clearcoat'];socket(p,'Clearcoat Roughness','Coat Roughness').default_value=m['clearcoatRoughness'];socket(p,'Transmission','Transmission Weight').default_value=m['transmission'];p.inputs['IOR'].default_value=m['ior']
+    anisotropy=socket(p,'Anisotropic','Anisotropic IOR Level')
+    if anisotropy is not None:anisotropy.default_value=m.get('anisotropy',0)
+    sheen=socket(p,'Sheen','Sheen Weight')
+    if sheen is not None:sheen.default_value=m.get('sheen',0)
+    if p.inputs.get('Sheen Roughness') is not None:p.inputs['Sheen Roughness'].default_value=m.get('sheenRoughness',.5)
+    if p.inputs.get('Sheen Tint') is not None and p.inputs['Sheen Tint'].type=='RGBA':p.inputs['Sheen Tint'].default_value=(*m.get('sheenColor',[1,1,1]),1)
     if m['map'] is not None:
         t=texture(n,l,m['map'],'color');mix=n.new('ShaderNodeMixRGB');mix.name='BaseTint';mix.blend_type='MULTIPLY';mix.inputs[0].default_value=1;mix.inputs[2].default_value=(*m['color'],1);l.new(t.outputs['Color'],mix.inputs[1]);l.new(mix.outputs[0],p.inputs['Base Color'])
     if m['roughnessMap'] is not None:
@@ -143,7 +152,7 @@ previous=set();previous_lights=set();snapshots=[]
 for obj in objects.values():track(obj,'hide_render',[1],.5)
 for sample in range(data['report']['snapshotCount']):
     with open(os.path.join(HERE,'baked','snapshot_%04d.json'%sample)) as f:s=json.load(f)
-    snapshots.append({'camera':s['camera'],'environment':s['environment'],'environmentIntensity':s['environmentIntensity'],'geometry':{o['id']:o['geometry'] for o in s['visible']},'background':s['background'],'dynamics':s['dynamics'],'exposure':s['exposure']})
+    snapshots.append({'camera':s['camera'],'environment':s['environment'],'environmentIntensity':s['environmentIntensity'],'geometry':{o['id']:o['geometry'] for o in s['visible']},'background':s['background'],'dynamics':s['dynamics'],'exposure':s['exposure'],'graphicOnly':s.get('graphicOnly',False),'overlay':s.get('overlay')})
     frame=s['frame'];visible={o['id'] for o in s['visible']} & objects.keys()
     for id in visible ^ previous:
         track(objects[id],'hide_render',[int(id not in visible)],frame)
@@ -167,13 +176,16 @@ for sample in range(data['report']['snapshotCount']):
     for key in previous_lights-visible_lights:
         if key in lights:track(lights[key],'hide_render',[1],frame)
     for light in s['lights']:
-        key=light['uuid'];type={'RectAreaLight':'AREA','PointLight':'POINT','DirectionalLight':'SUN'}.get(light['type'])
+        key=light['uuid'];type={'RectAreaLight':'AREA','PointLight':'POINT','DirectionalLight':'SUN','SpotLight':'SPOT'}.get(light['type'])
         if not type:continue
         if key not in lights:
             ld=bpy.data.lights.new(key,type);obj=bpy.data.objects.new(key,ld);scene.collection.objects.link(obj);obj.rotation_mode='QUATERNION';lights[key]=obj
             if type=='AREA':ld.shape='RECTANGLE';ld.size=light['width'];ld.size_y=light['height']
-            if type=='POINT':ld.shadow_soft_size=.04
-        obj=lights[key];track(obj,'hide_render',[0],frame);ld=obj.data;track(ld,'color',light['color'],frame);track(ld,'energy',[light['intensity']*(light['width']*light['height']*math.pi if type=='AREA' else 4*math.pi if type=='POINT' else 1)],frame);animate_transform(obj,light['matrix'],frame)
+            if type in ['POINT','SPOT']:ld.shadow_soft_size=.04
+            if type=='SPOT':ld.spot_size=light['angle']*2;ld.spot_blend=light['penumbra']
+        obj=lights[key]
+        if type=='AREA':track(obj.data,'size',[light['width']],frame);track(obj.data,'size_y',[light['height']],frame)
+        track(obj,'hide_render',[0],frame);ld=obj.data;track(ld,'color',light['color'],frame);track(ld,'energy',[light['intensity']*(light['width']*light['height']*math.pi if type=='AREA' else 4*math.pi if type in ['POINT','SPOT'] else 1)],frame);animate_transform(obj,light['matrix'],frame)
     previous_lights=visible_lights
     if sample%120==0:emit('progress',phase='importing',sample=sample,totalSamples=data['report']['snapshotCount'])
 emit('progress',phase='animation',tracks=len(tracks))
@@ -219,6 +231,9 @@ def prepare(frame):
         if id in objects:objects[id].data=load_geometry(gid,data['objects'][id]['materials'])
     env.image=image(s['environment'],'data') if s['environment'] is not None else None;env_bg.inputs['Strength'].default_value=s['environmentIntensity']
     bgtex.image=png_image(s['background'],'color')
+    dof=s['camera'].get('dof')
+    cam.dof.use_dof=bool(dof and dof.get('enabled'))
+    if dof:cam.dof.focus_distance=dof['focusDistance'];cam.dof.aperture_fstop=dof['fstop']
     for d in s['dynamics']:
         for role in ['color','data']:
             nodes=dynamic_nodes.get((d['id'],role),[])
@@ -232,6 +247,12 @@ selected=json.loads(os.environ['MOTION_CYCLES_FRAMES'])
 emit('progress',phase='rendering',setupSeconds=setup,device=device,meshes=len(objects),omittedShaderLayers=omitted)
 for frame in selected:
     prepare(frame);filename=os.path.join(HERE,'frames','frame-%06d.png'%frame)
+    snap=snapshots[1 if options['command']=='frame' else (frame-1)*2]
+    if snap.get('graphicOnly'):
+        with open(filename,'wb') as f:f.write(base64.b64decode(snap['overlay'].split(',')[1]))
+        records.append({'frame':frame,'seconds':0,'layer':'canvas'})
+        emit('frame',frame=frame,total=options['count'],seconds=0,path=filename,device=device)
+        continue
     for stage in preview_stages(options):
         scene.render.resolution_x=stage['width'];scene.render.resolution_y=stage['height'];scene.cycles.samples=stage['samples']
         preview=os.path.join(HERE,'preview-raw-%d.png'%stage['stage'])
