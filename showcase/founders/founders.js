@@ -1,3 +1,5 @@
+import {films, publishedFilms} from './films.js';
+
 // The same static files work in the repository preview and at /motion-lab/founders/.
 const localPreview = location.pathname.includes('/showcase/founders');
 const base = new URL(localPreview ? '../../' : '../', location.href);
@@ -14,6 +16,25 @@ document.querySelector('[data-license]').href = new URL('LICENSE', base).href;
 document.querySelector('[data-original]').href = new URL(localPreview ? 'showcase/' : './', base).href;
 
 const hero = document.querySelector('#hero-video');
+const featuredId = publishedFilms[0];
+const featuredFilm = films[featuredId];
+hero.poster = asset(featuredFilm.poster);
+hero.setAttribute('aria-label', featuredFilm.title);
+document.querySelector('#hero-film-label').textContent = `${featuredFilm.name} / MADE IN FRAMEVOLVE`;
+document.querySelector('#hero-caption').textContent = `${featuredFilm.name} — made in Framevolve.`;
+document.querySelector('#watch-featured').dataset.film = featuredId;
+const gallery = document.querySelector('#film-grid');
+for (const id of publishedFilms.slice(1)) {
+  const film = films[id];
+  const card = document.createElement('button');
+  card.type = 'button';
+  card.className = 'film-card';
+  card.dataset.film = id;
+  card.setAttribute('aria-label', `Watch ${film.title}`);
+  // The catalog is authored locally; user input never reaches this markup.
+  card.innerHTML = `<div class="film-image"><img src="${asset(film.poster)}" width="1920" height="1080" alt="${film.alt}" loading="lazy"><span class="play">↗</span></div><span class="film-label"><strong>${film.name}</strong><span>${film.caption}</span></span>`;
+  gallery.append(card);
+}
 const playButton = document.querySelector('#hero-play');
 const reducedMotion = matchMedia('(prefers-reduced-motion: reduce)');
 const saveData = navigator.connection?.saveData || /(^|-)2g$/.test(navigator.connection?.effectiveType ?? '');
@@ -24,7 +45,7 @@ const updatePlayback = () => {
     hero.pause();
     return;
   }
-  if (!hero.getAttribute('src')) hero.src = asset('pulse-web-preview.mp4');
+  if (!hero.getAttribute('src')) hero.src = asset(featuredFilm.preview);
   hero.play().catch(() => {});
 };
 const syncPlayButton = () => {
@@ -52,11 +73,6 @@ reducedMotion.addEventListener('change', () => {
 const dialog = document.querySelector('#film-dialog');
 const player = document.querySelector('#film-player');
 const status = document.querySelector('#film-status');
-const films = {
-  pulse: {title: 'PULSE — Product film', file: 'pulse-1080.mp4', poster: 'pulse-poster.jpg'},
-  camera: {title: 'CAMERA — Product film', file: 'camera-1080.mp4', poster: 'camera-poster.jpg'},
-  dot: {title: 'DOT — Character film', file: 'dot-1080.mp4', poster: 'dot-poster.jpg'}
-};
 let filmTrigger;
 for (const button of document.querySelectorAll('[data-film]')) {
   button.addEventListener('click', () => {
@@ -93,6 +109,17 @@ if ('IntersectionObserver' in window) {
 } else { heroVisible = true; updatePlayback(); }
 
 const briefForm = document.querySelector('#brief-form');
+for (const link of document.querySelectorAll('a[href="#brief"]')) {
+  link.addEventListener('click', () => { document.querySelector('.brief-drawer').open = true; });
+}
+for (const button of document.querySelectorAll('[data-color]')) {
+  button.addEventListener('click', () => {
+    document.querySelector('.refine-art').dataset.tone = button.dataset.color;
+    for (const swatch of document.querySelectorAll('[data-color]')) {
+      swatch.setAttribute('aria-pressed', String(swatch === button));
+    }
+  });
+}
 const briefOutput = document.querySelector('#brief-output');
 const copyStatus = document.querySelector('#copy-status');
 briefForm.addEventListener('submit', event => {
