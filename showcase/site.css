@@ -26,3 +26,6 @@
 .wordmark .mark{display:block;width:28px;height:28px;flex:0 0 auto;object-fit:contain;border:0;border-radius:0;background:none}
 footer .wordmark .mark{width:25px;height:25px}
 .wordmark>span{font-weight:620;letter-spacing:-.55px}
+
+/* Keep the setup code card inside narrow mobile layouts. */
+.start-section > *{min-width:0}

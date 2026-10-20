@@ -60,6 +60,11 @@ if (heroVideo) {
 }
 
 const films = {
+  loop: {
+    title: 'LOOP',
+    description: 'From a written brief to a cinematic product commercial. LOOP V11, with the original Electro soundtrack.',
+    file: 'loop-v11-electro-1080.mp4', poster: 'loop-v11-poster.jpg', specs: 'Cycles · 1080p · 30 fps · 22 s · Electro', source: null
+  },
   pulse: {
     title: 'PULSE',
     description: 'Sound objects, tactile materials and cinematic movement in a rhythmic 3D studio.',
@@ -160,7 +165,10 @@ function selectFilm(id) {
   document.getElementById('film-title').textContent = film.title;
   document.getElementById('film-description').textContent = film.description;
   document.getElementById('film-specs').textContent = film.specs;
-  document.getElementById('film-source').href = 'https://github.com/AndreXes03/motion-lab/blob/main/src/scenes/' + film.source;
+  const sourceLink = document.getElementById('film-source');
+  sourceLink.hidden = !film.source;
+  if (film.source) sourceLink.href = 'https://github.com/AndreXes03/motion-lab/blob/main/src/scenes/' + film.source;
+  else sourceLink.removeAttribute('href');
   document.getElementById('film-download').href = asset('demo/' + film.file);
 }
 
@@ -189,7 +197,7 @@ function selectHashFilm() {
 const requestedFilm = new URLSearchParams(location.search).get('film');
 selectFilm(Object.hasOwn(films, location.hash.slice(1))
   ? location.hash.slice(1)
-  : Object.hasOwn(films, requestedFilm) ? requestedFilm : 'pulse');
+  : Object.hasOwn(films, requestedFilm) ? requestedFilm : 'loop');
 window.addEventListener('hashchange', selectHashFilm);
 
 document.getElementById('copy-setup').onclick = async () => {
