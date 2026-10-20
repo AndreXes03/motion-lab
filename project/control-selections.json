@@ -781,7 +781,10 @@
         "waveWeight",
         "coatingScale",
         "coatingEdge",
-        "renderAberration"
+        "renderAberration",
+        "clothRelief",
+        "metalRoughness",
+        "superOpacity"
       ],
       "panels": [
         {
@@ -824,7 +827,9 @@
             "shellRoughness",
             "ledBrightness",
             "coatingScale",
-            "coatingEdge"
+            "coatingEdge",
+            "clothRelief",
+            "metalRoughness"
           ],
           "advanced": false
         },
@@ -833,7 +838,8 @@
           "title": "Graphics",
           "category": "graphics",
           "controls": [
-            "typeScale"
+            "typeScale",
+            "superOpacity"
           ],
           "advanced": false
         },
@@ -903,7 +909,7 @@
           "advanced": false
         }
       ],
-      "rationale": "38 implemented controls: motion, real lens and distance, per-shot lighting, tactile materials, organic coating field, Gaussian opening, title Bezier and contour ribbons; finishing separated from UI."
+      "rationale": "40 implemented controls: preserved lens, light, curve and timing controls, plus true textile mesh relief and contrasting brushed/polished metal finishes. Headline opacity also prepares the requested clean variant without removing UI or the closing logo."
     }
   }
 }

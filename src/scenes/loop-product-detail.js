@@ -1,4 +1,5 @@
 import * as T from 'three';
+import {acousticClothGeometry,clothProfile,coatingField,coatingSample} from './loop-surface.js';
 import {RoundedBoxGeometry} from 'three/addons/geometries/RoundedBoxGeometry.js';
 
 // Scene-owned manufacturing detail. The assembly is constrained choreography,
@@ -15,32 +16,45 @@ export function addLoopProductDetail({product,body,face,cone,knob,shell,black,tr
     d.putImageData(im,0,0);const tex=new T.CanvasTexture(c);tex.wrapS=tex.wrapT=T.RepeatWrapping;tex.repeat.set(2,2);textures.push(tex);return tex;
   }
   const bead=surface('bead'),brush=surface('brushed'),fibre=surface('fibre');
-  shell.normalMap=null;shell.roughnessMap=bead;shell.bumpMap=bead;shell.bumpScale=.00018;shell.clearcoat=.18;shell.clearcoatRoughness=.25;
+  // Smooth pigmented lacquer. Brushing and microtexture belong to the metal
+  // hardware and textile, never to this polished colour coat.
+  shell.name='LOOP / polished tangerine lacquer';shell.normalMap=null;shell.bumpMap=null;shell.roughnessMap=null;shell.bumpScale=0;shell.clearcoat=1;shell.clearcoatRoughness=.045;shell.ior=1.49;
   trim.normalMap=null;trim.roughnessMap=brush;trim.bumpMap=brush;trim.bumpScale=.00008;trim.roughness=.29;trim.anisotropy=.65;
-  // Fine woven acoustic cloth: alternating over/under yarns instead of thick bars.
-  const clothCanvas=document.createElement('canvas');clothCanvas.width=clothCanvas.height=1024;
-  const clothContext=clothCanvas.getContext('2d'),clothImage=clothContext.createImageData(1024,1024);
+  // Low-contrast fibres run along each real yarn. Their geometry supplies the
+  // weave and open pores; these maps only break up microscopic highlights.
+  const clothCanvas=document.createElement('canvas'),heightCanvas=document.createElement('canvas');
+  clothCanvas.width=clothCanvas.height=heightCanvas.width=heightCanvas.height=1024;
+  const clothContext=clothCanvas.getContext('2d'),heightContext=heightCanvas.getContext('2d');
+  const clothImage=clothContext.createImageData(1024,1024),heightImage=heightContext.createImageData(1024,1024);
   for(let y=0;y<1024;y++)for(let x=0;x<1024;x++){
-    const u=x/8,v=y/8,fx=u-Math.floor(u),fy=v-Math.floor(v),over=(Math.floor(u)+Math.floor(v))%2===0;
-    const warp=Math.sin(fx*Math.PI)**1.7,weft=Math.sin(fy*Math.PI)**1.7;
-    const yarn=over?Math.max(warp*.96,weft*.52):Math.max(weft*.96,warp*.52);
-    const micro=Math.sin(x*2.5+y*.7)*Math.sin(y*2.1)*3;
-    const value=112+yarn*128+micro,i=(y*1024+x)*4;
+    const fibre=Math.sin(y/1024*Math.PI*24+Math.sin(x*.032)*.38),grain=Math.sin(x*1.77+y*2.13)*Math.sin(x*.43-y*.77),i=(y*1024+x)*4;
+    const value=212+fibre*15+grain*8,height=128+fibre*64+grain*14;
     clothImage.data[i]=clothImage.data[i+1]=clothImage.data[i+2]=value;clothImage.data[i+3]=255;
+    heightImage.data[i]=heightImage.data[i+1]=heightImage.data[i+2]=height;heightImage.data[i+3]=255;
   }
-  clothContext.putImageData(clothImage,0,0);
-  const cloth=new T.CanvasTexture(clothCanvas);cloth.wrapS=cloth.wrapT=T.RepeatWrapping;cloth.repeat.set(2,2);textures.push(cloth);
-  grille.normalMap=null;grille.metalness=0;grille.roughness=.88;grille.roughnessMap=null;
-  grille.bumpMap=cloth;grille.bumpScale=.0011;grille.map=cloth;grille.sheen=.32;grille.sheenRoughness=.78;grille.sheenColor=new T.Color('#9ca9ba');
-  cylinder(1.128,.007,.383,grille,face);ring(1.126,.0025,.390,black,face);
-  const titanium=mat('brushedMetal',{name:'LOOP / micro-machined titanium',color:'#a6abb0',roughness:.32,anisotropy:.65,normalMap:null,roughnessMap:brush,bumpMap:brush,bumpScale:.00008});
-  const graphite=mat('anodizedMetal',{name:'LOOP / bead-blasted graphite',color:'#222c32',roughness:.42,normalMap:null,roughnessMap:bead,bumpMap:bead,bumpScale:.00012});
+  clothContext.putImageData(clothImage,0,0);heightContext.putImageData(heightImage,0,0);
+  const cloth=new T.CanvasTexture(clothCanvas),clothHeight=new T.CanvasTexture(heightCanvas);
+  cloth.colorSpace=T.SRGBColorSpace;textures.push(cloth,clothHeight);
+  grille.name='LOOP / woven acoustic textile';grille.normalMap=null;grille.metalness=0;grille.roughness=.98;grille.roughnessMap=null;
+  grille.bumpMap=clothHeight;grille.bumpScale=.00019;grille.map=cloth;grille.sheen=.24;grille.sheenRoughness=.92;grille.sheenColor=new T.Color('#a8adaa');
+  const yarnTones=[.85,.93,.98,1.02,1.07,1.12],yarnMaterials=yarnTones.map((tone,i)=>{const m=grille.clone();m.name=`LOOP / acoustic yarn ${i+1}`;m.roughness=.95+(i%3)*.025;return m;});
+  const clothGeometry=acousticClothGeometry(),clothMesh=mesh(clothGeometry,yarnMaterials,face);clothMesh.name='loop.woven-cloth';clothMesh.position.z=.424;
+  const clothBase=Float32Array.from(clothGeometry.attributes.position.array);let previousRelief=1;
+  const backingGeometry=new T.CircleGeometry(1.126,128),backingPositions=backingGeometry.attributes.position;
+  for(let i=0;i<backingPositions.count;i++)backingPositions.setZ(i,clothProfile(backingPositions.getX(i),backingPositions.getY(i))*.85);
+  backingGeometry.computeVertexNormals();
+  const backingMaterial=mat('rubber',{name:'LOOP / acoustic shadow backing',color:'#090c0d',roughness:1,normalMap:null});
+  const backing=mesh(backingGeometry,backingMaterial,face);backing.name='loop.acoustic-backing';backing.position.z=.414;
+  ring(1.126,.0025,.430,black,face);
+  const titanium=mat('brushedMetal',{name:'LOOP / micro-machined titanium',color:'#a6abb0',roughness:.27,anisotropy:.78,normalMap:null,roughnessMap:brush,bumpMap:brush,bumpScale:.00008});
+  const graphite=mat('anodizedMetal',{name:'LOOP / bead-blasted graphite',color:'#222c32',roughness:.72,normalMap:null,roughnessMap:bead,bumpMap:bead,bumpScale:.00012});
   const copper=mat('copper',{name:'LOOP / wound copper',color:'#c47b47',roughness:.24});
-  const pcbMat=mat('satinPlastic',{name:'LOOP / midnight PCB solder mask',color:'#15363a',roughness:.43,metalness:.12,clearcoat:.18});
+  const pcbMat=mat('satinPlastic',{name:'LOOP / midnight PCB solder mask',color:'#15363a',roughness:.28,metalness:.12,clearcoat:.36});
   const ceramic=mat('ceramic',{name:'LOOP / ceramic capacitors',color:'#d7c7a5',roughness:.53});
   const carbon=mat('fibre',{name:'LOOP / woven driver diaphragm',color:'#1f262a',roughness:.56,normalMap:null,roughnessMap:fibre,bumpMap:fibre,bumpScale:.0003});
-  const seal=mat('rubber',{name:'LOOP / elastomer seals',color:'#080d11',roughness:.76,normalScale:new T.Vector2(.03,.03)});
-  const glass=mat('glass',{name:'LOOP / smoked rear window',color:'#586e76',roughness:.18,transmission:.45,thickness:.035});
+  const seal=mat('rubber',{name:'LOOP / elastomer seals',color:'#080d11',roughness:.94,normalScale:new T.Vector2(.03,.03)});
+  const glass=mat('glass',{name:'LOOP / smoked rear window',color:'#586e76',roughness:.075,transmission:.45,thickness:.035});
+  const polished=mat('brushedMetal',{name:'LOOP / diamond-cut edge',color:'#d6dce2',roughness:.105,normalMap:null,roughnessMap:null,anisotropy:.15});
   const screwGeo=new T.CylinderGeometry(.031,.032,.018,12);screwGeo.rotateX(Math.PI/2);
   const screwSlot=new T.BoxGeometry(.035,.006,.002);
   function screw(x,y,z,parent){const bolt=mesh(screwGeo,titanium,parent);bolt.position.set(x,y,z);const slot=mesh(screwSlot,black,parent);slot.position.set(x,y,z+.010);slot.rotation.z=Math.atan2(y,x)+.3;}
@@ -48,20 +62,43 @@ export function addLoopProductDetail({product,body,face,cone,knob,shell,black,tr
   function bridge(a,b,width,depth,material,parent){const v=new T.Vector3().subVectors(b,a),o=rounded(width,v.length(),depth,.012,material,parent);o.position.copy(a).add(b).multiplyScalar(.5);o.quaternion.setFromUnitVectors(new T.Vector3(0,1,0),v.normalize());return o;}
   function annulus(radius,inner,depth,z,material,parent){const profile=[[inner,-depth/2],[radius-.014,-depth/2],[radius,-depth/2+.014],[radius,depth/2-.014],[radius-.014,depth/2],[inner,depth/2],[inner,-depth/2]].map(([r,h])=>new T.Vector2(r,h));const o=mesh(new T.LatheGeometry(profile,96),material,parent);o.rotation.x=Math.PI/2;o.position.z=z;return o;}
   // Three-material chassis seam, recessed rear service window and keyed fasteners.
-  ring(1.326,.014,-.16,graphite,body);ring(1.329,.010,-.13,titanium,body);ring(1.315,.017,.21,seal,body);
+  ring(1.326,.014,-.16,graphite,body);ring(1.329,.007,-.13,polished,body);ring(1.315,.017,.21,seal,body);
   annulus(1.20,1.03,.035,-.307,graphite,body);cylinder(1.025,.018,-.325,glass,body);
   for(let i=0;i<6;i++){const a=i*Math.PI/3+.25;screw(Math.cos(a)*1.205,Math.sin(a)*1.205,.319,body);}
   for(let i=0;i<3;i++){const a=-.60+i*.12;const o=rounded(.055,.16,.012,.016,graphite,body,Math.cos(a)*1.325,Math.sin(a)*1.325,.02);o.rotation.z=a-Math.PI/2;}
+  // Visible precision mounts under the floating grille, each with a dark isolation pad.
+  for(let i=0;i<3;i++){
+    const a=i*Math.PI*2/3+.18,x=Math.cos(a)*1.16,y=Math.sin(a)*1.16;
+    const post=cylinder(.025,.080,.374,titanium,body);post.position.x=x;post.position.y=y;
+    const pad=cylinder(.032,.008,.417,seal,body);pad.position.x=x;pad.position.y=y;
+    const tab=rounded(.075,.026,.014,.006,polished,face,x,y,.430);tab.rotation.z=a;
+  }
   // Recessed USB-C service port and a surrounding machined insert on the back.
   rounded(.36,.16,.035,.045,titanium,body,.50,-.68,-.34);rounded(.25,.095,.038,.026,seal,body,.50,-.68,-.364);rounded(.16,.016,.012,.005,graphite,body,.50,-.68,-.386);
-  // Fine concentric turning marks and numbered detents on the crown.
-  knob.root.traverse(o=>{if(o.isMesh&&o.material?.name!=='LOOP / crown marker'){if(o.material?.metalness>.8)o.material=titanium;else if(o.material?.clearcoat>.2&&o.material?.metalness<.1)o.material=shell;}});
-  const turned=surface('turned');turned.repeat.set(1,1);
-  const capFinish=mat('brushedMetal',{name:'LOOP / turned aluminium crown cap',color:'#bcc4cd',roughness:.32,normalMap:null,roughnessMap:turned,bumpMap:turned,bumpScale:.00006,anisotropy:.55});
-  const cap=knob.root.children.find(o=>o.geometry?.type==='CylinderGeometry'&&o.position.z>.15);if(cap)cap.material=capFinish;
-  for(const r of [.070,.206])ring(r,.00065,.194,graphite,knob.root);
-  ring(.255,.006,.055,seal,knob.root);ring(.252,.005,.155,titanium,knob.root);
-  for(let i=0;i<12;i++){const a=i*Math.PI/6,o=rounded(.005,i%3===0?.028:.014,.002,.001,graphite,knob.root,Math.sin(a)*.195,Math.cos(a)*.195,.197);o.rotation.z=-a;}
+  // A polished black cap over a tactile matte stainless grip. One recessed
+  // laser index replaces the raised marker and decorative clock-face ticks.
+  for(const child of [...knob.root.children])knob.root.remove(child);
+  const capFinish=mat('ceramic',{name:'LOOP / polished obsidian crown',color:'#080a0d',roughness:.055,metalness:.38,clearcoat:1,clearcoatRoughness:.035,ior:1.52,normalMap:null,roughnessMap:null,bumpMap:null});
+  const gripFinish=mat('brushedMetal',{name:'LOOP / satin blasted crown grip',color:'#879097',roughness:.68,metalness:.96,anisotropy:.72,normalMap:null,roughnessMap:brush,bumpMap:brush,bumpScale:.000045});
+  const laserFinish=mat('anodizedMetal',{name:'LOOP / recessed laser index',color:'#9ca4a8',roughness:.76,metalness:.55,normalMap:null,roughnessMap:null});
+  const basePath=new T.Path();basePath.moveTo(0,0);basePath.lineTo(.224,0);basePath.quadraticCurveTo(.247,0,.247,.018);basePath.lineTo(.247,.047);basePath.quadraticCurveTo(.247,.054,.238,.057);basePath.lineTo(0,.057);
+  const collar=mesh(new T.LatheGeometry(basePath.getPoints(24),192),capFinish,knob.root);collar.rotation.x=Math.PI/2;
+  // Fine rounded flutes are one continuous machined sleeve, not chunky blocks.
+  const gripGeo=new T.CylinderGeometry(.252,.252,.106,768,8,true),gp=gripGeo.attributes.position;
+  for(let i=0;i<gp.count;i++){
+    const x=gp.getX(i),z=gp.getZ(i),angle=Math.atan2(x,z),h=gp.getY(i)/.106+.5;
+    const bevel=Math.sin(Math.PI*Math.max(0,Math.min(1,h/.10))*.5)*Math.sin(Math.PI*Math.max(0,Math.min(1,(1-h)/.10))*.5);
+    const r=.248+.0035*bevel+.00165*Math.cos(angle*96)*bevel;
+    gp.setX(i,Math.sin(angle)*r);gp.setZ(i,Math.cos(angle)*r);
+  }gripGeo.computeVertexNormals();
+  const grip=mesh(gripGeo,gripFinish,knob.root);grip.rotation.x=Math.PI/2;grip.position.z=.104;
+  ring(.246,.002,.158,polished,knob.root);ring(.245,.0025,.051,gripFinish,knob.root);
+  const capShape=new T.Shape();capShape.absarc(0,0,.239,0,Math.PI*2,false);
+  const slot=new T.Path(),sx=.006,cy=.143,hy=.029;
+  slot.moveTo(-sx,cy-hy);slot.lineTo(-sx,cy+hy);slot.absarc(0,cy+hy,sx,Math.PI,0,true);slot.lineTo(sx,cy-hy);slot.absarc(0,cy-hy,sx,0,-Math.PI,true);slot.closePath();capShape.holes.push(slot);
+  const capGeo=new T.ExtrudeGeometry(capShape,{depth:.029,bevelEnabled:true,bevelSegments:5,steps:1,bevelSize:.0012,bevelThickness:.0012,curveSegments:96});
+  const cap=mesh(capGeo,capFinish,knob.root);cap.position.z=.169;cap.name='loop.crown-polished-cap';
+  const index=rounded(.010,.066,.001,.004,laserFinish,knob.root,0,cy,.195);index.name='loop.crown-recessed-index';
   // A diaphragm with a real dish and flexible concentric surround.
   const membrane=mesh(new T.LatheGeometry([[.36,.17],[.55,.14],[.77,.18],[.94,.26],[1.02,.27]].map(([r,z])=>new T.Vector2(r,z)),96),carbon,cone);membrane.rotation.x=Math.PI/2;
   for(const r of [1.005,1.045,1.085])ring(r,.022,.255,seal,cone);
@@ -94,9 +131,17 @@ export function addLoopProductDetail({product,body,face,cone,knob,shell,black,tr
   // small droplets follow the same front on the real cylindrical housing.
   const coating=createCoating({product,shell,mat,textures});
   return {
-    update(spread=0){inner.visible=spread>.025;for(const {g,factor} of layers){g.position.z=spread*factor;g.rotation.z=0;}},
+    update(spread=0,phase=null){inner.visible=spread>.025;for(const {g,factor} of layers){
+      const offset=phase===null?0:Math.sin(phase*Math.PI)*Math.sin(factor*8)*.07;
+      g.position.set(offset,offset*.3,spread*factor);g.rotation.set(0,phase===null?0:offset*.25,phase===null?0:(phase-.5)*.13*Math.sin(factor*6));
+    }},
+    surface(relief=1,metal=1){
+      if(relief!==previousRelief){const a=clothGeometry.attributes.position,base=clothGeometry.userData.clothProfile;for(let i=0;i<a.count;i++)a.setZ(i,base[i]+(clothBase[i*3+2]-base[i])*relief);a.needsUpdate=true;clothGeometry.computeVertexNormals();clothGeometry.computeBoundingBox();previousRelief=relief;}
+      grille.bumpScale=.00019*relief;yarnMaterials.forEach((m,i)=>{m.color.copy(grille.color).multiplyScalar(yarnTones[i]);m.bumpScale=grille.bumpScale;});
+      titanium.roughness=Math.min(1,.27*metal);trim.roughness=Math.min(1,.29*metal);gripFinish.roughness=Math.min(.94,.68*metal);capFinish.roughness=Math.min(.16,.055*metal);polished.roughness=Math.min(1,.105*metal);
+    },
     coat:coating.update,
-    dispose(){coating.dispose();textures.forEach(t=>t.dispose());}
+    dispose(){coating.dispose();textures.forEach(t=>t.dispose());yarnMaterials.forEach(m=>m.dispose());}
   };
 }
 
@@ -107,29 +152,25 @@ function createCoating({product,shell,mat,textures}){
   const colorMap=new T.CanvasTexture(canvas);colorMap.colorSpace=T.SRGBColorSpace;
   const roughMap=new T.CanvasTexture(roughCanvas);textures.push(colorMap,roughMap);
   shell.map=colorMap;shell.roughnessMap=roughMap;
-  const clamp=v=>Math.max(0,Math.min(1,v)),smooth=v=>{v=clamp(v);return v*v*(3-2*v);};
-  const noise=(u,v,scale)=>.5+.24*Math.sin(u*137*scale+Math.sin(v*29)*1.8)+.16*Math.sin(v*31*scale+Math.sin(u*113)*2.1)+.10*Math.sin(u*241*scale-v*53*scale);
-  const field=(u,v,scale)=>.50+(u-.50)*1.5+(noise(u,v,scale)-.5)*.40+.055*Math.sin(v*19+u*11);
+  const field=coatingField;
   const dropMaterial=mat('ceramic',{name:'LOOP / wet coating microdroplets',color:'#a7c2de',roughness:.18,clearcoat:.6,clearcoatRoughness:.12});
   const dropGeo=new T.SphereGeometry(1,8,5),drops=new T.InstancedMesh(dropGeo,dropMaterial,220),dummy=new T.Object3D();
   drops.name='loop.coating-front';drops.userData.loopCoating=true;drops.visible=false;product.add(drops);
   let last='';
   function update(progress=-1,hue=0,scale=1,edge=1){
-    const key=[progress,hue,scale,edge].join(':');drops.visible=progress>=0&&progress<1;
+    const key=[progress,hue,scale,edge].join(':');drops.visible=progress>0&&progress<1;
     if(key===last)return;last=key;
     const active=progress>=0,from=new T.Color('#f55b18').offsetHSL(hue/360,0,0).convertLinearToSRGB().toArray(),to=new T.Color('#9fbad9').offsetHSL(hue/360,0,0).convertLinearToSRGB().toArray();
     for(let y=0;y<size;y++)for(let x=0;x<size;x++){
-      const u=x/(size-1),v=1-y/(size-1),i=(y*size+x)*4,f=field(u,v,scale),n=noise(u*2.8,v*2.8,scale);
-      const delta=progress-f,w=smooth((delta+.025*edge)/(.05*edge));
-      const seeds=active&&delta<0&&delta>-.10*edge&&n>.79?smooth((n-.79)*13)*smooth((delta+.10*edge)/(.10*edge)):0;
-      const blend=Math.max(w,seeds),wet=Math.exp(-((delta/.026)**2));
-      for(let ch=0;ch<3;ch++){pixels.data[i+ch]=active?(from[ch]+(to[ch]-from[ch])*blend)*255:255;rough.data[i+ch]=active?240-wet*135:238;}
+      const u=x/(size-1),v=1-y/(size-1),i=(y*size+x)*4;
+      const {blend,wet}=coatingSample(u,v,progress,scale,edge);
+      for(let ch=0;ch<3;ch++){pixels.data[i+ch]=active?(from[ch]+(to[ch]-from[ch])*blend)*255:255;rough.data[i+ch]=active?255-wet*76:255;}
       pixels.data[i+3]=rough.data[i+3]=255;
     }
     ctx.putImageData(pixels,0,0);rc.putImageData(rough,0,0);colorMap.needsUpdate=true;roughMap.needsUpdate=true;
     for(let i=0;i<220;i++){
-      const u=((i*.61803398875)%1),z=-.13+((i*.41421356237)%1)*.36,v=.4+(z+.13)/.36*.2;
-      const delta=progress-field(u,v,scale),life=Math.exp(-((delta/.065)**2)),radius=(.005+(i%7)*.0015)*life*edge;
+      const u=((i*.61803398875)%1),z=-.12+((i*.41421356237)%1)*.32,v=4/9+(z+.12)/(.32*9);
+      const delta=progress-field(u,v,scale),life=Math.exp(-((delta/.065)**2)),radius=(.003+(i%7)*.0009)*life*edge;
       const a=u*Math.PI*2,r=1.343+radius*.5;dummy.position.set(Math.sin(a)*r,-Math.cos(a)*r,z);dummy.scale.setScalar(Math.max(.00001,radius));dummy.updateMatrix();drops.setMatrixAt(i,dummy.matrix);
     }
     drops.instanceMatrix.needsUpdate=true;

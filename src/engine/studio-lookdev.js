@@ -3,8 +3,8 @@ import {organicSurface} from '../scenes/organic-surface.js';
 import {glossStudio} from '../scenes/gloss-studio.js';
 // Create once per scene; reuse materials rather than generating maps per mesh.
 // Ownership is explicit: dispose only after every mesh using this kit is removed.
-export function createStudioMaterials(renderer,{colors={}}={}){
- const environment=glossStudio(renderer,{owned:true}),env=environment.texture,leather=organicSurface('leather'),metal=organicSurface('metal'),paper=organicSurface('paper');
+export function createStudioMaterials(renderer,{colors={},environmentFactory=glossStudio}={}){
+ const environment=environmentFactory(renderer,{owned:true}),env=environment.texture,leather=organicSurface('leather'),metal=organicSurface('metal'),paper=organicSurface('paper');
  const materials={
   leather:new T.MeshPhysicalMaterial({...leather,color:'#151617',roughness:.76,metalness:0,normalScale:new T.Vector2(.45,.45),envMap:env}),
   rubber:new T.MeshPhysicalMaterial({...leather,color:'#111212',roughness:.9,metalness:0,normalScale:new T.Vector2(.48,.48),envMap:env,envMapIntensity:.3}),
