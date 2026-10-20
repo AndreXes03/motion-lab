@@ -24,7 +24,7 @@ document.querySelector('#hero-film-label').textContent = `${featuredFilm.name} /
 document.querySelector('#hero-caption').textContent = `${featuredFilm.name} — made in Framevolve.`;
 document.querySelector('#watch-featured').dataset.film = featuredId;
 const gallery = document.querySelector('#film-grid');
-for (const id of publishedFilms.slice(1)) {
+for (const id of publishedFilms) {
   const film = films[id];
   const card = document.createElement('button');
   card.type = 'button';
