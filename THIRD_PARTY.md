@@ -90,3 +90,12 @@ without an account-specific Premium download certificate. Until that acquisition
 is verified or replaced with a documented Premium download, the existing Uicons
 credit is retained. Do not discard upstream license/provenance files, or infer
 that this subscription relicenses icons for other users' independent reuse.
+
+## Space Grotesk
+
+LOOP editorial headlines use embedded glyph outlines from Space Grotesk at weight 600.
+Source: [Space Grotesk by Florian Karsten](https://github.com/floriankarsten/space-grotesk),
+distributed through [Google Fonts](https://github.com/google/fonts/tree/main/ofl/spacegrotesk).
+The [SIL Open Font License](src/assets/fonts/space-grotesk-OFL.txt) is preserved.
+The [outline asset](src/assets/fonts/space-grotesk-headlines.json) records provenance,
+weight and checksum. No system font installation is required. The official logo is separate.

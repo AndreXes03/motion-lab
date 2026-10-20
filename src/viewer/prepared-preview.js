@@ -1,5 +1,9 @@
 import loopSource from '../scenes/loop-launch.js?raw';
 import loopDetailSource from '../scenes/loop-product-detail.js?raw';
+import loopMotionSource from '../scenes/loop-motion.js?raw';
+import loopSurfaceSource from '../scenes/loop-surface.js?raw';
+import loopHeadlinesSource from '../scenes/loop-headlines.js?raw';
+import loopFontSource from '../assets/fonts/space-grotesk-headlines.json?raw';
 import {isLoopPreviewCurrent} from './prepared-preview-state.js';
 import './prepared-preview.css';
 
@@ -19,7 +23,7 @@ export function mountPreparedPreview({container,toolbar,getState,onSelect,onChan
     try{
       const response=await fetch('/local-preview/loop.json',{cache:'no-store'});if(!response.ok)return;
       const data=await response.json();
-      const hash=Array.from(new Uint8Array(await crypto.subtle.digest('SHA-256',new TextEncoder().encode(loopSource+'\n'+loopDetailSource))),v=>v.toString(16).padStart(2,'0')).join('');
+      const hash=Array.from(new Uint8Array(await crypto.subtle.digest('SHA-256',new TextEncoder().encode([loopSource,loopDetailSource,loopMotionSource,loopSurfaceSource,loopHeadlinesSource,loopFontSource].join('\n')))),v=>v.toString(16).padStart(2,'0')).join('');
       if(data.engine!=='cycles'||data.scene!=='loop'||data.sourceSHA256!==hash||data.duration!==22||!/^\/local-preview\/[a-zA-Z0-9._-]+\.mp4$/.test(data.url))return;
       manifest=data;video.src=data.url;ready=true;onChange();
     }catch{/* No prepared local render: the interactive and frame renderers remain available. */}
