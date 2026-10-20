@@ -67,6 +67,24 @@
       "temporalSamples": 48,
       "version": "cinematic-v15-soft-sfx",
       "posterTime": 4.4
+    },
+    {
+      "film": "LOOP",
+      "file": "demo/loop-v11-electro-1080.mp4",
+      "poster": "demo/loop-v11-poster.jpg",
+      "sha256": "6dc018a371b6d008da1827b13faa7fefdb7aaec25c4c00b37525f357ec875403",
+      "bytes": 17350104,
+      "width": 1920,
+      "height": 1080,
+      "fps": 30,
+      "duration": 22,
+      "framecount": 660,
+      "videoCodec": "h264",
+      "audioCodec": "aac",
+      "version": "v11-principale-electro",
+      "posterTime": 19.8,
+      "preview": "demo/loop-v11-web-preview.mp4",
+      "approvedOn": "2026-10-20"
     }
   ],
   "schemaVersion": 2

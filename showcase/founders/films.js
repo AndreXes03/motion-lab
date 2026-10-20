@@ -1,10 +1,10 @@
-// Editorial order: LOOP leads once the user approves its finished export.
-// No LOOP media is loaded, linked or published while its release is pending.
+// Approved editorial order. LOOP V11 uses the first (Electro) soundtrack.
 export const filmOrder = ['loop', 'pulse', 'camera', 'dot'];
 export const films = {
   loop: {
-    name: 'LOOP', status: 'awaiting-user-approval',
-    title: 'LOOP — Launch film', file: null, preview: null, poster: null
+    name: 'LOOP', status: 'published', title: 'LOOP — Launch film',
+    file: 'loop-v11-electro-1080.mp4', preview: 'loop-v11-web-preview.mp4', poster: 'loop-v11-poster.jpg',
+    caption: 'From a brief to a big entrance.', alt: 'LOOP orange and graphite product in a cinematic launch film'
   },
   pulse: {
     name: 'PULSE', status: 'published', title: 'PULSE — Product film',
