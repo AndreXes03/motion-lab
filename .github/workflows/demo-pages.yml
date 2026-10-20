@@ -50,6 +50,7 @@ jobs:
           cp -R public/brand _site/brand
           cp showcase/index.html _site/index.html
           cp showcase/site.css showcase/site.js _site/
+          cp -R showcase/founders _site/founders
           cp LICENSE THIRD_PARTY.md _site/
           mkdir -p _site/licenses/legacy
           cp licenses/legacy/MIT.txt _site/licenses/legacy/
