@@ -15,6 +15,7 @@
   <meta name="twitter:card" content="summary_large_image">
   <link rel="icon" href="../brand/framevolve-mark.png" data-brand type="image/png">
   <link rel="stylesheet" href="./founders.css">
+  <link rel="stylesheet" href="./founders-polish.css">
   <script type="module" src="./founders.js"></script>
 </head>
 <body>
@@ -26,15 +27,18 @@
   </header>
   <main id="main">
     <section class="hero wrap" id="top">
-      <p class="eyebrow"><span class="dot"></span> BIG IDEAS. BOOTSTRAPPED BUDGETS.</p>
+      <p class="eyebrow hero-badge"><span class="dot"></span> BIG IDEAS. BOOTSTRAPPED BUDGETS. <span class="badge-arrow">↗</span></p>
       <h1>Make your launch video.<br><span>Keep your runway.</span></h1>
-      <p class="hero-description">Your product. Your logo. A few words.<br>A launch video you can make your own.</p>
-      <div class="actions"><a class="button primary" href="#how">See how it works <span aria-hidden="true">↓</span></a><a class="text-link" href="#films">Watch the films <span aria-hidden="true">↗</span></a></div>
-      <p class="micro">Free to use. Built for bootstrappers.</p>
+      <p class="hero-description">Turn “let me explain” into <span>“watch this.”</span><br>Your product, your story. A video you can keep refining.</p>
+      <div class="actions"><a class="button primary hero-primary" data-studio href="../studio/">Explore the web demo <span aria-hidden="true">↗</span></a><a class="text-link" href="#how">See how it works <span aria-hidden="true">↓</span></a></div>
+      <div class="hero-benefits"><span>✓ Free for commercial use</span><span>✓ Start with your assets</span><span>✓ Keep creative control</span></div>
+      <div class="hero-reel">
+      <div class="reel-tab"><span class="reel-icon">▶</span> YOUR NEXT LAUNCH COULD MOVE LIKE THIS <span>↓</span></div>
       <div class="hero-stage">
         <div class="stage-bar"><span><span class="dot"></span> MADE IN FRAMEVOLVE</span><span id="hero-film-label">PULSE / PRODUCT FILM</span></div>
         <video id="hero-video" muted loop playsinline preload="none" poster="../demo/pulse-poster.jpg" data-poster="pulse-poster.jpg" aria-label="PULSE product film preview"></video>
         <div class="stage-bottom"><button class="watch-featured" id="watch-featured" type="button">Watch the full film <span>↗</span></button><button id="hero-play" class="circle-button" aria-label="Play product film preview" type="button">▶</button></div>
+      </div>
       </div>
       <p class="asset-caption"><span id="hero-caption">PULSE — made in Framevolve.</span><span>Authored film · not an automatic template output</span></p>
     </section>
@@ -72,7 +76,25 @@
       <div class="film-grid" id="film-grid"></div>
     </section>
 
-    <div class="value-strip wrap"><span><i>↗</i> Big launch energy.</span><span><i>○</i> Small startup budget.</span><span><i>✓</i> Free for commercial use.</span></div>
+    <section class="launch-moments wrap section" id="launch-moments" aria-labelledby="moments-title">
+      <div class="moments-copy"><p class="eyebrow">MORE THAN ONE BIG DAY.</p><h2 id="moments-title">Something new?<br><span>Make it a moment.</span></h2><p>A first launch. A new feature. A better first impression.</p>
+        <div class="moment-tabs" role="tablist" aria-label="Launch video directions">
+          <button type="button" role="tab" id="moment-tab-launch" aria-controls="moment-preview" aria-selected="true" data-moment="launch"><span>01</span><div><strong>Launch day</strong><small>Give people a reason to care.</small></div><i>↗</i></button>
+          <button type="button" role="tab" id="moment-tab-feature" aria-controls="moment-preview" aria-selected="false" tabindex="-1" data-moment="feature"><span>02</span><div><strong>The next feature</strong><small>Make the update worth noticing.</small></div><i>↗</i></button>
+          <button type="button" role="tab" id="moment-tab-homepage" aria-controls="moment-preview" aria-selected="false" tabindex="-1" data-moment="homepage"><span>03</span><div><strong>Your homepage</strong><small>Show the value before the scroll.</small></div><i>↗</i></button>
+        </div>
+      </div>
+      <div class="moment-preview" id="moment-preview" role="tabpanel" aria-labelledby="moment-tab-launch" tabindex="0" data-direction="launch">
+        <div class="moment-topline"><span>YOUR BRAND / IN MOTION</span><span id="moment-format">THE BIG INTRODUCTION</span></div>
+        <div class="moment-art"><div class="moment-orbit orbit-one"></div><div class="moment-orbit orbit-two"></div><div class="moment-star" aria-hidden="true">✳</div><span class="moment-overline" id="moment-overline">MEET YOUR NEXT FAVORITE THING.</span><h3 id="moment-headline">Small team.<br>Big entrance.</h3>
+          <div class="moment-app" aria-hidden="true"><div class="moment-app-bar"><i></i><i></i><i></i><span>your-product.app</span></div><div class="moment-app-body"><div class="moment-app-icon">✳</div><div class="moment-app-lines"><b></b><i></i></div><div class="moment-app-graph"><i></i><i></i><i></i><i></i><i></i></div><div class="moment-app-stats"><span></span><span></span></div></div></div>
+          <span class="moment-sticker" id="moment-sticker">WE’RE LIVE ↗</span><span class="moment-play" aria-hidden="true">▶</span>
+        </div>
+        <div class="moment-caption"><span>Illustrative direction · your brand goes here</span><a href="#brief" id="use-direction">Start with this direction ↗</a></div>
+      </div>
+    </section>
+
+    <div class="founder-facts wrap"><div><span>01 / START WITH WHAT YOU HAVE</span><p>Logo. Screenshots. A clear idea.</p></div><div><span>02 / STAY IN THE DRIVER’S SEAT</span><p>Refine the look and movement.</p></div><div><span>03 / KEEP YOUR RUNWAY</span><p>Studio is free for commercial use.</p></div></div>
 
     <section class="wrap section brief-section" id="brief" aria-labelledby="brief-heading">
       <div class="brief-copy"><p class="eyebrow">YOUR TURN.</p><h2 id="brief-heading">Got a launch in mind?</h2><p>Turn it into a brief for your AI assistant.</p></div>
@@ -94,7 +116,10 @@
       <details><summary>Free, even for my startup?<span>+</span></summary><p>Yes. Framevolve is free for professional use and selling your original videos. Your AI assistant and other services may have their own costs. Software resale has separate <a data-license href="../LICENSE">license terms</a>.</p></details>
     </div></section>
 
-    <section class="closing wrap"><p class="eyebrow"><span class="dot"></span> BUILT SOMETHING GOOD?</p><h2>Give it a proper entrance.</h2><div class="actions"><a class="button primary" data-studio href="../studio/">Explore Framevolve <span aria-hidden="true">↗</span></a><a class="text-link" href="#brief">Start with your brief ↗</a></div><p class="micro">Web demo available. Founder creation coming to local Studio.</p></section>
+    <section class="closing wrap" aria-labelledby="closing-title">
+      <div class="closing-card"><div class="closing-copy"><p class="eyebrow"><span class="closing-dot"></span> YOUR NEXT BIG THING STARTS HERE.</p><h2 id="closing-title">You built the thing.<br>Now make<br><span>them look.</span></h2><p>A little less explaining.<br>A launch worth pressing play on.</p><div class="actions"><a class="button closing-primary" data-studio href="../studio/">Make your first move <span aria-hidden="true">↗</span></a><a class="text-link" href="#brief">Build your brief ↗</a></div><span class="closing-note">Free Studio · Web demo available · Founder setup in preview</span></div>
+      <div class="closing-illustration" aria-hidden="true"><div class="closing-ring ring-one"></div><div class="closing-ring ring-two"></div><div class="closing-film"><div class="closing-film-top"><span>✳ YOUR BRAND</span><span>01 / THE LAUNCH</span></div><span class="closing-film-title">Hello,<br>world.</span><div class="closing-film-play">▶</div><div class="closing-film-bottom"><span>YOUR PRODUCT. IN MOTION.</span><span>↗</span></div></div><div class="closing-logo">✳</div><div class="closing-sticker">BIG LAUNCH<br>ENERGY ↗</div><div class="closing-cursor">↖<span>You, directing.</span></div></div></div>
+    </section>
   </main>
   <footer class="wrap"><a class="brand" href="#top"><img data-brand src="../brand/framevolve-mark.png" width="26" height="26" alt=""><span>Framevolve</span></a><p>Made by Andrea Salvo. For ideas worth showing.</p><div><a href="../" data-original>Original landing ↗</a><a href="https://github.com/AndreXes03/motion-lab">GitHub ↗</a></div></footer>
   <dialog id="film-dialog" aria-labelledby="dialog-title"><div class="dialog-bar"><h2 id="dialog-title">PULSE</h2><button id="close-film" type="button" aria-label="Close film">Close ×</button></div><video id="film-player" controls playsinline preload="none"></video><p id="film-status" role="status"></p></dialog>
