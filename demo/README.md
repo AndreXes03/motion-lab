@@ -11,7 +11,7 @@
 | [![DOT](dot-poster.jpg)](https://andrexes03.github.io/motion-lab/#dot) | Hybrid | 16 s | [Watch](https://andrexes03.github.io/motion-lab/#dot) · [1080p MP4](dot-1080.mp4) |
 | [![REPLAY](replay-poster.jpg)](https://andrexes03.github.io/motion-lab/#replay) | Hybrid | 15 s | [Watch](https://andrexes03.github.io/motion-lab/#replay) · [1080p MP4](replay-1080.mp4) |
 
-**1920 × 1080 · 30 fps · sound design.** Hybrid combines 3D objects with 2D graphics and typography. PULSE/CAMERA use separately licensed music ([credits](../THIRD_PARTY.md)). All scenes remain editable in free, open-source Framevolve and render locally from code.
+**1920 × 1080 · 30 fps · sound design.** Hybrid combines 3D objects with 2D graphics and typography. PULSE/CAMERA use separately licensed music ([credits](../THIRD_PARTY.md)). All scenes remain editable in free-to-use, source-available Framevolve and render locally from code.
 
 ## Earlier studies
 

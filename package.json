@@ -38,7 +38,9 @@
     "test:export:browser": "node scripts/test-browser-export.mjs",
     "test:export:browser:recording": "node scripts/test-browser-export-recording.mjs",
     "test:motion:fluid": "node scripts/test-fluid-editor-browser.mjs",
-    "studio": "node scripts/launch-studio.mjs"
+    "studio": "node scripts/launch-studio.mjs",
+    "setup": "node scripts/setup-mac.mjs",
+    "test:setup": "node --test scripts/test-browser-runtime.mjs scripts/test-setup-mac.mjs scripts/test-mac-launcher.mjs"
   },
   "keywords": [
     "threejs",
