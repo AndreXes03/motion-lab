@@ -1,3 +1,4 @@
+import { mountFeedbackMemory } from './feedback-memory.js';
 const RECOVERY='framevolve-live-reload', BACKUP='framevolve-before-live-update';
 export function readLiveRecovery(){try{return JSON.parse(sessionStorage.getItem(RECOVERY)||'null');}catch{return null;}}
 const signature=snapshot=>JSON.stringify(snapshot.parameters);
@@ -10,7 +11,7 @@ export function mountLiveReview({container,enabled,baseline,getSnapshot,setSnaps
   const apply=document.createElement('button');apply.id='live-review-apply';apply.type='button';apply.textContent='Apply latest';apply.hidden=true;
   const undo=document.createElement('button');undo.id='live-review-restore';undo.type='button';undo.textContent='Restore local edits';undo.hidden=true;
   const details=document.createElement('details'),summary=document.createElement('summary'),list=document.createElement('ol');
-  summary.textContent='Agent feedback';details.append(summary,list);container.append(status,toggle,apply,undo,details);
+  summary.textContent='Agent feedback';details.append(summary,list);container.append(status,toggle,apply,undo,details);mountFeedbackMemory(container);
   let paused=sessionStorage.getItem('framevolve-live-paused')==='true',base=signature(baseline),seen=null,current=null,pending=null,stopped=false,reloading=false,localError='',taskSignature='';
   const dirty=()=>signature(getSnapshot())!==base;
   function render(){

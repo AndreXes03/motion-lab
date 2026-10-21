@@ -43,3 +43,9 @@ For each feedback item:
 Studio waits when the user has manual edits, pauses updates, or is rendering. Do not override that choice. Explain **Apply latest** when needed: local edits are backed up in that tab and can be restored with **Restore local edits**. Syntax-invalid source/JSON keeps the existing tab on its prior checkpoint until corrected. If a batch is interrupted, inspect files and the current checklist before publishing or resuming; publishing does not undo unfinished file edits.
 
 End with the checklist of completed and remaining items, the Studio URL, and what was actually verified. Keep the server available. Do not mark an item Done merely because code was written, a download finished, or an API call returned successfully.
+
+## Interpret feedback before executing it
+
+Read [Client feedback guidance](../motion-lab-product-film/references/client-feedback.md) when turning a client's natural-language reaction into a concrete revision. Keep their words distinct from your visual diagnosis and proposed intervention. Preserve approved creative choices; compare the same shot or corresponding motion passage before/after. “Done” in this checklist is not client approval.
+
+Run `node scripts/feedback-memory.mjs status` before optional data collection. If enabled, use `list` for relevant prior decisions and `record` with a JSON object on stdin after a coherent attempt. Follow the guidance's field contract and do not invent observations. If off, do not enable it or create an alternative journal. The user manages outcomes, consent, deletion and voluntary email sharing in Studio → Feedback memory. Never send a report yourself without explicit authorization.

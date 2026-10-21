@@ -55,6 +55,11 @@ test('local setup API enforces token, host, origin and provider allowlist; retry
   assert.equal((await post('provider', { provider: 'other' })).status, 200);
   assert.equal((await post('install', { provider: 'constructor', browser: 'auto' })).status, 400);
   assert.equal((await post('install', { provider: 'other', browser: 'unknown' })).status, 400);
+  assert.equal(setup.state.feedbackMemory, false);
+  assert.equal((await post('memory', { enabled: 'yes' })).status, 400);
+  assert.equal((await post('memory', { enabled: true })).status, 200);
+  assert.equal(setup.state.feedbackMemory, true);
+  assert.equal((await post('memory', { enabled: false })).status, 200);
   assert.equal((await post('finish')).status, 400);
   assert.equal(launched, 0);
   assert.equal((await post('install', { provider: 'other', browser: 'auto' })).status, 200);

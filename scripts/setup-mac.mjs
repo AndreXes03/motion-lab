@@ -1,5 +1,6 @@
 #!/usr/bin/env node
 import http from 'node:http';
+import { readMemory, setMemoryConsent } from './feedback-memory-store.mjs';
 import { spawn, execFile } from 'node:child_process';
 import { randomBytes } from 'node:crypto';
 import { access, mkdir, readFile, realpath, rm, writeFile } from 'node:fs/promises';
@@ -60,7 +61,7 @@ export async function startSetup({ root = ROOT, open = true, operations = {} } =
   const release = () => rm(lock, { recursive: true, force: true });
   let settings; try { settings = await readSetup(root); } catch { settings = {}; }
   const token = randomBytes(32).toString('hex');
-  const state = { busy: false, stage: 'welcome', message: '', error: '', ready: false, provider: settings.provider ?? 'other', browser: settings.browser?.kind ?? 'auto', chrome: await (operations.findChrome ?? findChrome)(), agent: null, log: '', root, launcherWarning: '' };
+  const state = { feedbackMemory: (await readMemory(root)).consent.enabled, busy: false, stage: 'welcome', message: '', error: '', ready: false, provider: settings.provider ?? 'other', browser: settings.browser?.kind ?? 'auto', chrome: await (operations.findChrome ?? findChrome)(), agent: null, log: '', root, launcherWarning: '' };
   const env = { ...process.env, PATH: `${path.dirname(process.execPath)}${path.delimiter}${process.env.PATH ?? ''}` };
   const run = operations.run ?? ((command, args) => new Promise((resolve, reject) => {
     const child = spawn(command, args, { cwd: root, env, stdio: ['ignore', 'pipe', 'pipe'] });
@@ -144,11 +145,15 @@ export async function startSetup({ root = ROOT, open = true, operations = {} } =
       if (url.pathname === '/api/install') {
         if (!Object.hasOwn(PROVIDERS, body.provider)) return json(400, { error: 'Choose an available agent.' });
         if (!['auto', 'chrome', 'chromium'].includes(body.browser)) return json(400, { error: 'Choose Automatic, Chrome or Chromium.' });
+        if (body.feedbackMemory !== undefined && typeof body.feedbackMemory !== 'boolean') return json(400, { error: 'Choose whether to save feedback memory.' });
         job('install', async () => {
+          if (body.feedbackMemory !== undefined) { await setMemoryConsent(root, body.feedbackMemory); state.feedbackMemory = body.feedbackMemory; }
           state.provider = body.provider;
           await prepare(body);
           await finish();
         });
+      } else if (url.pathname === '/api/memory') {
+        const memory = await setMemoryConsent(root, body.enabled); state.feedbackMemory = memory.consent.enabled;
       } else if (url.pathname === '/api/provider') {
         if (!Object.hasOwn(PROVIDERS, body.provider)) return json(400, { error: 'Choose an available agent.' });
         state.provider = body.provider; state.agent = await findAgent(body.provider, root);

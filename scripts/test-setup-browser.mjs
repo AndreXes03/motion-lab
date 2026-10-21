@@ -25,6 +25,15 @@ try {
   assert.equal(await page.locator('#agent').isVisible(), false);
   assert.equal(await page.locator('#install').evaluate(el => el.getBoundingClientRect().bottom < innerHeight), true);
   assert.equal(await page.locator('.choices img').evaluateAll(images => images.length === 2 && images.every(img => img.complete && img.naturalWidth > 0)), true);
+  assert.equal(await page.locator('#feedback-memory').isChecked(), false);
+  await page.locator('#feedback-memory').click();
+  await page.locator('#memory-notice').waitFor({ state: 'visible' });
+  assert.equal(await page.locator('#feedback-memory').isChecked(), false);
+  await page.locator('#memory-decline').click();
+  assert.equal(await page.locator('#feedback-memory').isChecked(), false);
+  await page.locator('#memory-info').click();
+  await page.locator('#memory-enable').click();
+  assert.equal(await page.locator('#feedback-memory').isChecked(), true);
   await page.locator('input[value="codex"]').check();
   assert.match(await page.locator('#provider-docs').getAttribute('href'), /openai.com/);
   await mkdir('outputs/setup-check', { recursive: true });
@@ -39,6 +48,7 @@ try {
   assert.equal(launched, 1);
   assert.equal(setup.state.browser, 'chromium');
   assert.equal(setup.state.provider, 'codex');
+  assert.equal(setup.state.feedbackMemory, true);
   assert.equal(installs.some(args => args.includes('--global')), false, 'agent install must wait for explicit Create with AI');
   await page.locator('#agent').waitFor({ state: 'visible' });
   await page.screenshot({ path: 'outputs/setup-check/02-ready.png', fullPage: true });

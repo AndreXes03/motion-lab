@@ -38,16 +38,22 @@ async function action(fn) {
 }
 document.querySelectorAll('input[name="provider"]').forEach(el => el.addEventListener('change', () => render(state)));
 $('browser').onchange = () => { selectionChanged = true; render(state); };
+$('memory-info').onclick = () => $('memory-notice').showModal();
+$('feedback-memory').onclick = event => { if ($('feedback-memory').checked) { event.preventDefault(); $('memory-notice').showModal(); } };
+$('memory-enable').onclick = () => { $('feedback-memory').checked = true; $('memory-notice').close(); };
+$('memory-decline').onclick = () => { $('feedback-memory').checked = false; $('memory-notice').close(); };
+$('memory-notice-close').onclick = () => $('memory-notice').close();
 $('install').onclick = () => action(async () => {
-  if (state.ready && !selectionChanged) state = await api('finish', {});
-  else { state = await api('install', { provider: provider(), browser: $('browser').value }); selectionChanged = false; }
+  if (state.ready && !selectionChanged) { state = await api('memory', { enabled: $('feedback-memory').checked }); state = await api('finish', {}); }
+  else { state = await api('install', { provider: provider(), browser: $('browser').value, feedbackMemory: $('feedback-memory').checked }); selectionChanged = false; }
 });
 $('agent').onclick = () => action(async () => { state = await api('provider', { provider: provider() }); state = await api('agent', {}); });
 $('locate').onclick = () => action(async () => { state = await api('locate', {}); selectionChanged = true; });
 $('copy-prompt').onclick = () => action(async () => { await navigator.clipboard.writeText(document.querySelector('blockquote').textContent); $('copy-prompt').textContent = 'Copied'; });
-$('close').onclick = () => action(async () => { await api('close', {}); disconnected = true; state.message = 'Setup is complete. You can close this tab and its Terminal window.'; });
+$('close').onclick = () => action(async () => { await api('memory', { enabled: $('feedback-memory').checked }); await api('close', {}); disconnected = true; state.message = 'Setup is complete. You can close this tab and its Terminal window.'; });
 try {
   state = await api('state');
+  $('feedback-memory').checked = !!state.feedbackMemory;
   document.querySelector(`input[name="provider"][value="${['codex','claude','other'].includes(state.provider) ? state.provider : 'other'}"]`).checked = true;
   $('browser').value = ['chrome','chromium'].includes(state.browser) ? state.browser : 'auto';
   render(state);

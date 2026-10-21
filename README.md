@@ -102,3 +102,7 @@ Output directories are created automatically. Studio video renders go to Downloa
 | Licenses | [Third-party assets](THIRD_PARTY.md) |
 
 Created and owned by Andrea Salvo. New Studio interface/editing tools, plugins and installation/update features are covered by the proprietary [Framevolve Free Use License](LICENSE): free personal and professional use, including selling your own rendered work; resale, paid software hosting and commercial repackaging require written permission. Earlier MIT grants remain valid for previously published code; see [licensing details](docs/LICENSING.md). Demo trademarks and third-party assets retain their respective rights. FFmpeg binaries are not included.
+
+### Optional feedback memory
+
+Mac setup offers an unchecked local feedback-memory option with an explanatory window. Studio lets users review revision examples, record the client's actual response, turn collection off, delete entries and prepare a voluntary report to **framevolve.app@gmail.com**. Nothing is uploaded or sent automatically. [Feedback guidance and memory](docs/FEEDBACK_MEMORY.md).
