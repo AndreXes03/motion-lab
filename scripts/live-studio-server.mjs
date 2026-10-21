@@ -22,7 +22,8 @@ export function liveStudioPlugin() {
       // Transform before releasing a checkpoint. A half-written JS/JSON file leaves the current page intact.
       const files=[...pending];
       for(const file of files){
-        const raw=await readFile(file,'utf8');
+        const raw=await readFile(file,'utf8').catch(error=>{if(error.code==='ENOENT')return null;throw error;});
+        if(raw===null)continue;
         if(file.endsWith('.json'))JSON.parse(raw);
         else await server.transformRequest('/'+path.relative(root,file).split(path.sep).join('/'));
       }
@@ -45,11 +46,13 @@ export function liveStudioPlugin() {
       server.watcher.on('change',changed);server.watcher.on('add',changed);server.watcher.on('unlink',changed);
       server.middlewares.use('/__framevolve_live',(req,res)=>{
         if(req.method!=='GET'){res.statusCode=405;res.end();return;}
+        let host;try{host=new URL('http://'+req.headers.host).hostname;}catch{}
+        if(!['localhost','127.0.0.1','[::1]'].includes(host)){res.statusCode=403;res.end();return;}
         if(req.headers.origin&&new URL(req.headers.origin).host!==req.headers.host){res.statusCode=403;res.end();return;}
         res.setHeader('Content-Type','application/json');res.setHeader('Cache-Control','no-store');res.end(JSON.stringify(state));
       });
     },
-    handleHotUpdate(context){if(isLiveSource(root,context.file)){changed(context.file);return [];}},
+    hotUpdate(context){if(this.environment.name==='client'&&isLiveSource(root,context.file)){changed(context.file);return [];}},
     closeBundle(){stopped=true;clearTimeout(timer);if(server){for(const event of ['change','add','unlink'])server.watcher.off(event,changed);}}
   };
 }

@@ -20,13 +20,13 @@ try{
  const waitRevision=async rev=>page.waitForFunction(rev=>window.motionLive?.getState().revision>=rev,rev);
  const pixelHash=()=>page.evaluate(()=>{const canvas=document.querySelector('#renderCanvas');let h=2166136261;for(const n of canvas.getContext('2d').getImageData(0,0,canvas.width,canvas.height).data)h=Math.imul(h^n,16777619);return h>>>0;});
  await page.goto(url);await ready();
- await page.locator('#seek').evaluate(el=>{el.value='60';el.dispatchEvent(new Event('input',{bubbles:true}));});await page.evaluate(()=>window.motionPreview.whenIdle());
+ await page.locator('#seek').evaluate(el=>{el.value='240';el.dispatchEvent(new Event('input',{bubbles:true}));});await page.evaluate(()=>window.motionPreview.whenIdle());
  // An old recovery snapshot must not hide a new authored default after a source reload.
  const lookFile=path.join(root,'project/look.json'),look=JSON.parse(await readFile(lookFile,'utf8'));look.post.grain=.025;
  await writeFile(lookFile,JSON.stringify(look));
  await page.waitForFunction(()=>window.motionLive?.getState().revision>=1);await ready();
  assert.equal((await recipe()).parameters.look.post.grain,.025);
- assert.equal(await page.locator('#seek').inputValue(),'60');
+ assert.equal(await page.locator('#seek').inputValue(),'240');
  await command('plan',{tasks:[{id:'f1',title:'New title'},{id:'f2',title:'Accent and scene code'},{id:'f3',title:'Final title'}]});
  await command('begin',{task:'f1'});
  const one=await recipe();one.parameters.graphics.title='FIRST CHANGE';one.parameters.studio.values.title='FIRST CHANGE';
@@ -42,7 +42,7 @@ try{
  const two=structuredClone(one);two.parameters.graphics.title='SECOND CHANGE';two.parameters.studio.values.title='SECOND CHANGE';
  await command('publish',{task:'f2',snapshot:two});
  await page.waitForFunction(()=>window.__liveSourceProof===1);await ready();
- assert.equal((await recipe()).parameters.graphics.title,'SECOND CHANGE');assert.equal(await page.locator('#seek').inputValue(),'60');
+ assert.equal((await recipe()).parameters.graphics.title,'SECOND CHANGE');assert.equal(await page.locator('#seek').inputValue(),'240');
  await command('done',{task:'f2'});
  // Syntax errors keep the last good page, then recover automatically after a fix.
  const goodHash=await pixelHash();await page.evaluate(()=>window.liveTabIdentity='before-error');
