@@ -15,7 +15,7 @@ try{
  page=await browser.newPage({viewport:{width:1440,height:1000}});const errors=[];page.on('pageerror',e=>errors.push(e.message));
  const url=`http://127.0.0.1:${server.httpServer.address().port}/?scene=procedural`;
  const ready=async()=>{await page.waitForFunction(()=>window.motionLive?.getState().revision!==undefined);await page.evaluate(()=>window.motionPreview.whenIdle());};
- const recipe=async()=>{const download=page.waitForEvent('download');await page.locator('#download-recipe').click();return JSON.parse(await readFile(await(await download).path(),'utf8'));};
+ const recipe=async()=>{await page.evaluate(()=>window.motionPreview.whenIdle());await page.locator('#experience-pro').click();await page.locator('#tab-code').click();return JSON.parse(await page.locator('#code-content').textContent());};
  const command=async(action,options={})=>writeReview(root,updateReview(await readReview(root),action,options));
  const waitRevision=async rev=>page.waitForFunction(rev=>window.motionLive?.getState().revision>=rev,rev);
  const pixelHash=()=>page.evaluate(()=>{const canvas=document.querySelector('#renderCanvas');let h=2166136261;for(const n of canvas.getContext('2d').getImageData(0,0,canvas.width,canvas.height).data)h=Math.imul(h^n,16777619);return h>>>0;});
