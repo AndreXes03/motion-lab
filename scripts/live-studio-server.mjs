@@ -1,3 +1,4 @@
+import { parseSync } from 'vite';
 import path from 'node:path';
 import { readFile } from 'node:fs/promises';
 import { randomUUID } from 'node:crypto';
@@ -5,6 +6,13 @@ import { readReview, liveFile } from './live-review-store.mjs';
 export function isLiveSource(root, file) {
   const relative=path.relative(root,file).split(path.sep).join('/');
   return /^(src\/.*\.(js|json|css|glsl)|project\/[^/]+\.json)$/.test(relative);
+}
+export function validateLiveSource(file, raw) {
+  if (file.endsWith('.json')) { JSON.parse(raw); return; }
+  if (file.endsWith('.js')) {
+    const errors = parseSync(file, raw).errors.filter(error => error.severity === 'Error');
+    if (errors.length) throw Error(path.basename(file) + ': ' + errors[0].message);
+  }
 }
 export function liveStudioPlugin() {
   let server, root, timer, stopped=false, working=false, generation=0;
@@ -24,8 +32,8 @@ export function liveStudioPlugin() {
       for(const file of files){
         const raw=await readFile(file,'utf8').catch(error=>{if(error.code==='ENOENT')return null;throw error;});
         if(raw===null)continue;
-        if(file.endsWith('.json'))JSON.parse(raw);
-        else await server.transformRequest('/'+path.relative(root,file).split(path.sep).join('/'));
+        validateLiveSource(file,raw);
+        if(!file.endsWith('.json'))await server.transformRequest('/'+path.relative(root,file).split(path.sep).join('/'));
       }
       if(start!==generation){schedule();return;}
       const latest=await readReview(root);
@@ -52,7 +60,11 @@ export function liveStudioPlugin() {
         res.setHeader('Content-Type','application/json');res.setHeader('Cache-Control','no-store');res.end(JSON.stringify(state));
       });
     },
-    hotUpdate(context){if(this.environment.name==='client'&&isLiveSource(root,context.file)){changed(context.file);return [];}},
+    hotUpdate(context){if(this.environment.name==='client'&&isLiveSource(root,context.file)){
+      // A custom refresh replaces Vite's updateModules path; invalidate its cache explicitly.
+      for(const module of context.modules)this.environment.moduleGraph.invalidateModule(module,new Set(),context.timestamp,true);
+      changed(context.file);return [];
+    }},
     closeBundle(){stopped=true;clearTimeout(timer);if(server){for(const event of ['change','add','unlink'])server.watcher.off(event,changed);}}
   };
 }

@@ -5,7 +5,7 @@ import path from 'node:path';
 import os from 'node:os';
 import {readReview,writeReview,updateReview,validateReview} from './live-review-store.mjs';
 import {liveArgs} from './live-studio.mjs';
-import {isLiveSource} from './live-studio-server.mjs';
+import {isLiveSource,validateLiveSource} from './live-studio-server.mjs';
 import {shouldApplyLive} from '../src/viewer/live-review.js';
 test('feedback progresses through plan, edit, published checkpoint and verified completion',async t=>{
  const root=await mkdtemp(path.join(os.tmpdir(),'live-review-'));t.after(()=>rm(root,{recursive:true,force:true}));
@@ -49,4 +49,11 @@ test('reloading API schemas preserves the active render reservation',async()=>{
   assert.equal(response.statusCode,409);assert.match(response.body,/already running/);
   assert.notEqual(first,next);
  }finally{state.activeRenderId=previous;}
+});
+
+test('checkpoint syntax validation reads new bytes rather than a cached transform',()=>{
+ validateLiveSource('scene.js','export const value = 1;');
+ assert.throws(()=>validateLiveSource('scene.js','export const value = ;'),/Unexpected token/);
+ assert.throws(()=>validateLiveSource('look.json','{"post":'),SyntaxError);
+ validateLiveSource('scene.js','export const value = 2;');
 });
