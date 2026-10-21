@@ -2,8 +2,6 @@ name: Mac setup and export
 on:
   pull_request:
     paths: ['scripts/**', 'Setup Framevolve.command', 'package*.json', '.github/workflows/mac-setup.yml']
-  push:
-    branches: ['fix/mac-guided-setup']
   workflow_dispatch:
 permissions:
   contents: read

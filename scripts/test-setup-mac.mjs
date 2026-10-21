@@ -4,6 +4,7 @@ import { mkdtemp, mkdir, readFile, writeFile, rm, symlink } from 'node:fs/promis
 import { spawnSync } from 'node:child_process';
 import path from 'node:path';
 import os from 'node:os';
+import http from 'node:http';
 import { ROOT, playwright } from './browser-runtime.mjs';
 import { authScript, ensureLauncher, startSetup } from './setup-mac.mjs';
 
@@ -44,7 +45,11 @@ test('local setup API enforces token, host, origin and provider allowlist; retry
   const post = (route, body = {}, override = {}) => fetch(origin + '/api/' + route, { method: 'POST', headers: { ...headers, ...override }, body: JSON.stringify(body) });
   assert.equal((await fetch(origin + '/api/state')).status, 403);
   assert.equal((await post('provider', { provider: 'codex' }, { origin: 'https://example.com' })).status, 403);
-  assert.equal((await post('provider', { provider: 'codex' }, { host: 'evil.example' })).status, 403);
+  const wrongHost = await new Promise((resolve, reject) => {
+    const request = http.request(origin + '/api/provider', { method: 'POST', headers: { ...headers, host: 'evil.example' } }, response => { response.resume(); resolve(response.statusCode); });
+    request.on('error', reject); request.end(JSON.stringify({ provider: 'codex' }));
+  });
+  assert.equal(wrongHost, 403);
   assert.equal((await post('provider', { provider: 'constructor' })).status, 400);
   assert.equal((await post('provider', { provider: 'other' })).status, 200);
   assert.equal((await post('finish')).status, 400);
