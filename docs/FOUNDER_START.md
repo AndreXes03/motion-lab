@@ -65,3 +65,7 @@ For final delivery, ask for the formats and destination you need. The agent shou
 [Setup](../README.md#run-motion-lab-locally) · [Studio usage](USAGE.md) · [Agent workflow](AGENT_WORKFLOW.md)
 
 For best results, use a capable coding model such as Sol, Astra, Opus, Fable or an equivalent, where available. Framevolve does not require a specific model or plan; access and any usage costs are managed by your provider. You can try the Studio and export existing scenes without an agent.
+
+## Watch changes as they happen
+
+Ask your agent to use the `framevolve-live-review` skill, list your feedback, and show each change in the same Studio tab. You can request its integrated browser if one is available. Studio follows completed checkpoints automatically; your manual edits are protected. See [Live Studio](LIVE_STUDIO.md).

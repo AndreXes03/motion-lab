@@ -19,6 +19,8 @@ Preserve supplied product identity, approved decisions and publication scope. Th
 
 The beginner-facing entry is [Start a founder commercial](../../../docs/FOUNDER_START.md). This is a workflow with the user's coding agent, not an in-app AI wizard or a promise of one-click generation.
 
+For revisions and live feedback, also follow [the live-review skill](../framevolve-live-review/SKILL.md): list the requested changes, keep their status current, and publish each coherent change to the same visible Studio tab before moving on.
+
 ## Working loop
 
 1. **Distill the brief.** Establish who should care, the one takeaway, a demonstrable product moment and one next action. Separate supplied facts, creative assumptions and unresolved claims. For “you choose,” recommend suitable defaults and proceed on reversible work.
