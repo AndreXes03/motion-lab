@@ -60,7 +60,7 @@ export async function startSetup({ root = ROOT, open = true, operations = {} } =
   const release = () => rm(lock, { recursive: true, force: true });
   let settings; try { settings = await readSetup(root); } catch { settings = {}; }
   const token = randomBytes(32).toString('hex');
-  const state = { busy: false, stage: 'welcome', message: '', error: '', ready: false, provider: settings.provider ?? 'other', browser: settings.browser?.kind ?? 'auto', chrome: await findChrome(), agent: null, log: '', root, launcherWarning: '' };
+  const state = { busy: false, stage: 'welcome', message: '', error: '', ready: false, provider: settings.provider ?? 'other', browser: settings.browser?.kind ?? 'auto', chrome: await (operations.findChrome ?? findChrome)(), agent: null, log: '', root, launcherWarning: '' };
   const env = { ...process.env, PATH: `${path.dirname(process.execPath)}${path.delimiter}${process.env.PATH ?? ''}` };
   const run = operations.run ?? ((command, args) => new Promise((resolve, reject) => {
     const child = spawn(command, args, { cwd: root, env, stdio: ['ignore', 'pipe', 'pipe'] });
@@ -77,13 +77,14 @@ export async function startSetup({ root = ROOT, open = true, operations = {} } =
   };
   const prepare = async body => {
     state.ready = false;
-    if (!['chrome', 'chromium'].includes(body.browser)) throw Error('Choose Chrome or Chromium.');
+    if (!['auto', 'chrome', 'chromium'].includes(body.browser)) throw Error('Choose Automatic, Chrome or Chromium.');
+    const browserChoice = body.browser === 'auto' ? (await executable(chromeExecutable(state.chrome)) ? 'chrome' : 'chromium') : body.browser;
     state.message = 'Preparing Framevolve…';
     // Reuse a complete installation; fresh ZIPs install from the lockfile.
     try { for (const name of ['vite', 'playwright', 'sharp', 'ffmpeg-static', 'ffprobe-static']) createRequire(path.join(root, 'package.json')).resolve(name); }
     catch { await run('npm', ['ci', '--no-audit', '--no-fund']); }
     let browser;
-    if (body.browser === 'chrome') {
+    if (browserChoice === 'chrome') {
       const file = chromeExecutable(state.chrome);
       if (!await executable(file)) throw Error('Chrome was not found. Choose Locate Chrome, or Install Chromium.');
       browser = { kind: 'chrome', path: file };
@@ -108,7 +109,18 @@ export async function startSetup({ root = ROOT, open = true, operations = {} } =
     try { await (operations.installLauncher ?? ensureLauncher)(root); state.launcherWarning = ''; }
     catch (error) { state.launcherWarning = error.message; }
   };
-  let origin;
+  let origin, expiry;
+  const finish = async () => {
+    state.message = 'Opening Studio…';
+    const result = await (operations.launch ?? launch)({ action: 'start', root, port: 4173, open: false, update: false });
+    state.studioUrl = `${result.url}?scene=pop`;
+    await (operations.openStudio ?? (url => runFile('/usr/bin/open', [url])))(state.studioUrl);
+    state.message = 'Studio is open with the PLAY.EXE demo.';
+    // Keep optional agent setup available after Studio opens; never interrupt an active job.
+    clearTimeout(expiry);
+    const expire = () => { if (state.busy) expiry = setTimeout(expire, 60000).unref(); else server.close(); };
+    expiry = setTimeout(expire, 30 * 60 * 1000).unref();
+  };
   const server = http.createServer(async (request, response) => {
     const json = (status, value) => { response.writeHead(status, { 'Content-Type': 'application/json', 'Cache-Control': 'no-store' }); response.end(JSON.stringify(value)); };
     try {
@@ -116,8 +128,10 @@ export async function startSetup({ root = ROOT, open = true, operations = {} } =
       const url = new URL(request.url, origin);
       response.setHeader('Referrer-Policy', 'no-referrer'); response.setHeader('X-Content-Type-Options', 'nosniff');
       response.setHeader('Content-Security-Policy', "default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self'; connect-src 'self'; frame-ancestors 'none'; base-uri 'none'; form-action 'none'");
-      if (request.method === 'GET' && ['/', '/setup.js', '/setup.css', '/mark.png'].includes(url.pathname)) {
+      if (request.method === 'GET' && ['/', '/setup.js', '/setup.css', '/mark.png', '/logos/codex.svg', '/logos/claude.svg'].includes(url.pathname)) {
         const files = { '/': ['setup/index.html', 'text/html'], '/setup.js': ['setup/setup.js', 'text/javascript'], '/setup.css': ['setup/setup.css', 'text/css'], '/mark.png': ['../public/brand/framevolve-mark.png', 'image/png'] };
+        files['/logos/codex.svg'] = ['setup/logos/codex.svg', 'image/svg+xml'];
+        files['/logos/claude.svg'] = ['setup/logos/claude.svg', 'image/svg+xml'];
         const [file, type] = files[url.pathname];
         response.writeHead(200, { 'Content-Type': type, 'Cache-Control': 'no-store' }); response.end(await readFile(new URL(file, import.meta.url))); return;
       }
@@ -127,7 +141,15 @@ export async function startSetup({ root = ROOT, open = true, operations = {} } =
       let raw = ''; for await (const chunk of request) { raw += chunk; if (raw.length > 8192) return json(413, { error: 'Request too large.' }); }
       const body = JSON.parse(raw || '{}');
       if (state.busy) return json(409, { error: 'A setup step is still running.' });
-      if (url.pathname === '/api/provider') {
+      if (url.pathname === '/api/install') {
+        if (!Object.hasOwn(PROVIDERS, body.provider)) return json(400, { error: 'Choose an available agent.' });
+        if (!['auto', 'chrome', 'chromium'].includes(body.browser)) return json(400, { error: 'Choose Automatic, Chrome or Chromium.' });
+        job('install', async () => {
+          state.provider = body.provider;
+          await prepare(body);
+          await finish();
+        });
+      } else if (url.pathname === '/api/provider') {
         if (!Object.hasOwn(PROVIDERS, body.provider)) return json(400, { error: 'Choose an available agent.' });
         state.provider = body.provider; state.agent = await findAgent(body.provider, root);
         settings = { ...settings, provider: body.provider }; await saveSetup(settings, root);
@@ -158,18 +180,15 @@ export async function startSetup({ root = ROOT, open = true, operations = {} } =
         });
       } else if (url.pathname === '/api/finish') {
         if (!state.ready) return json(400, { error: 'Prepare and check a rendering browser first.' });
-        job('finish', async () => {
-          const result = await (operations.launch ?? launch)({ action: 'start', root, port: 4173, open: false, update: false });
-          state.studioUrl = `${result.url}?scene=pop`;
-          await (operations.openStudio ?? (url => runFile('/usr/bin/open', [url])))(state.studioUrl);
-          state.message = 'Studio is open with the PLAY.EXE demo. You can close this setup and its Terminal window.';
-          setTimeout(() => server.close(), 3000).unref();
-        });
+        job('finish', finish);
+      } else if (url.pathname === '/api/close') {
+        if (!state.ready) return json(400, { error: 'Finish setup before closing.' });
+        json(200, { closed: true }); server.close(); return;
       } else return json(404, { error: 'Unknown setup step.' });
       json(200, state);
     } catch (error) { json(400, { error: error.message }); }
   });
-  server.once('close', release);
+  server.once('close', () => { clearTimeout(expiry); release(); });
   try { await new Promise((resolve, reject) => { server.once('error', reject); server.listen(0, '127.0.0.1', resolve); }); }
   catch (error) { await release(); throw error; }
   origin = `http://127.0.0.1:${server.address().port}`;

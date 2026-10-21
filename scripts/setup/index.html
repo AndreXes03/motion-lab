@@ -1,26 +1,32 @@
 <!doctype html>
-<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Set up Framevolve</title><link rel="stylesheet" href="/setup.css"><script type="module" src="/setup.js"></script></head>
-<body><main><header><img src="/mark.png" width="42" height="42" alt=""><span>Framevolve</span><small>MAC SETUP</small></header>
-<nav aria-label="Setup progress"><span id="nav1" class="active">01 &nbsp; Your agent</span><span id="nav2">02 &nbsp; Rendering</span><span id="nav3">03 &nbsp; Create</span></nav>
-<section id="step1"><p class="eyebrow">YOUR IDEAS. YOUR TOOLS.</p><h1>Make yourself<br>at home.</h1><p class="intro">Choose the agent you would like to create with.<br>You can change this later, or explore without one.</p>
-<fieldset><legend>Choose your agent</legend>
-<label class="choice"><input type="radio" name="provider" value="codex"><span><strong>OpenAI · Codex</strong><small>Use your existing agent, or set up Codex CLI.</small></span><b>↗</b></label>
-<label class="choice"><input type="radio" name="provider" value="claude"><span><strong>Anthropic · Claude Code</strong><small>Use your existing agent, or set up Claude Code.</small></span><b>↗</b></label>
-<label class="choice"><input type="radio" name="provider" value="other" checked><span><strong>Another agent / decide later</strong><small>Open the Studio and try a demo first.</small></span><b>→</b></label></fieldset>
-<p class="note">For best results, we recommend capable coding models such as Sol, Astra, Opus, Fable or equivalents, where available. Framevolve does not require a specific model or plan. Your chosen provider manages access and any usage costs.</p>
-<div id="agent-options" hidden><p>Already use the desktop app or an editor agent? Continue, then open the Framevolve folder there. For the command-line version, the button below installs it if missing and opens its official sign-in flow in Terminal.</p><button id="agent" class="secondary">Set up / open agent</button> <a id="provider-docs" target="_blank" rel="noreferrer">Official guide ↗</a><p class="note">Sign-in happens in the provider's app, never in this setup. Selecting an agent does not add a chat inside Studio.</p></div>
-<div class="actions"><span>No agent needed to try the demo.</span><button id="next">Continue →</button></div></section>
-<section id="step2" hidden><p class="eyebrow">READY TO RENDER</p><h1>Choose your<br>rendering browser.</h1><p class="intro">Framevolve uses a browser behind the scenes to turn your scene into frames. Your everyday browser stays unchanged.</p>
-<fieldset><legend>Rendering browser</legend>
-<label class="choice"><input type="radio" name="browser" value="chrome"><span><strong>Use Google Chrome</strong><small id="chrome-status">Checking this Mac…</small></span></label>
-<button id="locate" class="text-button">Locate Chrome…</button>
-<label class="choice"><input type="radio" name="browser" value="chromium"><span><strong>Install Chromium for me</strong><small>A dedicated rendering browser. No Chrome installation needed.</small></span></label></fieldset>
-<p class="note">Setup downloads missing app components and, if selected, Chromium. Allow a few minutes and several hundred MB. No administrator password is needed.</p>
-<div class="actions"><button class="secondary" id="back">← Back</button><button id="prepare">Prepare Framevolve →</button></div></section>
-<section id="step3" hidden><p class="eyebrow">ALL SET</p><h1>Your first frame<br>starts here.</h1><p class="intro">Your rendering browser and video encoder passed their checks. Open PLAY.EXE, explore its controls and export your first video.</p>
-<div class="summary"><span class="check">✓</span><div><strong>Local rendering is ready</strong><p id="browser-summary"></p><p>CLI exports create their destination folders automatically.</p></div></div>
-<p id="launcher-result">Your Framevolve shortcut is in your user Applications folder. Keep this project folder in place.</p>
-<details><summary>Start a video with your agent</summary><p>Open this folder in your coding agent:</p><code id="repo"></code><p>Send this prompt:</p><blockquote>Read AGENTS.md and docs/FOUNDER_START.md. Help me create my first product video. Ask me only the essential questions and guide me through a first preview.</blockquote><button id="copy-prompt" class="secondary">Copy starter prompt</button></details>
-<div class="actions"><button id="change" class="secondary">← Change setup</button><button id="finish">Open Studio + demo ↗</button></div></section>
-<aside id="feedback" hidden aria-live="polite"><p id="message"></p><p id="error" role="alert"></p><details id="logs" hidden><summary>Installation details</summary><pre id="log"></pre></details></aside>
-<footer>Make motion. Keep control.<span>Local setup · Free to use</span></footer></main></body></html>
+<html lang="en">
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Set up Framevolve</title><link rel="stylesheet" href="/setup.css"><script type="module" src="/setup.js"></script></head>
+<body><main>
+<header><img src="/mark.png" width="32" height="32" alt=""><strong>framevolve</strong><span>MAC SETUP</span></header>
+<h1>Make your first move.</h1>
+<p class="intro">We’ll prepare everything and open a demo. You can start creating right away.</p>
+<fieldset id="providers"><legend>Your AI agent <span>Optional · you can decide later</span></legend>
+<div class="choices">
+<label><input type="radio" name="provider" value="codex"><img src="/logos/codex.svg" width="32" height="32" alt=""><span><b>Codex</b><small>OpenAI</small></span></label>
+<label><input type="radio" name="provider" value="claude"><img src="/logos/claude.svg" width="32" height="32" alt=""><span><b>Claude Code</b><small>Anthropic</small></span></label>
+<label><input type="radio" name="provider" value="other" checked><span><b>Decide later</b><small>Explore the demo first</small></span></label>
+</div></fieldset>
+<p id="auto-summary" class="hint">Checking this Mac…</p>
+<details id="advanced"><summary>Advanced options</summary>
+<label class="browser-label" for="browser">Rendering browser</label>
+<div class="browser-row"><select id="browser"><option value="auto">Automatic (recommended)</option><option value="chrome">Use Google Chrome</option><option value="chromium">Install Chromium</option></select><button id="locate" type="button" hidden>Locate Chrome</button></div>
+<p id="chrome-status" class="hint"></p>
+<p class="hint">For AI creation, we recommend models such as Sol, Astra, Opus, Fable or equivalents. No specific model or subscription is required by Framevolve. Your provider manages access and usage costs.</p>
+<p id="provider-help" class="hint" hidden><a id="provider-docs" target="_blank" rel="noreferrer">Official agent setup guide</a></p>
+<p class="hint">Keep this project folder in place: <span id="repo"></span></p>
+</details>
+<div class="actions"><button id="install" class="primary" type="button" disabled>Set up &amp; open Framevolve</button><p id="install-note" class="hint">No account needed to explore. First setup needs an internet connection.</p></div>
+<div id="feedback" aria-live="polite" hidden><p id="message" role="status"></p><p id="error" role="alert"></p><p id="launcher-warning" class="hint"></p><details id="logs" hidden><summary>Installation details</summary><pre id="log"></pre></details></div>
+<section id="ready" aria-label="Ready to create" hidden>
+<p class="hint">Your demo is ready. To make something new, choose an agent above.</p>
+<div class="ready-actions"><button id="agent" type="button" hidden>Create with AI</button><button id="close" type="button">Close setup</button></div>
+<p id="agent-note" class="hint" hidden>Opens your agent in Terminal and installs it if needed. Sign in there if requested, then send:</p>
+<div id="prompt-area" hidden><blockquote>Read docs/FOUNDER_START.md and help me create my first video.</blockquote><button id="copy-prompt" type="button">Copy prompt</button></div>
+</section>
+<footer>Local on your Mac. Your work stays in your project folder.</footer>
+</main></body></html>
