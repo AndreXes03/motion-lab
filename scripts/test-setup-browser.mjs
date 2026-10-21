@@ -3,6 +3,7 @@ import { mkdir, mkdtemp, writeFile, symlink, rm } from 'node:fs/promises';
 import path from 'node:path';
 import os from 'node:os';
 import { startSetup } from './setup-mac.mjs';
+import { readMemory, setMemoryConsent } from './feedback-memory-store.mjs';
 import { ROOT, playwright } from './browser-runtime.mjs';
 const root = await mkdtemp(path.join(os.tmpdir(), 'framevolve-ui-'));
 await writeFile(path.join(root, 'package.json'), '{"name":"motion-lab","type":"module"}');
@@ -52,6 +53,12 @@ try {
   assert.equal(installs.some(args => args.includes('--global')), false, 'agent install must wait for explicit Create with AI');
   await page.locator('#agent').waitFor({ state: 'visible' });
   await page.screenshot({ path: 'outputs/setup-check/02-ready.png', fullPage: true });
+  // A setup tab left open must not undo a later revocation made in Studio.
+  await setMemoryConsent(root, false);
+  await page.waitForFunction(() => !document.querySelector('#feedback-memory').checked);
+  await page.locator('#install').click();
+  await page.waitForFunction(() => !document.querySelector('#install').disabled);
+  assert.equal((await readMemory(root)).consent.enabled, false);
   await page.locator('#advanced summary').click();
   await page.locator('#browser').selectOption('chrome');
   assert.equal(await page.locator('#ready').isVisible(), false);

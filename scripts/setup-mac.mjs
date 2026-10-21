@@ -137,7 +137,7 @@ export async function startSetup({ root = ROOT, open = true, operations = {} } =
         response.writeHead(200, { 'Content-Type': type, 'Cache-Control': 'no-store' }); response.end(await readFile(new URL(file, import.meta.url))); return;
       }
       if (request.headers['x-framevolve-setup'] !== token || (request.headers.origin && request.headers.origin !== origin)) return json(403, { error: 'Reopen setup to continue.' });
-      if (request.method === 'GET' && url.pathname === '/api/state') return json(200, state);
+      if (request.method === 'GET' && url.pathname === '/api/state') { state.feedbackMemory = (await readMemory(root)).consent.enabled; return json(200, state); }
       if (request.method !== 'POST' || request.headers.origin !== origin || request.headers['content-type'] !== 'application/json') return json(403, { error: 'Invalid setup request.' });
       let raw = ''; for await (const chunk of request) { raw += chunk; if (raw.length > 8192) return json(413, { error: 'Request too large.' }); }
       const body = JSON.parse(raw || '{}');
