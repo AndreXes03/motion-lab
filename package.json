@@ -40,7 +40,9 @@
     "test:motion:fluid": "node scripts/test-fluid-editor-browser.mjs",
     "studio": "node scripts/launch-studio.mjs",
     "setup": "node scripts/setup-mac.mjs",
-    "test:setup": "node --test scripts/test-browser-runtime.mjs scripts/test-setup-mac.mjs scripts/test-mac-launcher.mjs"
+    "test:setup": "node --test scripts/test-browser-runtime.mjs scripts/test-setup-mac.mjs scripts/test-mac-launcher.mjs",
+    "studio:live": "node scripts/live-studio.mjs",
+    "test:live": "node --test scripts/test-live-review.mjs"
   },
   "keywords": [
     "threejs",

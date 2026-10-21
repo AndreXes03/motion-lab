@@ -42,9 +42,13 @@ const LOOK_SECTIONS = {
   post: new Set(['dofEnabled','dofAuto','dofFocus','dofStrength','dofMaxBlur','exposure', 'bloomStrength', 'bloomThreshold', 'bloomRadius', 'aberrationPx', 'grain', 'grainSize', 'vignette', 'lensDistortion', 'aoIntensity', 'shutterAngle', 'antialias','colorContrast','colorSaturation']),
   motion: new Set(['amount'])
 };
-const jobs = new Map();
-let activeRenderId = null;
-let persistedJobsLoaded = false;
+// Vite reloads authored schemas while the server stays alive. Render ownership
+// and reservations must survive module reloads and remain isolated per repository.
+const stateKey = Symbol.for('framevolve.studio-render-states');
+const renderStates = globalThis[stateKey] ??= new Map();
+if (!renderStates.has(ROOT)) renderStates.set(ROOT, { jobs: new Map(), activeRenderId: null, persistedJobsLoaded: false });
+const processState = renderStates.get(ROOT);
+const { jobs } = processState;
 let cyclesProbe,cyclesProbeAt=0;
 async function rendererCapabilities(){
   if(!cyclesProbe||Date.now()-cyclesProbeAt>60000){cyclesProbeAt=Date.now();cyclesProbe=getCyclesCapabilities({root:ROOT});}
@@ -260,7 +264,7 @@ async function writeJobManifest(job) {
 }
 
 async function loadPersistedJobs() {
-  if (persistedJobsLoaded) return;
+  if (processState.persistedJobsLoaded) return;
   await mkdir(RENDER_DIR, { recursive: true });
   const entries = await readdir(RENDER_DIR, { withFileTypes: true });
   for (const entry of entries) {
@@ -306,7 +310,7 @@ async function loadPersistedJobs() {
       if (status !== record.status) await writeJobManifest(job);
     } catch { /* Ignore malformed manifests; never trust paths from their contents. */ }
   }
-  persistedJobsLoaded = true;
+  processState.persistedJobsLoaded = true;
 }
 
 function publicJob(job) {
@@ -328,7 +332,7 @@ function revealWithFinder(job, spawnFn = nodeSpawn) {
 }
 
 function launchJob(job, invocation, spawnFn) {
-  job.status = 'running'; job.progress = 0; job.phase = 'rendering'; job.startedAt = new Date().toISOString(); activeRenderId = job.id;
+  job.status = 'running'; job.progress = 0; job.phase = 'rendering'; job.startedAt = new Date().toISOString(); processState.activeRenderId = job.id;
   const child = spawnFn(invocation.command, invocation.args, { cwd: invocation.cwd??ROOT, shell: false, windowsHide: true, stdio: ['ignore', 'pipe', 'pipe'] });
   job.pid = child.pid;
   let stdout = '', stderr = '', buffer = '';
@@ -360,7 +364,7 @@ function launchJob(job, invocation, spawnFn) {
   });
   child.stderr.on('data', chunk => { stderr = (stderr + chunk.toString()).slice(-16000); });
   child.on('error', error => {
-    job.status = 'failed'; job.phase = 'failed'; job.error = error.message; job.finishedAt = new Date().toISOString(); job.progress = 0; activeRenderId = null;
+    job.status = 'failed'; job.phase = 'failed'; job.error = error.message; job.finishedAt = new Date().toISOString(); job.progress = 0; processState.activeRenderId = null;
   });
   child.on('close', async code => {
     if (buffer) consumeLine(buffer);
@@ -388,7 +392,7 @@ function launchJob(job, invocation, spawnFn) {
     } catch (error) {
       job.status = 'failed'; job.url = null; job.error = `Could not write render manifest: ${error.message}`;
     }
-    activeRenderId = null;
+    processState.activeRenderId = null;
   });
 }
 
@@ -490,11 +494,11 @@ export function createStudioApi({ spawnFn = nodeSpawn, revealFn = revealWithFind
         if (!isRecord(body) || Object.keys(body).some(k => !['kind', 'time', 'parameters', 'settings', 'purpose'].includes(k))) return send(res, 400, { error: 'Expected kind, time, parameters, and optional settings' });
         if (!['frame', 'preview', 'export'].includes(body.kind)) return send(res, 400, { error: 'kind must be frame, preview, or export' });
         if (body.purpose !== undefined && (body.purpose !== 'viewport' || body.kind !== 'frame')) return send(res, 400, { error: 'Viewport jobs must be single frames' });
-        if (activeRenderId) return send(res, 409, { error: 'Another local render is already running' });
+        if (processState.activeRenderId) return send(res, 409, { error: 'Another local render is already running' });
         const time = body.time ?? 0;
         const selectedConfig=sceneConfig(body.parameters?.scene??'objects');if (typeof time !== 'number' || !Number.isFinite(time) || time < 0 || time > selectedConfig.duration) return send(res, 400, { error: `time must be a number from 0 to ${selectedConfig.duration} seconds` });
         reservation = `pending:${randomUUID()}`;
-        activeRenderId = reservation;
+        processState.activeRenderId = reservation;
         const parameters = await validateStudioParameters(body.parameters);
         const settings = validateRenderSettings(body.kind, body.settings);if(['dot','replay'].includes(parameters.scene))settings.temporalSamples=1;else if(['pulse','camera'].includes(parameters.scene)&&body.settings?.temporalSamples===undefined)settings.temporalSamples=4;
         const plan=validateRenderPlan(parameters.renderPolicy);
@@ -535,7 +539,7 @@ export function createStudioApi({ spawnFn = nodeSpawn, revealFn = revealWithFind
       }
       return send(res, 404, { error: 'Unknown studio endpoint' });
     } catch (error) {
-      if (reservation && activeRenderId === reservation) activeRenderId = null;
+      if (reservation && processState.activeRenderId === reservation) processState.activeRenderId = null;
       return send(res, error.status ?? 400, { error: error.message || 'Studio API error' });
     }
   };
