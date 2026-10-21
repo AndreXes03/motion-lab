@@ -31,7 +31,7 @@ Plan the phrase as **entry → assembly → reading → exit**. These phases may
 
 Do not apply one ease-in-out to every property. Position, reveal, scale and opacity serve different purposes. A soft landing with a velocity peak near a cut is often useful; a normalized Gaussian velocity can suit a long pullback, while a short title may need a stronger monotonic ease. Match velocity as the entry tail joins reading drift and as exit acceleration takes over. Avoid rebound unless playfulness specifically calls for it.
 
-Different travel distances need different start times or durations to feel related. Put any scale emphasis close to entry/cut and keep it small during reading. Do not make glyphs rotate or bounce independently merely to add activity. Blur belongs to fast travel, not the settled phrase.
+Different travel distances need different start times or durations to feel related. Put any scale emphasis close to entry/cut and keep it small during reading. Do not make glyphs rotate or bounce independently merely to add activity. Blur belongs to fast travel, not the settled phrase. Do not call a new font, a new stagger order or a shifted anchor an interpolation improvement: change and inspect the velocity profile. A longer braking tail, a separate short glyph-assembly curve and a continuous reading drift can preserve force without a block sliding in and stopping. Check at delivery speed, including short supers; do not squash glyphs as a substitute for choreography.
 
 ## Replace the automatic reading-order reveal
 
@@ -61,6 +61,6 @@ Check entry, partial assembly, fully readable interval, exit and the neighboring
 - The reveal does not repeat reading order everywhere, and does not flicker on random seeking.
 - Product, UI and type remain distinct as all move; no accidental edge collisions or orphaned punctuation.
 - Contrast and spacing survive phone-size playback, motion blur and compression.
-- The official logo remains accurate and the ending matches the product's position, apparent size and velocity when a match cut is intended.
+- The official logo remains accurate and the ending matches the product's position, apparent size and velocity when a match cut is intended. A mathematically continuous cut can still fail if both sides have nearly stopped: measure the visible feature's speed immediately across the cut and keep the intended velocity accent there. When only compositing is authorized, reframe existing alpha beauty and carry that motion into the logo; report that the 3D was reused.
 
 Keep a clean frame and the compressed motion proof. Passing curve/math tests proves determinism, not good choreography. Reuse approved beauty for typography iterations before committing to another costly 3D render.

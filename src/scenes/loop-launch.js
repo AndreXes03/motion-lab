@@ -112,7 +112,7 @@ function superTitle(ctx,text,t,start,end,p={}){
   function block(copy,x,y,size,index=0,tracking=-1.5){
     size*=scale;const width=headlineWidth(copy,size,tracking),pose=headlineMotion(age,duration,c,x,width,index,copy);
     ctx.save();ctx.globalAlpha*=c.superOpacity??1;ctx.translate(pose.x,y+pose.y);ctx.scale(pose.scaleX,1);
-    drawHeadline(ctx,copy,0,0,size,{reveal:pose.reveal,rise:c.letterRise??.07,color:'#f6f7f8',tracking});ctx.restore();
+    drawHeadline(ctx,copy,0,0,size,{reveal:pose.reveal,rise:c.letterRise??.16,color:'#f6f7f8',tracking});ctx.restore();
   }
   if(text==='FROM A BRIEF.'){
     block('From a',244,450,60,0,-.4);block('brief.',232,650,238,1);
@@ -137,13 +137,13 @@ function kinetic(ctx,t,p){
   for(const {id,birth,pose,alpha} of waveHistory(elapsed,c)){
     const quat=new T.Quaternion().setFromEuler(pose.rotation),major=id%3===0;
     const contour=(radius,reverse=false)=>{for(let j=0;j<=128;j++){
-      const a=(reverse?128-j:j)/128*TAU,r=radius*(1+.008*(c.waveWarp??1)*Math.sin(a*6+birth*4));
+      const a=(reverse?128-j:j)/128*TAU,r=radius*(1+.014*(c.waveWarp??1)*Math.sin(a*6+birth*4+elapsed*2.4));
       const v=new T.Vector3(Math.cos(a)*r,Math.sin(a)*r,.33).multiplyScalar(pose.scale).applyQuaternion(quat);v.x+=pose.x;v.y+=pose.y;
       const x=960+projection*v.x/(6-v.z),y=540-projection*v.y/(6-v.z);if(j)ctx.lineTo(x,y);else ctx.moveTo(x,y);
     }ctx.closePath();};
     ctx.beginPath();contour(1.32);ctx.globalAlpha=alpha*(major?.94:.45);
-    if(major){contour(Math.max(.72,1.32-.27*weight),true);ctx.fillStyle=id%6===0?'#d7f56b':'#398dff';ctx.fill('evenodd');}
-    else{ctx.strokeStyle=id%2===0?'#b7d9ff':'#2478d7';ctx.lineWidth=3.5*weight;ctx.stroke();}
+    if(major){contour(Math.max(.64,1.32-.38*weight),true);ctx.fillStyle=id%6===0?'#d7f56b':'#398dff';ctx.fill('evenodd');}
+    else{ctx.strokeStyle=id%2===0?'#b7d9ff':'#2478d7';ctx.lineWidth=7*weight;ctx.stroke();}
   }
   ctx.restore();
 }

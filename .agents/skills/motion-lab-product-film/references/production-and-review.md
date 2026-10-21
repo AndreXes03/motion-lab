@@ -12,7 +12,7 @@ Use a scene-owned material kit and `variant()`. Shared textures need explicit ow
 
 For a mechanical assembly, measure the entire swept volume, including support parts. Verify pivots, axes, attachment chains, contact bounds and the order of separation. Keep spring overshoot on the allowed side of contact. Describe constrained animation as such; do not claim a rigid-body or fluid simulation.
 
-Reset poses and procedural state from authored values at each absolute time. Particle positions, trails, coating masks and random choices must reproduce under backward and random seeking. Do not compound existing easing when exposing an authored motion channel.
+Reset poses and procedural state from authored values at each absolute time. Particle positions, trails, coating masks and random choices must reproduce under backward and random seeking. Stable emission identities must not freeze the emitted graphics: continue their authored drift, rotation or deformation as age advances, and check continuity when new elements appear. Do not compound existing easing when exposing an authored motion channel.
 
 ## Choose a renderer without overpromising
 
@@ -71,7 +71,7 @@ Use a bounded improvement pass: identify the most consequential visible issues, 
 3. Reuse the expensive beauty for a graphics/background/UI correction only when the change does not require altered 3D. Do not pass an old beauty off as a new model or camera render.
 4. Preserve an approved mix. Render silent picture when appropriate, then mux the selected track without unrequested gain or picture-color changes. Keep separately licensed standalone tracks and private references out of the public repository. Listen to the SFX stem and mix; loudness metrics do not prove good sound design.
 5. Use `scripts/export-social.mjs` for a compatible delivery encode when suitable; read its current constraints. Encoding does not improve geometry or lighting. Keep the master and prior accepted versions.
-6. Check frame count, duration, dimensions, fps, audio, complete decode and arbitrary seek. Inspect each compressed musical/format variant, especially interpolated edges, rings, UI and type. A checked master does not automatically validate retimed alternatives.
+6. Check frame count, duration, dimensions, fps, audio, complete decode and arbitrary seek. An audio stream existing is not enough: compare its actual duration with the intended soundtrack interval and check the tail against the source; full video duration can hide truncated AAC. Inspect each compressed musical/format variant, especially interpolated edges, rings, UI and type. A checked master does not automatically validate retimed alternatives.
 7. Install the correct local preview through the supported route and verify its source/version, playback and seek. Distinguish interactive Three.js from a prepared Cycles movie. Source changes must invalidate stale prepared previews rather than displaying them as the latest render.
 8. Verify actual destination copies and hashes when delivering files. Save representative screenshots and a concise report. `prepare-demo.mjs` handles supported PULSE/CAMERA demo installation with backups; it is not a generic installer for arbitrary scenes and does not publish.
 
