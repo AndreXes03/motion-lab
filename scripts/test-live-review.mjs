@@ -36,3 +36,17 @@ test('integrated browser mode returns an explicit capability request, with stric
  assert.throws(()=>liveArgs(['start','--port','bad']),/port/);
  assert.throws(()=>liveArgs(['begin','--task']),/option/);
 });
+test('reloading API schemas preserves the active render reservation',async()=>{
+ const {ROOT}=await import('./project-store.mjs');
+ const first=await import('./studio-api.mjs?live-reservation-first');
+ const state=globalThis[Symbol.for('framevolve.studio-render-states')].get(ROOT);
+ const previous=state.activeRenderId;state.activeRenderId='pending:live-test';
+ try{
+  const next=await import('./studio-api.mjs?live-reservation-next');
+  const response={statusCode:200,setHeader(){},end(value){this.body=value;}};
+  const request={method:'POST',url:'/studio/render',headers:{host:'127.0.0.1:4173'},async *[Symbol.asyncIterator](){yield Buffer.from(JSON.stringify({kind:'frame',parameters:{scene:'procedural'}}));}};
+  await next.createStudioApi()(request,response,()=>assert.fail('Unexpected route fallthrough'));
+  assert.equal(response.statusCode,409);assert.match(response.body,/already running/);
+  assert.notEqual(first,next);
+ }finally{state.activeRenderId=previous;}
+});

@@ -6,13 +6,13 @@ import {createServer} from 'vite';
 import {ROOT,playwright} from './browser-runtime.mjs';
 import {readReview,writeReview,updateReview} from './live-review-store.mjs';
 const root=await mkdtemp(path.join(os.tmpdir(),'framevolve-live-ui-'));
-let server,browser;
+let server,browser,page;
 try{
  for(const name of ['src','scripts','project','public','index.html','vite.config.js','package.json'])await cp(path.join(ROOT,name),path.join(root,name),{recursive:true});
  await symlink(path.join(ROOT,'node_modules'),path.join(root,'node_modules'),'dir');
  server=await createServer({root,configFile:path.join(root,'vite.config.js'),server:{host:'127.0.0.1',port:0},logLevel:'error'});await server.listen();
  browser=await playwright().chromium.launch({executablePath:playwright().chromium.executablePath(),headless:true});
- const page=await browser.newPage({viewport:{width:1440,height:1000}}),errors=[];page.on('pageerror',e=>errors.push(e.message));
+ page=await browser.newPage({viewport:{width:1440,height:1000}});const errors=[];page.on('pageerror',e=>errors.push(e.message));
  const url=`http://127.0.0.1:${server.httpServer.address().port}/?scene=procedural`;
  const ready=async()=>{await page.waitForFunction(()=>window.motionLive?.getState().revision!==undefined);await page.evaluate(()=>window.motionPreview.whenIdle());};
  const recipe=async()=>{const download=page.waitForEvent('download');await page.locator('#download-recipe').click();return JSON.parse(await readFile(await(await download).path(),'utf8'));};
@@ -64,4 +64,9 @@ try{
  await mkdir(path.join(ROOT,'outputs/live-studio'),{recursive:true});await page.locator('#live-review summary').click();await page.screenshot({path:path.join(ROOT,'outputs/live-studio/feedback-checklist.png'),fullPage:true});
  assert.deepEqual(errors,[]);
  console.log('Live Studio passed: authored defaults, sequential recipe updates with changed pixels, same-tab reuse, multi-file hold, source reload, time preservation, syntax recovery, checklist and manual-edit backup.');
+}catch(error){
+ console.error('Live test failure:',error.message);
+ if(page)console.error(await page.evaluate(()=>({status:document.querySelector('#live-review-status')?.textContent,live:window.motionLive?.getState(),proof:window.__liveSourceProof})).catch(()=>({page:'unavailable'})));
+ if(server){const info=await fetch(`http://127.0.0.1:${server.httpServer.address().port}/__framevolve_live`).then(r=>r.json()).catch(()=>({}));delete info.snapshot;console.error('Server live state:',info);}
+ throw error;
 }finally{await browser?.close();await server?.close();await rm(root,{recursive:true,force:true});}
