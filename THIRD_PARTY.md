@@ -99,3 +99,7 @@ distributed through [Google Fonts](https://github.com/google/fonts/tree/main/ofl
 The [SIL Open Font License](src/assets/fonts/space-grotesk-OFL.txt) is preserved.
 The [outline asset](src/assets/fonts/space-grotesk-headlines.json) records provenance,
 weight and checksum. No system font installation is required. The official logo is separate.
+
+## Setup provider logos
+
+The Codex and Claude logo SVGs in `scripts/setup/logos/` are from [LobeHub Icons](https://github.com/lobehub/lobe-icons), licensed under MIT. The copyright and license are included in [`scripts/setup/logos/LICENSE`](scripts/setup/logos/LICENSE). Provider names and logos remain the trademarks of their respective owners; their inclusion identifies available integrations and does not imply endorsement.
