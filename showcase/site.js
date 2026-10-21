@@ -62,8 +62,8 @@ if (heroVideo) {
 const films = {
   loop: {
     title: 'LOOP',
-    description: 'From a written brief to a cinematic product commercial. LOOP V12, with the original Electro soundtrack.',
-    file: 'loop-v12-electro-1080.mp4', poster: 'loop-v12-poster.jpg', specs: 'Cycles · 1080p · 30 fps · 22 s · Electro', source: null
+    description: 'From a written brief to a cinematic product commercial. LOOP V12.1, with the original Electro soundtrack.',
+    file: 'loop-v12-1-electro-1080.mp4', poster: 'loop-v12-1-poster.jpg', specs: 'Cycles · 1080p · 30 fps · 22 s · Electro', source: null
   },
   pulse: {
     title: 'PULSE',

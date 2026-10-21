@@ -14,6 +14,7 @@ import {findBlender} from './cycles/studio.mjs';
 import {gradePixels} from './cycles/finish.mjs';
 import {composeLoopFrame} from './cycles/loop-compose.mjs';
 import {sampleRuntimeSound,renderProceduralAudio} from './cycles/audio.mjs';
+import {sequenceVideoArgs,assertAudioCoverage} from './cycles/video-encode.mjs';
 const ROOT=path.resolve(path.dirname(fileURLToPath(import.meta.url)),'..');
 const stable=value=>JSON.stringify(value,(_,v)=>v&&typeof v==='object'&&!Array.isArray(v)?Object.fromEntries(Object.keys(v).sort().map(k=>[k,v[k]])):v);
 const hash=v=>createHash('sha256').update(v).digest('hex');
@@ -123,10 +124,10 @@ async function main(){
  if(options.command==='frame')await copyFile(path.join(sequence,'frame-000001.png'),temporary);
  else if(options.sequenceOnly){await writeFile(temporary,JSON.stringify({schemaVersion:1,engine:'cycles',sequence:path.join(sequence,'frame-%06d.png'),startFrame:1,width:options.width,height:options.height,fps:options.fps,frameCount:options.count,alpha:options.background==='transparent',colorSpace:'srgb',finish:options.finish,audio:audioPath,audioStart:audioOffset,adaptations},null,2));}
  else{
-  const args=['-y','-v','error','-framerate',String(options.fps),'-start_number','1','-i',path.join(sequence,'frame-%06d.png')];
-  if(audioPath)args.push('-ss',String(audioOffset),'-i',audioPath);
-  args.push('-map','0:v:0');if(audioPath)args.push('-map','1:a:0');args.push('-c:v','libx264','-preset','medium','-crf','16','-pix_fmt','yuv420p','-frames:v',String(options.count),'-t',String(options.count/options.fps));if(audioPath)args.push('-c:a','aac','-b:a','192k');args.push('-movflags','+faststart',temporary);await run(ffmpeg,args);
-  const probe=JSON.parse(await run(ffprobe.path,['-v','error','-show_streams','-show_format','-of','json',temporary]));const video=probe.streams.find(s=>s.codec_type==='video');if(audioPath&&!probe.streams.some(s=>s.codec_type==='audio'))throw Error('Procedural/explicit audio missing from encoded output');if(video.width!==options.width||video.height!==options.height||Number(video.nb_frames)!==options.count)throw Error('Encoded Cycles video metadata mismatch');await run(ffmpeg,['-v','error','-i',temporary,'-f','null','-']);await updateManifest({validation:{completeDecode:true,probe}});
+  await run(ffmpeg,sequenceVideoArgs({sequence,fps:options.fps,count:options.count,audioPath,audioOffset,out:temporary}));
+  const probe=JSON.parse(await run(ffprobe.path,['-v','error','-show_streams','-show_format','-of','json',temporary]));const video=probe.streams.find(s=>s.codec_type==='video');
+  if(audioPath){const sourceAudio=JSON.parse(await run(ffprobe.path,['-v','error','-show_streams','-show_format','-of','json',audioPath]));const track=sourceAudio.streams.find(s=>s.codec_type==='audio');const available=Number(track?.duration??sourceAudio.format.duration)-audioOffset;assertAudioCoverage(probe,Math.min(options.count/options.fps,Math.max(0,available)));}
+  if(video.width!==options.width||video.height!==options.height||Number(video.nb_frames)!==options.count)throw Error('Encoded Cycles video metadata mismatch');await run(ffmpeg,['-v','error','-i',temporary,'-f','null','-']);await updateManifest({validation:{completeDecode:true,probe}});
  }
  await rename(temporary,options.out);await updateManifest({status:'complete',phase:'complete',frames:options.count,percent:100,renderWallSeconds:(Date.now()-started)/1000,completedAt:new Date().toISOString()});emit('complete',{path:options.out,width:options.width,height:options.height,fps:options.fps,frames:options.count,duration:options.command==='frame'?0:options.count/options.fps,manifestPath,engine:'cycles',adaptations});
 }
