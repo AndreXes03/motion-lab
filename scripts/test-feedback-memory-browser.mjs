@@ -9,7 +9,7 @@ import {readMemory,addMemoryRecord} from './feedback-memory-store.mjs';
 const root=await mkdtemp(path.join(os.tmpdir(),'framevolve-memory-ui-'));let server,browser;
 try{
  await mkdir(path.join(root,'src/viewer'),{recursive:true});
- for(const file of ['feedback-memory.js','feedback-report.js','style.css'])await cp(path.join(ROOT,'src/viewer',file),path.join(root,'src/viewer',file));
+ for(const file of ['feedback-memory.js','feedback-report.js','style.css','reference-panel.css'])await cp(path.join(ROOT,'src/viewer',file),path.join(root,'src/viewer',file));
  await symlink(path.join(ROOT,'node_modules'),path.join(root,'node_modules'),'dir');
  await writeFile(path.join(root,'index.html'),'<html><head><link rel="stylesheet" href="/src/viewer/style.css"></head><body><div id="test"></div><script type="module">import {mountFeedbackMemory} from "/src/viewer/feedback-memory.js";mountFeedbackMemory(document.querySelector("#test"));</script></body></html>');
  server=await createServer({root,configFile:false,plugins:[feedbackMemoryPlugin()],server:{host:'127.0.0.1',port:0},logLevel:'error'});await server.listen();
