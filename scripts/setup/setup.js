@@ -2,7 +2,7 @@ const $ = id => document.getElementById(id);
 // Capability stays in this tab's memory, not in referrers or persistent storage.
 const token = location.hash.slice(1);
 history.replaceState(null, '', '/');
-let state = {}, pending = false, disconnected = false, selectionChanged = false, clientError = '';
+let state = {}, pending = false, disconnected = false, selectionChanged = false, memoryChanged = false, clientError = '';
 const docs = { codex: 'https://developers.openai.com/codex/cli/', claude: 'https://code.claude.com/docs/en/setup' };
 const provider = () => document.querySelector('input[name="provider"]:checked').value;
 async function api(route, body) {
@@ -11,6 +11,7 @@ async function api(route, body) {
 }
 function render(data) {
   state = data;
+  if (!memoryChanged) $('feedback-memory').checked = !!state.feedbackMemory;
   const busy = state.busy || pending, ready = state.ready && !selectionChanged;
   document.querySelectorAll('button,input,select').forEach(el => { el.disabled = busy || disconnected; });
   $('install').textContent = busy ? 'Working…' : ready ? 'Open Studio' : (state.error || clientError) ? 'Retry setup & open Framevolve' : 'Set up & open Framevolve';
@@ -38,16 +39,24 @@ async function action(fn) {
 }
 document.querySelectorAll('input[name="provider"]').forEach(el => el.addEventListener('change', () => render(state)));
 $('browser').onchange = () => { selectionChanged = true; render(state); };
+$('memory-info').onclick = () => $('memory-notice').showModal();
+$('feedback-memory').onclick = event => { if ($('feedback-memory').checked) { event.preventDefault(); $('memory-notice').showModal(); } else { memoryChanged = true; if (state.ready) action(persistMemory); } };
+$('memory-enable').onclick = () => { $('feedback-memory').checked = true; memoryChanged = true; $('memory-notice').close(); if (state.ready) action(persistMemory); };
+$('memory-decline').onclick = () => { $('feedback-memory').checked = false; memoryChanged = true; $('memory-notice').close(); if (state.ready) action(persistMemory); };
+$('memory-notice-close').onclick = () => $('memory-notice').close();
+async function persistMemory() { if (memoryChanged) { state = await api('memory', { enabled: $('feedback-memory').checked }); memoryChanged = false; } }
 $('install').onclick = () => action(async () => {
+  await persistMemory();
   if (state.ready && !selectionChanged) state = await api('finish', {});
   else { state = await api('install', { provider: provider(), browser: $('browser').value }); selectionChanged = false; }
 });
 $('agent').onclick = () => action(async () => { state = await api('provider', { provider: provider() }); state = await api('agent', {}); });
 $('locate').onclick = () => action(async () => { state = await api('locate', {}); selectionChanged = true; });
 $('copy-prompt').onclick = () => action(async () => { await navigator.clipboard.writeText(document.querySelector('blockquote').textContent); $('copy-prompt').textContent = 'Copied'; });
-$('close').onclick = () => action(async () => { await api('close', {}); disconnected = true; state.message = 'Setup is complete. You can close this tab and its Terminal window.'; });
+$('close').onclick = () => action(async () => { await persistMemory(); await api('close', {}); disconnected = true; state.message = 'Setup is complete. You can close this tab and its Terminal window.'; });
 try {
   state = await api('state');
+  $('feedback-memory').checked = !!state.feedbackMemory;
   document.querySelector(`input[name="provider"][value="${['codex','claude','other'].includes(state.provider) ? state.provider : 'other'}"]`).checked = true;
   $('browser').value = ['chrome','chromium'].includes(state.browser) ? state.browser : 'auto';
   render(state);

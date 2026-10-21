@@ -25,3 +25,7 @@ Keep the tab visible to see each checkpoint promptly. Browsers may throttle back
 The agent should leave the Studio server running when it finishes. Files under `.motion-cache/` hold the local feedback/checkpoint state. The endpoint is local and read-only; it does not start an agent or collect provider credentials. Public hosted demos and render-only pages do not follow local edits.
 
 Implementation protocol and commands: [.agents/skills/framevolve-live-review/SKILL.md](../.agents/skills/framevolve-live-review/SKILL.md).
+
+## Creative feedback and optional memory
+
+The bundled [client-feedback guidance](../.agents/skills/motion-lab-product-film/references/client-feedback.md) helps the agent translate nontechnical requests into visual hypotheses and practical changes. **Feedback memory** in Studio manages optional local cases and client responses. Saving requires opt-in; sharing selected, reviewed examples by email is separate. See [Feedback memory](FEEDBACK_MEMORY.md).

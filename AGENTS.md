@@ -50,3 +50,7 @@ Perspective lens controls must always be paired with real camera distance and su
 ## Ownership and distribution
 
 New Framevolve contributions are proprietary under the root Framevolve Free Use License, including interface/editing, plugin and installation/update work. Free use includes professional work and selling original rendered outputs; resale, commercial repackaging and paid software access require Andrea Salvo's written permission. Do not label current additions MIT or open source. Preserve prior MIT grants in `licenses/legacy/MIT.txt`, as well as all third-party rights and notices. See `docs/LICENSING.md`. The public repository is source-available; do not change repository visibility without an explicit request. The current Uicons acquisition is public npm; a claimed Premium subscription alone is not a recorded Premium download for that sprite. Keep provenance/license files and the existing attribution until its acquisition is verified or replaced.
+
+## Interpret client feedback
+
+Use `.agents/skills/motion-lab-product-film/references/client-feedback.md` for subjective or nontechnical video feedback. Diagnose the viewing problem before choosing effects, preserve approved choices, compare before/after and keep client approval distinct from technical completion. Optional local feedback memory is off by default: check `node scripts/feedback-memory.mjs status`, respect consent, and never send it automatically.

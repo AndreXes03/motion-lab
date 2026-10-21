@@ -42,7 +42,9 @@
     "setup": "node scripts/setup-mac.mjs",
     "test:setup": "node --test scripts/test-browser-runtime.mjs scripts/test-setup-mac.mjs scripts/test-mac-launcher.mjs",
     "studio:live": "node scripts/live-studio.mjs",
-    "test:live": "node --test scripts/test-live-review.mjs"
+    "test:live": "node --test scripts/test-live-review.mjs",
+    "feedback": "node scripts/feedback-memory.mjs",
+    "test:feedback": "node --test scripts/test-feedback-memory.mjs"
   },
   "keywords": [
     "threejs",

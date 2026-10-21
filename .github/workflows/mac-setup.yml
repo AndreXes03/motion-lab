@@ -21,6 +21,10 @@ jobs:
         run: npm run test:setup
       - name: Live feedback contracts
         run: npm run test:live
+      - name: Feedback memory contracts
+        run: npm run test:feedback
+      - name: Feedback memory interface
+        run: node scripts/test-feedback-memory-browser.mjs
       - name: Live Studio sequential updates
         run: node scripts/test-live-studio-browser.mjs
       - name: Studio API and render ownership regression

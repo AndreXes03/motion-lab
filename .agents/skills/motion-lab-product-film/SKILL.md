@@ -48,3 +48,7 @@ Read [AGENTS.md](../../../AGENTS.md) for scene controls, animation groups, rende
 Check [renderer support](../../../docs/RENDERER_SELECTION.md) against the installed code and local capability. Three.js/Canvas preview is not Cycles. New products do not automatically inherit a validated Cycles converter from an existing scene. Do not claim photoreal or path-traced output until the actual exported result has been inspected.
 
 Keep unrelated scenes, approved masters and private references intact. Expensive renders follow the user's quality/time budget and existing authorization; routine reversible improvements do not need repeated permission. This skill does not grant permission to publish, purchase assets, generate paid music or message anyone.
+
+## Client feedback and creative memory
+
+For nontechnical client feedback, dissatisfaction, subjective requests such as “more premium” or “too slow”, and iterative refinements, read [Client feedback](references/client-feedback.md). Diagnose the viewing problem, preserve approved choices, compare the affected passage before/after and separate implementation from client acceptance. Use the optional local memory only when the user has enabled it; sharing is always a separate user action.
