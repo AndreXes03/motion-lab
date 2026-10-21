@@ -122,6 +122,8 @@ try {
 
   // Load the API module in a fresh instance to model a viewer restart and
   // verify that completed jobs are recovered from their disk manifest.
+  // Simulate a new process, rather than a live schema reload which retains this map.
+  globalThis[Symbol.for('framevolve.studio-render-states')]?.delete(ROOT);
   const fresh = await import(`./studio-api.mjs?restart-test=${Date.now()}`);
   let revealedPath = null;
   const persistedApi = fresh.createStudioApi({ revealFn: async job => { revealedPath = job.outputPath; } });
