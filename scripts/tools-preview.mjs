@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+import {browserLaunchOptions} from './browser-runtime.mjs';
 import {chromium} from 'playwright';
 import sharp from 'sharp';
 import {mkdir} from 'node:fs/promises';
@@ -10,7 +11,6 @@ const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const args = process.argv.slice(2);
 const flag = name => { const i = args.indexOf('--' + name); return i < 0 ? undefined : args[i + 1]; };
 const baseUrl = flag('url') ?? 'http://127.0.0.1:4194/';
-const chromePath = '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome';
 const viewport = {width: 1600, height: 1000};
 
 async function openStudio(browser, panel, outputName) {
@@ -55,7 +55,7 @@ async function openStudio(browser, panel, outputName) {
 }
 
 await mkdir(path.join(root, 'demo'), {recursive: true});
-const browser = await chromium.launch({executablePath: chromePath, headless: true, args: ['--disable-gpu-sandbox']});
+const browser = await chromium.launch({...await browserLaunchOptions(), headless: true, args: ['--disable-gpu-sandbox']});
 try {
   const outputs = [
     await openStudio(browser, 'look', 'ui-tools.jpg'),

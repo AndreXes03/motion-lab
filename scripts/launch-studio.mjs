@@ -18,7 +18,7 @@ const APP = 'motion-lab-local-launcher-v1';
 
 export function checkNode(version = process.versions.node) {
   const [major, minor] = version.split('.').map(Number);
-  if (major < 22 || (major === 22 && minor < 12)) throw Error(`Serve Node.js >=22.12; attuale ${version}. Aggiorna Node e reinstalla il launcher se il percorso cambia.`);
+  if (major < 22 || (major === 22 && minor < 12)) throw Error(`Node.js >=22.12 is required; found ${version}. Run Setup Framevolve.command to install a compatible runtime.`);
 }
 
 export function parseArgs(args) {
@@ -28,13 +28,13 @@ export function parseArgs(args) {
     if (i === 0 && ['start', 'status', 'stop', '--serve'].includes(arg)) options.action = arg;
     else if (arg === '--no-open') options.open = false;
     else if (['--repo', '--port', '--instance'].includes(arg)) {
-      const value = args[++i]; if (!value) throw Error(`Manca il valore di ${arg}.`);
-      if (arg === '--repo') { if (!path.isAbsolute(value)) throw Error('--repo richiede un percorso assoluto.'); options.root = value; }
-      else if (arg === '--port') { options.port = Number(value); if (!Number.isInteger(options.port) || options.port < 1024 || options.port > 65535) throw Error('Porta non valida (1024–65535).'); }
+      const value = args[++i]; if (!value) throw Error(`Missing value for ${arg}.`);
+      if (arg === '--repo') { if (!path.isAbsolute(value)) throw Error('--repo requires an absolute path.'); options.root = value; }
+      else if (arg === '--port') { options.port = Number(value); if (!Number.isInteger(options.port) || options.port < 1024 || options.port > 65535) throw Error('Invalid port (1024–65535).'); }
       else options.instance = value;
-    } else throw Error('Uso: launch-studio.mjs [start|status|stop] [--repo /percorso/assoluto] [--port 4173] [--no-open]');
+    } else throw Error('Usage: launch-studio.mjs [start|status|stop] [--repo /absolute/path] [--port 4173] [--no-open]');
   }
-  if (options.action === '--serve' && !options.instance) throw Error('Identificativo del servizio mancante.');
+  if (options.action === '--serve' && !options.instance) throw Error('Missing service identifier.');
   return options;
 }
 
@@ -42,15 +42,15 @@ export async function validateRepo(root, dependencies = false) {
   checkNode(); root = await realpath(root);
   let pkg;
   try { pkg = JSON.parse(await readFile(path.join(root, 'package.json'), 'utf8')); }
-  catch { throw Error(`Repository non valido: ${root}. Usa --repo con la radice di Motion Lab.`); }
-  if (pkg.name !== 'motion-lab') throw Error('La cartella indicata non è Motion Lab.');
+  catch { throw Error(`Invalid repository: ${root}. Use --repo with the Framevolve repository root.`); }
+  if (pkg.name !== 'motion-lab') throw Error('The selected folder is not a Framevolve repository.');
   for (const file of ['index.html', 'vite.config.js']) {
     try { if (!(await stat(path.join(root, file))).isFile()) throw Error(); }
-    catch { throw Error(`Manca ${file}: indica la radice completa di Motion Lab.`); }
+    catch { throw Error(`Missing ${file}: select the complete Framevolve repository root.`); }
   }
   if (dependencies) {
     try { await stat(path.join(root, 'node_modules/vite/package.json')); }
-    catch { throw Error('Dipendenze mancanti. Esegui npm ci nella repo, poi riprova. Se usi una copia ZIP, installale prima del primo avvio.'); }
+    catch { throw Error('Dependencies are missing. Run Setup Framevolve.command, or npm ci in the repository, then try again.'); }
   }
   return root;
 }
@@ -62,7 +62,7 @@ export function paths(root, port) {
 
 async function readState(file) {
   try { return JSON.parse(await readFile(file, 'utf8')); }
-  catch (error) { if (error.code === 'ENOENT') return null; throw Error(`Stato launcher illeggibile: ${file}. Verificalo prima di riavviare.`); }
+  catch (error) { if (error.code === 'ENOENT') return null; throw Error(`Cannot read launcher state: ${file}. Check it before restarting.`); }
 }
 
 function health(port) {
@@ -120,7 +120,7 @@ async function serve({ root, port, instance }) {
   await server.listen();
   const temporary = `${files.state}.${process.pid}.tmp`;
   await writeFile(temporary, JSON.stringify(identity) + '\n', { mode: 0o600 }); await rename(temporary, files.state);
-  console.log(`Motion Lab pronto: http://127.0.0.1:${port}/ · ${root}`);
+  console.log(`Framevolve ready: http://127.0.0.1:${port}/ · ${root}`);
 }
 
 export async function launch(options) {
@@ -129,17 +129,17 @@ export async function launch(options) {
   if (action === '--serve') return serve({ ...options, root });
   if (action === 'status') {
     const running = await ownedHealth(root, port);
-    console.log(running ? `Studio attivo: ${url} · PID ${running.pid} · ${root}` : 'Nessuna istanza sana di questo launcher per la repo e porta indicate.');
+    console.log(running ? `Studio running: ${url} · PID ${running.pid} · ${root}` : 'No healthy launcher instance for this repository and port.');
     return { running: Boolean(running), pid: running?.pid };
   }
   if (action === 'stop') {
     const running = await ownedHealth(root, port);
-    if (!running) { console.log('Nessuna istanza propria da fermare. Altri processi non vengono toccati.'); return { stopped: false }; }
+    if (!running) { console.log('No owned instance to stop. Other processes are left running.'); return { stopped: false }; }
     process.kill(running.pid, 'SIGTERM');
-    if (!await waitFor(async () => !await ownedHealth(root, port), 5000)) throw Error(`Studio non si è fermato. Controlla ${files.log}; nessun arresto forzato eseguito.`);
-    console.log('Studio fermato.'); return { stopped: true };
+    if (!await waitFor(async () => !await ownedHealth(root, port), 5000)) throw Error(`Studio did not stop. Check ${files.log}; no process was forcibly stopped.`);
+    console.log('Studio stopped.'); return { stopped: true };
   }
-  if (options.open && process.platform !== 'darwin') throw Error('Apertura browser prevista su macOS. Per i test usa --no-open.');
+  if (options.open && process.platform !== 'darwin') throw Error('Automatic browser opening is supported on macOS. Use --no-open for tests.');
   await mkdir(files.cache, { recursive: true });
   let running = await ownedHealth(root, port), reused = Boolean(running), locked = false;
   let updates;
@@ -147,12 +147,12 @@ export async function launch(options) {
     let active;
     try{const response=await fetch(`http://127.0.0.1:${port}/api/studio`,{signal:AbortSignal.timeout(1500)});if(!response.ok)throw Error();const data=await response.json();active=(data.jobs??[]).some(job=>['running','queued'].includes(job.status));}
     catch{active=true;}
-    if(active)updates={state:'busy',note:'Aggiornamento rimandato: Studio sta lavorando o il suo stato non è verificabile.'};
+    if(active)updates={state:'busy',note:'Update postponed: Studio is busy or its status could not be verified.'};
   }
   updates ??= options.update===false?{state:'not-requested'}:await updateStudio({root});
-  if(updates.lock){if(!await waitFor(async()=>{try{await stat(updates.lock);return false;}catch{return true;}},15000))throw Error('Aggiornamento ancora in corso; riprova tra poco.');updates=await updateStudio({root});}
+  if(updates.lock){if(!await waitFor(async()=>{try{await stat(updates.lock);return false;}catch{return true;}},15000))throw Error('An update is still running; try again shortly.');updates=await updateStudio({root});}
   if(updates.state==='updated'||updates.installed){
-    if(running){process.kill(running.pid,'SIGTERM');if(!await waitFor(async()=>!await ownedHealth(root,port),5000))throw Error('Riavvio dopo aggiornamento non confermato.');running=null;reused=false;}
+    if(running){process.kill(running.pid,'SIGTERM');if(!await waitFor(async()=>!await ownedHealth(root,port),5000))throw Error('Restart after update could not be confirmed.');running=null;reused=false;}
   }
   await validateRepo(root,true);
   if (!running) {
@@ -160,13 +160,13 @@ export async function launch(options) {
     catch (error) {
       if (error.code !== 'EEXIST') throw error;
       running = await waitFor(() => ownedHealth(root, port)); reused = Boolean(running);
-      if (!running) throw Error(`Avvio già in corso oppure lock residuo: ${files.lock}. Verifica il processo precedente prima di rimuoverlo.`);
+      if (!running) throw Error(`Startup is already in progress or a lock remains: ${files.lock}. Check the previous process before removing it.`);
     }
     if (locked) {
       try {
         running = await ownedHealth(root, port); reused = Boolean(running);
         if (!running) {
-          if (!await portAvailable(port)) throw Error(`Porta ${port} occupata da un altro servizio o da un'altra repo. Chiudilo oppure usa --port con una porta libera. Nessun processo è stato fermato.`);
+          if (!await portAvailable(port)) throw Error(`Port ${port} is in use by another service or another repository. Close it or choose a free --port. No process was stopped.`);
           const instance = randomUUID(), fd = openSync(files.log, 'a', 0o600);
           let child;
           try {
@@ -176,12 +176,12 @@ export async function launch(options) {
           running = await waitFor(async () => {
             const result = await ownedHealth(root, port);
             if (result?.instance === instance) return result;
-            if (child.exitCode !== null || child.signalCode !== null) throw Error(`Avvio Vite fallito. Controlla ${files.log}.`);
+            if (child.exitCode !== null || child.signalCode !== null) throw Error(`Vite startup failed. Check ${files.log}.`);
             return null;
           });
           if (!running) {
             child.kill('SIGTERM');
-            throw Error(`Avvio non confermato entro 15 secondi. Controlla ${files.log}.`);
+            throw Error(`Startup was not confirmed within 15 seconds. Check ${files.log}.`);
           }
         }
       } finally { await rm(files.lock, { recursive: true, force: true }); }
@@ -189,13 +189,13 @@ export async function launch(options) {
   }
   if (options.open) {
     const result = spawnSync('/usr/bin/open', [url], { encoding: 'utf8' });
-    if (result.error || result.status !== 0) throw Error(`Studio pronto su ${url}, ma il browser non si è aperto. Apri l'indirizzo manualmente.`);
+    if (result.error || result.status !== 0) throw Error(`Studio is ready at ${url}, but the browser did not open. Open the address manually.`);
   }
-  console.log(`${reused ? 'Studio riutilizzato' : 'Studio avviato'}: ${url} · PID ${running.pid} · log ${files.log}`);
+  console.log(`${reused ? 'Studio reused' : 'Studio started'}: ${url} · PID ${running.pid} · log ${files.log}`);
   return { running: true, reused, pid: running.pid, url, updates };
 }
 
 if (process.argv[1] && await realpath(process.argv[1]) === await realpath(SELF)) {
   try { await launch(parseArgs(process.argv.slice(2))); }
-  catch (error) { console.error(`Motion Lab: ${error.message}`); process.exitCode = 1; }
+  catch (error) { console.error(`Framevolve: ${error.message}`); process.exitCode = 1; }
 }

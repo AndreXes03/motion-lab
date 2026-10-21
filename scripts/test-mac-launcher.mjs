@@ -63,19 +63,19 @@ test('Node e argomenti: requisiti espliciti e percorsi assoluti', () => {
   assert.equal(installerArgs(['--destination', destination]).port, 4173);
   assert.equal(installerArgs(['--destination', destination, '--port', '4198']).port, 4198);
   for (const port of ['0', '65536', 'abc', '4198.5']) assert.throws(() => installerArgs(['--destination', destination, '--port', port]));
-  if (process.platform !== 'darwin') assert.throws(() => installerArgs([]), /Applications di Linux/);
+  if (process.platform !== 'darwin') assert.throws(() => installerArgs([]), /user Applications/);
 });
 
 test('lifecycle detached: start, health della root, riuso stesso PID, stop e nuovo avvio', async t => {
   const f = await fixture(t);
-  const first = await command(f.root, f.port); assert.equal(first.code, 0, first.stderr); assert.match(first.stdout, /avviato/);
+  const first = await command(f.root, f.port); assert.equal(first.code, 0, first.stderr); assert.match(first.stdout, /started/);
   const a = JSON.parse(await readFile(paths(f.root, f.port).state));
   const health = await (await fetch(`http://127.0.0.1:${f.port}${HEALTH_PATH}`)).json(); assert.equal(health.root, f.root); assert.equal(health.pid, a.pid);
   assert.equal((await command(f.root, f.port, 'status')).code, 0);
-  const second = await command(f.root, f.port); assert.equal(second.code, 0, second.stderr); assert.match(second.stdout, /riutilizzato/);
+  const second = await command(f.root, f.port); assert.equal(second.code, 0, second.stderr); assert.match(second.stdout, /reused/);
   assert.equal(JSON.parse(await readFile(paths(f.root, f.port).state)).pid, a.pid);
-  const stop = await command(f.root, f.port, 'stop'); assert.equal(stop.code, 0, stop.stderr); assert.match(stop.stdout, /fermato/);
-  assert.match((await command(f.root, f.port, 'status')).stdout, /Nessuna istanza/);
+  const stop = await command(f.root, f.port, 'stop'); assert.equal(stop.code, 0, stop.stderr); assert.match(stop.stdout, /stopped/);
+  assert.match((await command(f.root, f.port, 'status')).stdout, /No healthy launcher/);
   await assert.rejects(fetch(`http://127.0.0.1:${f.port}${HEALTH_PATH}`));
   const third = await command(f.root, f.port); assert.equal(third.code, 0, third.stderr); assert.notEqual(JSON.parse(await readFile(paths(f.root, f.port).state)).instance, a.instance);
 });
@@ -84,30 +84,30 @@ test('due doppio clic contemporanei avviano un solo servizio', async t => {
   const f = await fixture(t);
   const results = await Promise.all([command(f.root, f.port), command(f.root, f.port)]);
   for (const result of results) assert.equal(result.code, 0, result.stderr);
-  assert.equal(results.filter(result => result.stdout.includes('avviato')).length, 1);
-  assert.equal(results.filter(result => result.stdout.includes('riutilizzato')).length, 1);
+  assert.equal(results.filter(result => result.stdout.includes('started')).length, 1);
+  assert.equal(results.filter(result => result.stdout.includes('reused')).length, 1);
 });
 
-test('porta estranea occupata: nessun riuso, stop o processo aggiuntivo', async t => {
+test('porta estranea in use: nessun riuso, stop o processo aggiuntivo', async t => {
   const f = await fixture(t), foreign = http.createServer((req, res) => {res.statusCode=404;res.end('foreign');});
   await new Promise(resolve => foreign.listen(f.port, '127.0.0.1', resolve)); t.after(() => new Promise(resolve => foreign.close(resolve)));
-  const result = await command(f.root, f.port); assert.equal(result.code, 1); assert.match(result.stderr, /occupata/);
-  const stop = await command(f.root, f.port, 'stop'); assert.equal(stop.code, 0); assert.match(stop.stdout, /Altri processi/);
+  const result = await command(f.root, f.port); assert.equal(result.code, 1); assert.match(result.stderr, /in use/);
+  const stop = await command(f.root, f.port, 'stop'); assert.equal(stop.code, 0); assert.match(stop.stdout, /Other processes/);
   assert.equal(await (await fetch(`http://127.0.0.1:${f.port}/`)).text(), 'foreign');
 });
 
-test('un servizio Motion Lab di altra root non viene riusato o fermato', async t => {
+test('un servizio Motion Lab di altra root non viene riusato o stopped', async t => {
   const a = await fixture(t), b = await fixture(t);
   assert.equal((await command(a.root, a.port)).code, 0);
-  const result = await command(b.root, a.port); assert.equal(result.code, 1); assert.match(result.stderr, /altra repo/);
-  assert.match((await command(b.root, a.port, 'stop')).stdout, /Altri processi/);
-  assert.match((await command(a.root, a.port, 'status')).stdout, /Studio attivo/);
+  const result = await command(b.root, a.port); assert.equal(result.code, 1); assert.match(result.stderr, /another repository/);
+  assert.match((await command(b.root, a.port, 'stop')).stdout, /Other processes/);
+  assert.match((await command(a.root, a.port, 'status')).stdout, /Studio running/);
 });
 
 test('dipendenze assenti e root sbagliata: errori chiari senza installazione automatica', async t => {
   const f = await fixture(t); await rm(path.join(f.root, 'node_modules'), { recursive: true });
   const missing = await command(f.root, f.port); assert.equal(missing.code, 1); assert.match(missing.stderr, /npm ci/);
-  await writeFile(path.join(f.root, 'package.json'), '{"name":"altra-app"}'); assert.match((await command(f.root, f.port)).stderr, /non è Motion Lab/);
+  await writeFile(path.join(f.root, 'package.json'), '{"name":"altra-app"}'); assert.match((await command(f.root, f.port)).stderr, /not a Framevolve repository/);
 });
 
 test('installer esterno: bundle con spazi, Node/repo assoluti, shell valida e nessun overwrite', async t => {
@@ -128,7 +128,7 @@ test('installer esterno: bundle con spazi, Node/repo assoluti, shell valida e ne
   assert.equal(await readFile(path.join(destination,'Contents/Resources/LEGACY-MIT.txt'),'utf8'),'Legacy MIT notice');
   const copied = path.join(destination, 'Contents/Resources/launch-studio.mjs');
   const launch = await command(f.root, f.port, 'start', copied); assert.equal(launch.code, 0, launch.stderr);
-  await assert.rejects(installLauncher({root:f.root,destination}), /Esiste già/);
+  await assert.rejects(installLauncher({root:f.root,destination}), /Already exists/);
 });
 
 test('entry CLI tramite symlink e directory alias: avvio e installazione realmente eseguiti', async t => {
@@ -140,14 +140,14 @@ test('entry CLI tramite symlink e directory alias: avvio e installazione realmen
   await symlink(path.dirname(helper), scriptsAlias, 'dir');
   await symlink(f.root, repoAlias, 'dir');
   const started = await command(repoAlias, f.port, 'start', launcherAlias);
-  assert.equal(started.code, 0, started.stderr); assert.match(started.stdout, /Studio avviato/);
+  assert.equal(started.code, 0, started.stderr); assert.match(started.stdout, /Studio started/);
   assert.equal(JSON.parse(await readFile(paths(f.root, f.port).state)).root, f.root);
   const destination = path.join(f.base, 'Applications alias test', 'Motion Lab.app');
   const installed = spawnSync(process.execPath, [path.join(scriptsAlias, 'install-mac-launcher.mjs'), '--repo', repoAlias, '--destination', destination, '--port', String(f.port)], { env, encoding: 'utf8' });
-  assert.equal(installed.status, 0, installed.stderr); assert.match(installed.stdout, /Launcher installato/);
+  assert.equal(installed.status, 0, installed.stderr); assert.match(installed.stdout, /Launcher installed/);
   const info = JSON.parse(await readFile(path.join(destination, 'Contents/Resources/installation.json')));
   assert.equal(info.repository, f.root);
   assert.equal(info.port, f.port);
   const stopped = await command(repoAlias, f.port, 'stop', path.join(scriptsAlias, 'launch-studio.mjs'));
-  assert.equal(stopped.code, 0, stopped.stderr); assert.match(stopped.stdout, /Studio fermato/);
+  assert.equal(stopped.code, 0, stopped.stderr); assert.match(stopped.stdout, /Studio stopped/);
 });

@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+import {browserLaunchOptions} from './browser-runtime.mjs';
 import {createServer} from 'vite';
 import {chromium} from 'playwright';
 import {writeFile,mkdir} from 'node:fs/promises';
@@ -9,7 +10,7 @@ const output=path.join(ROOT,'renders/camera-quality.json');
 let server,browser;
 try{
  server=await createServer({root:ROOT,server:{host:'127.0.0.1',port:0},logLevel:'error'});await server.listen();
- browser=await chromium.launch({executablePath:'/Applications/Google Chrome.app/Contents/MacOS/Google Chrome',headless:true,args:['--disable-gpu-sandbox']});
+ browser=await chromium.launch({...await browserLaunchOptions(),headless:true,args:['--disable-gpu-sandbox']});
  const page=await browser.newPage();await page.goto(`http://127.0.0.1:${server.httpServer.address().port}/?render=1`);await page.waitForFunction(()=>window.motion?.ready);await page.evaluate(()=>window.motion.ready);
  const report=await page.evaluate(async()=>{
   const T=await import('/node_modules/three/build/three.module.js');

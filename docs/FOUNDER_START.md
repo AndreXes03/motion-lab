@@ -6,7 +6,7 @@ Framevolve includes a [commercial-making skill](../.agents/skills/motion-lab-pro
 
 ## Start the conversation
 
-Open this repository in Codex or Claude Code and send:
+Run the [guided Mac setup](MAC_SETUP.md), then open this repository in your preferred coding agent and send:
 
 > Help me make a commercial for my product in Framevolve. Use the included `motion-lab-product-film` skill. I am a founder, not a motion designer: ask only the essential questions, recommend a suitable direction and make a first preview I can judge. Start from what I already have, keep the result editable, and tell me which choices are assumptions.
 
@@ -63,3 +63,5 @@ Interactive preview and final rendering can use different engines. Cycles is loc
 For final delivery, ask for the formats and destination you need. The agent should inspect the encoded film, check sound and seeking, and verify the actual delivered files. Publishing, buying music or starting paid generation remains a separate action requiring your authorization.
 
 [Setup](../README.md#run-motion-lab-locally) · [Studio usage](USAGE.md) · [Agent workflow](AGENT_WORKFLOW.md)
+
+For best results, use a capable coding model such as Sol, Astra, Opus, Fable or an equivalent, where available. Framevolve does not require a specific model or plan; access and any usage costs are managed by your provider. You can try the Studio and export existing scenes without an agent.

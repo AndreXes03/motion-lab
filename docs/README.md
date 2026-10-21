@@ -21,3 +21,5 @@
 [Engine](../src/engine/) · [Scenes](../src/scenes/) · [Objects and materials](../src/components/) · [Recipes](../project/) · [Rendering](../scripts/) · [Demos](../demo/)
 
 - [Pop Motion](POP_MOTION.md): 2D camera, fish-eye, extruded type and beat-synced motion.
+
+- [Guided Mac setup](MAC_SETUP.md): choose an agent, use Chrome or install Chromium, and open a working demo.

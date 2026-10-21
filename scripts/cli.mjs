@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+import {browserLaunchOptions} from './browser-runtime.mjs';
 import {applyRenderQuality} from '../src/engine/render-quality.js';
 import {openFrameCache,sourceFingerprint} from './render-cache.mjs';
 import {sceneConfig,sceneIds} from '../src/scene-registry.js';
@@ -16,7 +17,6 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
-const CHROME = '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome';
 let DEFAULT = config;
 
 function output(type, payload = {}) { process.stdout.write(`${JSON.stringify({ type, ...payload })}\n`); }
@@ -126,6 +126,8 @@ function run(bin, args) {
   });
 }
 async function exportVideo(page, target, width, height, parameters, start, end, temporalSamples, fps, format, bitrateMbps, cacheOptions) {
+  // Progress JPEGs are written before encoding, including the very first frame.
+  await mkdir(path.dirname(target), { recursive: true });
   const cache = await openFrameCache(ROOT, {source:cacheOptions.resume?await sourceFingerprint(ROOT):null,
     width,height,parameters,start,end,temporalSamples,fps,browser:page.context().browser().version()},cacheOptions);
   const frameDir = cache.directory;
@@ -240,7 +242,7 @@ async function main() {
   const { server, url } = await startVite(command === 'viewer' ? 4173 : 0);
   let browser;
   try {
-    browser = await chromium.launch({ executablePath: CHROME, headless: command !== 'viewer', args: ['--disable-gpu-sandbox'] });
+    browser = await chromium.launch({ ...await browserLaunchOptions(), headless: command !== 'viewer', args: ['--disable-gpu-sandbox'] });
     const page = await openMotion(browser, command==='viewer'?url+'?scene='+(parameters.scene||'objects')+(opts.sound?'&sound='+opts.sound:''):url+'?render=1&scene='+parameters.scene, width, height);
     output('ready', { command, url, width, height, start, end, temporalSamples, config: await page.evaluate(() => window.motion.config ?? null) });
     if (command === 'viewer') {
