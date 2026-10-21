@@ -25,3 +25,7 @@ The user approved publishing `V11/01_Principale_Electro.mp4` on 2026-10-20. LOOP
 The original landing is unchanged. `demo/render-manifest.json` records source hash and export metadata; check hero first-frame playback, repeat playback, full-film audio availability and mobile gallery layout after deployment.
 
 The second section compares the familiar describe / see / refine pattern with Base44, using original app and film illustrations. It is a workflow analogy, not an integration or a claim that the upcoming founder flow is available. The existing availability details remain visible.
+
+## LOOP V12 publication — 2026-10-21
+
+The user authorized V12 export and publication on all existing landing pages. V12 replaces the featured V11 media while preserving the Electro soundtrack, film order and prior assets. The Full HD file is byte-identical to the delivered master; the silent 720p preview and poster at 9.933333s derive from it. Cycles rendered up to 1024 samples (adaptive minimum 256). Full decode and compressed frame-sequence review passed. Browser/device playback was not verified because local browser access was unavailable and the Mac was locked; this is not a claim of fresh user creative approval.

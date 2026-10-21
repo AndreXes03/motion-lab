@@ -70,10 +70,10 @@
     },
     {
       "film": "LOOP",
-      "file": "demo/loop-v11-electro-1080.mp4",
-      "poster": "demo/loop-v11-poster.jpg",
-      "sha256": "6dc018a371b6d008da1827b13faa7fefdb7aaec25c4c00b37525f357ec875403",
-      "bytes": 17350104,
+      "file": "demo/loop-v12-electro-1080.mp4",
+      "poster": "demo/loop-v12-poster.jpg",
+      "sha256": "c635e94f6ccc89cb99bd111a87801e19cdd075a001bcfadf5a01fdbcef03354a",
+      "bytes": 21504992,
       "width": 1920,
       "height": 1080,
       "fps": 30,
@@ -81,10 +81,15 @@
       "framecount": 660,
       "videoCodec": "h264",
       "audioCodec": "aac",
-      "version": "v11-principale-electro",
-      "posterTime": 19.8,
-      "preview": "demo/loop-v11-web-preview.mp4",
-      "approvedOn": "2026-10-20"
+      "version": "v12-principale-electro",
+      "posterTime": 9.933333,
+      "preview": "demo/loop-v12-web-preview.mp4",
+      "exportAuthorizedOn": "2026-10-21",
+      "renderEngine": "cycles",
+      "samples": 1024,
+      "minimumAdaptiveSamples": 256,
+      "visualReview": "compressed-frame-sequence",
+      "sourceSHA256": "dec1f17bbd2c7672e451f2a3f907be67e25a41d41a685a4123fa9f6d0dc4d5dc"
     }
   ],
   "schemaVersion": 2

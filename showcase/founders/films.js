@@ -1,9 +1,9 @@
-// Approved editorial order. LOOP V11 uses the first (Electro) soundtrack.
+// Approved editorial order. LOOP V12 uses the first (Electro) soundtrack.
 export const filmOrder = ['loop', 'pulse', 'camera', 'dot'];
 export const films = {
   loop: {
     name: 'LOOP', status: 'published', title: 'LOOP — Launch film',
-    file: 'loop-v11-electro-1080.mp4', preview: 'loop-v11-web-preview.mp4', poster: 'loop-v11-poster.jpg',
+    file: 'loop-v12-electro-1080.mp4', preview: 'loop-v12-web-preview.mp4', poster: 'loop-v12-poster.jpg',
     caption: 'From a brief to a big entrance.', alt: 'LOOP orange and graphite product in a cinematic launch film'
   },
   pulse: {
