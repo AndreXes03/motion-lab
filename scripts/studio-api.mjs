@@ -1,3 +1,4 @@
+import {authoredSceneAudio} from './authored-audio.mjs';
 import {createNativeProjectApi} from './native-project-api.mjs';
 import {importAudioAsset,listAudioAssets,resolveAudioAsset} from './audio-assets.mjs';
 import {normalizeAudioTracks} from '../src/engine/audio-track.js';
@@ -443,6 +444,10 @@ export function createStudioApi({ spawnFn = nodeSpawn, revealFn = revealWithFind
       if (!['127.0.0.1', 'localhost', '[::1]'].some(local => host?.startsWith(`${local}:`) || host === local)) return send(res, 403, { error: 'Local requests only' });
 
       if(route.startsWith('/studio/projects'))return createNativeProjectApi({root:ROOT})(req,res,next);
+      if(req.method==='POST'&&route==='/studio/audio/authored/loop'){
+        if(!req.headers.origin||new URL(req.headers.origin).host!==host||req.headers['content-type']?.split(';')[0]!=='application/json')return send(res,403,{error:'Load authored audio from this Studio tab.'});
+        const input=await readJson(req);if(!isRecord(input)||Object.keys(input).length)return send(res,400,{error:'Authored audio expects an empty object.'});return send(res,200,await authoredSceneAudio(ROOT,'loop'));
+      }
       if(req.method==='GET'&&route==='/studio/audio/assets')return send(res,200,{assets:await listAudioAssets(ROOT)});
       if(req.method==='POST'&&route==='/studio/audio/assets'){
         if(!req.headers.origin||new URL(req.headers.origin).host!==host||req.headers['content-type']?.split(';')[0]!=='application/octet-stream')return send(res,403,{error:'Import audio from this Studio tab.'});

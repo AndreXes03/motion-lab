@@ -21,6 +21,7 @@ async function atomic(file,value){
  const temp=file+'.'+randomUUID()+'.tmp';let handle;try{handle=await open(temp,constants.O_WRONLY|constants.O_CREAT|constants.O_EXCL|constants.O_NOFOLLOW,0o600);await handle.writeFile(JSON.stringify(value));await handle.sync();await handle.close();handle=null;await rename(temp,file);}finally{await handle?.close();await rm(temp,{force:true});}
 }
 async function pointer(root){const file=path.join(await cache(root),'active-project.json');try{const value=await readJson(file);if(value.version!==1||!idPattern.test(value.id)||!Array.isArray(value.trusted??[])||(value.trusted??[]).some(id=>!idPattern.test(id)))throw Error('Invalid active project.');return value;}catch(e){if(e.code==='ENOENT')return null;throw e;}}
+export async function activeProjectId(root){root=await realpath(path.resolve(root));return (await pointer(root))?.id??null;}
 async function activate(root,id,trusted=[]){await atomic(path.join(await cache(root),'active-project.json'),{version:1,id,trusted});}
 const sessionJournal=root=>path.join(root,'.motion-cache/project-session-open.json');
 async function restoreSession(root,journal){

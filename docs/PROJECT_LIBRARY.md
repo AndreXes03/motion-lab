@@ -11,6 +11,14 @@ Agent file changes save after a short pause while Studio runs. The existing `nod
 
 ## Included in a portable project
 
+### Your music
+
+Open **Audio → Import music** and choose a downloaded MP3, WAV or M4A (up to 100 MB). Framevolve keeps a local copy with the project. Adjust its start, duration, volume and fades in the same panel. Imported music replaces generated background music; **Generated sound** controls the synthesizer/effects, while each imported track has its own Enabled checkbox.
+
+The saved project owns its audio settings and imported tracks. Changing the scene restores that scene's defaults; opening another saved project restores its own mix. If your installation already has LOOP's edited soundtrack, it is copied into managed local assets and included in your portable project. That personal soundtrack is not bundled in the public repository. A missing local soundtrack is reported explicitly.
+
+### Package contents
+
 The saved recipe plus authored files under `src/scenes/`, `src/components/`, `src/product-kit/`, `src/assets/`, `src/config.js`, `project/` and `public/assets/`. This includes local imported audio, models, textures, fonts and license files kept there. Snapshots share identical file blobs on disk. Package import checks file hashes, safe paths and size limits before applying anything.
 
 Excluded: the application and its dependencies, renderer binaries, renders, caches, hidden/private files, credentials, feedback, briefs and history/version folders. The package does not replace `src/engine/`, `src/viewer/` or `src/scene-registry.js`. A newly registered scene therefore needs a compatible app with that registration. Native project documents in `.motion-cache/projects/` remain a separate API and are not automatically packaged.

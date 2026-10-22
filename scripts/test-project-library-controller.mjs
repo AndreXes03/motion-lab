@@ -108,7 +108,7 @@ test('external updates preserve manual edits until applied, then later edits sav
   env.snapshot = manual;
   await env.fire(1800);
   assert.deepEqual(env.snapshot, manual, 'polling must keep local manual edits');
-  assert.match(env.views.at(-1).message, /Local edits are kept/);
+  assert.match(env.views.at(-1).message, /New changes available/);
 
   // Simulate the user choosing Apply latest in the live-update UI.
   env.snapshot = incoming;

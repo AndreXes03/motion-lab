@@ -1,6 +1,6 @@
 import {mountProjectLibraryUI} from './project-library-ui.js';
 const signature=value=>JSON.stringify(value);
-export async function mountProjectLibrary({container,getSnapshot,setSnapshot,newSnapshot,isBusy,liveRecovery=false,canApplyExternal=()=>true}){
+export async function mountProjectLibrary({container,getSnapshot,setSnapshot,newSnapshot,isBusy,liveRecovery=false,canApplyExternal=()=>true,onProjectCreated=()=>{}}){
  let active=null,projects=[],token=null,base='',working=false,saving=false,stopped=false,conflict=false,externalPending=false,timer,pollTimer,observed='',changedAt=0,ready=false,switching=false,retryAt=0;
  let status='loading',message='';
  const ui=mountProjectLibraryUI({container,isBusy,actions:{save:()=>save(true),newProject,openProject,importProject,exportProject}});
@@ -45,7 +45,7 @@ export async function mountProjectLibrary({container,getSnapshot,setSnapshot,new
  async function operation(fn){if(working||isBusy())throw Error('Wait for the current render or project operation to finish.');working=true;paint();try{return await fn();}catch(error){fail(error);throw error;}finally{working=false;paint();}}
  async function newProject(name){return operation(async()=>{
   await save(true);const before=getSnapshot();
-  try{const snapshot=newSnapshot();const {record}=await request('/new',{activeId:active.id,name,snapshot});installRecord(record);sessionStorage.removeItem('framevolve-session-draft');return record;}
+  try{const snapshot=newSnapshot();const {record}=await request('/new',{activeId:active.id,name,snapshot});installRecord(record);onProjectCreated(record.snapshot);sessionStorage.removeItem('framevolve-session-draft');return record;}
   catch(error){setSnapshot(before);throw error;}
  });}
  async function openProject(id,{trusted=false}={}){return operation(async()=>{

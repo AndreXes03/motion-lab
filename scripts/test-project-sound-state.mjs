@@ -1,0 +1,12 @@
+import assert from 'node:assert/strict';
+import {normalizeSoundState,usesEditedSoundtrack} from '../src/viewer/sound-state.js';
+import {isLoopPreviewCurrent} from '../src/viewer/prepared-preview-state.js';
+assert.equal(usesEditedSoundtrack('loop',{musicStyle:'scene'},{url:'known.mp3'}),true);assert.equal(usesEditedSoundtrack('loop',{musicStyle:'ambient'},{url:'known.mp3'}),false);assert.equal(usesEditedSoundtrack('loop',{},null),false);assert.equal(usesEditedSoundtrack('procedural',{},{}),false);
+const track={id:'voice',assetId:'a'.repeat(64),duration:3,sourceStart:1,timelineStart:2,volume:.4,fadeIn:.5,fadeOut:.6};
+assert.equal(usesEditedSoundtrack('loop',{musicStyle:'scene'},{url:'known.mp3'},{version:1,tracks:[track]}),false);
+const project=normalizeSoundState({sound:{musicStyle:'ambient',music:.2,seed:91},audio:{version:1,tracks:[track]}});
+const fresh=normalizeSoundState();assert.equal(fresh.sound.musicStyle,'scene');assert.equal(fresh.sound.seed,42);assert.deepEqual(fresh.audio,{version:1,tracks:[]});
+const restored=normalizeSoundState(JSON.parse(JSON.stringify(project)));assert.deepEqual(restored,project);restored.audio.tracks[0].volume=1;assert.equal(project.audio.tracks[0].volume,.4);
+assert.equal(isLoopPreviewCurrent({scene:'loop',...fresh}),true);assert.equal(isLoopPreviewCurrent({scene:'loop',...project}),false);assert.equal(isLoopPreviewCurrent({scene:'loop',audio:project.audio}),false);
+assert.throws(()=>normalizeSoundState({sound:{music:3},audio:project.audio}),/0..1/);assert.deepEqual(project.audio.tracks[0].assetId,track.assetId);
+console.log('Project audio: fresh defaults, independent imports, exact snapshot restore and prepared LOOP custom-mix rejection passed.');
