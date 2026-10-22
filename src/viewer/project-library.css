@@ -69,3 +69,16 @@
   .project-library-name { max-width: 110px; }
   .project-library-status { max-width: 100px; }
 }
+.project-library-manage-dialog, .project-library-export-dialog { width: min(570px, calc(100vw - 32px)); max-height: min(720px, calc(100vh - 48px)); overflow-y: auto; }
+.project-library-manage-dialog h3 { margin: 20px 0 8px; color: #bfc7b4; font-size: 12px; }
+.project-library-manage-row { padding: 12px 0; border-bottom: 1px solid #ffffff16; }
+.project-library-manage-row > strong { display: block; overflow-wrap: anywhere; font-size: 12px; }
+.project-library-manage-row > small { display: block; color: #93998e; margin-top: 7px; }
+.project-library-row-actions { display: flex; flex-wrap: wrap; gap: 7px; margin-top: 9px; }
+.project-library-row-actions button { padding: 6px 9px; color: #cbd2c2; background: #252927; border: 1px solid #ffffff24; border-radius: 5px; font: inherit; cursor: pointer; }
+.project-library-row-actions button:disabled { opacity: .45; cursor: default; }
+.project-library-export-dialog details { margin: 0 0 15px; color: #bfc7b4; font-size: 11px; }
+.project-library-export-dialog summary { cursor: pointer; padding: 8px 0; }
+.project-library-export-files { max-height: 180px; overflow-y: auto; padding-left: 18px; line-height: 1.7; overflow-wrap: anywhere; }
+.project-library-export-dialog .project-library-warning-wrap li { overflow-wrap: anywhere; }
+.project-library-scene-actions { flex-wrap: wrap; }

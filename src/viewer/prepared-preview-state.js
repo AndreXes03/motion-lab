@@ -1,9 +1,11 @@
+import {soundDefaults} from '../engine/sound-design.js';
 import {studyControlDefinitions} from '../engine/scene-capabilities.js';
 const defaults=Object.fromEntries(studyControlDefinitions.loop.map(c=>[c.id,c.default]));
 export function isLoopPreviewCurrent(p){
   if(p?.scene!=='loop')return false;
   // The movie contains its own finished soundtrack, so it cannot play a saved custom mix.
   if(p.audio?.tracks?.some(track=>track.enabled!==false))return false;
+  if(p.sound?.muted||(p.sound?.master??soundDefaults.master)!==soundDefaults.master||(p.sound?.music??soundDefaults.music)!==soundDefaults.music)return false;
   if(p.sound?.musicStyle&&p.sound.musicStyle!=='scene')return false;
   if(Object.entries(p.sceneControls??{}).some(([key,value])=>!(key in defaults)||value!==defaults[key]))return false;
   const c=p.look?.camera??{},post=p.look?.post??{};

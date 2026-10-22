@@ -1,0 +1,48 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import {readFile} from 'node:fs/promises';
+import {chromium} from 'playwright';
+
+test('project dialogs keep two toolbar controls and explicit example/export decisions',async t=>{
+ const browser=await chromium.launch({executablePath:process.env.CHROME_PATH??'/Applications/Google Chrome.app/Contents/MacOS/Google Chrome',headless:true});t.after(()=>browser.close());
+ const page=await browser.newPage({viewport:{width:1024,height:768}});
+ await page.setContent('<div id="projects"></div>');
+ await page.addStyleTag({content:await readFile(new URL('../src/viewer/project-library.css',import.meta.url),'utf8')});
+ const source=(await readFile(new URL('../src/viewer/project-library-ui.js',import.meta.url),'utf8')).replace("import './project-library.css';",'').replace("import { icon } from './studio-icons.js';",'const icon=()=>"<svg aria-hidden=\\"true\\"></svg>";').replace('export function mountProjectLibraryUI','function mountProjectLibraryUI');
+ await page.addScriptTag({content:source+'\nwindow.mountProjectLibraryUI=mountProjectLibraryUI;'});
+ await page.evaluate(()=>{
+  window.actionCalls=[];window.sceneResult='pending';window.exportResult='pending';
+  const first={id:'first',name:'Active project',revision:1},second={id:'second',name:'Saved project',revision:1},trash={id:'trash',name:'Recover me',revision:2,trashedAt:new Date().toISOString()};
+  window.ui=window.mountProjectLibraryUI({container:document.querySelector('#projects'),actions:{manageProject:async(...args)=>{window.actionCalls.push(args);}}});
+  window.ui.render({active:first,projects:[first,second,trash],status:'saved'});
+ });
+ assert.equal(await page.locator('.project-library-controls .project-library-icon').count(),2);
+ await page.getByRole('button',{name:'Project collection',exact:true}).click();
+ await page.locator('[data-recent]').click();
+ assert.equal(await page.locator('[data-recent-list] [data-project-id]').count(),2);
+ await page.getByRole('menuitem',{name:'Manage projects & Trash'}).click();
+ const manage=page.locator('[data-manage-dialog]');
+ assert.equal(await manage.getByRole('heading',{name:'Trash',exact:true}).isVisible(),true);
+ await manage.locator('[data-project-action="duplicate"][data-id="second"]').focus();
+ assert.equal(await page.evaluate(()=>{const before=document.activeElement;window.ui.render({status:'saved'});return before===document.activeElement&&before.isConnected;}),true,'unchanged polling preserves the focused project action');
+ assert.equal(await manage.locator('[data-project-action="trash"][data-id="first"]').isDisabled(),true);
+ await manage.locator('[data-project-action="restore"]').click();
+ assert.deepEqual(await page.evaluate(()=>window.actionCalls),[['restore','trash']]);
+ await manage.getByRole('button',{name:'Done'}).click();
+ await page.evaluate(()=>{window.ui.chooseScene({label:'Procedural',active:{name:'Active project'}}).then(result=>window.sceneResult=result);});
+ assert.equal(await page.locator('[data-scene-dialog]').isVisible(),true);
+ await page.locator('[data-scene-cancel]').click();
+ assert.equal(await page.evaluate(()=>window.sceneResult),null);
+ await page.evaluate(()=>{window.ui.chooseScene({label:'Procedural',active:{name:'Active project'}}).then(result=>window.sceneResult=result);});
+ await page.locator('[data-scene-replace]').click();
+ assert.deepEqual(await page.evaluate(()=>window.sceneResult),{mode:'replace'});
+ await page.evaluate(()=>{window.ui.confirmExport({name:'Active project',revision:1,files:[{path:'project/audio/local.audio'}],totalBytes:1234,warnings:[{reference:'https://example.com/music.wav',reason:'External file'}],requirements:['Compatible Framevolve application','Cycles installed separately'],limitations:'Computed paths cannot all be discovered automatically.'}).then(result=>window.exportResult=result);});
+ const review=page.locator('[data-export-dialog]');
+ assert.equal(await review.getByText('https://example.com/music.wav: External file',{exact:true}).isVisible(),true);
+ assert.equal(await review.getByText('Computed paths cannot all be discovered automatically.',{exact:true}).isVisible(),true);
+ await review.locator('summary').click();
+ assert.equal(await review.getByText('project/audio/local.audio',{exact:true}).isVisible(),true);
+ await review.getByRole('button',{name:'Cancel',exact:true}).click();
+ assert.equal(await page.evaluate(()=>window.exportResult),false);
+ await page.evaluate(()=>window.ui.dispose());
+});

@@ -1,0 +1,19 @@
+.fv-help-trigger {display:inline-flex;align-items:center;justify-content:center;min-height:34px;padding:0 12px;border:1px solid #ffffff24;border-radius:7px;background:#ffffff08;color:#d5d9dc;font:inherit;font-size:12px;font-weight:550;cursor:pointer}
+.fv-help-trigger:hover {border-color:#d7f56b80;background:#d7f56b12;color:#eff5d8}
+.fv-help-trigger:focus-visible,.fv-help-dialog button:focus-visible {outline:2px solid #d7f56b;outline-offset:3px}
+.fv-help-dialog {box-sizing:border-box;width:min(520px,calc(100vw - 28px));max-height:calc(100dvh - 28px);margin:auto;padding:0;overflow:auto;border:1px solid #ffffff20;border-radius:18px;background:linear-gradient(145deg,#24282b,#171a1d);color:#edf0e9;box-shadow:0 28px 90px #0009;font:inherit}
+.fv-help-dialog::backdrop {background:#050707b8;backdrop-filter:blur(6px)}
+.fv-help-dialog>header {display:flex;align-items:flex-start;justify-content:space-between;gap:18px;padding:26px 27px 20px}
+.fv-help-dialog header h2 {margin:8px 0 0;font-size:25px;line-height:1.15;font-weight:560;letter-spacing:-.7px}
+.fv-help-kicker {color:#a6b0b8;font-size:9px;letter-spacing:1.4px}
+.fv-help-dialog header button {width:32px;height:32px;border:1px solid #ffffff20;border-radius:50%;background:#ffffff08;color:#e4e7e1;font-size:20px;cursor:pointer}
+.fv-help-content {display:grid;gap:10px;padding:0 20px 22px}
+.fv-help-card {display:grid;grid-template-columns:32px 1fr 18px;align-items:start;gap:12px;width:100%;padding:16px;border:1px solid #ffffff12;border-radius:11px;background:#ffffff05;color:inherit;text-align:left;font:inherit;cursor:pointer}
+button.fv-help-card:hover {border-color:#d7f56b66;background:#d7f56b0b}
+.fv-help-card strong {display:block;margin-bottom:5px;font-size:13px;font-weight:620}
+.fv-help-card small {display:block;color:#aab2b9;font-size:11px;line-height:1.55}
+.fv-help-number {color:#d7f56b;font-size:10px;font-variant-numeric:tabular-nums}
+.fv-help-ai {grid-template-columns:32px 1fr 18px}
+.fv-help-dialog>footer {display:flex;align-items:center;justify-content:space-between;gap:12px;padding:15px 24px;border-top:1px solid #ffffff12;color:#9ba5ad;font-size:10px}
+.fv-help-dialog footer button {padding:7px 12px;border:1px solid #ffffff20;border-radius:6px;background:#ffffff08;color:#dfe3de;font:inherit;cursor:pointer}
+@media(max-width:620px) {.fv-help-dialog>header{padding:22px 20px 18px}.fv-help-dialog header h2{font-size:22px}.fv-help-content{padding:0 14px 18px}.fv-help-card{padding:14px}.fv-help-dialog>footer{padding:14px 18px}}

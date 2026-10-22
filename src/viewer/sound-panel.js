@@ -1,10 +1,10 @@
 import {normalizeSoundState,usesEditedSoundtrack} from './sound-state.js';
 import {mountAudioImportPanel} from './audio-import-panel.js';
 import './sound-panel.css';
-import {soundDefaults,soundKits,normalizeSound,planSound,renderSound,encodeWav} from '../engine/sound-design.js';
+import {soundDefaults,soundKits,normalizeSound,planSound,renderSound,encodeWav,masterGain} from '../engine/sound-design.js';
 const timbres={air:'Air',silk:'Silk',deep:'Deep',grain:'Grainy',swirl:'Swirl',reverse:'Reverse',bright:'Bright',riser:'Riser',mechanical:'Mechanical',metal:'Metal',plastic:'Plastic',glass:'Glass',rubber:'Rubber',wood:'Wood',electric:'Electric',ceramic:'Ceramic',soft:'Soft',click:'Click',knock:'Knock',snap:'Snap',ping:'Ping',sub:'Sub',chime:'Chime',pop:'Pop'};
-const labels={camera:'Camera movement',objects:'Object movement',accents:'Accents',music:'Music volume',master:'Master volume',density:'Effect frequency',dial:'Dial clicks',hinge:'Hinge movement',gyro:'Gyroscope movement'};
-export function mountSoundPanel({runtime,parameters,onChange,onPause,getTime}){
+const labels={camera:'Camera movement',objects:'Object movement',accents:'Accents',music:'Generated music volume',master:'Master volume',density:'Effect frequency',dial:'Dial clicks',hinge:'Hinge movement',gyro:'Gyroscope movement'};
+export function mountSoundPanel({runtime,parameters,onChange,onPause,getTime,getDuration,onSeek}){
  const panel=document.createElement('details');panel.className='finish-tools sound-panel';panel.id='sound-tools';panel.open=true;
  panel.innerHTML='<summary>Sound design</summary><div class="sound-heading"><h3>Sound design</h3><label class="finish-checkbox sound-enable"><input id="sound-enabled" type="checkbox" checked> Generated sound</label></div>';
  let settings={...soundDefaults},context,source,buffer,cacheKey='',generation=0,startTime=0,offset=0,building=null;
@@ -15,8 +15,10 @@ export function mountSoundPanel({runtime,parameters,onChange,onPause,getTime}){
   const group=document.createElement(advanced?'details':'section');group.className=advanced?'sound-section sound-disclosure':'sound-section';
   const heading=document.createElement(advanced?'summary':'h4');heading.textContent=title;group.append(heading);panel.append(group);return group;
  }
- const imported=mountAudioImportPanel({container:panel,onImport:()=>{audioRevision++;settings.music=0;sync();},onEdit:()=>{stop();cacheKey='';setScene(activeScene);onPause();onChange();}});
- const mix=section('Mix');
+ const imported=mountAudioImportPanel({container:panel,getTime,getDuration,onSeek,onPause,onImport:()=>{audioRevision++;settings.music=0;sync();},onEdit:()=>{stop();cacheKey='';setScene(activeScene);onPause();onChange();}});
+ const mix=section('Global mix');
+ const muteLabel=document.createElement('label');muteLabel.className='audio-track-enabled sound-global-mute';const mute=document.createElement('input');mute.id='sound-muted';mute.type='checkbox';mute.onchange=()=>{settings.muted=mute.checked;edit();};muteLabel.append(mute,document.createTextNode('Mute all audio'));mix.append(muteLabel);
+ const masterNote=document.createElement('p');masterNote.className='audio-import-note';masterNote.textContent='Master volume controls generated sound and imported music. 80% is the authored mix level.';mix.append(masterNote);panel.insertBefore(mix,panel.querySelector('.imported-audio'));
  const sfx=section('Motion effects');
  const music=section('Music settings',{advanced:true});
  const mechanics=section('Mechanical detail',{advanced:true});
@@ -47,26 +49,26 @@ export function mountSoundPanel({runtime,parameters,onChange,onPause,getTime}){
  const buttons=document.createElement('div');buttons.className='output-links sound-actions';const variation=document.createElement('button');variation.type='button';variation.textContent='New variation';variation.title='Generate a new sound variation with the current mix';variation.onclick=()=>{settings.seed=(settings.seed+1)%1000000;edit();};const download=document.createElement('button');download.type='button';download.textContent='Download WAV';download.className='sound-download';download.onclick=async()=>{try{onPause();await prepare();if(!buffer)return;const bytes=encodeWav([buffer.getChannelData(0),buffer.getChannelData(1)],buffer.sampleRate);const url=URL.createObjectURL(new Blob([bytes],{type:'audio/wav'}));const a=document.createElement('a');a.href=url;a.download='framevolve-sound-design.wav';a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);}catch(e){status.textContent=e.message;}};const subtle=document.createElement('button');subtle.type='button';subtle.textContent='Subtle mix';subtle.title='Reset movement and mechanical levels to the authored subtle mix';subtle.onclick=()=>{for(const k of ['camera','objects','accents','dial','hinge','gyro'])settings[k]=soundDefaults[k];sync();edit();};buttons.append(subtle,variation,download);panel.append(buttons);
  (document.querySelector('#inspector-audio')??document.querySelector('.property-panel')).append(panel);
  panel.querySelector('#sound-enabled').onchange=e=>{settings.enabled=e.target.checked;edit();};
- function sync(){for(const [key,f] of Object.entries(fields)){f.input.value=settings[key];if(f.out){f.out.value=Math.round(settings[key]*100);f.out.setCustomValidity('');}}bpm.disabled=settings.tempo==='auto';bpmLabel.hidden=settings.tempo==='auto';panel.querySelector('#sound-enabled').checked=settings.enabled;}
+ function sync(){for(const [key,f] of Object.entries(fields)){f.input.value=settings[key];if(f.out){f.out.value=Math.round(settings[key]*100);f.out.setCustomValidity('');}}bpm.disabled=settings.tempo==='auto';bpmLabel.hidden=settings.tempo==='auto';panel.querySelector('#sound-enabled').checked=settings.enabled;mute.checked=settings.muted;}
  function stop(){generation++;if(source){source.onended=null;source.stop();source.disconnect();source=null;}}
  async function prepare(){
   if(!context)context=new AudioContext({sampleRate:48000});await context.resume();
   await defaultRequest;const p=parameters();
   const key=JSON.stringify(p);if(cacheKey===key&&buffer)return;
   status.textContent='Preparing audio…';await new Promise(r=>setTimeout(r,20));
-  await editedReady;if(usesEditedSoundtrack(p.scene,p.sound,editedTrack,p.audio)){buffer=await imported.mix(await editedBuffer(p),context,p.audio);cacheKey=key;status.textContent='Edited soundtrack · LOOP';return;}
+  await editedReady;if(usesEditedSoundtrack(p.scene,p.sound,editedTrack,p.audio)){buffer=await imported.mix(await editedBuffer(p),context,p.audio,p.sound);cacheKey=key;status.textContent='Edited soundtrack · LOOP';return;}
   const telemetry=runtime.sampleMotion(p),plan=planSound(telemetry,p.sound),rendered=renderSound(plan);
-  buffer=context.createBuffer(2,rendered.channels[0].length,rendered.sampleRate);for(let c=0;c<2;c++)buffer.copyToChannel(rendered.channels[c],c);buffer=await imported.mix(buffer,context,p.audio);cacheKey=key;
+  buffer=context.createBuffer(2,rendered.channels[0].length,rendered.sampleRate);for(let c=0;c<2;c++)buffer.copyToChannel(rendered.channels[c],c);buffer=await imported.mix(buffer,context,p.audio,p.sound);cacheKey=key;
   status.textContent=(p.scene==='loop'&&p.sound?.musicStyle==='scene'&&!editedTrack&&!p.audio?.tracks?.some(t=>t.enabled)?'LOOP edited soundtrack unavailable in this installation · synthesized preview · ':'')+`${plan.bpm} BPM · ${plan.events.length} sound effects`;
  }
  async function play(time){stop();const token=generation;if(!settings.enabled&&!imported.getAudio().tracks.some(t=>t.enabled))return false;building=prepare();await building;if(token!==generation||!buffer)return false;source=context.createBufferSource();source.buffer=buffer;source.connect(context.destination);offset=time;startTime=context.currentTime;source.start(0,Math.min(time,buffer.duration-.001));return true;}
  async function editedBuffer(p){
   if(!context)context=new AudioContext({sampleRate:48000});
   if(!decodedTrack){const response=await fetch(editedTrack.url);if(!response.ok)throw new Error('Soundtrack unavailable');decodedTrack=await context.decodeAudioData(await response.arrayBuffer());}
-  const result=context.createBuffer(decodedTrack.numberOfChannels,decodedTrack.length,decodedTrack.sampleRate),gain=(p.sound?.enabled===false?0:1)*((p.sound?.master??soundDefaults.master)/soundDefaults.master)*((p.sound?.music??soundDefaults.music)/soundDefaults.music);
+  const result=context.createBuffer(decodedTrack.numberOfChannels,decodedTrack.length,decodedTrack.sampleRate),gain=(p.sound?.enabled===false?0:1)*(masterGain(p.sound))*((p.sound?.music??soundDefaults.music)/soundDefaults.music);
   for(let c=0;c<result.numberOfChannels;c++){const input=decodedTrack.getChannelData(c),output=result.getChannelData(c);for(let i=0;i<input.length;i++)output[i]=input[i]*gain;}return result;
  }
- async function exportBuffer(p){await editedReady;if(usesEditedSoundtrack(p.scene,p.sound,editedTrack,p.audio))return imported.mix(await editedBuffer(p),context,p.audio);await new Promise(resolve=>setTimeout(resolve,0));const rendered=renderSound(planSound(runtime.sampleMotion(p),p.sound));const result=new AudioBuffer({numberOfChannels:2,length:rendered.channels[0].length,sampleRate:rendered.sampleRate});for(let c=0;c<2;c++)result.copyToChannel(rendered.channels[c],c);if(!context)context=new AudioContext({sampleRate:48000});return imported.mix(result,context,p.audio);}
+ async function exportBuffer(p){await editedReady;if(usesEditedSoundtrack(p.scene,p.sound,editedTrack,p.audio))return imported.mix(await editedBuffer(p),context,p.audio,p.sound);await new Promise(resolve=>setTimeout(resolve,0));const rendered=renderSound(planSound(runtime.sampleMotion(p),p.sound));const result=new AudioBuffer({numberOfChannels:2,length:rendered.channels[0].length,sampleRate:rendered.sampleRate});for(let c=0;c<2;c++)result.copyToChannel(rendered.channels[c],c);if(!context)context=new AudioContext({sampleRate:48000});return imported.mix(result,context,p.audio,p.sound);}
  function loadSceneDefault(scene){
   if(import.meta.env.VITE_PUBLIC_DEMO==='true'||scene!=='loop'||settings.musicStyle!=='scene'||settings.music<=0||imported.getAudio().tracks.length)return;
   const revision=audioRevision,key=scene+':'+revision;if(defaultKey===key)return;defaultKey=key;
@@ -92,5 +94,5 @@ export function mountSoundPanel({runtime,parameters,onChange,onPause,getTime}){
   }
  }
  function setState(value){const next=normalizeSoundState(value);audioRevision++;stop();cacheKey='';settings=next.sound;imported.setAudio(next.audio);sync();setScene(value?.scene??activeScene);}
- sync();return {get ready(){return defaultRequest??Promise.resolve();},setState,resetForScene(scene){setState({scene});},getAudio:imported.getAudio,setAudio(value){audioRevision++;stop();cacheKey='';imported.setAudio(value);setScene(activeScene);},exportBuffer,setScene,getSettings:()=>({...settings}),setSettings(value){audioRevision++;stop();settings=normalizeSound(value??soundDefaults);cacheKey='';sync();setScene(activeScene);},play,stop,currentTime:()=>source?offset+context.currentTime-startTime:null};
+ sync();return {get ready(){return defaultRequest??Promise.resolve();},setState,resetForScene(scene){setState({scene});},refreshTimeline:imported.refreshTimeline,getAudio:imported.getAudio,setAudio(value){audioRevision++;stop();cacheKey='';imported.setAudio(value);setScene(activeScene);},exportBuffer,setScene,getSettings:()=>({...settings}),setSettings(value){audioRevision++;stop();settings=normalizeSound(value??soundDefaults);cacheKey='';sync();setScene(activeScene);},play,stop,currentTime:()=>source?offset+context.currentTime-startTime:null};
 }

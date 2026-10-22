@@ -26,6 +26,16 @@ try{
   let maxError=0;for(let i=0;i<output.length/2;i++){const time=start+i/48000,gain=audioTrackGain(audio.tracks[0],time),sourceFrame=Math.round((audio.tracks[0].sourceStart+time-audio.tracks[0].timelineStart)*48000);for(let channel=0;channel<2;channel++){const expected=gain?(input[sourceFrame*2+channel]??0)*gain:0;maxError=Math.max(maxError,Math.abs(output[i*2+channel]-expected));}}
   assert.ok(maxError<.00002,`${name} sample timing, gain and overlapping fades match audioTrackGain: ${maxError}`);
  }
+ // Preview/native master parity: an already mastered generated bed gets no second gain.
+ const base=path.join(root,'base.wav');await run(ffmpeg,['-v','error','-y','-f','lavfi','-i','aevalsrc=0.1|0.1:s=48000:d=1.5','-c:a','pcm_f32le',base]);
+ for(const [name,sound,expected]of [['half',{master:.4},.05],['muted',{master:.8,muted:true},0]]){
+  const destination=path.join(root,`global-${name}.wav`);await renderTimelineAudio({root,audio,sound,start:0,duration:1.5,destination,baseAudio:base,baseMastered:false,run});
+  const output=await decode(destination,`global-${name}.f32`);assert.ok(Math.abs(output[0]-expected)<.00001,`${name} explicit-source master`);
+  const reference=await decode(path.join(root,'full.wav'),`reference-${name}.f32`),ratio=name==='half'?.5:0;
+  for(let i=0;i<output.length;i++)assert.ok(Math.abs(output[i]-(reference[i]+.1)*ratio)<.00002,`${name} imported and explicit audio share one master`);
+ }
+ const destination=path.join(root,'already-mastered.wav');await renderTimelineAudio({root,audio,sound:{master:.4},start:0,duration:1.5,destination,baseAudio:base,run});
+ const mastered=await decode(destination,'already-mastered.f32');assert.ok(Math.abs(mastered[0]-.1)<.00001,'Generated base never receives double master gain');
  await assert.rejects(validateTimelineAudioAssets(root,{version:1,tracks:[{...audio.tracks[0],sourceStart:1.8}]}),/beyond its source/);
  console.log('Native audio passed: real FFmpeg stereo tone, source cut, timeline delay, overlapping fades, partial interval, exact duration and source bounds.');
 }finally{await rm(root,{recursive:true,force:true});}

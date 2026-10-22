@@ -3,7 +3,7 @@ const signature=value=>JSON.stringify(value);
 export async function mountProjectLibrary({container,getSnapshot,setSnapshot,newSnapshot,isBusy,liveRecovery=false,canApplyExternal=()=>true,onProjectCreated=()=>{}}){
  let active=null,projects=[],token=null,base='',working=false,saving=false,stopped=false,conflict=false,externalPending=false,timer,pollTimer,observed='',changedAt=0,ready=false,switching=false,retryAt=0;
  let status='loading',message='';
- const ui=mountProjectLibraryUI({container,isBusy,actions:{save:()=>save(true),newProject,openProject,importProject,exportProject}});
+ const ui=mountProjectLibraryUI({container,isBusy,actions:{save:()=>save(true),newProject,openProject,importProject,exportProject,manageProject}});
  function paint(){ui.render({active,projects,status,message,working:working||saving});}
  function fail(error){retryAt=Date.now()+5000;status='error';message=error.message;conflict=error.status===409;paint();}
  async function request(route='',body,{binary=false,download=false,keepalive=false}={}){
@@ -42,11 +42,9 @@ export async function mountProjectLibrary({container,getSnapshot,setSnapshot,new
    active=record;base=captured;projects=[record,...projects.filter(p=>p.id!==record.id)];status=signature(getSnapshot())===base?'saved':'unsaved';conflict=false;
   }catch(error){fail(error);throw error;}finally{saving=false;paint();}
  }
- async function operation(fn){if(working||isBusy())throw Error('Wait for the current render or project operation to finish.');working=true;paint();try{return await fn();}catch(error){fail(error);throw error;}finally{working=false;paint();}}
+ async function operation(fn){if(working||saving||isBusy())throw Error('Wait for the current render or project operation to finish.');working=true;paint();try{return await fn();}catch(error){fail(error);throw error;}finally{working=false;paint();}}
  async function newProject(name){return operation(async()=>{
-  await save(true);const before=getSnapshot();
-  try{const snapshot=newSnapshot();const {record}=await request('/new',{activeId:active.id,name,snapshot});installRecord(record);onProjectCreated(record.snapshot);sessionStorage.removeItem('framevolve-session-draft');return record;}
-  catch(error){setSnapshot(before);throw error;}
+  await save(true);const snapshot=newSnapshot();const {record}=await request('/new',{activeId:active.id,name,snapshot});installRecord(record,{restore:true});onProjectCreated(record.snapshot);sessionStorage.removeItem('framevolve-session-draft');return record;
  });}
  async function openProject(id,{trusted=false}={}){return operation(async()=>{
   await save(true);
@@ -63,8 +61,32 @@ export async function mountProjectLibrary({container,getSnapshot,setSnapshot,new
   if(file.size>100*1024*1024)throw Error('Project packages can be up to 100 MB.');
   const {record}=await request('/import',file,{binary:true});projects=[record,...projects.filter(p=>p.id!==record.id)];paint();return record;
  });}
+ async function manageProject(action,id,name){return operation(async()=>{
+  await save(true);const target=id===active.id?active:projects.find(project=>project.id===id);
+  if(!target)throw Error('This project is no longer in the collection. Refresh and try again.');
+  const {record}=await request('/manage',{activeId:active.id,id,revision:target.revision,action,name});
+  if(record.id===active.id)installRecord(record);else projects=[record,...projects.filter(project=>project.id!==record.id)];
+  paint();return record;
+ });}
+ // makeSnapshot is pure: nothing is applied to the editor until the server has
+ // saved the new project or preserved a visible checkpoint for replacement.
+ async function chooseScene(sceneId,label,makeSnapshot){
+  if(working||saving||isBusy())throw Error('Wait for the current render or project operation to finish.');
+  const choice=await ui.chooseScene({sceneId,label,active});if(!choice)return false;
+  return operation(async()=>{
+   await save(true);const next=makeSnapshot(sceneId);
+   const {record,checkpoint}=await request('/scene',{activeId:active.id,revision:active.revision,mode:choice.mode,name:choice.name,sceneId,label,snapshot:next});
+   if(checkpoint)projects=[checkpoint,...projects.filter(project=>project.id!==checkpoint.id)];
+   installRecord(record,{restore:true});onProjectCreated(record.snapshot);sessionStorage.removeItem('framevolve-session-draft');
+   return true;
+  });
+ }
  async function exportProject(){return operation(async()=>{
-  await save(true);const blob=await request('/export',{id:active.id},{download:true});const url=URL.createObjectURL(blob),link=document.createElement('a');
+  await save(true);const preflight=await request('/preflight',{activeId:active.id});
+  if(!await ui.confirmExport(preflight))return null;
+  // Bind the download to the reviewed revision. Source autosave in another
+  // window may have changed it while the review dialog was open.
+  const blob=await request('/export',{id:active.id,revision:preflight.revision},{download:true});const url=URL.createObjectURL(blob),link=document.createElement('a');
   link.href=url;link.download=active.name.replace(/[^\p{L}\p{N} _.-]/gu,'').slice(0,80)+'.framevolve';link.click();setTimeout(()=>URL.revokeObjectURL(url),30000);
   return active;
  });}
@@ -85,5 +107,5 @@ export async function mountProjectLibrary({container,getSnapshot,setSnapshot,new
  window.addEventListener('pagehide',flushOnHide);document.addEventListener('visibilitychange',()=>{if(document.hidden)flushOnHide();});
  try{await refresh({initial:true});ready=true;paint();}catch(error){fail(error);ready=true;}
  tick();pollTimer=setTimeout(poll,1800);
- return {getActiveId:()=>active?.id,save,getSnapshotHash:()=>active?.snapshotHash,isSwitching:()=>working||switching,dispose(){stopped=true;clearTimeout(timer);clearTimeout(pollTimer);window.removeEventListener('pagehide',flushOnHide);ui.dispose();}};
+ return {getActiveId:()=>active?.id,save,chooseScene,getSnapshotHash:()=>active?.snapshotHash,isSwitching:()=>working||switching,dispose(){stopped=true;clearTimeout(timer);clearTimeout(pollTimer);window.removeEventListener('pagehide',flushOnHide);ui.dispose();}};
 }

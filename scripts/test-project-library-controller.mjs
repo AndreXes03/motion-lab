@@ -15,7 +15,7 @@ function record(id, revision, snapshot) {
 }
 const response = body => ({ ok: true, json: async () => body });
 
-async function harness(t, { initial, fetch, defaults = initial?.snapshot, liveRecovery = false, canApplyExternal = () => true } = {}) {
+async function harness(t, { initial, fetch, defaults = initial?.snapshot, liveRecovery = false, canApplyExternal = () => true, chooseScene = async () => null, confirmExport = async () => false, newSnapshot } = {}) {
   const prior = {
     fetch: globalThis.fetch,
     setTimeout: globalThis.setTimeout,
@@ -38,7 +38,7 @@ async function harness(t, { initial, fetch, defaults = initial?.snapshot, liveRe
   });
 
   let current = structuredClone(defaults), now = 1000, timerId = 0;
-  const timers = new Map(), setCalls = [], views = [];
+  const timers = new Map(), setCalls = [], views = [];let actions;
   Date.now = () => now;
   globalThis.setTimeout = (callback, delay) => { const id = ++timerId; timers.set(id, { callback, delay }); return id; };
   globalThis.clearTimeout = id => timers.delete(id);
@@ -46,11 +46,11 @@ async function harness(t, { initial, fetch, defaults = initial?.snapshot, liveRe
   globalThis.document = { hidden: false, addEventListener() {}, removeEventListener() {} };
   globalThis.sessionStorage = { getItem: () => null, setItem() {}, removeItem() {} };
   globalThis.fetch = fetch || (async () => response({ token: 'token', projects: [], active: initial }));
-  globalThis.__projectLibraryTestUI = ({ actions }) => ({
-    actions,
+  globalThis.__projectLibraryTestUI = input => {actions=input.actions;return {
+    actions,chooseScene,confirmExport,
     render(view) { views.push(view); },
     dispose() {},
-  });
+  };};
 
   const moduleUrl = `data:text/javascript;base64,${Buffer.from(`${source}\n// isolated harness ${++controllerImportNumber}`).toString('base64')}`;
   const { mountProjectLibrary } = await import(moduleUrl);
@@ -58,14 +58,14 @@ async function harness(t, { initial, fetch, defaults = initial?.snapshot, liveRe
     container: {},
     getSnapshot: () => structuredClone(current),
     setSnapshot: value => { current = structuredClone(value); setCalls.push(structuredClone(value)); },
-    newSnapshot: () => structuredClone(current),
+    newSnapshot: newSnapshot || (() => structuredClone(current)),
     liveRecovery,
     canApplyExternal,
     isBusy: () => false,
   });
 
   return {
-    app, views, setCalls, timers,
+    app, views, setCalls, timers, actions,
     get snapshot() { return structuredClone(current); },
     set snapshot(value) { current = structuredClone(value); },
     set now(value) { now = value; },
@@ -152,4 +152,54 @@ test('a delayed old poll response cannot revert a newer snapshot saved while the
   await delayedPoll;
   assert.deepEqual(env.snapshot, newerSnapshot);
   assert.equal(env.app.getSnapshotHash(), 'hash-2');
+});
+
+
+test('canceling the example choice leaves editor, undo integration and server untouched', async t => {
+ const original={parameters:{scene:'starter',amount:7}};let gets=0,builds=0;
+ const env=await harness(t,{initial:record('p1',1,original),chooseScene:async()=>null,fetch:async()=>{gets++;return response({token:'token',projects:[],active:record('p1',1,original)});}});
+ const applies=env.setCalls.length;
+ assert.equal(await env.app.chooseScene('procedural','Procedural',()=>{builds++;return {parameters:{scene:'procedural'}};}),false);
+ assert.equal(builds,0);assert.equal(gets,1);assert.equal(env.setCalls.length,applies);assert.deepEqual(env.snapshot,original);
+});
+
+test('example replacement applies only after checkpoint transaction succeeds and exposes its recovery copy',async t=>{
+ const original={parameters:{scene:'starter',amount:7}},next={parameters:{scene:'procedural'}};let resolveScene,sceneBody;
+ const env=await harness(t,{initial:record('p1',1,original),chooseScene:async()=>({mode:'replace'}),fetch:async(url,options={})=>{
+  if(url.endsWith('/save'))return response({record:record('p1',1,original)});
+  if(url.endsWith('/scene')){sceneBody=JSON.parse(options.body);return new Promise(resolve=>{resolveScene=resolve;});}
+  return response({token:'token',projects:[],active:record('p1',1,original)});
+ }});
+ const change=env.app.chooseScene('procedural','Procedural',()=>structuredClone(next));
+ for(let i=0;i<10&&!resolveScene;i++)await Promise.resolve();
+ assert.equal(typeof resolveScene,'function');assert.deepEqual(env.snapshot,original);assert.equal(sceneBody.mode,'replace');assert.equal(sceneBody.revision,1);
+ resolveScene(response({record:record('p1',2,next),checkpoint:{...record('copy1',1,original),name:'Test project · before Procedural'}}));
+ assert.equal(await change,true);assert.deepEqual(env.snapshot,next);assert.ok(env.views.at(-1).projects.some(project=>project.id==='copy1'));
+});
+
+test('a rejected example change preserves editor state',async t=>{
+ const original={parameters:{scene:'starter'}},next={parameters:{scene:'procedural'}};
+ const env=await harness(t,{initial:record('p1',1,original),newSnapshot:()=>structuredClone(next),chooseScene:async()=>({mode:'new',name:'Example'}),fetch:async(url)=>{
+  if(url.endsWith('/save'))return response({record:record('p1',1,original)});
+  if(url.endsWith('/scene'))return {ok:false,status:409,json:async()=>({error:'Concurrent edit'})};
+  if(url.endsWith('/new'))return response({record:record('p2',1,next)});
+  return response({token:'token',projects:[],active:record('p1',1,original)});
+ }});
+ await assert.rejects(env.app.chooseScene('procedural','Procedural',()=>next),/Concurrent edit/);assert.deepEqual(env.snapshot,original);
+});
+
+test('pure New project applies its fresh procedural snapshot after creation',async t=>{
+ const original={parameters:{scene:'starter'}},next={parameters:{scene:'procedural'}};
+ const second=await harness(t,{initial:record('p1',1,original),newSnapshot:()=>structuredClone(next),fetch:async(url)=>url.endsWith('/new')?response({record:record('p2',1,next)}):url.endsWith('/save')?response({record:record('p1',1,original)}):response({token:'token',projects:[],active:record('p1',1,original)})});
+ await second.actions.newProject('Fresh');assert.deepEqual(second.snapshot,next);assert.equal(second.app.getActiveId(),'p2');
+});
+
+test('portable export cancellation reviews preflight without starting a download',async t=>{
+ const original={parameters:{scene:'starter'}},routes=[];let review;
+ const env=await harness(t,{initial:record('p1',1,original),confirmExport:async value=>{review=value;return false;},fetch:async(url)=>{
+  routes.push(url);if(url.endsWith('/save'))return response({record:record('p1',1,original)});
+  if(url.endsWith('/preflight'))return response({id:'p1',revision:1,files:[{path:'project/audio/local.audio'}],warnings:[{reference:'https://example.com/music.wav'}]});
+  return response({token:'token',projects:[],active:record('p1',1,original)});
+ }});
+ assert.equal(await env.actions.exportProject(),null);assert.equal(review.revision,1);assert.equal(review.warnings.length,1);assert.ok(!routes.some(route=>route.endsWith('/export')));
 });

@@ -184,6 +184,7 @@ export function mountRenderPanel({container, getScene, getParameters = () => ({}
   return {
     getPlan: () => structuredClone(plan),
     getSelection: selection,
+    getCapabilities: () => structuredClone(capState),
     setPlan(next, {notify = false} = {}) {
       activeScene = sceneId(getScene()); plan = validateRenderPlan(next); scenePlans.set(activeScene, structuredClone(plan)); sync();
       if (notify) onChange(structuredClone(plan), selection());

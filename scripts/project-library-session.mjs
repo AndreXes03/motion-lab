@@ -3,7 +3,7 @@ import path from 'node:path';
 import {constants,realpathSync} from 'node:fs';
 import {randomUUID,createHash} from 'node:crypto';
 import {setTimeout as delay} from 'node:timers/promises';
-import {listProjects,readProject,saveProject,openProject,importProject,exportProject,recoverProjectOpen,assertProjectLibraryIdle} from './project-library-store.mjs';
+import {listProjects,readProject,saveProject,openProject,importProject,exportProject,recoverProjectOpen,assertProjectLibraryIdle,manageProject,replaceProjectScene,projectExportPreflight,restoreProjectRecord} from './project-library-store.mjs';
 import {readReview,writeReview,validateReview} from './live-review-store.mjs';
 
 const sessions=globalThis[Symbol.for('framevolve.project-library.sessions')]??=new Map();
@@ -38,7 +38,7 @@ async function recoverSession(root){
  if(await exists(storeJournal(root)))await recoverProjectOpen(root);
  if(await exists(sessionJournal(root)))await restoreSession(root,await readJson(sessionJournal(root),8*1024*1024));
 }
-function publicRecord(record){if(!record)return null;return {id:record.id,name:record.name,revision:record.revision,updatedAt:record.updatedAt,snapshot:record.snapshot,snapshotHash:hash(record.snapshot),customCode:record.customCode,imported:record.imported,warnings:record.portabilityWarnings??[]};}
+function publicRecord(record){if(!record)return null;return {id:record.id,name:record.name,revision:record.revision,updatedAt:record.updatedAt,snapshot:record.snapshot,snapshotHash:hash(record.snapshot),customCode:record.customCode,imported:record.imported,warnings:record.portabilityWarnings??[],trashedAt:record.trashedAt??null};}
 export async function libraryState(root){root=await realpath(path.resolve(root));await cache(root);if(await exists(sessionJournal(root))||await exists(storeJournal(root)))await exclusive(root,async()=>{});const current=await pointer(root),state=projectSession(root);return {active:current?publicRecord(await readProject(root,current.id)):null,projects:await listProjects(root),working:state.working,pending:state.pending,error:state.error};}
 async function exclusive(root,operation){
  const lock=path.join(await cache(root),'project-session.lock'),state=projectSession(root);let acquired=false;
@@ -71,7 +71,9 @@ export async function autosaveActiveProject(root,{snapshot}={}){root=await realp
 });}
 export async function createActiveProject(root,input){root=await realpath(path.resolve(root));return exclusive(root,async()=>{
  const current=await expected(root,input.activeId);await assertProjectLibraryIdle(root);
- const record=await saveProject(root,{name:input.name,snapshot:input.snapshot});await activate(root,record.id,current?.trusted??[]);await writeReview(root,{version:1,phase:'ready',tasks:[],checkpoint:randomUUID(),snapshot:record.snapshot,label:'Project created',updatedAt:new Date().toISOString()});return publicRecord(record);
+ const record=await saveProject(root,{name:input.name,snapshot:input.snapshot});
+ try{await activate(root,record.id,current?.trusted??[]);await writeReview(root,{version:1,phase:'ready',tasks:[],checkpoint:randomUUID(),snapshot:record.snapshot,label:'Project created',updatedAt:new Date().toISOString()});return publicRecord(record);}
+ catch(error){try{const now=await pointer(root);if(now?.id!==record.id&&now?.id!==current?.id)throw failure('A newer active project prevents rollback.');if(current)await activate(root,current.id,current.trusted??[]);else await rm(path.join(await cache(root),'active-project.json'),{force:true});}catch(recovery){throw failure(`${error.message} The new project was saved as ${record.id}; activation recovery needs attention: ${recovery.message}`);}throw failure(`${error.message} The previous project remains open; the new project is saved in the collection.`,400);}
 });}
 /** beforeActivate is a private failure-injection hook; never accept it from API input. */
 export async function openActiveProject(root,input,{beforeActivate=async()=>{}}={}){root=await realpath(path.resolve(root));return exclusive(root,async()=>{
@@ -100,4 +102,34 @@ export async function openActiveProject(root,input,{beforeActivate=async()=>{}}=
  }
 });}
 export async function importLibraryProject(root,bytes){root=await realpath(path.resolve(root));return exclusive(root,async()=>publicRecord(await importProject(root,bytes)));}
-export async function exportLibraryProject(root,id){root=await realpath(path.resolve(root));return exclusive(root,async()=>{await expected(root,id);return exportProject(root,id);});}
+export async function exportLibraryProject(root,id,revision){root=await realpath(path.resolve(root));return exclusive(root,async()=>{await expected(root,id);return exportProject(root,id,{expectedRevision:revision});});}
+export async function preflightLibraryProject(root,input){root=await realpath(path.resolve(root));return exclusive(root,async()=>{await expected(root,input.activeId);return projectExportPreflight(root,input.activeId);});}
+export async function manageLibraryProject(root,input){root=await realpath(path.resolve(root));return exclusive(root,async()=>{
+ const current=await expected(root,input.activeId);await assertProjectLibraryIdle(root);
+ if(input.action==='trash'&&current?.id===input.id)throw failure('Open another project before moving the active project to Trash. Your current work stays open.');
+ return publicRecord(await manageProject(root,{id:input.id,expectedRevision:input.revision,action:input.action,name:input.name}));
+});}
+/** beforePublish is a private failure-injection hook, never accepted from HTTP input. */
+export async function chooseLibraryScene(root,input,{beforePublish=async()=>{}}={}){root=await realpath(path.resolve(root));return exclusive(root,async()=>{
+ const current=await expected(root,input.activeId);await assertProjectLibraryIdle(root);
+ if(!current)throw failure('Save the current project before choosing an example.');
+ const previous=await readProject(root,current.id);
+ if(input.revision!==previous.revision)throw failure('The project changed while choosing an example. Try again after the current save.');
+ if(!input.snapshot?.parameters?.scene||input.snapshot.parameters.scene!==input.sceneId)throw failure('The chosen example does not match its scene snapshot.',400);
+ let record,checkpoint;
+ try{
+  if(input.mode==='new'){record=await saveProject(root,{name:input.name||input.label||'Example project',snapshot:input.snapshot});await activate(root,record.id,current.trusted??[]);}
+  else if(input.mode==='replace')({record,checkpoint}=await replaceProjectScene(root,{id:current.id,expectedRevision:input.revision,snapshot:input.snapshot,label:input.label}));
+  else throw failure('Choose New project or Replace current project.',400);
+  await beforePublish();await writeReview(root,{version:1,phase:'ready',tasks:[],checkpoint:randomUUID(),snapshot:record.snapshot,label:'Example opened',updatedAt:new Date().toISOString()});
+  return {record:publicRecord(record),checkpoint:publicRecord(checkpoint)};
+ }catch(error){
+  if(!record)throw error;
+  try{
+   const now=await pointer(root);if(now?.id!==(input.mode==='new'?record.id:current.id)&&now?.id!==current.id)throw failure('A newer active project prevents rollback.');
+   if(input.mode==='replace')await restoreProjectRecord(root,previous,record.revision);
+   await activate(root,current.id,current.trusted??[]);
+  }catch(recovery){throw failure(`${error.message} The example was saved but rollback needs attention: ${recovery.message} Prior work remains in project ${checkpoint?.id??previous.id}. Reload before further editing.`);}
+  throw failure(`${error.message} The previous project was restored. ${checkpoint?'Its recovery copy remains in Recent projects.':'The new example remains saved in the collection.'}`,400);
+ }
+});}

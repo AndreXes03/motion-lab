@@ -61,9 +61,14 @@ export function mountOnboarding({container, isBusy, explore, edit, renderFrame, 
     }).catch(error => { $('.ob-message').textContent = error.message; });
   }
   function mark(step) { if (!progress.completed.includes(step)) { progress.completed.push(step); paint(); save(); } }
-  async function open() {
+  async function open({section} = {}) {
     try { await load(); $('.ob-message').textContent = ''; } catch(error) { $('.ob-message').textContent = error.message; }
     paint(); if (!dialog.open) dialog.showModal();
+    if (section === 'ai') {
+      const ai = dialog.querySelector('.ob-ai');
+      ai.open = true;
+      requestAnimationFrame(() => ai.scrollIntoView({behavior: 'smooth', block: 'start'}));
+    }
   }
   entry.onclick = open;
   dialog.addEventListener('close', () => { progress.seen = true; save(); if (dialog.contains(document.activeElement) || document.activeElement === document.body) entry.focus(); });
