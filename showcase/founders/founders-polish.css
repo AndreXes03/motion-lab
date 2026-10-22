@@ -25,3 +25,6 @@
 .brief-drawer .brief-context>summary>span{font-size:10px;color:var(--muted);transform:none}
 .brief-context[open]>summary{margin-bottom:6px}
 .brief-context .form-row select{margin-bottom:0}
+
+/* Keep bring-your-own-subscription guidance beside the primary CTA. */
+.hero-subscription{max-width:520px;margin:16px auto 0;padding-inline:12px;font-size:13px;line-height:1.6;color:#a6afa0;text-align:center}.hero-subscription strong{color:#e7eddf;font-weight:500}
