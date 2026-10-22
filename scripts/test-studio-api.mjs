@@ -74,7 +74,7 @@ try {
   assert.deepEqual(versionResponse.snapshot.parameters.studio.controlManifest,normalized.studio.controlManifest);
 
   response = await request('/render', { kind: 'frame', time: 2, parameters: validParameters });
-  assert.equal(response.status, 202);
+  assert.equal(response.status, 202, response.status===202?undefined:await response.clone().text());
   jobId = (await response.json()).id;
   outputPath = path.join(ROOT, 'renders', 'studio', `${jobId}.png`);
   const publishedPath = path.join(homedir(), 'Downloads', `Motion-Lab-${jobId}.png`);

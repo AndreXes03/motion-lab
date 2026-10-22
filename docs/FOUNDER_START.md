@@ -10,6 +10,8 @@ Run the [guided Mac setup](MAC_SETUP.md), then open this repository in your pref
 
 > Help me make a commercial for my product in Framevolve. Use the included `motion-lab-product-film` skill. I am a founder, not a motion designer: ask only the essential questions, recommend a suitable direction and make a first preview I can judge. Start from what I already have, keep the result editable, and tell me which choices are assumptions.
 
+In Studio, **Create your first video** prepares a local brief and a prompt you can copy into your agent. Start with your website/product link (or a description if you have no public site). Audience, goal, materials and placement can be left for the agent to recommend. The form does not send data or generate video itself.
+
 Then add whatever you know:
 
 > My product is … It helps … do … I want viewers to … I have … The video will first appear on … It should feel …
@@ -69,3 +71,13 @@ For best results, use a capable coding model such as Sol, Astra, Opus, Fable or 
 ## Watch changes as they happen
 
 Ask your agent to use the `framevolve-live-review` skill, list your feedback, and show each change in the same Studio tab. You can request its integrated browser if one is available. Studio follows completed checkpoints automatically; your manual edits are protected. See [Live Studio](LIVE_STUDIO.md).
+
+## Recover and report
+
+**Revision history** saves scene source and project JSON, with your current preview recipe when saved from Studio. Live-review `begin` also saves a checkpoint before the agent edits. Restoring first backs up the current state; wait for the agent and any render to finish. Keep original media, which is not copied into checkpoints. Existing saved parameter versions now save the current parameters before loading another version.
+
+**Report a problem** prepares an editable report with your description, environment and the last few render errors. Review it, download it, then attach it manually to an email to framevolve.app@gmail.com if you want. No automatic sending, media, full logs, website brief or feedback memories are included. If Studio cannot start, send the visible setup error instead.
+
+Before local export, Framevolve tests writes to its working output folder and Downloads. This catches destination permissions before rendering without adding another dialog. It does not guarantee disk capacity or detect every possible asset failure.
+
+If a source restore was interrupted, stop the agent and renders, then run `node scripts/session.mjs recover`. Retain `.motion-cache/session-checkpoints`; do not delete checkpoints while restoring. Recovery preserves newer edits by stopping for manual reconciliation if necessary.
