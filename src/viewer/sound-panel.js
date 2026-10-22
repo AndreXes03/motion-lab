@@ -1,3 +1,4 @@
+import {mountAudioImportPanel} from './audio-import-panel.js';
 import './sound-panel.css';
 import {soundDefaults,soundKits,normalizeSound,planSound,renderSound,encodeWav} from '../engine/sound-design.js';
 const timbres={air:'Air',silk:'Silk',deep:'Deep',grain:'Grainy',swirl:'Swirl',reverse:'Reverse',bright:'Bright',riser:'Riser',mechanical:'Mechanical',metal:'Metal',plastic:'Plastic',glass:'Glass',rubber:'Rubber',wood:'Wood',electric:'Electric',ceramic:'Ceramic',soft:'Soft',click:'Click',knock:'Knock',snap:'Snap',ping:'Ping',sub:'Sub',chime:'Chime',pop:'Pop'};
@@ -13,6 +14,7 @@ export function mountSoundPanel({runtime,parameters,onChange,onPause,getTime}){
   const group=document.createElement(advanced?'details':'section');group.className=advanced?'sound-section sound-disclosure':'sound-section';
   const heading=document.createElement(advanced?'summary':'h4');heading.textContent=title;group.append(heading);panel.append(group);return group;
  }
+ const imported=mountAudioImportPanel({container:panel,onEdit:()=>{stop();cacheKey='';onPause();onChange();}});
  const mix=section('Mix');
  const sfx=section('Motion effects');
  const music=section('Music settings',{advanced:true});
@@ -51,19 +53,19 @@ export function mountSoundPanel({runtime,parameters,onChange,onPause,getTime}){
   const p=parameters();
   const key=JSON.stringify(p);if(cacheKey===key&&buffer)return;
   status.textContent='Preparing audio…';await new Promise(r=>setTimeout(r,20));
-  await editedReady;if(p.scene==='loop'&&editedTrack){buffer=await editedBuffer(p);cacheKey=key;status.textContent='Edited soundtrack · LOOP';return;}
+  await editedReady;if(p.scene==='loop'&&editedTrack){buffer=await imported.mix(await editedBuffer(p),context,p.audio);cacheKey=key;status.textContent='Edited soundtrack · LOOP';return;}
   const telemetry=runtime.sampleMotion(p),plan=planSound(telemetry,p.sound),rendered=renderSound(plan);
-  buffer=context.createBuffer(2,rendered.channels[0].length,rendered.sampleRate);for(let c=0;c<2;c++)buffer.copyToChannel(rendered.channels[c],c);cacheKey=key;
+  buffer=context.createBuffer(2,rendered.channels[0].length,rendered.sampleRate);for(let c=0;c<2;c++)buffer.copyToChannel(rendered.channels[c],c);buffer=await imported.mix(buffer,context,p.audio);cacheKey=key;
   status.textContent=`${plan.bpm} BPM · ${plan.events.length} sound effects`;
  }
- async function play(time){stop();const token=generation;if(!settings.enabled)return false;building=prepare();await building;if(token!==generation||!buffer)return false;source=context.createBufferSource();source.buffer=buffer;source.connect(context.destination);offset=time;startTime=context.currentTime;source.start(0,Math.min(time,buffer.duration-.001));return true;}
+ async function play(time){stop();const token=generation;if(!settings.enabled&&!imported.getAudio().tracks.some(t=>t.enabled))return false;building=prepare();await building;if(token!==generation||!buffer)return false;source=context.createBufferSource();source.buffer=buffer;source.connect(context.destination);offset=time;startTime=context.currentTime;source.start(0,Math.min(time,buffer.duration-.001));return true;}
  async function editedBuffer(p){
   if(!context)context=new AudioContext({sampleRate:48000});
   if(!decodedTrack){const response=await fetch(editedTrack.url);if(!response.ok)throw new Error('Soundtrack unavailable');decodedTrack=await context.decodeAudioData(await response.arrayBuffer());}
-  const result=context.createBuffer(decodedTrack.numberOfChannels,decodedTrack.length,decodedTrack.sampleRate),gain=((p.sound?.master??soundDefaults.master)/soundDefaults.master)*((p.sound?.music??soundDefaults.music)/soundDefaults.music);
+  const result=context.createBuffer(decodedTrack.numberOfChannels,decodedTrack.length,decodedTrack.sampleRate),gain=(p.sound?.enabled===false?0:1)*((p.sound?.master??soundDefaults.master)/soundDefaults.master)*((p.sound?.music??soundDefaults.music)/soundDefaults.music);
   for(let c=0;c<result.numberOfChannels;c++){const input=decodedTrack.getChannelData(c),output=result.getChannelData(c);for(let i=0;i<input.length;i++)output[i]=input[i]*gain;}return result;
  }
- async function exportBuffer(p){await editedReady;if(p.scene==='loop'&&editedTrack)return editedBuffer(p);await new Promise(resolve=>setTimeout(resolve,0));const rendered=renderSound(planSound(runtime.sampleMotion(p),p.sound));const result=new AudioBuffer({numberOfChannels:2,length:rendered.channels[0].length,sampleRate:rendered.sampleRate});for(let c=0;c<2;c++)result.copyToChannel(rendered.channels[c],c);return result;}
+ async function exportBuffer(p){await editedReady;if(p.scene==='loop'&&editedTrack)return imported.mix(await editedBuffer(p),context,p.audio);await new Promise(resolve=>setTimeout(resolve,0));const rendered=renderSound(planSound(runtime.sampleMotion(p),p.sound));const result=new AudioBuffer({numberOfChannels:2,length:rendered.channels[0].length,sampleRate:rendered.sampleRate});for(let c=0;c<2;c++)result.copyToChannel(rendered.channels[c],c);if(!context)context=new AudioContext({sampleRate:48000});return imported.mix(result,context,p.audio);}
  function setScene(scene){
   activeScene=scene;panel.hidden=false;const edited=scene==='loop'&&!!editedTrack;music.hidden=edited;variation.hidden=edited;
   // Mirrors runtime.sampleMotion: only OBJECTS emits local mechanical profiles;
@@ -83,5 +85,5 @@ export function mountSoundPanel({runtime,parameters,onChange,onPause,getTime}){
    fields[kitKey].input.closest('label').hidden=authoredCues;
   }
  }
- sync();return {exportBuffer,setScene,getSettings:()=>({...settings}),setSettings(value){stop();settings=normalizeSound(value??soundDefaults);cacheKey='';sync();},play,stop,currentTime:()=>source?offset+context.currentTime-startTime:null};
+ sync();return {getAudio:imported.getAudio,setAudio(value){stop();cacheKey='';imported.setAudio(value);},exportBuffer,setScene,getSettings:()=>({...settings}),setSettings(value){stop();settings=normalizeSound(value??soundDefaults);cacheKey='';sync();},play,stop,currentTime:()=>source?offset+context.currentTime-startTime:null};
 }

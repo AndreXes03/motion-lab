@@ -1,4 +1,6 @@
 #!/usr/bin/env node
+import {normalizeAudioTracks} from '../src/engine/audio-track.js';
+import {validateTimelineAudioAssets} from './native/audio.mjs';
 import {browserLaunchOptions} from './browser-runtime.mjs';
 import {spawn} from 'node:child_process';
 import {createHash} from 'node:crypto';
@@ -28,8 +30,8 @@ for(const [signal,code] of [['SIGINT',130],['SIGTERM',143]])process.once(signal,
 async function run(program,args,{cwd=ROOT,env=process.env,onEvent}={}){
  return new Promise((resolve,reject)=>{const child=spawn(program,args,{cwd,env});children.add(child);let stdout='',stderr='',pending='';child.stdout.on('data',d=>{stdout=(stdout+d).slice(-64000);pending+=d;const lines=pending.split('\n');pending=lines.pop();for(const line of lines){if(line.startsWith('MOTION_CYCLES ')){try{onEvent?.(JSON.parse(line.slice(14)));}catch(e){child.kill('SIGTERM');reject(e);}}}});child.stderr.on('data',d=>{stderr=(stderr+d).slice(-64000);});child.on('error',reject);child.on('close',code=>{children.delete(child);if(code!==0||interrupted||/ERROR:|Unknown (shader|input socket|output socket)/.test(stderr))reject(Error(stderr.slice(-4000)||stdout.slice(-4000)||'Process stopped'));else resolve(stdout);});});
 }
-async function sourceDigest(directory){const chunks=[];async function visit(relative){for(const entry of (await readdir(path.join(directory,relative),{withFileTypes:true})).sort((a,b)=>a.name.localeCompare(b.name))){const name=path.join(relative,entry.name);if(entry.isDirectory())await visit(name);else if(!entry.isSymbolicLink())chunks.push(name,await readFile(path.join(directory,name)));}}for(const folder of ['src','project','public','scripts/cycles','scripts/native','native/cycles'])if(await exists(path.join(directory,folder)))await visit(folder);for(const name of ['scripts/cycles.mjs','scripts/browser-runtime.mjs','package-lock.json'])chunks.push(name,await readFile(path.join(directory,name)));return hash(Buffer.concat(chunks.map(x=>typeof x==='string'?Buffer.from(x):x)));}
-async function freeze(destination){await mkdir(destination,{recursive:true});for(const folder of ['src','project','public','scripts/cycles','scripts/native','native/cycles'])if(await exists(path.join(ROOT,folder)))await cp(path.join(ROOT,folder),path.join(destination,folder),{recursive:true});for(const file of ['package.json','package-lock.json','scripts/cycles.mjs','scripts/browser-runtime.mjs'])await copyFile(path.join(ROOT,file),path.join(destination,file));await symlink(path.join(ROOT,'node_modules'),path.join(destination,'node_modules'),'dir');await writeFile(path.join(destination,'cycles-bake.html'),'<!doctype html><meta charset="utf-8"><title>Motion Lab Cycles bake</title>');}
+async function sourceDigest(directory){const chunks=[];async function visit(relative){for(const entry of (await readdir(path.join(directory,relative),{withFileTypes:true})).sort((a,b)=>a.name.localeCompare(b.name))){const name=path.join(relative,entry.name);if(entry.isDirectory())await visit(name);else if(!entry.isSymbolicLink())chunks.push(name,await readFile(path.join(directory,name)));}}for(const folder of ['src','project','public','scripts/cycles','scripts/native','native/cycles'])if(await exists(path.join(directory,folder)))await visit(folder);for(const name of ['scripts/cycles.mjs','scripts/browser-runtime.mjs','scripts/audio-assets.mjs','package-lock.json'])chunks.push(name,await readFile(path.join(directory,name)));return hash(Buffer.concat(chunks.map(x=>typeof x==='string'?Buffer.from(x):x)));}
+async function freeze(destination){await mkdir(destination,{recursive:true});for(const folder of ['src','project','public','scripts/cycles','scripts/native','native/cycles'])if(await exists(path.join(ROOT,folder)))await cp(path.join(ROOT,folder),path.join(destination,folder),{recursive:true});for(const file of ['package.json','package-lock.json','scripts/cycles.mjs','scripts/browser-runtime.mjs','scripts/audio-assets.mjs'])await copyFile(path.join(ROOT,file),path.join(destination,file));await symlink(path.join(ROOT,'node_modules'),path.join(destination,'node_modules'),'dir');await writeFile(path.join(destination,'cycles-bake.html'),'<!doctype html><meta charset="utf-8"><title>Motion Lab Cycles bake</title>');}
 async function bake(directory,frozen,options){
  for(const folder of ['baked','frames','geometries'])await mkdir(path.join(directory,folder),{recursive:true});
  if(options.backend==='standalone'){
@@ -103,6 +105,8 @@ async function finishFrames(directory,options,frozen){
 }
 async function main(){
  const input=parseCyclesArgs(process.argv.slice(2));const snapshot=input.snapshot?JSON.parse(await readFile(input.snapshot,'utf8')):{};const options=normalizeCyclesOptions(input,snapshot);const native=options.backend==='standalone'?await probeNative():null;const blender=native?null:await findBlender(input.blender);
+ if(options.parameters.audio!==undefined)options.parameters.audio=normalizeAudioTracks(options.parameters.audio);
+ if(options.command!=='frame')await validateTimelineAudioAssets(ROOT,options.parameters.audio);
  const directory=options.out+'.cycles';manifestPath=options.out+'.job.json';await mkdir(path.dirname(options.out),{recursive:true});
  if(await exists(options.out)&&!options.resume)throw Error('Output already exists; choose a new --out or matching --resume on');
  const sourceHash=await sourceDigest(ROOT), fingerprint=hash(stable({...options,resume:false,out:null,workers:1,blender,nativeRevision:native?.revision,sourceHash}));
@@ -137,6 +141,11 @@ async function main(){
  if(options.command!=='frame'&&!audioPath&&options.parameters.sound?.enabled){
   const audio=await renderProceduralAudio({frozenRoot:frozen,telemetryPath:path.join(directory,'sound-telemetry.json'),destination:path.join(directory,'procedural-sound.wav'),parameters:options.parameters,start:options.start,duration:options.count/options.fps});audioPath=audio.path;audioOffset=0;await updateManifest({audio});
  }else if(audioPath)await updateManifest({audio:{kind:'explicit-source',path:audioPath}});
+ if(options.command!=='frame'){
+  const {renderTimelineAudio}=await import(pathToFileURL(path.join(frozen,'scripts/native/audio.mjs')).href);
+  const mixed=await renderTimelineAudio({root:frozen,audio:options.parameters.audio,start:options.start,duration:options.count/options.fps,destination:path.join(directory,'timeline-mix.wav'),baseAudio:audioPath,baseOffset:audioOffset,run});
+  if(mixed!==audioPath){audioPath=mixed;audioOffset=0;await updateManifest({audio:{kind:'timeline',path:audioPath,tracks:options.parameters.audio.tracks,base:manifest.audio??null}});}
+ }
  if(options.command==='frame')await copyFile(path.join(sequence,'frame-000001.png'),temporary);
  else if(options.sequenceOnly){await writeFile(temporary,JSON.stringify({schemaVersion:1,engine:'cycles',sequence:path.join(sequence,'frame-%06d.png'),startFrame:1,width:options.width,height:options.height,fps:options.fps,frameCount:options.count,alpha:options.background==='transparent',colorSpace:'srgb',finish:options.finish,audio:audioPath,audioStart:audioOffset,adaptations},null,2));}
  else{

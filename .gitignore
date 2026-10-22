@@ -25,3 +25,6 @@ outputs/
 
 # Local prepared Cycles movies and music are not source/public demo assets.
 /public/local-preview/
+
+# User-imported audio stays local across source updates.
+/project/audio/

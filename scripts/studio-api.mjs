@@ -1,3 +1,6 @@
+import {createNativeProjectApi} from './native-project-api.mjs';
+import {importAudioAsset,listAudioAssets,resolveAudioAsset} from './audio-assets.mjs';
+import {normalizeAudioTracks} from '../src/engine/audio-track.js';
 import {verifyExportDestination} from './export-preflight.mjs';
 import {migrateLegacyScene} from '../src/engine/legacy-scene.js';
 import {studyControlDefinitions} from '../src/engine/scene-capabilities.js';
@@ -36,7 +39,7 @@ async function publishDownload(job) {
 }
 const MAX_BODY = 2 * 1024 * 1024;
 const MAX_JSON_DEPTH = 32;
-const ALLOWED_PARAMETERS = new Set(['scene', 'look', 'motion', 'graphics', 'studio', 'display', 'shell', 'knob', 'objectMotion', 'objectEdits', 'review', 'inspect', 'sound', 'animation', 'product', 'sceneControls', 'renderPolicy']);
+const ALLOWED_PARAMETERS = new Set(['scene', 'look', 'motion', 'graphics', 'studio', 'display', 'shell', 'knob', 'objectMotion', 'objectEdits', 'review', 'inspect', 'sound', 'audio', 'animation', 'product', 'sceneControls', 'renderPolicy']);
 const LOOK_SECTIONS = {
   camera: new Set(['fov','fovScale','distance','keepSubjectSize']),
   lighting: new Set(['preset', 'key', 'fill', 'rim', 'environment', 'keyPosition', 'keyTarget', 'rimPosition', 'keyAngle', 'keyPenumbra', 'keyColor', 'rimColor']),
@@ -143,6 +146,7 @@ export async function validateStudioParameters(input) {
     }
   }
   if(input.sound !== undefined)normalized.sound=normalizeSound(input.sound);
+  if(input.audio !== undefined){normalized.audio=normalizeAudioTracks(input.audio);for(const track of normalized.audio.tracks){const asset=await resolveAudioAsset(ROOT,track.assetId);if(track.sourceStart+track.duration>asset.metadata.duration+.001)throw Error('Audio trim exceeds its imported source.');}}
   if (input.graphics !== undefined) {
     if (!['procedural','pop'].includes(scene) || !isRecord(input.graphics) || Object.keys(input.graphics).some(k => !['title', 'accent', 'density', 'speed', ...(scene==='pop'?['cameraMotion','fisheye']:[])].includes(k))) throw new Error('graphics is only supported for procedural and pop scenes');
     const g = input.graphics;
@@ -248,6 +252,7 @@ async function sourceFingerprint() {
     for (const entry of entries) {
       if (entry.name.startsWith('.') || ['node_modules', 'renders', 'versions', 'history', 'references'].includes(entry.name)) continue;
       const file = path.join(dir, entry.name);
+      if (file === path.join(ROOT, 'project', 'audio')) continue;
       if (entry.isDirectory()) await walk(file);
       else if (entry.isFile()) await addFile(file);
     }
@@ -257,7 +262,7 @@ async function sourceFingerprint() {
   await walk(path.join(ROOT,'scripts','native'));
   await walk(path.join(ROOT,'scripts','mixed'));
   await walk(path.join(ROOT,'scripts','lib'));
-  for (const file of ['index.html', 'package.json', 'package-lock.json', 'vite.config.js', 'scripts/cli.mjs', 'scripts/project-store.mjs','scripts/cycles.mjs','scripts/mixed-studio.mjs']) await addFile(path.join(ROOT, file));
+  for (const file of ['index.html', 'package.json', 'package-lock.json', 'vite.config.js', 'scripts/cli.mjs', 'scripts/project-store.mjs','scripts/cycles.mjs','scripts/mixed-studio.mjs','scripts/audio-assets.mjs','scripts/video-encode.mjs']) await addFile(path.join(ROOT, file));
   return hash.digest('hex');
 }
 
@@ -437,6 +442,14 @@ export function createStudioApi({ spawnFn = nodeSpawn, revealFn = revealWithFind
       if (req.headers.origin && (!host || new URL(req.headers.origin).host !== host)) return send(res, 403, { error: 'Same-origin local requests only' });
       if (!['127.0.0.1', 'localhost', '[::1]'].some(local => host?.startsWith(`${local}:`) || host === local)) return send(res, 403, { error: 'Local requests only' });
 
+      if(route.startsWith('/studio/projects'))return createNativeProjectApi({root:ROOT})(req,res,next);
+      if(req.method==='GET'&&route==='/studio/audio/assets')return send(res,200,{assets:await listAudioAssets(ROOT)});
+      if(req.method==='POST'&&route==='/studio/audio/assets'){
+        if(!req.headers.origin||new URL(req.headers.origin).host!==host||req.headers['content-type']?.split(';')[0]!=='application/octet-stream')return send(res,403,{error:'Import audio from this Studio tab.'});
+        const asset=await importAudioAsset(ROOT,req,{name:decodeURIComponent(req.headers['x-audio-name']??'Audio'),contentLength:req.headers['content-length']});return send(res,201,{asset});
+      }
+      const audioFile=route.match(/^\/studio\/audio\/assets\/([a-f0-9]{64})\/file$/);
+      if(req.method==='GET'&&audioFile){const asset=await resolveAudioAsset(ROOT,audioFile[1]);res.statusCode=200;res.setHeader('Content-Type',asset.mimeType??'application/octet-stream');res.setHeader('Content-Length',asset.size);res.setHeader('Cache-Control','no-store');createReadStream(asset.path).pipe(res);return;}
       if (req.method === 'GET' && route === '/studio') {
         await loadPersistedJobs();
         const [versions] = await Promise.all([listVersions()]);

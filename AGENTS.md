@@ -62,3 +62,7 @@ Follow [docs/AGENT_EFFICIENCY.md](docs/AGENT_EFFICIENCY.md). Start with `npm run
 ## Native storyboard and creative review
 
 For new video layouts use `.agents/skills/motion-lab-product-film/references/native-storyboard.md`: compose real scene elements, register named native poses and present Storyboard mode before animating the same elements. Do not generate unrelated images as storyboard substitutes. Read frame-linked user comments with `node scripts/creative.mjs comments SCENE`. Before delivery use the creative-review reference and record evidence, not an invented quality score.
+
+## Native project documents
+
+Read [docs/NATIVE_PROJECTS.md](docs/NATIVE_PROJECTS.md) before changing the versioned project document. Use `node scripts/native-project.mjs` or the localhost project API for AI-assisted document operations; MCP clients may wrap those local commands. A browser is needed for visual judgment, not for creating, migrating, reading, updating, or evaluating documents. Keep existing scene recipes behind explicit legacy adapters and do not claim migration converts arbitrary authored scenes into native elements. Preserve project revision checks and never edit `.motion-cache/projects/*.json` directly.

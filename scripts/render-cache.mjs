@@ -16,13 +16,18 @@ export async function sourceFingerprint(root) {
     catch (error) { if (error.code === 'ENOENT') return; throw error; }
     for (const entry of entries.sort((a,b) => a.name.localeCompare(b.name))) {
       const name = path.join(relative, entry.name);
+      if (name === path.join('project','audio')) continue; // Assets are immutable digest references in the recipe.
       if (entry.isDirectory()) await visit(name);
       else { digest.update(name); digest.update(await readFile(path.join(root, name))); }
     }
   }
-  for (const folder of ['src','project','public']) await visit(folder);
+  for (const folder of ['src','project','public','scripts/native']) await visit(folder);
   for (const file of ['scripts/cli.mjs','index.html','package-lock.json']) {
     digest.update(file); digest.update(await readFile(path.join(root, file)));
+  }
+  for(const file of ['scripts/audio-assets.mjs','scripts/video-encode.mjs']){
+    let bytes;try{bytes=await readFile(path.join(root,file));}catch(error){if(error.code==='ENOENT')continue;throw error;}
+    digest.update(file);digest.update(bytes);
   }
   return digest.digest('hex');
 }

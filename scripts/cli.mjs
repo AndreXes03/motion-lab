@@ -1,4 +1,7 @@
 #!/usr/bin/env node
+import {videoEncodeArgs} from './video-encode.mjs';
+import {normalizeAudioTracks} from '../src/engine/audio-track.js';
+import {renderTimelineAudio,validateTimelineAudioAssets} from './native/audio.mjs';
 import {browserLaunchOptions} from './browser-runtime.mjs';
 import {applyRenderQuality} from '../src/engine/render-quality.js';
 import {openFrameCache,sourceFingerprint} from './render-cache.mjs';
@@ -106,11 +109,12 @@ async function renderPng(page, time, width, height, parameters = {}, temporalSam
 }
 function outPath(value) { if (!value) throw new Error('This command requires --out <path>'); return path.resolve(process.cwd(), value); }
 async function writeImage(png, target) { await mkdir(path.dirname(target), { recursive: true }); await writeFile(target, png); }
-async function encodeFrames(frameDir, target, width, height, fps, format, bitrateMbps, audioPath=null) {
+async function encodeFrames(frameDir, target, width, height, fps, format, bitrateMbps, audioPath=null, frameCount) {
   await mkdir(path.dirname(target), { recursive: true });
-  const codec=format==='webm'?['-c:v','libvpx-vp9','-b:v',`${bitrateMbps}M`,'-pix_fmt','yuv420p']:format==='prores'?['-c:v','prores_ks','-profile:v','3','-pix_fmt','yuv422p10le','-movflags','+write_colr']:['-c:v','libx264','-preset','medium','-b:v',`${bitrateMbps}M`,'-pix_fmt','yuv420p','-movflags','+faststart'];
-  const args = ['-hide_banner','-loglevel','error','-y','-framerate',String(fps),'-i',path.join(frameDir,'frame-%06d.png'),...(audioPath?['-i',audioPath,'-map','0:v:0','-map','1:a:0','-c:a',format==='webm'?'libopus':format==='prores'?'pcm_s16le':'aac','-shortest']:[]),...codec,'-vf','scale=out_color_matrix=bt709:out_range=tv','-color_primaries','bt709','-color_trc','bt709','-colorspace','bt709','-color_range','tv','-f',format==='prores'?'mov':format,target];
+  const args=videoEncodeArgs({frameDir,target,fps,format,bitrateMbps,audioPath,frameCount});
   await run(ffmpegPath, args);
+  const video=(await probeVideo(target,false)).streams[0];
+  if(video.width!==width||video.height!==height||video.nb_frames&&Number(video.nb_frames)!==frameCount)throw Error('Encoded video dimensions or frame count do not match the render');
 }
 async function writeProgressJpeg(page, png, target) {
   const jpeg = await sharp(png).resize({width:1280,height:1280,fit:'inside',withoutEnlargement:true}).jpeg({quality:76}).toBuffer();
@@ -127,6 +131,7 @@ function run(bin, args) {
   });
 }
 async function exportVideo(page, target, width, height, parameters, start, end, temporalSamples, fps, format, bitrateMbps, cacheOptions) {
+  await validateTimelineAudioAssets(ROOT,parameters.audio);
   // Progress JPEGs are written before encoding, including the very first frame.
   await mkdir(path.dirname(target), { recursive: true });
   const cache = await openFrameCache(ROOT, {source:cacheOptions.resume?await sourceFingerprint(ROOT):null,
@@ -156,7 +161,8 @@ async function exportVideo(page, target, width, height, parameters, start, end, 
       const channels=result.channels.map(c=>c.slice(Math.round(start*result.sampleRate),Math.round(end*result.sampleRate)));
       audioPath=path.join(frameDir,'sound.wav');await writeFile(audioPath,encodeWav(channels,result.sampleRate));
     }
-    await encodeFrames(frameDir, target, width, height, fps, format, bitrateMbps,audioPath);
+    audioPath=await renderTimelineAudio({root:ROOT,audio:parameters.audio,start,duration:total/fps,destination:path.join(frameDir,'timeline-mix.wav'),baseAudio:audioPath,run});
+    await encodeFrames(frameDir, target, width, height, fps, format, bitrateMbps,audioPath,total);
     success = true;
   } finally { await cache.close(success); }
 }
@@ -181,10 +187,10 @@ async function contactSheet(page, target, samples, width, height, parameters, fp
   }, { shots, cellW, cellH, cols, rows });
   await writeImage(Buffer.from(data.split(',')[1], 'base64'), target);
 }
-async function probeVideo(target) {
+async function probeVideo(target,countFrames=true) {
   if (!ffprobe?.path) throw new Error('ffprobe-static did not provide an executable');
   const stdout = await new Promise((resolve, reject) => {
-    const child=spawn(ffprobe.path,['-v','error','-count_frames','-select_streams','v:0','-show_entries','stream=codec_name,pix_fmt,width,height,r_frame_rate,duration,nb_frames,nb_read_frames:format=duration','-of','json',target]);let out='',err='';
+    const child=spawn(ffprobe.path,['-v','error',...(countFrames?['-count_frames']:[]),'-select_streams','v:0','-show_entries','stream=codec_name,pix_fmt,width,height,r_frame_rate,duration,nb_frames,nb_read_frames:format=duration','-of','json',target]);let out='',err='';
     child.stdout.on('data',d=>out+=d);child.stderr.on('data',d=>err+=d);child.on('error',reject);child.on('close',code=>code===0?resolve(out):reject(new Error(err.trim())));
   });
   return JSON.parse(stdout);
@@ -213,6 +219,7 @@ async function main() {
   const parameters={...sidecar.parameters,...requested.parameters,...explicitParameters};
   DEFAULT=sceneConfig(parameters.scene??saved.config?.scene??config.scene);parameters.scene=DEFAULT.scene;
   if(opts.sound!==undefined){if(!['on','off'].includes(opts.sound))throw Error('--sound must be on or off');parameters.sound=normalizeSound({...parameters.sound,enabled:opts.sound==='on'});}
+  if(parameters.audio!==undefined)parameters.audio=normalizeAudioTracks(parameters.audio);
   if(parameters.sound!==undefined)parameters.sound=normalizeSound(parameters.sound);
   const number=(key,savedValue,fallback)=>{const n=Number(opts[key]??savedValue??fallback);if(!Number.isFinite(n))throw new Error(`--${key} must be finite`);return n;};
   // Legacy sidecars described design resolution instead of the encoded preview resolution.
