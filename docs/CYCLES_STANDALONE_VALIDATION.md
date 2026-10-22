@@ -30,12 +30,20 @@ Machine: macOS 26.6.2, Apple M4 Max. Native source revision `a456b761034dda42c32
 
 ## Remaining release blockers
 
-1. **Signing and notarization:** no valid signing identities were found on this Mac. `spctl --assess --type execute` rejects the development executable. Gatekeeper was not disabled and quarantine was not removed. A final Developer ID signed/notarized distribution must pass the normal macOS flow.
+1. **Downloaded-package authorization:** Developer ID is not a requirement for Cycles to render. On 2026-10-22 the user chose to proceed without it for now. This Mac runs the locally built runtime directly; Gatekeeper was not disabled and quarantine was not removed. The current download validator still requires Developer ID/notarization. Public unsigned distribution needs an explicit manual macOS authorization flow implemented and verified before that requirement can be relaxed. No valid signing identity is present, and `spctl --assess --type execute` rejects the development executable.
 2. **Color data notices:** the pinned Blender OCIO configuration points to `ocio-license.txt`, but that notice is absent from the pinned source tree. The historical notice is recorded separately, not asserted to cover all current LUTs. Final dependency attribution and color-data provenance must be completed before redistribution; package assembly currently refuses it.
 3. **Release and clean setup:** no production binary/archive was uploaded; `native/cycles/releases.json` is deliberately empty. The install/download UI explains unavailability, and base setup remains usable. A signed archive with pinned checksum, clean install/retry/update/removal, and actual Studio first-use download must be verified before a stable manifest is added.
 4. **Remaining picture coverage:** arbitrary shaders, per-material environments, hemisphere ambient lights and browser post effects are not equivalent. Deformation/animated-texture blur remains unsupported, as in the old adapter; object/camera/light transform blur is transferred. Animated light energy and material values are sampled once per output frame. Only the pictured PULSE/LOOP frames were visually inspected. Long-film seeking, rapid camera cuts, high-resolution throughput and complete soundtrack playback need release review. Other operating systems and architectures are unavailable.
 
 Because these gates are open, this change must remain a draft PR: no merge and no replacement of the user's working installation. The repository's safe updater is not bypassed.
+
+## Usable local installation (2026-10-22)
+
+A separate persistent Studio is running at `http://127.0.0.1:4190/`, using the already-built native runtime. The user's existing Studio on port 4174 remains untouched. A local **Framevolve Cycles.app** launcher on the Desktop starts/reuses this isolated Studio, without requiring terminal input, compilation, a Developer ID certificate or Blender. It depends on the existing local checkout/runtime paths; it is not a portable public installer.
+
+Open that launcher, choose PULSE or LOOP, then **Export → Renderer → Cycles**. **Render view** renders the current frame; **Export MP4** renders the video. Start with Draft for quick feedback. A real UI-triggered PULSE frame completed at 1280×720 in 11.3s with the device label **METAL · Apple M4 Max (GPU - 40 cores)**. This adds actual Render View user-flow evidence; complete installer/download approval remains outstanding.
+
+![Actual Cycles Render View on the local Mac](cycles-evidence/studio-ready.png)
 
 ## Interface once a stable component is published
 
