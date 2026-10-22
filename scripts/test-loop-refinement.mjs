@@ -1,6 +1,7 @@
 import assert from 'node:assert/strict';
 import * as T from 'three';
-import {waveHistory,productHandoff,logoPose,headlineMotion,headlineRanks} from '../src/scenes/loop-motion.js';
+import {wavePose,waveHistory,concentricField,rimDetailPose,arrayPalette,arraySpeakerRotation,productHandoff,logoPose,headlineMotion,headlineRanks,titleEase} from '../src/scenes/loop-motion.js';
+import {drawHeadline} from '../src/scenes/loop-headlines.js';
 import {acousticClothGeometry,CLOTH_STRANDS,clothProfile,yarnCentre,coatingField,coatingSample} from '../src/scenes/loop-surface.js';
 
 // Birth identity is stable, but existing contours must keep moving.
@@ -17,25 +18,102 @@ for(const count of [28,58,90])for(let t=0;t<2.4;t+=.017){
   for(const h of history)assert.ok(h.alpha>=0&&h.alpha<=1);
 }
 
+// The source follows the speaker, while older centres freeze in screen space.
+// Rings keep expanding, including across birth/release boundaries and seeks.
+for(let t=.1;t<2.4;t+=.013){
+  const field=concentricField(t),later=concentricField(t+1e-6),pose=wavePose(t),projection=540/Math.tan(42*Math.PI/360);
+  assert.equal(field.centre.x,960+projection*pose.x/6);assert.equal(field.centre.y,540-projection*pose.y/6);
+  assert.deepEqual(field,concentricField(t));
+  assert.ok(field.rings.length>=8);
+  for(const ring of field.rings){
+    const next=later.rings.find(r=>r.id===ring.id);
+    if(next){assert.ok(next.radius>ring.radius&&next.radius-ring.radius<.1);assert.ok(Math.hypot(next.centre.x-ring.centre.x,next.centre.y-ring.centre.y)<.01);if(ring.age>=.44)assert.deepEqual(next.centre,ring.centre);}
+    assert.ok(ring.width>=30&&ring.alpha>=0&&ring.alpha<=1);
+  }
+}
+assert.notDeepEqual(concentricField(1.7),concentricField(1.8));
+const ringSpeed=(t,c)=>{const a=concentricField(t,c).rings.find(r=>r.id===0),b=concentricField(t+.0001,c).rings.find(r=>r.id===0);return (b.radius-a.radius)/.0001;};
+assert.ok(ringSpeed(.7,{waveExpansion:2.6})>ringSpeed(.7,{waveExpansion:1})*2.5);
+assert.deepEqual(concentricField(.7,{waveExpansion:4}).centre,concentricField(.7,{waveExpansion:.5}).centre);
+for(const follow of [0,.44,1])for(const speed of [.5,2.6,4])for(const age of [0.00001,follow-.000001,follow+.000001]){
+  if(age<0)continue;
+  const c={waveFollowTime:follow,waveExpansion:speed},a=concentricField(age,c).rings.find(r=>r.id===0),b=concentricField(age+.000001,c).rings.find(r=>r.id===0);
+  if(a&&b){assert.ok(Math.hypot(b.centre.x-a.centre.x,b.centre.y-a.centre.y)<.01);if(age>=follow)assert.deepEqual(a.centre,b.centre);}
+}
+const recent=concentricField(.00001).rings.find(r=>r.id===0);
+assert.ok(Math.hypot(recent.centre.x-concentricField(.00001).centre.x,recent.centre.y-concentricField(.00001).centre.y)<.001);
+// Macro pass has substantial camera parallax with the camera clear of the lip.
+assert.ok(rimDetailPose(0).offset.distanceTo(rimDetailPose(1).offset)>1.2);
+for(let q=0;q<=1;q+=.02){const view=rimDetailPose(q);assert.ok(view.point.z+view.offset.z>1.4);}
+assert.notDeepEqual(rimDetailPose(.8,{detailTravel:.5}),rimDetailPose(.8));
+assert.equal(new Set(arrayPalette).size,6);
+for(let i=0;i<6;i++)for(let j=i+1;j<6;j++){
+  const qa=t=>new T.Quaternion().setFromEuler(arraySpeakerRotation(i,t));
+  const qb=t=>new T.Quaternion().setFromEuler(arraySpeakerRotation(j,t));
+  assert.ok(qa(0).invert().multiply(qb(0)).angleTo(qa(.8).invert().multiply(qb(.8)))>.1,'Array turns must change relative orientations');
+}
+assert.deepEqual(arraySpeakerRotation(3,0,{arraySpin:0}),arraySpeakerRotation(3,1,{arraySpin:0}));
+
 // Product centre/radius and incoming mark remain C1 across the hard cut.
 const h=.00001,at=productHandoff(0),left=productHandoff(-h),right=productHandoff(h),logo=logoPose(0);
 assert.equal(at.x,logo.x-290*logo.scale);assert.equal(at.radius,67.5*logo.scale);
 for(const key of ['x','y','radius'])assert.ok(Math.abs((at[key]-left[key])/h-(right[key]-at[key])/h)<.2,key+' velocity mismatch');
-assert.ok((right.x-left.x)/(2*h)<-1000,'The cut must carry a visible positional velocity, not a completed stop');
+assert.ok((right.x-left.x)/(2*h)<-750,'The cut must carry a visible positional velocity, not a completed stop');
 for(let t=-1.7;t<1.4;t+=.007){const p=productHandoff(t);assert.ok(p.radius>0&&Number.isFinite(p.x));}
 
-// Titles must enter and leave offscreen, read without bounce, and preserve
+// Check the whole departure, not merely the cut. Neither centre nor apparent
+// radius reverses; the late acceleration and logo carry remain continuous.
+for(const endingPullback of [.9,1.6,1.66])for(const logoSettle of [.12,.20,.35]){
+  const c={endingPullback,logoSettle};let previous=productHandoff(-endingPullback,c);
+  for(let age=-endingPullback+h;age<=0;age+=.004){const p=productHandoff(age,c);assert.ok(p.radius<=previous.radius&&p.x<=previous.x);previous=p;}
+  const start=productHandoff(-endingPullback,c);
+  assert.ok(productHandoff(-endingPullback/2,c).radius<start.radius-(start.radius-productHandoff(0,c).radius)*.4,'Departure must use the shot, not its last half second');
+  for(const key of ['x','radius']){const at=productHandoff(0,c),before=productHandoff(-h,c),after=productHandoff(h,c);assert.ok(Math.abs((at[key]-before[key])/h-(after[key]-at[key])/h)<.3);}
+}
+const closingSpeed=t=>Math.abs((productHandoff(t+h).x-productHandoff(t).x)/h);
+assert.ok(closingSpeed(-1.65)>2500,'Fast entry');
+assert.ok(closingSpeed(-.85)<40,'Central recovery');
+assert.ok(closingSpeed(-.04)>650,'Reaccelerate towards the logo');
+assert.ok(productHandoff(-1.6).x>productHandoff(-1.6,{endingArrival:0}).x+400);
+assert.notEqual(productHandoff(-1,{endingPullback:1.2}).radius,productHandoff(-1,{endingPullback:1.6}).radius);
+assert.notEqual(logoPose(.1,{logoSettle:.12}).x,logoPose(.1,{logoSettle:.35}).x);
+// Preserve the closing tail Andrea preferred; only the opening framing changes.
+for(const [age,x,radius] of [[-.5,1016.8,150.1],[-.3,982.2,109],[-.1,902.5,85.2]]){const p=productHandoff(age);assert.ok(Math.abs(p.x-x)<.1&&Math.abs(p.radius-radius)<.1);}
+
+// Titles enter from offscreen and cut while still visible at speed. Preserve
 // leftward momentum when the entrance tail joins the reading interval.
 for(const [anchor,width,word] of [[100,350,0],[1400,425,1]]){
   const d=1.16,start=headlineMotion(0,d,{},anchor,width,word),end=headlineMotion(d,d,{},anchor,width,word);
-  assert.ok(start.x>=1920);assert.ok(end.x+width<0);
+  assert.ok(start.x>=1920);assert.ok(end.x+width>0&&end.x<1920);
+  const last=headlineMotion(d-h,d,{},anchor,width,word),earlier=headlineMotion(d-.08,d,{},anchor,width,word),beforeEarlier=headlineMotion(d-.08-h,d,{},anchor,width,word);
+  const cutSpeed=(last.x-end.x)/h,earlierSpeed=(beforeEarlier.x-earlier.x)/h;
+  assert.ok(cutSpeed>1800&&cutSpeed>earlierSpeed,'Disappear on a strong impulse, not after clearing the edge');
   let previous=Infinity;
-  for(let age=0;age<=d;age+=.002){const p=headlineMotion(age,d,{},anchor,width,word);assert.ok(p.x<=previous+1e-8);previous=p.x;}
+  for(let age=0;age<=d;age+=.002){const p=headlineMotion(age,d,{},anchor,width,word);assert.equal(p.y,0);assert.ok(p.x<=previous+1e-8);previous=p.x;}
   for(const age of [.48,.6,.83]){const p=headlineMotion(age,d,{},anchor,width,word);assert.equal(p.reveal(4,5),1);assert.ok(Math.abs(p.x-anchor)<12);}
 }
 
+// Assert actual glyph transforms, not only the carrier: no diagonal motion or
+// opposing letters even with a large saved letter-travel setting.
+const originalPath=globalThis.Path2D;globalThis.Path2D??=class {constructor(path){this.path=path;}};
+for(const text of ['brief.','this.','Again.'])for(const travel of [0,.12,.65]){
+  const previous=Array(text.length).fill(Infinity);
+  for(let age=0;age<1.16;age+=.002){
+    const pose=headlineMotion(age,1.16,{},100,500,0,text);let i=0;
+    const ctx={globalAlpha:1,save(){},restore(){},scale(){},fill(){},translate(x,y){assert.equal(y,0);const at=pose.x+x;assert.ok(at<=previous[i]+1e-7);previous[i++]=at;}};
+    // Keep all glyphs in the mock so indices stay stable during partial reveals.
+    drawHeadline(ctx,text,0,0,230,{rise:travel,reveal:(index,n)=>Math.max(1e-12,pose.reveal(index,n))});
+  }
+}
+if(originalPath===undefined)delete globalThis.Path2D;
+
 // The entry must blend into the reading drift without a stopped frame.
-for(const word of [0,1]){const boundary=.42+word*.026,at=headlineMotion(boundary,1.16,{},100,350,word),before=headlineMotion(boundary-h,1.16,{},100,350,word),after=headlineMotion(boundary+h,1.16,{},100,350,word);assert.ok(Math.abs((at.x-before.x)/h-(after.x-at.x)/h)<1);assert.ok(after.x<at.x);}
+for(const word of [0,1]){const boundary=.46+word*.026,at=headlineMotion(boundary,1.16,{},100,350,word),before=headlineMotion(boundary-h,1.16,{},100,350,word),after=headlineMotion(boundary+h,1.16,{},100,350,word);assert.ok(Math.abs((at.x-before.x)/h-(after.x-at.x)/h)<1);assert.ok(after.x<at.x);}
+
+// Both refinement controls affect motion, remain monotonic and preserve endpoints.
+for(const sigma of [.12,.21,.40])for(const strength of [0,.5,1]){let prev=0;for(let i=0;i<=200;i++){const value=titleEase(i/200,{titleSigma:sigma,titleGaussian:strength});assert.ok(value>=prev-1e-7&&value<=1);prev=value;}assert.equal(titleEase(1,{titleSigma:sigma,titleGaussian:strength}),1);}
+assert.notEqual(titleEase(.25,{titleSigma:.12}),titleEase(.25,{titleSigma:.4}));
+assert.notEqual(titleEase(.25,{titleGaussian:0}),titleEase(.25,{titleGaussian:1}));
 
 // Letter assembly is deterministic but visibly not a reading-order wipe.
 for(const text of ['brief.','this.','Again.']){

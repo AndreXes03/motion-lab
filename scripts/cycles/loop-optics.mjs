@@ -1,7 +1,7 @@
 import sharp from 'sharp';
 
 /** Bounded, display-space optical finish on the isolated beauty only. */
-export async function finishLoopBeauty(input,{width,height,aberrationPx=1,glowStrength=.035,glowRadiusPx=2,glowThreshold=.78}={}){
+export async function finishLoopBeauty(input,{width,height,aberrationPx=.35,glowStrength=.035,glowRadiusPx=2,glowThreshold=.78}={}){
   const {data,info}=await sharp(input).resize(width,height).ensureAlpha().raw().toBuffer({resolveWithObject:true});
   const w=info.width,h=info.height,out=Buffer.from(data),glow=new Float32Array(w*h*3);
   const radius=Math.max(1,Math.round(Math.min(3,glowRadiusPx)*h/1080));

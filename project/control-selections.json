@@ -784,7 +784,28 @@
         "renderAberration",
         "clothRelief",
         "metalRoughness",
-        "superOpacity"
+        "superOpacity",
+        "titleGaussian",
+        "titleSigma",
+        "introGlowStrength",
+        "endingPullback",
+        "logoSettle",
+        "titleExitTravel",
+        "waveExpansion",
+        "waveFollowTime",
+        "detailTravel",
+        "arraySpin",
+        "arrayColorMix",
+        "endingArrival",
+        "lightSwitchTime",
+        "coatingRelief",
+        "introDriftScale",
+        "toEntryTravel",
+        "endingArrivalCurve",
+        "focusAperture",
+        "finishTurn",
+        "endingTurn",
+        "assetDragDuration"
       ],
       "panels": [
         {
@@ -793,7 +814,11 @@
           "category": "motion",
           "controls": [
             "motionAmount",
-            "explodeAmount"
+            "explodeAmount",
+            "detailTravel",
+            "arraySpin",
+            "finishTurn",
+            "endingTurn"
           ],
           "advanced": false
         },
@@ -804,9 +829,10 @@
           "controls": [
             "fovScale",
             "cameraDistance",
-            "keepSubjectSize"
+            "keepSubjectSize",
+            "focusAperture"
           ],
-          "advanced": false
+          "advanced": true
         },
         {
           "id": "lights",
@@ -814,7 +840,8 @@
           "category": "lights",
           "controls": [
             "keyLight",
-            "fillLight"
+            "fillLight",
+            "lightSwitchTime"
           ],
           "advanced": false
         },
@@ -829,7 +856,9 @@
             "coatingScale",
             "coatingEdge",
             "clothRelief",
-            "metalRoughness"
+            "metalRoughness",
+            "arrayColorMix",
+            "coatingRelief"
           ],
           "advanced": false
         },
@@ -839,7 +868,40 @@
           "category": "graphics",
           "controls": [
             "typeScale",
-            "superOpacity"
+            "introZoom",
+            "introPullbackStart",
+            "introPullbackDuration",
+            "introSigma",
+            "introPan",
+            "introGlowSpeed",
+            "titleEntry",
+            "titleExit",
+            "letterStagger",
+            "letterRise",
+            "titleDrift",
+            "titleEaseX1",
+            "titleEaseY1",
+            "titleEaseX2",
+            "titleEaseY2",
+            "waveCount",
+            "waveTravel",
+            "waveSpeed",
+            "waveWarp",
+            "waveWeight",
+            "superOpacity",
+            "titleGaussian",
+            "titleSigma",
+            "introGlowStrength",
+            "endingPullback",
+            "logoSettle",
+            "titleExitTravel",
+            "waveExpansion",
+            "waveFollowTime",
+            "endingArrival",
+            "introDriftScale",
+            "toEntryTravel",
+            "endingArrivalCurve",
+            "assetDragDuration"
           ],
           "advanced": false
         },
@@ -855,61 +917,9 @@
             "renderAberration"
           ],
           "advanced": true
-        },
-        {
-          "id": "intro",
-          "title": "Opening · Gaussian zoom",
-          "category": "graphics",
-          "controls": [
-            "introZoom",
-            "introPullbackStart",
-            "introPullbackDuration",
-            "introSigma",
-            "introPan",
-            "introGlowSpeed"
-          ],
-          "advanced": false
-        },
-        {
-          "id": "title-timing",
-          "title": "Titles · Timing",
-          "category": "graphics",
-          "controls": [
-            "titleEntry",
-            "titleExit",
-            "letterStagger",
-            "letterRise",
-            "titleDrift"
-          ],
-          "advanced": false
-        },
-        {
-          "id": "title-curve",
-          "title": "Titles · Bezier curve",
-          "category": "graphics",
-          "controls": [
-            "titleEaseX1",
-            "titleEaseY1",
-            "titleEaseX2",
-            "titleEaseY2"
-          ],
-          "advanced": true
-        },
-        {
-          "id": "wave-field",
-          "title": "Waves · Procedural field",
-          "category": "graphics",
-          "controls": [
-            "waveCount",
-            "waveTravel",
-            "waveSpeed",
-            "waveWarp",
-            "waveWeight"
-          ],
-          "advanced": false
         }
       ],
-      "rationale": "40 implemented controls: preserved lens, light, curve and timing controls, plus true textile mesh relief and contrasting brushed/polished metal finishes. Headline opacity also prepares the requested clean variant without removing UI or the closing logo."
+      "rationale": "Preserve refinement controls and expose the asset drag duration ahead of the fixed Send/drop timing."
     }
   }
 }

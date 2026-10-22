@@ -5,7 +5,7 @@ const paths=new Map();
 const advance=char=>font.glyphs[char]?.advance??font.glyphs[' '].advance;
 const kern=(a,b)=>font.kerning?.[a+b]??0;
 export const headlineWidth=(text,size,tracking=0)=>[...text].reduce((w,c,i)=>w+(advance(c)+(i?kern(text[i-1],c):0))*size/font.unitsPerEm+(i?tracking:0),0);
-export function drawHeadline(ctx,text,x,y,size,{reveal=()=>1,color='#f6f7f8',rise=.16,tracking=-1.5}={}){
+export function drawHeadline(ctx,text,x,y,size,{reveal=()=>1,color='#f6f7f8',rise=.12,tracking=-1.5}={}){
   ctx.fillStyle=color;let cursor=x;
   [...text].forEach((char,i)=>{
     if(i)cursor+=kern(text[i-1],char)*size/font.unitsPerEm;
@@ -13,9 +13,9 @@ export function drawHeadline(ctx,text,x,y,size,{reveal=()=>1,color='#f6f7f8',ris
     if(glyph?.path&&q>0){
       if(!paths.has(char))paths.set(char,new Path2D(glyph.path));
       ctx.save();ctx.globalAlpha*=Math.min(1,q*4);
-      // Small opposing vertical accents belong to the assembly; the word owns travel.
-      const direction=i%3===1?-.6:1;
-      ctx.translate(cursor+tail*size*(i%2?.20:.12),y+tail*size*rise*direction);
+      // Keep the baseline fixed: every letter shares the word's leftward axis.
+      // `rise` retains recipe compatibility but now controls horizontal travel.
+      ctx.translate(cursor+tail*size*rise,y);
       ctx.scale(size/font.unitsPerEm,-size/font.unitsPerEm);ctx.fill(paths.get(char));ctx.restore();
     }
     cursor+=advance(char)*size/font.unitsPerEm+tracking;

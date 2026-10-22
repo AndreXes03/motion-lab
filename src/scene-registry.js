@@ -1,9 +1,10 @@
+import {loopDuration,loopCuts} from './scenes/loop-timing.js';
 import {canonicalScene} from './engine/legacy-scene.js';
 import {studyControlDefinitions} from './engine/scene-capabilities.js';
 import {config} from './config.js';
 /** Browser/Node-safe scene metadata shared by viewer, CLI and export service. */
 export const sceneRegistry={
- loop:{duration:22,title:'LOOP / From brief to feeling',kind:'hybrid',shutterAngle:306,cuts:[0,3,119/30,4.8,5.3,7.7,259/30,9.6,316/30,12.4,13.3,428/30,15.2,470/30,17.1,18,568/30,20.6,22],source:'loop-launch.js'},
+ loop:{duration:loopDuration,title:'LOOP / From brief to feeling',kind:'hybrid',shutterAngle:306,cuts:loopCuts,source:'loop-launch.js'},
  starter:{duration:6,title:'Product starter',kind:'3d',shutterAngle:270,cuts:[0,6],source:'product-starter.js'},
  objects:{duration:10,title:'Objects in play'},procedural:{duration:10,title:'Procedural motion'},pop:{duration:10,title:'Pop motion'},
  dot:{shutterAngle:72,duration:16,title:'DOT / Character study',kind:'hybrid',cuts:[0,6.32,16],source:'mascot-demo.js'},

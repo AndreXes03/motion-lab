@@ -1,10 +1,10 @@
 import * as T from 'three';
-import {acousticClothGeometry,clothProfile,coatingField,coatingSample} from './loop-surface.js';
+import {acousticClothGeometry,clothProfile,coatingField,coatingNoise,coatingFromField} from './loop-surface.js';
 import {RoundedBoxGeometry} from 'three/addons/geometries/RoundedBoxGeometry.js';
 
 // Scene-owned manufacturing detail. The assembly is constrained choreography,
 // with component centres on the acoustic axis, not a physical simulation.
-export function addLoopProductDetail({product,body,face,cone,knob,shell,black,trim,grille,mat,mesh,cylinder,ring}){
+export function addLoopProductDetail({product,body,face,cone,knob,housing,shell,black,trim,grille,mat,mesh,cylinder,ring}){
   const textures=[];
   function surface(kind,size=512){
     const c=document.createElement('canvas');c.width=c.height=size;const d=c.getContext('2d'),im=d.createImageData(size,size);
@@ -125,16 +125,67 @@ export function addLoopProductDetail({product,body,face,cone,knob,shell,black,tr
   ring(1.10,.026,.28,seal,gasket);ring(1.13,.010,.28,copper,gasket);
   // Slim battery can, foil seam and isolated terminals behind the PCB.
   const battery=layer('loop.battery',-.13);rounded(.49,.99,.15,.045,graphite,battery,-.38,-.05,-.15);rounded(.013,.81,.003,.001,titanium,battery,-.12,-.05,-.071);rounded(.13,.12,.035,.01,copper,battery,-.38,.48,-.13);
+  // Secondary electronics and thermal hardware occupy different depth planes.
+  // Their asymmetry makes the exploded view read as an actual assembly.
+  const power=layer('loop.power-board',.27),heat=layer('loop.heat-spreader',.30),baffle=layer('loop.inner-baffle',.77);
+  rounded(.40,.64,.035,.035,pcbMat,power,.56,-.22,.02);
+  rounded(.22,.26,.10,.018,graphite,power,.56,-.16,.08);
+  for(let i=0;i<8;i++)for(const side of [-1,1])rounded(.035,.018,.013,.003,titanium,power,.56+side*.14,-.27+i*.031,.07);
+  for(let i=0;i<6;i++){
+    const x=-.64+(i%3)*.19,y=-.10+Math.floor(i/3)*.22;
+    const can=cylinder(.054,.14,-.012,graphite,board);can.position.set(x,y,-.012);
+    const cap=cylinder(.050,.006,.061,titanium,board);cap.position.set(x,y,.061);
+    rounded(.065,.005,.003,.001,black,board,x,y,.066);
+  }
+  for(let i=0;i<20;i++){
+    const x=-.19+(i%5)*.085,y=-.67+Math.floor(i/5)*.095;
+    rounded(.041,.054,.025,.004,i%4===0?ceramic:graphite,board,x,y,-.086);
+    for(const side of [-1,1])rounded(.045,.010,.006,.001,titanium,board,x,y+side*.026,-.071);
+  }
+  rounded(.52,.50,.025,.03,copper,heat,-.36,.24,.02);
+  for(let i=0;i<10;i++)rounded(.024,.46,.10,.007,titanium,heat,-.58+i*.049,.24,.08);
+  annulus(1.04,.94,.026,.07,graphite,baffle);
+  for(let i=0;i<6;i++){
+    const a=i*Math.PI*2/6,x=Math.cos(a),y=Math.sin(a);
+    bridge(new T.Vector3(x*.55,y*.55,.03),new T.Vector3(x*.98,y*.98,.07),.055,.026,titanium,baffle);
+    const spacer=cylinder(.035,.12,.03,titanium,board);spacer.position.set(x*.82,y*.82,.03);
+  }
+  const wireBlack=mat('rubber',{name:'LOOP / braided graphite cable',color:'#111820',roughness:.78,normalMap:null,bumpMap:fibre,bumpScale:.00016});
+  const wireOrange=mat('rubber',{name:'LOOP / silicone power cable',color:'#bd481b',roughness:.56,normalMap:null});
+  const cables=[];
+  function cable(name,material,radius,from,a,to,b,bow){
+    const points=[new T.Vector3(),new T.Vector3(.1,.1,.1),new T.Vector3(.2,.2,.2),new T.Vector3(.3,.3,.3)];
+    const curve=new T.CatmullRomCurve3(points),geometry=new T.TubeGeometry(curve,24,radius,6,false),wire=mesh(geometry,material,inner);
+    wire.name=name;wire.userData.loopCable={from:from.name,to:to.name,a,b};
+    cables.push({wire,geometry,curve,radius,from,to,a:new T.Vector3(...a),b:new T.Vector3(...b),bow:new T.Vector3(...bow)});
+    for(const [parent,point] of [[from,a],[to,b]]){
+      rounded(.072,.050,.046,.008,ceramic,parent,...point);
+      rounded(.032,.032,.052,.004,titanium,parent,...point);
+    }
+  }
+  cable('loop.cable.power-positive',wireOrange,.012,battery,[-.38,.48,-.13],power,[.56,.12,.04],[-.18,.46,.04]);
+  cable('loop.cable.power-ground',wireBlack,.012,battery,[-.29,.48,-.13],power,[.65,.12,.04],[-.15,.51,.04]);
+  cable('loop.cable.driver-positive',wireOrange,.009,board,[.67,-.35,-.07],coil,[.31,-.12,.05],[.62,-.38,.06]);
+  cable('loop.cable.driver-ground',wireBlack,.010,board,[.61,-.44,-.07],coil,[.28,-.21,.05],[.65,-.39,.06]);
+  for(let i=0;i<3;i++)cable('loop.cable.data-'+i,wireBlack,.0065,board,[-.70,.28+i*.028,-.07],power,[.38,-.40+i*.028,.04],[-.28,-.32,.035]);
   const labelCanvas=document.createElement('canvas');labelCanvas.width=512;labelCanvas.height=128;const lc=labelCanvas.getContext('2d');lc.fillStyle='#b4bfc2';lc.font='500 20px monospace';lc.fillText('LOOP — S1 / 014',18,34);lc.font='12px monospace';lc.fillText('MODULAR ACOUSTIC SYSTEM',18,61);for(let i=0;i<36;i++)lc.fillRect(20+i*4,80,i%3===0?2:1,22);
   const labelTex=new T.CanvasTexture(labelCanvas);labelTex.colorSpace=T.SRGBColorSpace;textures.push(labelTex);const labelMat=mat('satinPlastic',{map:labelTex,transparent:true,roughness:.7,depthWrite:false});const plaque=mesh(new T.PlaneGeometry(.61,.153),labelMat,body);plaque.rotation.y=Math.PI;plaque.position.set(-.12,.72,-.342);
-  // UV-attached organic coating. A deterministic field grows into wet islands;
-  // small droplets follow the same front on the real cylindrical housing.
-  const coating=createCoating({product,shell,mat,textures});
+  // UV-attached paint film: tiny relief follows the exact colour boundary.
+  const coating=createCoating({housing,shell,textures});
   return {
     update(spread=0,phase=null){inner.visible=spread>.025;for(const {g,factor} of layers){
       const offset=phase===null?0:Math.sin(phase*Math.PI)*Math.sin(factor*8)*.07;
       g.position.set(offset,offset*.3,spread*factor);g.rotation.set(0,phase===null?0:offset*.25,phase===null?0:(phase-.5)*.13*Math.sin(factor*6));
-    }},
+    }
+      if(inner.visible)for(const c of cables){
+        const a=c.a.clone().applyEuler(c.from.rotation).add(c.from.position),b=c.b.clone().applyEuler(c.to.rotation).add(c.to.position);
+        c.curve.points=[a,a.clone().lerp(b,.30).add(c.bow),a.clone().lerp(b,.72).add(c.bow.clone().multiplyScalar(.85)),b];
+        const next=new T.TubeGeometry(c.curve,24,c.radius,6,false);
+        c.geometry.attributes.position.copy(next.attributes.position);c.geometry.attributes.normal.copy(next.attributes.normal);
+        c.geometry.attributes.position.needsUpdate=true;c.geometry.attributes.normal.needsUpdate=true;
+        c.geometry.computeBoundingBox();c.geometry.computeBoundingSphere();next.dispose();
+      }
+    },
     surface(relief=1,metal=1){
       if(relief!==previousRelief){const a=clothGeometry.attributes.position,base=clothGeometry.userData.clothProfile;for(let i=0;i<a.count;i++)a.setZ(i,base[i]+(clothBase[i*3+2]-base[i])*relief);a.needsUpdate=true;clothGeometry.computeVertexNormals();clothGeometry.computeBoundingBox();previousRelief=relief;}
       grille.bumpScale=.00019*relief;yarnMaterials.forEach((m,i)=>{m.color.copy(grille.color).multiplyScalar(yarnTones[i]);m.bumpScale=grille.bumpScale;});
@@ -145,36 +196,47 @@ export function addLoopProductDetail({product,body,face,cone,knob,shell,black,tr
   };
 }
 
-function createCoating({product,shell,mat,textures}){
-  const size=384,canvas=document.createElement('canvas'),roughCanvas=document.createElement('canvas');
-  canvas.width=canvas.height=roughCanvas.width=roughCanvas.height=size;
-  const ctx=canvas.getContext('2d'),rc=roughCanvas.getContext('2d'),pixels=ctx.createImageData(size,size),rough=rc.createImageData(size,size);
+function createCoating({housing,shell,textures}){
+  const size=384,canvas=document.createElement('canvas'),roughCanvas=document.createElement('canvas'),bumpCanvas=document.createElement('canvas');
+  canvas.width=canvas.height=roughCanvas.width=roughCanvas.height=bumpCanvas.width=bumpCanvas.height=size;
+  const ctx=canvas.getContext('2d'),rc=roughCanvas.getContext('2d'),bc=bumpCanvas.getContext('2d'),pixels=ctx.createImageData(size,size),rough=rc.createImageData(size,size),bump=bc.createImageData(size,size);
   const colorMap=new T.CanvasTexture(canvas);colorMap.colorSpace=T.SRGBColorSpace;
-  const roughMap=new T.CanvasTexture(roughCanvas);textures.push(colorMap,roughMap);
-  shell.map=colorMap;shell.roughnessMap=roughMap;
-  const field=coatingField;
-  const dropMaterial=mat('ceramic',{name:'LOOP / wet coating microdroplets',color:'#a7c2de',roughness:.18,clearcoat:.6,clearcoatRoughness:.12});
-  const dropGeo=new T.SphereGeometry(1,8,5),drops=new T.InstancedMesh(dropGeo,dropMaterial,220),dummy=new T.Object3D();
-  drops.name='loop.coating-front';drops.userData.loopCoating=true;drops.visible=false;product.add(drops);
+  const roughMap=new T.CanvasTexture(roughCanvas),bumpMap=new T.CanvasTexture(bumpCanvas);textures.push(colorMap,roughMap,bumpMap);
+  shell.map=colorMap;shell.roughnessMap=roughMap;shell.bumpMap=bumpMap;shell.bumpScale=.0004;
+  const geometry=housing.geometry,position=geometry.attributes.position,normal=geometry.attributes.normal,uv=geometry.attributes.uv;
+  const base=position.array.slice(),baseNormals=normal.array.slice(),surfaceFields=new Float32Array(position.count),surfaceNoise=new Float32Array(position.count);
+  const atlas=new Float32Array(size*size),noiseAtlas=new Float32Array(size*size);
+  let cachedScale=null;
+  function prepareField(scale){
+    if(cachedScale===scale)return;cachedScale=scale;
+    for(let y=0;y<size;y++)for(let x=0;x<size;x++){const i=y*size+x,u=x/(size-1),v=1-y/(size-1);atlas[i]=coatingField(u,v,scale);noiseAtlas[i]=coatingNoise(u,v,scale*2.8);}
+    for(let i=0;i<position.count;i++){surfaceFields[i]=coatingField(uv.getX(i),uv.getY(i),scale);surfaceNoise[i]=coatingNoise(uv.getX(i),uv.getY(i),scale*2.8);}
+  }
   let last='';
-  function update(progress=-1,hue=0,scale=1,edge=1){
-    const key=[progress,hue,scale,edge].join(':');drops.visible=progress>0&&progress<1;
+  function update(progress=-1,hue=0,scale=1,edge=1,relief=1){
+    const key=[progress,hue,scale,edge,relief].join(':');
     if(key===last)return;last=key;
+    prepareField(scale);
     const active=progress>=0,from=new T.Color('#f55b18').offsetHSL(hue/360,0,0).convertLinearToSRGB().toArray(),to=new T.Color('#9fbad9').offsetHSL(hue/360,0,0).convertLinearToSRGB().toArray();
     for(let y=0;y<size;y++)for(let x=0;x<size;x++){
-      const u=x/(size-1),v=1-y/(size-1),i=(y*size+x)*4;
-      const {blend,wet}=coatingSample(u,v,progress,scale,edge);
-      for(let ch=0;ch<3;ch++){pixels.data[i+ch]=active?(from[ch]+(to[ch]-from[ch])*blend)*255:255;rough.data[i+ch]=active?255-wet*76:255;}
-      pixels.data[i+3]=rough.data[i+3]=255;
+      const i=(y*size+x)*4;
+      const {blend,wet}=coatingFromField(atlas[y*size+x],noiseAtlas[y*size+x],progress,edge);
+      const micro=Math.sin(x*1.77+y*1.13)*Math.sin(y*.70-x*.57);
+      for(let ch=0;ch<3;ch++){pixels.data[i+ch]=active?(from[ch]+(to[ch]-from[ch])*blend)*255:255;rough.data[i+ch]=active?255-wet*65:255;bump.data[i+ch]=128+(active?wet*micro*30:0);}
+      pixels.data[i+3]=rough.data[i+3]=bump.data[i+3]=255;
     }
-    ctx.putImageData(pixels,0,0);rc.putImageData(rough,0,0);colorMap.needsUpdate=true;roughMap.needsUpdate=true;
-    for(let i=0;i<220;i++){
-      const u=((i*.61803398875)%1),z=-.12+((i*.41421356237)%1)*.32,v=4/9+(z+.12)/(.32*9);
-      const delta=progress-field(u,v,scale),life=Math.exp(-((delta/.065)**2)),radius=(.003+(i%7)*.0009)*life*edge;
-      const a=u*Math.PI*2,r=1.343+radius*.5;dummy.position.set(Math.sin(a)*r,-Math.cos(a)*r,z);dummy.scale.setScalar(Math.max(.00001,radius));dummy.updateMatrix();drops.setMatrixAt(i,dummy.matrix);
+    ctx.putImageData(pixels,0,0);rc.putImageData(rough,0,0);bc.putImageData(bump,0,0);colorMap.needsUpdate=true;roughMap.needsUpdate=true;bumpMap.needsUpdate=true;shell.bumpScale=.0004*relief;
+    // A paint-thin meniscus, not a swollen shell. Endpoints restore the exact
+    // profile; fine detail comes from the shallow wet-film bump/reflection.
+    for(let i=0;i<position.count;i++){
+      const {wet}=coatingFromField(surfaceFields[i],surfaceNoise[i],progress,edge),r=Math.hypot(base[i*3],base[i*3+2]);
+      const height=.0015*wet*relief*Math.max(0,Math.min(1,(r-1.11)/.18));
+      for(let axis=0;axis<3;axis++)position.array[i*3+axis]=base[i*3+axis]+baseNormals[i*3+axis]*height;
     }
-    drops.instanceMatrix.needsUpdate=true;
+    position.needsUpdate=true;
+    if(progress>0&&progress<1&&relief>0)geometry.computeVertexNormals();else{normal.array.set(baseNormals);normal.needsUpdate=true;}
+    geometry.computeBoundingBox();geometry.computeBoundingSphere();
   }
   update();
-  return {update,dispose(){dropGeo.dispose();}};
+  return {update,dispose(){}};
 }
