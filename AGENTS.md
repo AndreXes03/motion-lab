@@ -65,4 +65,6 @@ For new video layouts use `.agents/skills/motion-lab-product-film/references/nat
 
 ## Native project documents
 
+The installed Studio has an active disk project library: read [docs/PROJECT_LIBRARY.md](docs/PROJECT_LIBRARY.md). Source/media edits are autosaved while Studio runs; `live-studio.mjs publish` also saves the active project without a browser. Publish each coherent agent change through that existing workflow. Keep transferable scene code/media in its documented managed paths. Do not write library records, active-project pointers or blobs directly. Do not switch projects during editing or rendering. Native documents below are a separate API, not the Studio's saved recipe/source library.
+
 Read [docs/NATIVE_PROJECTS.md](docs/NATIVE_PROJECTS.md) before changing the versioned project document. Use `node scripts/native-project.mjs` or the localhost project API for AI-assisted document operations; MCP clients may wrap those local commands. A browser is needed for visual judgment, not for creating, migrating, reading, updating, or evaluating documents. Keep existing scene recipes behind explicit legacy adapters and do not claim migration converts arbitrary authored scenes into native elements. Preserve project revision checks and never edit `.motion-cache/projects/*.json` directly.

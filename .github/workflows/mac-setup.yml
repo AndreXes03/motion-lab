@@ -38,6 +38,8 @@ jobs:
           # bounded startup separate from the unchanged 15-second media check.
           node --input-type=module -e "import {execFileSync} from 'node:child_process'; import ffprobe from 'ffprobe-static'; execFileSync(ffprobe.path,['-version'],{stdio:'inherit',timeout:60000});"
           node scripts/test-audio-import.mjs
+          node scripts/test-project-sound-state.mjs
+          node scripts/test-authored-audio.mjs
           node scripts/test-native-audio.mjs
           node scripts/test-native-project.mjs
           node scripts/test-cycles-video-encode.mjs
@@ -49,6 +51,7 @@ jobs:
         run: |
           npm run test:session
           node --test scripts/test-onboarding.mjs
+          node --test scripts/test-project-library.mjs scripts/test-project-library-session.mjs scripts/test-project-library-server.mjs scripts/test-project-library-controller.mjs
       - name: Clean ZIP first founder session
         run: node scripts/test-founder-session-browser.mjs
       - name: Live feedback contracts

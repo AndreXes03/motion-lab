@@ -56,6 +56,8 @@ Framevolve also supports procedural music and movement-driven 2D or 3D sound eff
 
 Scenes are source code plus project parameters. The renderer samples a requested absolute time, making a frame inspectable and repeatable. Browse [scene modules](src/scenes/), [engine code](src/engine/) and [project recipes](project/).
 
+The installed Studio saves your edits and agent changes automatically. The **save icon** saves now; the **folder icon** opens New, recent projects, and portable `.framevolve` import/export. See [Saving and moving projects](docs/PROJECT_LIBRARY.md) for included assets and transfer limits.
+
 An optional [path-traced still experiment](docs/PHOTOREALISM.md) studies PULSE materials with reflected light. It is a separate image-render path, not the motion-film renderer or a native After Effects or Cinema 4D project conversion.
 
 <a id="run-motion-lab-locally"></a>
