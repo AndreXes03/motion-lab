@@ -151,6 +151,7 @@ export async function launch(options) {
   }
   updates ??= options.update===false?{state:'not-requested'}:await updateStudio({root});
   if(updates.lock){if(!await waitFor(async()=>{try{await stat(updates.lock);return false;}catch{return true;}},15000))throw Error('An update is still running; try again shortly.');updates=await updateStudio({root});}
+  if(['recovery-required','updating'].includes(updates.state))throw Error(updates.note);
   if(updates.state==='updated'||updates.installed){
     if(running){process.kill(running.pid,'SIGTERM');if(!await waitFor(async()=>!await ownedHealth(root,port),5000))throw Error('Restart after update could not be confirmed.');running=null;reused=false;}
   }

@@ -113,7 +113,7 @@ test('dipendenze assenti e root sbagliata: errori chiari senza installazione aut
 test('installer esterno: bundle con spazi, Node/repo assoluti, shell valida e nessun overwrite', async t => {
   const f = await fixture(t), destination = path.join(f.base, "Applications con spazi e 'quote'", 'Motion Lab.app');
   const external = path.join(f.base, 'strumenti revisionati'); await mkdir(external);
-  for (const name of ['launch-studio.mjs', 'install-mac-launcher.mjs','studio-update.mjs']) await writeFile(path.join(external, name), await readFile(new URL(name, import.meta.url)));
+  for (const name of ['launch-studio.mjs', 'install-mac-launcher.mjs','studio-update.mjs','zip-update.mjs','update-dialog.mjs']) await writeFile(path.join(external, name), await readFile(new URL(name, import.meta.url)));
   const result = spawnSync(process.execPath, [path.join(external, 'install-mac-launcher.mjs'), '--repo', f.root, '--destination', destination, '--port', String(f.port)], { env, encoding: 'utf8' });
   assert.equal(result.status, 0, result.stderr);
   const executable = path.join(destination, 'Contents/MacOS/MotionLabLauncher');

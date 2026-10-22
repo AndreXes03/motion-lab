@@ -1,6 +1,8 @@
+import {updateZip,hasRunningStudio} from './zip-update.mjs';
+import {confirmUpdate,notifyUpdate} from './update-dialog.mjs';
 import {execFile} from 'node:child_process';
 import {createHash} from 'node:crypto';
-import {mkdir,readFile,writeFile,rename,rm,stat} from 'node:fs/promises';
+import {mkdir,readFile,writeFile,rename,rm,stat,realpath} from 'node:fs/promises';
 import path from 'node:path';
 
 export function trustedStudioOrigin(value) {
@@ -13,12 +15,14 @@ const exists=async file=>{try{await stat(file);return true;}catch{return false;}
 const run=(root,command,args,timeout=10000)=>new Promise((resolve,reject)=>execFile(command,args,{cwd:root,timeout,maxBuffer:2*1024*1024,encoding:'utf8',env:{...process.env,GIT_TERMINAL_PROMPT:'0',PATH:path.dirname(process.execPath)+path.delimiter+(process.env.PATH??'')}},(error,stdout,stderr)=>error?reject(Error(`${command}: ${stderr?.trim()||error.message}`)):resolve(stdout.trim())));
 
 /** Check main on every launch. Fast-forward only; never stash, reset or clean. */
-export async function updateStudio({root,log=console.error}={}) {
+export async function updateStudio({root,log=console.error,confirm=confirmUpdate,notify=notifyUpdate}={}) {
   const git=(...args)=>run(root,'git',args);
   let lock,locked=false;
   const result=(state,note,extra={})=>{log('Framevolve: '+note);return {state,note,...extra};};
   try {
-    try{await git('rev-parse','--git-dir');}catch{return result('unmanaged','Downloaded copy: starting locally. Clone the repository for automatic updates.');}
+    if(await hasRunningStudio(root))return result('busy','Close Studio to install updates; the current session is preserved.');
+    let isCheckout=false;try{isCheckout=await realpath(await git('rev-parse','--show-toplevel'))===await realpath(root);}catch{}
+    if(!isCheckout)return await updateZip({root,confirm,notify});
     let origin;try{origin=await git('config','--get-all','remote.origin.url');}catch{return result('untrusted-origin','No update repository configured; starting locally.');}
     if(!trustedStudioOrigin(origin))return result('untrusted-origin','Update skipped: this copy does not use the official repository.');
     if(await git('branch','--show-current')!=='main')return result('branch','Work branch preserved; automatic updates are available on main.');
@@ -35,6 +39,9 @@ export async function updateStudio({root,log=console.error}={}) {
     if(await dirty()||await git('rev-parse','HEAD')!==before)return result('local-changes','The working copy changed during the check; update postponed.');
     const [ahead]= (await git('rev-list','--left-right','--count','HEAD...refs/remotes/origin/main')).split(/\s+/).map(Number);
     if(ahead)return result('diverged','Local commits preserved; no automatic reconciliation.');
+    const revision=await git('rev-parse','refs/remotes/origin/main');
+    if(before!==revision&&!await confirm({revision}))return result('declined','Update postponed until a future launch.');
+    if(await dirty()||await hasRunningStudio(root)||await git('rev-parse','HEAD')!==before)return result('busy','The project changed during confirmation; update postponed.');
     await git('merge','--ff-only','--no-edit','refs/remotes/origin/main');
     const after=await git('rev-parse','HEAD'),hash=await fingerprint();
     const install=hash!==beforeHash||previous?.pending===true||(previous&&previous.hash!==hash)||(previous&&previous.abi!==process.versions.modules)||!await exists(path.join(root,'node_modules/vite/package.json'));

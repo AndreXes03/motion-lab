@@ -37,6 +37,7 @@ export async function installLauncher({ root, destination, port = 4173 }) {
     await mkdir(resources, { recursive: true }); await mkdir(path.dirname(executable), { recursive: true });
     await copyFile(helper, path.join(resources, 'launch-studio.mjs'));
     await copyFile(path.join(path.dirname(SELF),'studio-update.mjs'),path.join(resources,'studio-update.mjs'));
+    for(const name of ['zip-update.mjs','update-dialog.mjs'])await copyFile(path.join(path.dirname(SELF),name),path.join(resources,name));
     await copyFile(path.join(root,'public/brand/framevolve.icns'),path.join(resources,'Framevolve.icns'));
     await copyFile(path.join(root,'LICENSE'),path.join(resources,'LICENSE'));
     await copyFile(path.join(root,'licenses/legacy/MIT.txt'),path.join(resources,'LEGACY-MIT.txt'));

@@ -26,4 +26,4 @@ if ! node_ok; then
   node_ok || fail 'This runtime cannot run on this Mac. See https://nodejs.org/en/download.'
 fi
 printf 'Opening Framevolve setup… Keep this window open until setup finishes.\n'
-node scripts/setup-mac.mjs || fail 'Setup stopped. Reopen this file to try again.'
+node scripts/mac-start.mjs --setup || fail 'Setup stopped. Reopen this file to try again.'

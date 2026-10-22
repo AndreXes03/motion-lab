@@ -38,3 +38,5 @@ Rendering tools share `scripts/browser-runtime.mjs`. `FRAMEVOLVE_BROWSER_PATH` (
 Preferences and optional agent binaries live under `.motion-cache/`; no provider credentials are collected there by Framevolve. Chromium uses Playwright's standard browser cache. Providers manage their own credentials. App shortcuts point to this project folder, so rerun setup after moving it. Remove the shortcut and project folder to remove Framevolve; provider account data and shared Playwright caches are not deleted automatically.
 
 Technical references: [Playwright browsers](https://playwright.dev/docs/browsers), [Node.js downloads](https://nodejs.org/en/download), [Codex CLI](https://developers.openai.com/codex/cli/), [Claude Code setup](https://code.claude.com/docs/en/setup). Installation methods checked on 2026-10-21.
+
+The setup and installed app now offer **Update / Later** when a compatible update is available, including ZIP copies. See [updates and local-work protection](UPDATES.md).
