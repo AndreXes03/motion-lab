@@ -4,11 +4,10 @@ Framevolve is a local rendering engine for Three.js scenes and Canvas2D motion g
 
 ## Start
 
-Requires Node.js, npm and Google Chrome on macOS:
+On Mac, double-click **Setup Framevolve.command** for guided setup, including Node/npm when missing and a choice of existing Chrome or managed Chromium. See [Mac setup](MAC_SETUP.md). With Node.js 22.12+ already available:
 
 ```sh
-npm ci
-node scripts/cli.mjs viewer
+npm run setup
 ```
 
 The viewer opens at `http://127.0.0.1:4173/`. Choose a 3D or procedural project, a preset and scene controls. Moment buttons jump to useful shots. Properties groups the scene’s selected tools into Motion, Lens, Lights, Compositing and other supported categories; the complete catalog, advanced tools and references have separate views.
@@ -56,7 +55,7 @@ node scripts/cli.mjs verify --time 2.8 --out renders/film.mp4
 
 In browsers with canvas recording support, the public Studio exports browser-rendered video at 720p or 1080p, PNG frames and JSON recipes. MP4 is offered when the browser supports its encoder; otherwise it offers WebM. Browser video uses the real-time Three.js/Canvas path. Cycles and prepared Mixed renders run locally, and renderer choices for those paths can be stored in recipes without running on the public site. Public versions stay in that browser.
 
-Only one Studio render job can run at a time. The export panel shows history, errors, file paths and open/download/Finder actions. Viewer exports go to Downloads; history persists after restart. The CLI's Chrome path is configured in `scripts/cli.mjs`.
+Only one Studio render job can run at a time. The export panel shows history, errors, file paths and open/download/Finder actions. Viewer exports go to Downloads; history persists after restart. All rendering tools use the browser selected in setup. Rerun `npm run setup` to switch browser; `FRAMEVOLVE_BROWSER_PATH` or `CHROME_PATH` provides an explicit executable override. CLI output folders, including nested paths, are created automatically before progress images and video are written.
 
 ## Optional local Cycles and mixed inputs
 

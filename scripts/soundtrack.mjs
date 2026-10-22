@@ -1,3 +1,4 @@
+import {browserLaunchOptions} from './browser-runtime.mjs';
 import {createServer} from 'vite';
 import {chromium} from 'playwright';
 import {readFile,writeFile,mkdir} from 'node:fs/promises';
@@ -15,7 +16,7 @@ const parameters={...recipe.parameters,sound:settings};
 const server=await createServer({root,server:{host:'127.0.0.1',port:0},logLevel:'error'});await server.listen();
 let browser;
 try{
- browser=await chromium.launch({headless:true,executablePath:'/Applications/Google Chrome.app/Contents/MacOS/Google Chrome',args:['--autoplay-policy=no-user-gesture-required']});
+ browser=await chromium.launch({headless:true,...await browserLaunchOptions(),args:['--autoplay-policy=no-user-gesture-required']});
  const page=await browser.newPage();await page.goto(`http://127.0.0.1:${server.httpServer.address().port}/?render=1`);await page.waitForFunction(()=>window.motion?.sampleMotion);await page.evaluate(()=>window.motion.ready);
  const telemetry=await page.evaluate(p=>window.motion.sampleMotion(p),parameters);
  const plan=planSound(telemetry,settings),result=renderSound(plan,{stems:true});

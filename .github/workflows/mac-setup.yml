@@ -1,0 +1,46 @@
+name: Mac setup and export
+on:
+  pull_request:
+    paths: ['src/**', 'project/**', 'index.html', 'vite.config.js', '.agents/**', 'scripts/**', 'Setup Framevolve.command', 'package*.json', '.github/workflows/mac-setup.yml']
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  mac:
+    runs-on: macos-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci
+      - run: npx playwright install chromium
+      - name: Browser, launcher and setup regression tests
+        run: npm run test:setup
+      - name: Live feedback contracts
+        run: npm run test:live
+      - name: Feedback memory contracts
+        run: npm run test:feedback
+      - name: Feedback memory interface
+        run: node scripts/test-feedback-memory-browser.mjs
+      - name: Live Studio sequential updates
+        run: node scripts/test-live-studio-browser.mjs
+      - name: Studio API and render ownership regression
+        run: |
+          export FRAMEVOLVE_BROWSER_PATH="$(node --input-type=module -e "import {chromium} from 'playwright';console.log(chromium.executablePath())")"
+          node scripts/test-studio-api.mjs
+      - name: Setup interface checks
+        run: node scripts/test-setup-browser.mjs
+      - name: Export into a missing nested folder using Chromium
+        run: |
+          export FRAMEVOLVE_BROWSER_PATH="$(node --input-type=module -e "import {chromium} from 'playwright';console.log(chromium.executablePath())")"
+          node scripts/cli.mjs preview --snapshot demo/pop-motion.project.json --start 0 --end 0.1 --width 320 --height 180 --temporal-samples 1 --sound off --out outputs/fresh/nested/pop.mp4
+          node scripts/cli.mjs verify --out outputs/fresh/nested/pop.mp4 --time 0
+      - name: Preserve test evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: mac-setup-evidence
+          path: outputs/

@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+import {browserLaunchOptions} from './browser-runtime.mjs';
 // Optional still renderer. Dependencies stay outside the main application tree.
 import { createServer } from 'vite';
 import { chromium } from 'playwright';
@@ -63,7 +64,7 @@ try {
   });
   await server.listen();
   browser = await chromium.launch({
-    executablePath: process.env.CHROME_PATH ?? '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome',
+    ...await browserLaunchOptions(),
     headless: true,
   });
   const page = await browser.newPage();

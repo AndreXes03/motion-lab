@@ -62,20 +62,31 @@ An optional [path-traced still experiment](docs/PHOTOREALISM.md) studies PULSE m
 
 ## Run Framevolve locally
 
-The current setup is tested on macOS with Node.js 22.12 or newer and Google Chrome. Internet access is needed for the first installation.
+**On Mac, start with the [guided setup](docs/MAC_SETUP.md).** Download and unzip the project, put the folder somewhere you want to keep it, then double-click **Setup Framevolve.command**.
+
+On one screen, optionally choose your agent and click **Set up & open Framevolve**. Setup uses existing **Chrome** or installs **Chromium** automatically, then opens the working PLAY.EXE demo. Manual browser choices are in **Advanced options**; optional agent sign-in comes afterward via **Create with AI**. Setup prepares missing dependencies, checks local rendering and creates a Framevolve shortcut in your user Applications folder. No Homebrew or administrator password is needed. Internet access is needed for the first installation. This source download is not a signed/notarized app installer; see the guide if macOS asks you to approve opening it.
+
+For agent-assisted creation, we recommend capable coding models such as **Sol, Astra, Opus, Fable or equivalents**, where available. Framevolve does not require a specific model or subscription plan. Your chosen provider manages access and any usage costs. You can preview, edit and export existing scenes without an agent.
+
+For an existing Node.js 22.12+ installation:
 
 ```sh
 git clone https://github.com/AndreXes03/motion-lab.git
 cd motion-lab
-npm ci
-npm run studio
+npm run setup
 ```
 
-Open <http://127.0.0.1:4173/>. `npm run studio` checks official `origin/main` on every launch and applies only fast-forward updates. Local edits and work branches are preserved; offline launches use the installed copy. Downloaded ZIP copies also launch, but automatic updates require a Git clone. Use `npm run viewer` for a developer preview without an update check.
+To watch your agent work, ask it to use the [live-review workflow](docs/LIVE_STUDIO.md): Studio updates after each coherent change and shows the feedback checklist. An integrated browser can be used on request when the agent session provides one.
 
-On macOS, `node scripts/install-mac-launcher.mjs` creates a Framevolve app in your Applications folder. Its icon launches the same updater and Studio. See [editing and launch behavior](docs/FLUID_EDITING.md).
+After setup, launch the app shortcut or run `npm run studio`. Studio opens at <http://127.0.0.1:4173/>. The launcher checks official `origin/main` on every launch and applies only fast-forward updates. Local edits and work branches are preserved; offline launches use the installed copy. ZIP copies also launch; automatic updates require a Git clone.
 
-Video renders go to Downloads. Windows and Linux have not been validated. Read [usage and export details](docs/USAGE.md) and [supported setup](docs/VALIDATION.md).
+Try the bundled recipe, [`demo/pop-motion.project.json`](demo/pop-motion.project.json):
+
+```sh
+npm run preview -- --snapshot demo/pop-motion.project.json --start 0 --end 1 --width 640 --height 360 --temporal-samples 1 --out renders/first-preview.mp4
+```
+
+Output directories are created automatically. Studio video renders go to Downloads. Windows and Linux have not been validated. Read [usage and export details](docs/USAGE.md) and [supported setup](docs/VALIDATION.md).
 
 ## Project guides
 
@@ -91,3 +102,7 @@ Video renders go to Downloads. Windows and Linux have not been validated. Read [
 | Licenses | [Third-party assets](THIRD_PARTY.md) |
 
 Created and owned by Andrea Salvo. New Studio interface/editing tools, plugins and installation/update features are covered by the proprietary [Framevolve Free Use License](LICENSE): free personal and professional use, including selling your own rendered work; resale, paid software hosting and commercial repackaging require written permission. Earlier MIT grants remain valid for previously published code; see [licensing details](docs/LICENSING.md). Demo trademarks and third-party assets retain their respective rights. FFmpeg binaries are not included.
+
+### Optional feedback memory
+
+Mac setup offers an unchecked local feedback-memory option with an explanatory window. Studio lets users review revision examples, record the client's actual response, turn collection off, delete entries and prepare a voluntary report to **framevolve.app@gmail.com**. Nothing is uploaded or sent automatically. [Feedback guidance and memory](docs/FEEDBACK_MEMORY.md).

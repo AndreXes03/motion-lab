@@ -1,19 +1,32 @@
+import { feedbackMemoryPlugin } from './scripts/feedback-memory-server.mjs';
+import { liveStudioPlugin } from './scripts/live-studio-server.mjs';
 import { defineConfig } from 'vite';
 import { readProject, saveLook, ROOT } from './scripts/project-store.mjs';
-import { createStudioApi } from './scripts/studio-api.mjs';
 import { mkdir, writeFile, rm } from 'node:fs/promises';
 import path from 'node:path';
 import { randomUUID } from 'node:crypto';
 
 export default defineConfig({
   resolve: { dedupe: ['three'] },
+  server: { fs: { deny: ['.env', '.env.*', '*.{crt,pem}', '**/.git/**', '**/.motion-cache/**'] } },
   // Experimental renderers have their own dependencies. The Studio must use
   // one Three.js version for both scene matrices and renderer add-ons.
   optimizeDeps: { entries: ['index.html'] },
-  plugins: [{name:'lightweight-public-demo',transformIndexHtml:{order:'pre',handler(html){return process.env.VITE_PUBLIC_DEMO==='true'?html.replace('/src/viewer/main.js','/src/viewer/demo-main.js'):html;}}},{
+  plugins: [feedbackMemoryPlugin(),liveStudioPlugin(),{name:'lightweight-public-demo',transformIndexHtml:{order:'pre',handler(html){return process.env.VITE_PUBLIC_DEMO==='true'?html.replace('/src/viewer/main.js','/src/viewer/demo-main.js'):html;}}},{
     name: 'motion-local-project',
     configureServer(server) {
-      server.middlewares.use('/api', createStudioApi());
+      // Load authored schemas through Vite's module graph, not the config bundle.
+      // Scene/JSON edits can then update without restarting the local server.
+      server.middlewares.use('/api', async (req, res, next) => {
+        try {
+          const { createStudioApi } = await server.ssrLoadModule('/scripts/studio-api.mjs');
+          return await createStudioApi()(req, res, next);
+        } catch (error) {
+          res.statusCode = 503;
+          res.setHeader('Content-Type', 'application/json');
+          res.end(JSON.stringify({ error: 'Project update is not ready: ' + error.message }));
+        }
+      });
       server.middlewares.use('/api', async (req, res, next) => {
         const send = (status, data) => {
           res.statusCode = status;

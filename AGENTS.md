@@ -19,6 +19,10 @@ For new 3D product scenes, start with `src/scenes/product-starter.js` and import
 
 For an optional photorealism still, use `scripts/photoreal.mjs` and `docs/PHOTOREALISM.md`. Install experiment dependencies separately. This path does not replace the film renderer; report its material adaptations and inspect the exported image before publication.
 
+## Live Studio and feedback
+
+For video revisions, feedback lists, or watching an agent work, read and follow [.agents/skills/framevolve-live-review/SKILL.md](.agents/skills/framevolve-live-review/SKILL.md). Keep a numbered To do / In progress / Done / Blocked checklist, publish and inspect one coherent checkpoint per independent feedback item, and keep the same Studio tab/server available. On request, use an integrated browser only when a visible tool is actually available and can reach the local server; otherwise explain the external-browser fallback. Never assume a provider selection supplies a browser. Respect paused live updates, local manual edits and active renders.
+
 ## Required agent selected controls for every scene
 
 Every new or revised scene must ship with real editable controls and an agent-authored tool layout. Treat control selection as part of creating the video: choose the tools that help adjust its actual motion, lens, lights, materials and compositing. Keep the normal workspace focused and put secondary controls in advanced panels. Do not expose every catalog entry indiscriminately or invent unsupported sliders just to increase the count.
@@ -46,3 +50,7 @@ Perspective lens controls must always be paired with real camera distance and su
 ## Ownership and distribution
 
 New Framevolve contributions are proprietary under the root Framevolve Free Use License, including interface/editing, plugin and installation/update work. Free use includes professional work and selling original rendered outputs; resale, commercial repackaging and paid software access require Andrea Salvo's written permission. Do not label current additions MIT or open source. Preserve prior MIT grants in `licenses/legacy/MIT.txt`, as well as all third-party rights and notices. See `docs/LICENSING.md`. The public repository is source-available; do not change repository visibility without an explicit request. The current Uicons acquisition is public npm; a claimed Premium subscription alone is not a recorded Premium download for that sprite. Keep provenance/license files and the existing attribution until its acquisition is verified or replaced.
+
+## Interpret client feedback
+
+Use `.agents/skills/motion-lab-product-film/references/client-feedback.md` for subjective or nontechnical video feedback. Diagnose the viewing problem before choosing effects, preserve approved choices, compare before/after and keep client approval distinct from technical completion. Optional local feedback memory is off by default: check `node scripts/feedback-memory.mjs status`, respect consent, and never send it automatically.
