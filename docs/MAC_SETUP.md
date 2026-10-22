@@ -2,9 +2,9 @@
 
 1. Download and unzip [Framevolve](https://github.com/AndreXes03/motion-lab/archive/refs/heads/main.zip), or use your existing Git clone. Put the folder somewhere you want to keep it.
 2. Double-click **Setup Framevolve.command**. If Node.js is missing or too old, accept the private runtime download. No Homebrew, Git or administrator password is needed for a ZIP installation.
-3. Optionally choose **Codex**, **Claude Code**, or leave **Decide later** selected. Click **Set up & open Framevolve**. Setup detects Chrome; if it is unavailable, it installs Chromium automatically. Dependencies, rendering checks, the app shortcut and opening the PLAY.EXE demo are handled together.
+3. Optionally choose **Codex**, **Claude Code**, or leave **Decide later** selected. On an Apple Silicon Mac, **Native production** is selected by default: setup checks a real local Canvas raster and video encoder without downloading Chromium. Check **Download Rendering Cycles during setup** if you want the optional PULSE and LOOP renderer. Click **Set up & open Framevolve**. Dependencies, rendering checks, the app shortcut and opening the PLAY.EXE demo are handled together.
 
-Everything is on one screen. **Advanced options** lets you explicitly choose Chrome or Chromium, or locate Chrome elsewhere. After Studio opens, **Create with AI** optionally installs/opens the selected official agent in Terminal. Complete sign-in there if requested and send the provided starter prompt. If you already use a desktop/editor agent, open this project folder there instead. You can also choose the agent after installation.
+Everything is on one screen. **Advanced options** lets you choose the legacy browser production path for 3D scenes that have not migrated: setup detects Chrome or downloads Chromium. Studio itself opens in your default browser, including Safari; choosing Native production does not install a rendering browser. After Studio opens, **Create with AI** optionally installs/opens the selected official agent in Terminal. Complete sign-in there if requested and send the provided starter prompt. If you already use a desktop/editor agent, open this project folder there instead. You can also choose the agent after installation.
 
 For best results, we recommend capable coding models such as **Sol, Astra, Opus, Fable or equivalents**, where available. Framevolve does not require a particular model or subscription plan. Provider access and any usage costs are managed by your chosen provider. Previewing, editing and exporting existing scenes does not require an agent. Provider selection is a setup preference; it does not add an embedded chat to Studio.
 
@@ -43,8 +43,10 @@ The setup and installed app now offer **Update / Later** when a compatible updat
 
 ## Optional Rendering Cycles component
 
-Check **Download Rendering Cycles after setup** to add the optional native 3D renderer, or install it later from **Studio → Export → Rendering Cycles**. The base setup remains usable without this component. There is one Framevolve app and one Desktop shortcut; the component has no separate launcher on the Desktop.
+Check **Download Rendering Cycles during setup** to add the optional native 3D renderer. To add it later, reopen setup and expand **Rendering Cycles**, or use **Studio → Export → Rendering Cycles**. The base setup remains usable without this component. There is one Framevolve app and one Desktop shortcut; the component has no separate launcher on the Desktop.
 
-The macOS Apple Silicon preview is precompiled and checksummed. It requires no Blender, terminal commands or compilation. Because it has no Developer ID certificate yet, choose **Authorize in macOS** after download. If macOS blocks the component, use **System Settings → Privacy & Security → Open Anyway**, then return to Framevolve and choose **Check authorization**. Gatekeeper stays enabled. Managed Macs may prohibit this exception.
+The macOS Apple Silicon preview is precompiled and checksummed. It requires no Blender, terminal commands or compilation. Because it has no Apple Developer ID signature or notarization yet, choose **Authorize in macOS** after download. If macOS blocks the component, use **System Settings → Privacy & Security → Open Anyway**, then return to Framevolve and choose **Check authorization**. Gatekeeper stays enabled. Managed Macs may prohibit this exception.
+
+Apple Developer ID signing and notarization are coming soon. Once available, this manual authorization step will no longer be needed. The current preview still requires it; there is no announced release date.
 
 Choose PULSE or LOOP, set **Renderer → Cycles**, then use **Render View** or **Export MP4**. Other scenes/platforms remain unavailable for Cycles; Three.js remains available. The renderer uses ACES SDR and may differ from the interactive preview and the old Blender Filmic output. See [verification and limits](CYCLES_STANDALONE_VALIDATION.md).

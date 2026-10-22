@@ -5,8 +5,6 @@ import {createHash} from 'node:crypto';
 import {access,cp,mkdir,readFile,readdir,writeFile,open,rm,copyFile,symlink,rename} from 'node:fs/promises';
 import path from 'node:path';
 import {fileURLToPath,pathToFileURL} from 'node:url';
-import {createServer} from 'vite';
-import {chromium} from 'playwright';
 import ffmpeg from 'ffmpeg-static';
 import ffprobe from 'ffprobe-static';
 import sharp from 'sharp';
@@ -30,10 +28,23 @@ for(const [signal,code] of [['SIGINT',130],['SIGTERM',143]])process.once(signal,
 async function run(program,args,{cwd=ROOT,env=process.env,onEvent}={}){
  return new Promise((resolve,reject)=>{const child=spawn(program,args,{cwd,env});children.add(child);let stdout='',stderr='',pending='';child.stdout.on('data',d=>{stdout=(stdout+d).slice(-64000);pending+=d;const lines=pending.split('\n');pending=lines.pop();for(const line of lines){if(line.startsWith('MOTION_CYCLES ')){try{onEvent?.(JSON.parse(line.slice(14)));}catch(e){child.kill('SIGTERM');reject(e);}}}});child.stderr.on('data',d=>{stderr=(stderr+d).slice(-64000);});child.on('error',reject);child.on('close',code=>{children.delete(child);if(code!==0||interrupted||/ERROR:|Unknown (shader|input socket|output socket)/.test(stderr))reject(Error(stderr.slice(-4000)||stdout.slice(-4000)||'Process stopped'));else resolve(stdout);});});
 }
-async function sourceDigest(directory){const chunks=[];async function visit(relative){for(const entry of (await readdir(path.join(directory,relative),{withFileTypes:true})).sort((a,b)=>a.name.localeCompare(b.name))){const name=path.join(relative,entry.name);if(entry.isDirectory())await visit(name);else if(!entry.isSymbolicLink())chunks.push(name,await readFile(path.join(directory,name)));}}for(const folder of ['src','project','public','scripts/cycles','native/cycles'])if(await exists(path.join(directory,folder)))await visit(folder);for(const name of ['scripts/cycles.mjs','scripts/browser-runtime.mjs','package-lock.json'])chunks.push(name,await readFile(path.join(directory,name)));return hash(Buffer.concat(chunks.map(x=>typeof x==='string'?Buffer.from(x):x)));}
-async function freeze(destination){await mkdir(destination,{recursive:true});for(const folder of ['src','project','public','scripts/cycles','native/cycles'])if(await exists(path.join(ROOT,folder)))await cp(path.join(ROOT,folder),path.join(destination,folder),{recursive:true});for(const file of ['package.json','package-lock.json','scripts/cycles.mjs','scripts/browser-runtime.mjs'])await copyFile(path.join(ROOT,file),path.join(destination,file));await symlink(path.join(ROOT,'node_modules'),path.join(destination,'node_modules'),'dir');await writeFile(path.join(destination,'cycles-bake.html'),'<!doctype html><meta charset="utf-8"><title>Motion Lab Cycles bake</title>');}
+async function sourceDigest(directory){const chunks=[];async function visit(relative){for(const entry of (await readdir(path.join(directory,relative),{withFileTypes:true})).sort((a,b)=>a.name.localeCompare(b.name))){const name=path.join(relative,entry.name);if(entry.isDirectory())await visit(name);else if(!entry.isSymbolicLink())chunks.push(name,await readFile(path.join(directory,name)));}}for(const folder of ['src','project','public','scripts/cycles','scripts/native','native/cycles'])if(await exists(path.join(directory,folder)))await visit(folder);for(const name of ['scripts/cycles.mjs','scripts/browser-runtime.mjs','package-lock.json'])chunks.push(name,await readFile(path.join(directory,name)));return hash(Buffer.concat(chunks.map(x=>typeof x==='string'?Buffer.from(x):x)));}
+async function freeze(destination){await mkdir(destination,{recursive:true});for(const folder of ['src','project','public','scripts/cycles','scripts/native','native/cycles'])if(await exists(path.join(ROOT,folder)))await cp(path.join(ROOT,folder),path.join(destination,folder),{recursive:true});for(const file of ['package.json','package-lock.json','scripts/cycles.mjs','scripts/browser-runtime.mjs'])await copyFile(path.join(ROOT,file),path.join(destination,file));await symlink(path.join(ROOT,'node_modules'),path.join(destination,'node_modules'),'dir');await writeFile(path.join(destination,'cycles-bake.html'),'<!doctype html><meta charset="utf-8"><title>Motion Lab Cycles bake</title>');}
 async function bake(directory,frozen,options){
  for(const folder of ['baked','frames','geometries'])await mkdir(path.join(directory,folder),{recursive:true});
+ if(options.backend==='standalone'){
+  const {bakeNativeScene}=await import(pathToFileURL(path.join(frozen,'scripts/cycles/bake-native.mjs')).href);
+  const report=await bakeNativeScene(options,{directory,reportBake:value=>emit('progress',value)});
+  if(options.command!=='frame'&&!options.audio&&options.parameters.sound?.enabled){
+   const {sceneConfig,sceneRegistry}=await import(pathToFileURL(path.join(frozen,'src/scene-registry.js')).href);
+   const duration=sceneConfig(options.scene).duration,rate=60;
+   // Exact existing PULSE/LOOP runtime telemetry: authored cuts and no object sound tracks.
+   const frames=Array.from({length:Math.ceil(duration*rate)+1},(_,i)=>({time:Math.min(duration,i/rate),camera:{position:[0,0,0],quaternion:[0,0,0,1]},objects:{}}));
+   await writeFile(path.join(directory,'sound-telemetry.json'),JSON.stringify({duration,rate,frames,cuts:sceneRegistry[options.scene].cuts}));
+  }
+  return report;
+ }
+ const {createServer}=await import('vite'),{chromium}=await import('playwright');
  server=await createServer({root:frozen,configFile:false,cacheDir:path.join(directory,'vite-cache'),server:{host:'127.0.0.1',port:0,hmr:false,watch:null},logLevel:'error'});await server.listen();
  browser=await chromium.launch({...await browserLaunchOptions(),headless:true});const page=await browser.newPage();const errors=[];page.on('pageerror',e=>errors.push(e.message));
  await page.exposeFunction('saveBake',async(name,contents)=>{if(!/^(scene\.json|export-report\.json|baked\/snapshot_\d{4,}\.json|geometries\/\d+\.json)$/.test(name))throw Error('Unexpected bake path');await writeFile(path.join(directory,name),contents);});

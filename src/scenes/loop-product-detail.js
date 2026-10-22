@@ -1,3 +1,4 @@
+import {createSceneCanvas} from '../engine/scene-canvas.js';
 import * as T from 'three';
 import {acousticClothGeometry,clothProfile,coatingField,coatingNoise,coatingFromField} from './loop-surface.js';
 import {RoundedBoxGeometry} from 'three/addons/geometries/RoundedBoxGeometry.js';
@@ -7,7 +8,7 @@ import {RoundedBoxGeometry} from 'three/addons/geometries/RoundedBoxGeometry.js'
 export function addLoopProductDetail({product,body,face,cone,knob,housing,shell,black,trim,grille,mat,mesh,cylinder,ring}){
   const textures=[];
   function surface(kind,size=512){
-    const c=document.createElement('canvas');c.width=c.height=size;const d=c.getContext('2d'),im=d.createImageData(size,size);
+    const c=createSceneCanvas();c.width=c.height=size;const d=c.getContext('2d'),im=d.createImageData(size,size);
     let seed=1729;const rand=()=>{seed=(1664525*seed+1013904223)>>>0;return seed/4294967296;};
     for(let y=0;y<size;y++)for(let x=0;x<size;x++){
       const noise=rand(),v=kind==='turned'?174+24*Math.sin(Math.hypot(x-size/2,y-size/2)*2.6)+noise*10:kind==='brushed'?178+22*Math.sin(y*2.3)+noise*18:kind==='fibre'?158+36*Math.sin(x*.65)*Math.sin(y*.65)+noise*16:211+noise*39;
@@ -22,7 +23,7 @@ export function addLoopProductDetail({product,body,face,cone,knob,housing,shell,
   trim.normalMap=null;trim.roughnessMap=brush;trim.bumpMap=brush;trim.bumpScale=.00008;trim.roughness=.29;trim.anisotropy=.65;
   // Low-contrast fibres run along each real yarn. Their geometry supplies the
   // weave and open pores; these maps only break up microscopic highlights.
-  const clothCanvas=document.createElement('canvas'),heightCanvas=document.createElement('canvas');
+  const clothCanvas=createSceneCanvas(),heightCanvas=createSceneCanvas();
   clothCanvas.width=clothCanvas.height=heightCanvas.width=heightCanvas.height=1024;
   const clothContext=clothCanvas.getContext('2d'),heightContext=heightCanvas.getContext('2d');
   const clothImage=clothContext.createImageData(1024,1024),heightImage=heightContext.createImageData(1024,1024);
@@ -168,7 +169,7 @@ export function addLoopProductDetail({product,body,face,cone,knob,housing,shell,
   cable('loop.cable.driver-positive',wireOrange,.009,board,[.67,-.35,-.07],coil,[.31,-.12,.05],[.62,-.38,.06]);
   cable('loop.cable.driver-ground',wireBlack,.010,board,[.61,-.44,-.07],coil,[.28,-.21,.05],[.65,-.39,.06]);
   for(let i=0;i<3;i++)cable('loop.cable.data-'+i,wireBlack,.0065,board,[-.70,.28+i*.028,-.07],power,[.38,-.40+i*.028,.04],[-.28,-.32,.035]);
-  const labelCanvas=document.createElement('canvas');labelCanvas.width=512;labelCanvas.height=128;const lc=labelCanvas.getContext('2d');lc.fillStyle='#b4bfc2';lc.font='500 20px monospace';lc.fillText('LOOP — S1 / 014',18,34);lc.font='12px monospace';lc.fillText('MODULAR ACOUSTIC SYSTEM',18,61);for(let i=0;i<36;i++)lc.fillRect(20+i*4,80,i%3===0?2:1,22);
+  const labelCanvas=createSceneCanvas();labelCanvas.width=512;labelCanvas.height=128;const lc=labelCanvas.getContext('2d');lc.fillStyle='#b4bfc2';lc.font='500 20px monospace';lc.fillText('LOOP — S1 / 014',18,34);lc.font='12px monospace';lc.fillText('MODULAR ACOUSTIC SYSTEM',18,61);for(let i=0;i<36;i++)lc.fillRect(20+i*4,80,i%3===0?2:1,22);
   const labelTex=new T.CanvasTexture(labelCanvas);labelTex.colorSpace=T.SRGBColorSpace;textures.push(labelTex);const labelMat=mat('satinPlastic',{map:labelTex,transparent:true,roughness:.7,depthWrite:false});const plaque=mesh(new T.PlaneGeometry(.61,.153),labelMat,body);plaque.rotation.y=Math.PI;plaque.position.set(-.12,.72,-.342);
   // UV-attached paint film: tiny relief follows the exact colour boundary.
   const coating=createCoating({housing,shell,textures});
@@ -197,7 +198,7 @@ export function addLoopProductDetail({product,body,face,cone,knob,housing,shell,
 }
 
 function createCoating({housing,shell,textures}){
-  const size=384,canvas=document.createElement('canvas'),roughCanvas=document.createElement('canvas'),bumpCanvas=document.createElement('canvas');
+  const size=384,canvas=createSceneCanvas(),roughCanvas=createSceneCanvas(),bumpCanvas=createSceneCanvas();
   canvas.width=canvas.height=roughCanvas.width=roughCanvas.height=bumpCanvas.width=bumpCanvas.height=size;
   const ctx=canvas.getContext('2d'),rc=roughCanvas.getContext('2d'),bc=bumpCanvas.getContext('2d'),pixels=ctx.createImageData(size,size),rough=rc.createImageData(size,size),bump=bc.createImageData(size,size);
   const colorMap=new T.CanvasTexture(canvas);colorMap.colorSpace=T.SRGBColorSpace;

@@ -41,6 +41,10 @@ test('saved Chrome preference fails with recovery if moved, rather than silently
   await writeFile(path.join(f.root, '.motion-cache/setup.json'), '{bad');
   await assert.rejects(readSetup(f.root), /repair/);
 });
+test('native setup keeps legacy browser requirement explicit', async t => {
+  const f = await fixture(t);
+  await assert.rejects(resolveBrowser({ ...f, settings: { browser: { kind: 'native' } } }), /still needs a rendering browser/);
+});
 test('documented quick-start recipe exists and parses', async () => {
   const recipe = JSON.parse(await readFile(new URL('../demo/pop-motion.project.json', import.meta.url), 'utf8'));
   assert.equal(recipe.parameters.scene, 'pop');

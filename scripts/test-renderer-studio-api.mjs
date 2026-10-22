@@ -7,13 +7,14 @@ import path from 'node:path';
 import sharp from 'sharp';
 import {createStudioApi,validateStudioParameters} from './studio-api.mjs';
 import {ROOT} from './project-store.mjs';
-const caps={threejs:{available:true},cycles:{available:true,scenes:['pulse'],device:'METAL',devices:[{type:'METAL'}]},mixed:{available:false}};
+const caps={threejs:{available:true},skia:{available:true,scenes:['procedural'],device:'CPU'},cycles:{available:true,scenes:['pulse'],device:'METAL',devices:[{type:'METAL'}]},mixed:{available:false}};
 const calls=[],files=[],jobs=[];
 const api=createStudioApi({capabilitiesFn:async()=>caps,spawnFn:(command,args,options)=>{
  const child=new EventEmitter();child.stdout=new PassThrough();child.stderr=new PassThrough();child.pid=process.pid;
  calls.push({command,args,options});
  setTimeout(async()=>{try{
   const out=args[args.indexOf('--out')+1],snapshot=args[args.indexOf('--snapshot')+1];files.push(out,snapshot);await mkdir(path.dirname(out),{recursive:true});await writeFile(out,await sharp({create:{width:64,height:64,channels:3,background:'#ff4422'}}).png().toBuffer());
+  child.stdout.write(JSON.stringify(args.includes('--backend')?{type:'ready',engine:'skia',device:'CPU'}:{type:'ready',backend:'cycles-standalone',device:'METAL',deviceName:'Fixture Metal'})+'\n');
   child.stdout.write(JSON.stringify({type:'frame',frame:1,frames:1,total:1,percent:90})+'\n');child.emit('close',0);
  }catch(error){child.stderr.write(error.message);child.emit('close',1);}},25);
  return child;
@@ -32,11 +33,15 @@ try{
  response=await request('/render',{kind:'export',parameters:recipe,settings:{format:'webm'}});assert.equal(response.status,400);assert.match((await response.json()).error,/MP4/);
  response=await request('/render',{kind:'frame',time:9.23,parameters:recipe,settings:{width:64,height:64,temporalSamples:1}});assert.equal(response.status,202);const {id}=await response.json();jobs.push(id);
  let job;for(let i=0;i<60;i++){job=await (await request('/jobs/'+id)).json();if(job.status!=='running')break;await new Promise(r=>setTimeout(r,30));}
- assert.equal(job.status,'completed',job.error);assert.equal(job.engine,'cycles');files.push(job.outputPath,path.join(ROOT,'renders/studio',id+'.png.job.json'));
+ assert.equal(job.status,'completed',job.error);assert.equal(job.engine,'cycles');assert.equal(job.backend,'cycles-standalone');assert.equal(job.device,'METAL');files.push(job.outputPath,path.join(ROOT,'renders/studio',id+'.png.job.json'));
  const invocation=calls[0];assert.equal(path.basename(invocation.args[0]),'cycles.mjs');assert.equal(invocation.args[invocation.args.indexOf('--samples')+1],'16');assert.equal(invocation.args[invocation.args.indexOf('--denoise')+1],'off');assert.equal(invocation.args[invocation.args.indexOf('--motion-blur')+1],'off');assert.equal(invocation.options.shell,false);
  const frozen=JSON.parse(await readFile(invocation.args[invocation.args.indexOf('--snapshot')+1],'utf8'));assert.deepEqual(frozen.parameters.animation,recipe.animation);assert.equal(frozen.time,9.23);assert.equal(frozen.parameters.sceneControls.keyLight,1.25);assert.equal(frozen.parameters.previewQuality,undefined);
  response=await request('/jobs/'+id+'/preview');assert.equal(response.status,200);assert.equal(response.headers.get('content-type'),'image/png');
  const record=JSON.parse(await readFile(path.join(ROOT,'renders/studio',id+'.png.job.json'),'utf8'));assert.equal(record.engine,'cycles');assert.equal(record.parameters.renderPolicy.cycles.samples,16);
+ response=await request('/render',{kind:'frame',time:0,parameters:{scene:'procedural',renderPolicy:{renderer:'skia',source:'user'}},settings:{width:64,height:64}});assert.equal(response.status,202);const skiaId=(await response.json()).id;jobs.push(skiaId);
+ let skiaJob;for(let i=0;i<60;i++){skiaJob=await (await request('/jobs/'+skiaId)).json();if(skiaJob.status!=='running')break;await new Promise(r=>setTimeout(r,30));}
+ assert.equal(skiaJob.status,'completed',skiaJob.error);assert.equal(skiaJob.engine,'skia');assert.equal(skiaJob.backend,'skia');assert.equal(skiaJob.device,'CPU');files.push(skiaJob.outputPath,path.join(ROOT,'renders/studio',skiaId+'.png.job.json'));
+ const nativeCall=calls[1];assert.equal(nativeCall.args[nativeCall.args.indexOf('--backend')+1],'native');assert.equal(nativeCall.options.shell,false);
  console.log(JSON.stringify({passed:true,capabilities:true,unsupportedBlocked:true,formatBlocked:true,cyclesDispatch:true,recipePreserved:true,pngDownload:true}));
 }finally{
  await new Promise(resolve=>server.close(resolve));for(const file of new Set(files))await rm(file,{force:true});

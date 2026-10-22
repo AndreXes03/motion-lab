@@ -1,3 +1,4 @@
+import {createSceneCanvas} from '../engine/scene-canvas.js';
 import * as T from 'three';
 import {createProductStage, createRotaryControl} from '../product-kit/index.js';
 import {addLoopProductDetail} from './loop-product-detail.js';
@@ -163,7 +164,7 @@ function glassPanelAt(t){
 }
 export const loopGlassPanelAt=time=>glassPanelAt(storyTime(time));
 function rollingNumber(ctx,value,x,y,size){
-  const low=Math.floor(value),fraction=value-low,step=size*1.15,c=document.createElement('canvas');c.width=Math.ceil(size*1.8);c.height=Math.ceil(size*1.12);const d=c.getContext('2d');
+  const low=Math.floor(value),fraction=value-low,step=size*1.15,c=createSceneCanvas();c.width=Math.ceil(size*1.8);c.height=Math.ceil(size*1.12);const d=c.getContext('2d');
   type(d,String(low),0,size+fraction*step,size,'#fff',500);type(d,String(low+1),0,size-(1-fraction)*step,size,'#fff',500);
   d.globalCompositeOperation='destination-in';const fade=d.createLinearGradient(0,0,0,c.height);fade.addColorStop(0,'#ffffff00');fade.addColorStop(.15,'#fff');fade.addColorStop(.86,'#fff');fade.addColorStop(1,'#ffffff00');d.fillStyle=fade;d.fillRect(0,0,c.width,c.height);ctx.drawImage(c,x,y-size);
 }
@@ -201,7 +202,7 @@ export function renderLoopGraphics(ctx,time,p={},w=1920,h=1080){
 export function createLoopLaunch({rendererFactory=()=>new T.WebGLRenderer({alpha:true,antialias:true,preserveDrawingBuffer:true,powerPreference:'high-performance'}),stageFactory=createProductStage}={}){
   const renderer=rendererFactory();renderer.setPixelRatio(1);
   const stage=stageFactory(renderer,{background:C.purple,colors:{satinPlastic:C.orange},lighting:{keyStrength:1.5,fillIntensity:.09,environmentIntensity:.16,rimStrength:.8},look:{dofEnabled:false,aoIntensity:.18,bloomStrength:.045,bloomThreshold:2,aberrationPx:0,vignette:.04,lensDistortion:0}});
-  const {scene,camera}=stage,geometries=[],materials=[],parts=[];scene.background=null;renderer.setClearColor(0x000000,0);const backdrop=document.createElement('canvas');backdrop.width=960;backdrop.height=540;const bgctx=backdrop.getContext('2d');
+  const {scene,camera}=stage,geometries=[],materials=[],parts=[];scene.background=null;renderer.setClearColor(0x000000,0);const backdrop=createSceneCanvas();backdrop.width=960;backdrop.height=540;const bgctx=backdrop.getContext('2d');
   const mat=(name,options)=>{const m=stage.kit.variant(name,options);materials.push(m);return m;};
   const shell=mat('satinPlastic',{color:'#f75b12',roughness:.095,metalness:0,clearcoat:1,clearcoatRoughness:.045,normalScale:new T.Vector2(0,0)});
   const black=mat('rubber',{color:'#15121c',roughness:.7,normalScale:new T.Vector2(.08,.08)});
@@ -228,7 +229,7 @@ export function createLoopLaunch({rendererFactory=()=>new T.WebGLRenderer({alpha
   const face=new T.Group();face.name='loop.grille';product.add(face);ring(1.145,.010,.425,black,face);
   // The scene-owned detail module adds the fine woven acoustic membrane.
   const badge=mesh(new T.CapsuleGeometry(.052,.14,4,24),trim,face);badge.rotation.z=Math.PI/2;badge.scale.z=.12;badge.position.set(0,-.69,.445);
-  const iconCanvas=document.createElement('canvas');iconCanvas.width=256;iconCanvas.height=256;const ic=iconCanvas.getContext('2d');mark(ic,128,128,170,'#f1f4f8');const iconTexture=new T.CanvasTexture(iconCanvas);iconTexture.colorSpace=T.SRGBColorSpace;
+  const iconCanvas=createSceneCanvas();iconCanvas.width=256;iconCanvas.height=256;const ic=iconCanvas.getContext('2d');mark(ic,128,128,170,'#f1f4f8');const iconTexture=new T.CanvasTexture(iconCanvas);iconTexture.colorSpace=T.SRGBColorSpace;
   const iconMat=new T.MeshStandardMaterial({map:iconTexture,transparent:true,depthWrite:false,roughness:.6});materials.push(iconMat);const icon=mesh(new T.PlaneGeometry(.085,.085),iconMat,face);icon.position.set(0,-.69,.452);
   stage.kit.materials.brushedMetal.roughness=.23;stage.kit.materials.brushedMetal.normalScale.set(.035,.035);
   stage.kit.materials.satinPlastic.roughness=.28;stage.kit.materials.satinPlastic.clearcoat=.24;stage.kit.materials.satinPlastic.clearcoatRoughness=.2;

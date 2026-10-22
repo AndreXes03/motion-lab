@@ -6,7 +6,7 @@ import path from 'node:path';
 import os from 'node:os';
 import http from 'node:http';
 import { ROOT } from './browser-runtime.mjs';
-import { authScript, ensureLauncher, startSetup } from './setup-mac.mjs';
+import { authScript, ensureLauncher, nativeProductionSupported, startSetup } from './setup-mac.mjs';
 
 test('agent command quotes spaces, apostrophes and shell metacharacters', async t => {
   const root = await mkdtemp(path.join(os.tmpdir(), 'framevolve-agent-'));
@@ -35,10 +35,11 @@ test('local setup API enforces token, host, origin and provider allowlist; retry
   t.after(async () => { if (setup) await new Promise(resolve => setup.server.close(resolve)); await rm(root, { recursive: true, force: true }); });
   await writeFile(path.join(root, 'package.json'), '{"name":"motion-lab","type":"module"}');
   await symlink(path.join(ROOT, 'node_modules'), path.join(root, 'node_modules'), 'dir');
-  let failInstall = true, launched = 0, downloads = 0, browserChecks = 0;
+  let failInstall = true, launched = 0, downloads = 0, browserChecks = 0, nativeChecks = 0;
   setup = await startSetup({ root, open: false, operations: {
     findChrome: async () => null,
     verifyBrowser: async ({browser}) => { assert.ok(['chrome','chromium'].includes(browser.kind)); browserChecks++; },
+    verifyNative: async checkRoot => { assert.equal(checkRoot, root); nativeChecks++; },
     run: async (command, args) => { if (args.includes('install')) { downloads++; if (failInstall) throw Error('Simulated interrupted download'); } },
     installLauncher: async () => {}, launch: async () => { launched++; return { url: 'http://127.0.0.1:4173/' }; }, openStudio: async () => {}
   } });
@@ -84,7 +85,13 @@ test('local setup API enforces token, host, origin and provider allowlist; retry
   await wait(); assert.equal(setup.state.error, ''); assert.equal(setup.state.browser, 'chromium');
   assert.equal(downloads, 3, 'explicit Chromium overrides detected Chrome');
   assert.equal(browserChecks, 3, 'each successful setup checks its selected browser');
-  assert.equal((await post('finish')).status, 200); await wait(); assert.equal(launched, 4);
+  if (nativeProductionSupported()) {
+    assert.equal((await post('install', { provider: 'other', browser: 'native' })).status, 200);
+    await wait(); assert.equal(setup.state.browser, 'native'); assert.equal(nativeChecks, 1);
+    assert.equal(downloads, 3, 'native production does not download a rendering browser');
+    assert.equal(browserChecks, 3, 'native production does not probe a rendering browser');
+  } else assert.equal((await post('install', { provider: 'other', browser: 'native' })).status, 400);
+  assert.equal((await post('finish')).status, 200); await wait(); assert.equal(launched, nativeProductionSupported() ? 5 : 4);
   assert.equal((await post('provider', { provider: 'codex' })).status, 200, 'optional agent setup remains available after Studio opens');
   assert.equal((await post('close')).status, 200);
 });

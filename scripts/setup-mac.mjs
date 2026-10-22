@@ -20,6 +20,20 @@ export const PROVIDERS = {
   other: { name: 'Another agent / decide later' }
 };
 const runFile = (command, args, options = {}) => new Promise((resolve, reject) => execFile(command, args, { encoding: 'utf8', ...options }, (error, stdout, stderr) => error ? reject(Error(stderr?.trim() || error.message)) : resolve(stdout.trim())));
+export const nativeProductionSupported = (platform = process.platform, arch = process.arch) => platform === 'darwin' && arch === 'arm64';
+export async function verifyNativeProduction(root = ROOT) {
+  if (!nativeProductionSupported()) throw Error('Native production is currently supported only on Apple Silicon Macs. Choose Chrome or Chromium for this computer.');
+  const require = createRequire(path.join(root, 'package.json'));
+  const { Canvas } = require('skia-canvas');
+  const canvas = new Canvas(2, 2), context = canvas.getContext('2d');
+  context.fillStyle = '#25a6d4'; context.fillRect(0, 0, 2, 2);
+  const pixel = context.getImageData(0, 0, 1, 1).data;
+  if (pixel[0] !== 37 || pixel[1] !== 166 || pixel[2] !== 212 || pixel[3] !== 255) throw Error('Native canvas raster check failed. Retry setup.');
+  const png = canvas.toBufferSync('png');
+  if (!png.subarray(0, 8).equals(Buffer.from([137,80,78,71,13,10,26,10]))) throw Error('Native canvas PNG check failed. Retry setup.');
+  await runFile(require('ffmpeg-static'), ['-version']);
+  await runFile(require('ffprobe-static').path, ['-version']);
+}
 export function authScript(root, binary) {
   // Paths are shell quoted. The provider owns authentication; no credentials are read here.
   return `#!/bin/sh\nexport PATH=${quote(path.dirname(process.execPath))}:"$PATH"\ncd ${quote(root)} || exit 1\nprintf '%s\\n' 'Sign in if requested, then ask your agent to read docs/FOUNDER_START.md.'\n${quote(binary)}\nresult=$?\nif [ "$result" -ne 0 ]; then printf '%s\\n' 'Agent closed with an error. Return to Framevolve setup to retry or use the official setup guide.'; fi\nprintf '%s\\n' 'Press Return to close.'\nread answer\nexit "$result"\n`;
@@ -64,7 +78,7 @@ export async function startSetup({ root = ROOT, open = true, operations = {} } =
   const componentManager = operations.componentManager ?? cyclesComponentManager(root);
   const componentStatus = () => componentManager.status().catch(error => ({busy:false,canInstall:false,canUpdate:false,canRemove:false,reason:error.message}));
   const token = randomBytes(32).toString('hex');
-  const state = { feedbackMemory: (await readMemory(root)).consent.enabled, busy: false, stage: 'welcome', message: '', error: '', ready: false, provider: settings.provider ?? 'other', browser: settings.browser?.kind ?? 'auto', chrome: await (operations.findChrome ?? findChrome)(), agent: null, log: '', root, launcherWarning: '', cyclesComponent: await componentStatus() };
+  const state = { feedbackMemory: (await readMemory(root)).consent.enabled, busy: false, stage: 'welcome', message: '', error: '', ready: false, provider: settings.provider ?? 'other', browser: settings.browser?.kind ?? (nativeProductionSupported() ? 'native' : 'auto'), nativeSupported: nativeProductionSupported(), chrome: await (operations.findChrome ?? findChrome)(), agent: null, log: '', root, launcherWarning: '', cyclesComponent: await componentStatus() };
   const env = { ...process.env, PATH: `${path.dirname(process.execPath)}${path.delimiter}${process.env.PATH ?? ''}` };
   const run = operations.run ?? ((command, args) => new Promise((resolve, reject) => {
     const child = spawn(command, args, { cwd: root, env, stdio: ['ignore', 'pipe', 'pipe'] });
@@ -81,14 +95,16 @@ export async function startSetup({ root = ROOT, open = true, operations = {} } =
   };
   const prepare = async body => {
     state.ready = false;
-    if (!['auto', 'chrome', 'chromium'].includes(body.browser)) throw Error('Choose Automatic, Chrome or Chromium.');
+    if (!['native', 'auto', 'chrome', 'chromium'].includes(body.browser) || (body.browser === 'native' && !nativeProductionSupported())) throw Error('Choose a supported production mode for this Mac.');
     const browserChoice = body.browser === 'auto' ? (await executable(chromeExecutable(state.chrome)) ? 'chrome' : 'chromium') : body.browser;
     state.message = 'Preparing Framevolve…';
     // Reuse a complete installation; fresh ZIPs install from the lockfile.
-    try { for (const name of ['vite', 'playwright', 'sharp', 'ffmpeg-static', 'ffprobe-static']) createRequire(path.join(root, 'package.json')).resolve(name); }
+    try { for (const name of ['vite', 'playwright', 'sharp', 'skia-canvas', 'ffmpeg-static', 'ffprobe-static']) createRequire(path.join(root, 'package.json')).resolve(name); }
     catch { await run('npm', ['ci', '--no-audit', '--no-fund']); }
     let browser;
-    if (browserChoice === 'chrome') {
+    if (browserChoice === 'native') {
+      browser = { kind: 'native' };
+    } else if (browserChoice === 'chrome') {
       const file = chromeExecutable(state.chrome);
       if (!await executable(file)) throw Error('Chrome was not found. Choose Locate Chrome, or Install Chromium.');
       browser = { kind: 'chrome', path: file };
@@ -98,16 +114,19 @@ export async function startSetup({ root = ROOT, open = true, operations = {} } =
       await run(process.execPath, [cli, 'install', 'chromium']);
       browser = { kind: 'chromium' };
     }
-    state.message = 'Checking the browser and video encoder…';
-    await (operations.verifyBrowser ?? (async () => {
+    state.message = browserChoice === 'native' ? 'Checking native canvas and video encoder…' : 'Checking the browser and video encoder…';
+    if (browserChoice === 'native') await (operations.verifyNative ?? verifyNativeProduction)(root);
+    else await (operations.verifyBrowser ?? (async () => {
       const selected = await resolveBrowser({ root, settings: { browser }, env: {} });
       const instance = await playwright(root).chromium.launch({ executablePath: selected.executablePath, headless: true });
       try { const page = await instance.newPage(); await page.setContent('<canvas width="8" height="8"></canvas>'); if (!await page.evaluate(() => !!document.querySelector('canvas').getContext('webgl2'))) throw Error('WebGL2 is unavailable. Try another browser or update macOS.'); }
       finally { await instance.close(); }
     }))({browser, root});
-    const require = createRequire(path.join(root, 'package.json'));
-    await run(require('ffmpeg-static'), ['-version']);
-    await run(require('ffprobe-static').path, ['-version']);
+    if (browserChoice !== 'native') {
+      const require = createRequire(path.join(root, 'package.json'));
+      await run(require('ffmpeg-static'), ['-version']);
+      await run(require('ffprobe-static').path, ['-version']);
+    }
     await mkdir(path.join(root, 'renders'), { recursive: true });
     settings = { ...settings, browser, provider: state.provider, completedAt: new Date().toISOString() };
     await saveSetup(settings, root);
@@ -157,7 +176,7 @@ export async function startSetup({ root = ROOT, open = true, operations = {} } =
         });
       } else if (url.pathname === '/api/install') {
         if (!Object.hasOwn(PROVIDERS, body.provider)) return json(400, { error: 'Choose an available agent.' });
-        if (!['auto', 'chrome', 'chromium'].includes(body.browser)) return json(400, { error: 'Choose Automatic, Chrome or Chromium.' });
+        if (!['native', 'auto', 'chrome', 'chromium'].includes(body.browser) || (body.browser === 'native' && !nativeProductionSupported())) return json(400, { error: 'Choose a supported production mode for this Mac.' });
         if (body.feedbackMemory !== undefined && typeof body.feedbackMemory !== 'boolean') return json(400, { error: 'Choose whether to save feedback memory.' });
         if (body.cyclesOptional !== undefined && typeof body.cyclesOptional !== 'boolean') return json(400, { error: 'Choose whether to download Rendering Cycles.' });
         job('install', async () => {

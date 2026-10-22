@@ -1,3 +1,4 @@
+import {createSceneCanvas} from '../engine/scene-canvas.js';
 import * as THREE from 'three';
 import {RoundedBoxGeometry} from 'three/addons/geometries/RoundedBoxGeometry.js';
 import {createPulseHardwareKit,addPulseTileHardware,addCrtHardware,addVinylHardware} from './pulse-hardware-detail.js';
@@ -13,7 +14,7 @@ function roundedPanel(w,h,d,r,m,x=0,y=0,z=0){const shape=new THREE.Shape();shape
  for(const n of wallNormals.values())n.normalize();
  for(let i=0;i<gp.count;i++)if(Math.abs(gn.getZ(i))<.5){const n=wallNormals.get(wallKey(i));gn.setXYZ(i,n.x,n.y,0);}
  geo.translate(0,0,-d/2);const p=geo.attributes.position,uv=geo.attributes.uv;for(let i=0;i<p.count;i++)uv.setXY(i,p.getX(i)/w+.5,p.getY(i)/h+.5);const o=new THREE.Mesh(geo,m);o.position.set(x,y,z);return o;}
-function canvas(w,h){const c=document.createElement('canvas');c.width=w;c.height=h;return[c,c.getContext('2d')];}
+function canvas(w,h){const c=createSceneCanvas();c.width=w;c.height=h;return[c,c.getContext('2d')];}
 function shell(w,h,color){
  const sections=[[w-.06,h-.06,.21,-.34],[w,h,.23,-.27],[w,h,.23,.16],[w-.025,h-.025,.225,.215],[w-.075,h-.075,.205,.263],[w-.13,h-.13,.19,.285],[1.08,1.15,.17,.265],[1.08,1.15,.17,-.34]],n=64,vertices=[],indices=[];
  for(const[ww,hh,r,z]of sections)for(let j=0;j<n;j++){const corner=Math.floor(j/16),a=j/16*Math.PI/2;const cx=[1,-1,-1,1][corner]*(ww/2-r),cy=[1,1,-1,-1][corner]*(hh/2-r);vertices.push(cx+Math.cos(a)*r,cy+Math.sin(a)*r,z);}

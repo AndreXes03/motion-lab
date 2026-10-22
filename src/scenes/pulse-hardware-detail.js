@@ -1,3 +1,4 @@
+import {createSceneCanvas} from '../engine/scene-canvas.js';
 import * as THREE from 'three';
 import {RoundedBoxGeometry} from 'three/addons/geometries/RoundedBoxGeometry.js';
 import {mergeGeometries} from 'three/addons/utils/BufferGeometryUtils.js';
@@ -73,7 +74,7 @@ function compactStaticDetails(root){
 }
 
 function silkLabel(parent,name,text,w,h,p,kit){
-  const canvas=document.createElement('canvas');canvas.width=512;canvas.height=128;
+  const canvas=createSceneCanvas();canvas.width=512;canvas.height=128;
   const ctx=canvas.getContext('2d');ctx.fillStyle='#c2ccbc';ctx.font='500 38px monospace';ctx.textBaseline='middle';ctx.fillText(text,5,64);
   const map=new THREE.CanvasTexture(canvas);map.colorSpace=THREE.SRGBColorSpace;
   const material=new THREE.MeshStandardMaterial({map,transparent:true,depthWrite:false,roughness:.82,metalness:0});

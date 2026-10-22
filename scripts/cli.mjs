@@ -6,7 +6,6 @@ import {sceneConfig,sceneIds} from '../src/scene-registry.js';
 import { createServer } from 'vite';
 import {planSound,renderSound,encodeWav,normalizeSound} from '../src/engine/sound-design.js';
 import { config } from '../src/config.js';
-import { chromium } from 'playwright';
 import ffmpegPath from 'ffmpeg-static';
 import sharp from 'sharp';
 import ffprobe from 'ffprobe-static';
@@ -18,6 +17,7 @@ import { fileURLToPath } from 'node:url';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 let DEFAULT = config;
+const subprocesses=new Set();
 
 function output(type, payload = {}) { process.stdout.write(`${JSON.stringify({ type, ...payload })}\n`); }
 function fail(message, extra = {}) { output('error', { message, ...extra }); process.exitCode = 1; }
@@ -73,6 +73,7 @@ async function openMotion(browser, url, width, height) {
   return page;
 }
 async function renderPng(page, time, width, height, parameters = {}, temporalSamples = 1, fps = DEFAULT.fps, reportSamples = false) {
+  if(page.engine==='skia')return page.renderPng(time,width,height,parameters,temporalSamples,fps,reportSamples?event=>output('progress',event):undefined);
   const dataUrl = await page.evaluate(async ({ time, width, height, parameters, temporalSamples, fps, duration, reportSamples }) => {
     const canvas = document.querySelector('#renderCanvas');
     if (!canvas) throw new Error('#renderCanvas disappeared');
@@ -119,7 +120,7 @@ async function writeProgressJpeg(page, png, target) {
 }
 function run(bin, args) {
   return new Promise((resolve, reject) => {
-    const child = spawn(bin, args, { stdio: ['ignore', 'ignore', 'pipe'] }); let err = '';
+    const child = spawn(bin, args, { stdio: ['ignore', 'ignore', 'pipe'] });subprocesses.add(child);child.on('close',()=>subprocesses.delete(child)); let err = '';
     child.stderr.on('data', d => { err += d.toString(); });
     child.on('error', reject);
     child.on('close', code => code === 0 ? resolve() : reject(new Error(`${path.basename(bin)} exited ${code}: ${err.trim()}`)));
@@ -129,7 +130,7 @@ async function exportVideo(page, target, width, height, parameters, start, end, 
   // Progress JPEGs are written before encoding, including the very first frame.
   await mkdir(path.dirname(target), { recursive: true });
   const cache = await openFrameCache(ROOT, {source:cacheOptions.resume?await sourceFingerprint(ROOT):null,
-    width,height,parameters,start,end,temporalSamples,fps,browser:page.context().browser().version()},cacheOptions);
+    width,height,parameters,start,end,temporalSamples,fps,browser:page.engine==='skia'?page.version:page.context().browser().version()},cacheOptions);
   const frameDir = cache.directory;
   const total = Math.round((end - start) * fps);
   const previewPath = `${target}.progress.jpg`;
@@ -150,7 +151,7 @@ async function exportVideo(page, target, width, height, parameters, start, end, 
     output('progress', { phase: 'encoding', frames: total, total, percent: 99 });
     let audioPath=null;
     if(parameters.sound?.enabled){
-      const telemetry=await page.evaluate(p=>window.motion.sampleMotion(p),parameters);
+      const telemetry=page.engine==='skia'?page.sampleMotion():await page.evaluate(p=>window.motion.sampleMotion(p),parameters);
       const result=renderSound(planSound(telemetry,parameters.sound));
       const channels=result.channels.map(c=>c.slice(Math.round(start*result.sampleRate),Math.round(end*result.sampleRate)));
       audioPath=path.join(frameDir,'sound.wav');await writeFile(audioPath,encodeWav(channels,result.sampleRate));
@@ -167,6 +168,7 @@ async function contactSheet(page, target, samples, width, height, parameters, fp
     const time = DEFAULT.duration * i / Math.max(1, samples - 1);
     shots.push({ time, png: (await renderPng(page, time, width, height, parameters, 1, fps)).toString('base64') });
   }
+  if(page.engine==='skia'){await writeImage(await page.contactSheet({shots,cellW,cellH,cols,rows}),target);return;}
   const data = await page.evaluate(async ({ shots, cellW, cellH, cols, rows }) => {
     const c = document.createElement('canvas'); c.width = cols * cellW; c.height = rows * (cellH + 28);
     const ctx = c.getContext('2d'); ctx.fillStyle = '#111'; ctx.fillRect(0, 0, c.width, c.height);
@@ -198,6 +200,7 @@ async function readSnapshot(file,optional=false){
 }
 async function main() {
   const { command, opts, parameters: explicitParameters } = parseArgs(process.argv.slice(2));
+  if(command!=='viewer')for(const signal of ['SIGTERM','SIGINT'])process.once(signal,()=>{for(const child of subprocesses)child.kill(signal);process.exit(signal==='SIGINT'?130:143);});
   if (opts.help || command === 'help' || !command) return help();
   if (!['viewer', 'frame', 'contact', 'preview', 'export', 'verify'].includes(command)) throw new Error(`Unknown command: ${command}`);
   for (const key of ['resume','keep-frames']) if (opts[key] !== undefined && !['on','off'].includes(opts[key])) throw Error('--'+key+' must be on or off');
@@ -238,13 +241,18 @@ async function main() {
     if(!parameters.motion)parameters.motion=JSON.parse(await readFile(path.join(ROOT,'project/motion.json'),'utf8'));
   }
   if(['preview','export'].includes(command))await checkEncoder(format);
-  const saveSnapshot=async()=>{if(target&&command!=='verify'&&command!=='viewer')await writeFile(target+'.project.json',JSON.stringify({schemaVersion:2,command,config:{...DEFAULT,width,height,fps},parameters,width,height,fps,format,bitrateMbps,settings:{width,height,fps,format,bitrateMbps,temporalSamples},start,end,time,samples,temporalSamples,createdAt:new Date().toISOString()},null,2));};
-  const { server, url } = await startVite(command === 'viewer' ? 4173 : 0);
-  let browser;
+  const saveSnapshot=async()=>{if(target&&command!=='verify'&&command!=='viewer')await writeFile(target+'.project.json',JSON.stringify({schemaVersion:2,production:{version:1,backend:native?'native':'browser-reference',renderer:native?'skia':'threejs'},command,config:{...DEFAULT,width,height,fps},parameters,width,height,fps,format,bitrateMbps,settings:{width,height,fps,format,bitrateMbps,temporalSamples},start,end,time,samples,temporalSamples,createdAt:new Date().toISOString()},null,2));};
+  const requestedBackend=opts.backend??saved.production?.backend;
+  const native=parameters.scene==='procedural'&&command!=='viewer'&&requestedBackend!=='browser-reference';
+  if(opts.backend&&!['native','browser-reference'].includes(opts.backend))throw Error('Unknown --backend');
+  if(opts.backend==='native'&&!native)throw Error('No native 2D adapter for this scene');
+  let server,browser,url,page;
   try {
+    if(native){page=(await import('./native/renderer.mjs')).createNativeRenderer(parameters);}
+    else {({server,url}=await startVite(command==='viewer'?4173:0));const {chromium}=await import('playwright');
     browser = await chromium.launch({ ...await browserLaunchOptions(), headless: command !== 'viewer', args: ['--disable-gpu-sandbox'] });
-    const page = await openMotion(browser, command==='viewer'?url+'?scene='+(parameters.scene||'objects')+(opts.sound?'&sound='+opts.sound:''):url+'?render=1&scene='+parameters.scene, width, height);
-    output('ready', { command, url, width, height, start, end, temporalSamples, config: await page.evaluate(() => window.motion.config ?? null) });
+    page = await openMotion(browser, command==='viewer'?url+'?scene='+(parameters.scene||'objects')+(opts.sound?'&sound='+opts.sound:''):url+'?render=1&scene='+parameters.scene, width, height);}
+    output('ready', { command, url, width, height, start, end, temporalSamples, engine:native?'skia':'threejs',device:native?'CPU':undefined,config:native?page.config:await page.evaluate(() => window.motion.config ?? null) });
     if (command === 'viewer') {
       await new Promise(resolve => { browser.on('disconnected', resolve); process.on('SIGINT', resolve); process.on('SIGTERM', resolve); });
     } else if (command === 'frame') {
@@ -299,6 +307,6 @@ async function main() {
       if (!valid) process.exitCode = 2;
     }
     await saveSnapshot();
-  } finally { await browser?.close().catch(() => {}); await server.close(); }
+  } finally { await browser?.close().catch(() => {}); if(native)await page?.close(); await server?.close(); }
 }
 main().catch(e => fail(e.message));

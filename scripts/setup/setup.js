@@ -15,14 +15,18 @@ function render(data) {
   const busy = state.busy || pending, ready = state.ready && !selectionChanged;
   document.querySelectorAll('button,input,select').forEach(el => { el.disabled = busy || disconnected; });
   const cycles = state.cyclesComponent ?? {};
+  if ((cycles.busy || cycles.pendingAuthorization || cycles.error) && !$('cycles-component').open) $('cycles-component').open = true;
+  $('cycles-download').disabled = busy || disconnected || !cycles.canInstall;
+  if (!cycles.canInstall) $('cycles-download').checked = false;
   $('cycles-status').textContent = cycles.busy ? `Rendering Cycles · ${cycles.phase}${cycles.phase === 'downloading' ? ` ${Math.round((cycles.progress || 0) * 100)}%` : ''}` : cycles.reason || (cycles.compatible ? `Rendering Cycles ${cycles.installed.version} · installed` : 'Rendering Cycles is unavailable.');
   $('cycles-progress').hidden = !cycles.busy; $('cycles-progress').value = cycles.progress || 0;
   for (const [id, allowed] of [['cycles-install',cycles.canInstall && !cycles.installed], ['cycles-update',cycles.canUpdate], ['cycles-authorize',cycles.canAuthorize], ['cycles-check',cycles.canCheck], ['cycles-remove',cycles.canRemove]]) { $(id).hidden = !allowed; $(id).disabled = !allowed || busy || disconnected || cycles.busy; }
-  $('install').textContent = busy ? 'Working…' : ready ? 'Open Studio' : (state.error || clientError) ? 'Retry setup & open Framevolve' : 'Set up & open Framevolve';
+  $('install').textContent = busy ? 'Working…' : ready && $('cycles-download').checked ? 'Download Rendering Cycles' : ready ? 'Open Studio' : (state.error || clientError) ? 'Retry setup & open Framevolve' : 'Set up & open Framevolve';
   $('install-note').textContent = ready ? 'Ready on this Mac. You can close setup whenever you like.' : 'No account needed to explore. First setup needs an internet connection.';
-  $('auto-summary').textContent = $('browser').value === 'auto' ? (state.chrome ? 'Chrome found. We’ll use it and open your demo automatically.' : 'We’ll install Chromium for you and open your demo automatically.') : $('browser').value === 'chrome' ? 'We’ll use Google Chrome to preview and render your scenes.' : 'We’ll install Chromium for Framevolve and open your demo.';
+  $('auto-summary').textContent = $('browser').value === 'native' ? 'Native production is selected. We’ll check local Canvas and video encoding, then open Studio in your default browser.' : $('browser').value === 'auto' ? (state.chrome ? 'Chrome found for legacy rendering. We’ll use it and open your demo automatically.' : 'We’ll install Chromium for legacy rendering and open your demo automatically.') : $('browser').value === 'chrome' ? 'We’ll use Google Chrome for legacy browser rendering.' : 'We’ll install Chromium for legacy browser rendering.';
+  $('browser').querySelector('[value="native"]').disabled = !state.nativeSupported || busy || disconnected;
   $('locate').hidden = $('browser').value !== 'chrome';
-  $('chrome-status').textContent = state.chrome ? 'Google Chrome found on this Mac.' : 'Chrome was not found. Choose Automatic or Chromium, or locate your Chrome app.';
+  $('chrome-status').textContent = state.chrome ? 'Google Chrome found on this Mac for legacy rendering.' : 'Chrome was not found. Choose legacy automatic or Chromium if an unmigrated scene needs browser rendering.';
   $('message').textContent = state.message || (busy ? 'Preparing Framevolve…' : '');
   $('error').textContent = clientError || state.error || '';
   $('feedback').hidden = !state.message && !state.error && !clientError && !busy;
@@ -43,6 +47,7 @@ async function action(fn) {
 }
 document.querySelectorAll('input[name="provider"]').forEach(el => el.addEventListener('change', () => render(state)));
 $('browser').onchange = () => { selectionChanged = true; render(state); };
+$('cycles-download').onchange = () => { if ($('cycles-download').checked) $('cycles-component').open = true; render(state); };
 $('memory-info').onclick = () => $('memory-notice').showModal();
 $('feedback-memory').onclick = event => { if ($('feedback-memory').checked) { event.preventDefault(); $('memory-notice').showModal(); } else { memoryChanged = true; if (state.ready) action(persistMemory); } };
 $('memory-enable').onclick = () => { $('feedback-memory').checked = true; memoryChanged = true; $('memory-notice').close(); if (state.ready) action(persistMemory); };
@@ -51,7 +56,7 @@ $('memory-notice-close').onclick = () => $('memory-notice').close();
 async function persistMemory() { if (memoryChanged) { state = await api('memory', { enabled: $('feedback-memory').checked }); memoryChanged = false; } }
 $('install').onclick = () => action(async () => {
   await persistMemory();
-  if (state.ready && !selectionChanged) state = await api('finish', {});
+  if (state.ready && !selectionChanged) state = await api($('cycles-download').checked ? 'components/cycles/install' : 'finish', {});
   else { state = await api('install', { provider: provider(), browser: $('browser').value, cyclesOptional: $('cycles-download').checked }); selectionChanged = false; }
 });
 for (const name of ['install','update','authorize','check','remove']) $('cycles-' + name).onclick = () => action(async () => { state = await api('components/cycles/' + name, {}); });
@@ -63,7 +68,7 @@ try {
   state = await api('state');
   $('feedback-memory').checked = !!state.feedbackMemory;
   document.querySelector(`input[name="provider"][value="${['codex','claude','other'].includes(state.provider) ? state.provider : 'other'}"]`).checked = true;
-  $('browser').value = ['chrome','chromium'].includes(state.browser) ? state.browser : 'auto';
+  $('browser').value = ['native','auto','chrome','chromium'].includes(state.browser) ? state.browser : 'auto';
   render(state);
   const poll = async () => {
     if (disconnected) return;

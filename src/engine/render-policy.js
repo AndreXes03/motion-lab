@@ -1,6 +1,6 @@
 /** Renderer choice is recipe metadata. Availability must come from local preflight. */
-export const RENDERERS = Object.freeze(['auto', 'threejs', 'cycles', 'mixed']);
-export const RENDERER_LABELS = Object.freeze({auto: 'Auto', threejs: 'Three.js', cycles: 'Cycles', mixed: 'Mixed'});
+export const RENDERERS = Object.freeze(['auto', 'threejs', 'cycles', 'mixed', 'skia']);
+export const RENDERER_LABELS = Object.freeze({auto: 'Auto', threejs: 'Three.js', cycles: 'Cycles', mixed: 'Mixed', skia: 'Skia · native 2D'});
 export const RENDER_QUALITIES = Object.freeze(['draft', 'balanced', 'final']);
 const ENGINES = RENDERERS.slice(1);
 const FORBIDDEN = new Set(['__proto__', 'prototype', 'constructor']);
@@ -117,12 +117,13 @@ function availability(engine, plan, context) {
   if (context.publicDemo) return {available: false, reason: 'Final renderer jobs run in the local app. Browser video uses the real-time Three.js/Canvas path; Cycles and prepared Mixed renders are not executed on this site.'};
   const caps = context.capabilities ?? {};
   if (engine === 'threejs') return {available: caps.threejs?.available !== false, reason: caps.threejs?.reason ?? 'Available in the local app.'};
+  if(engine==='skia')return {available:supported(caps.skia,context.scene),reason:supported(caps.skia,context.scene)?'Native Skia CPU · no browser required.':'Native 2D is currently available for Procedural only on a verified local installation.'};
   if (engine === 'cycles') {
     const cap = caps.cycles;
-    if (!supported(cap, context.scene)) return {available: false, reason: cap?.reason || (cap?.available ? 'Cycles has no adapter for this scene.' : 'Blender preflight is required before Cycles can render locally.')};
-    if (['gpu', 'metal'].includes(plan.cycles.device) && !cap.devices?.some(device => ['METAL', 'CUDA', 'OPTIX', 'HIP', 'ONEAPI'].includes(String(device.type).toUpperCase()))) return {available: false, reason: 'No compatible GPU was verified by Blender. Select Auto or CPU.'};
+    if (!supported(cap, context.scene)) return {available: false, reason: cap?.reason || (cap?.available ? 'Cycles has no adapter for this scene.' : 'Install and authorize Rendering Cycles before rendering locally.')};
+    if (['gpu', 'metal'].includes(plan.cycles.device) && !cap.devices?.some(device => ['METAL', 'CUDA', 'OPTIX', 'HIP', 'ONEAPI'].includes(String(device.type).toUpperCase()))) return {available: false, reason: 'No compatible GPU was verified by Cycles. Select Auto or CPU.'};
     if (typeof plan.cycles.workers === 'number' && plan.cycles.workers > (cap.limits?.workers ?? 2)) return {available: false, reason: 'This computer allows fewer parallel Cycles workers. Select Auto.'};
-    return {available: true, reason: `Local Blender ready · ${cap.device || 'device selected at render time'}.`};
+    return {available: true, reason: `Local Cycles standalone ready · ${cap.device || 'device selected at render time'}.`};
   }
   if (!plan.composite.enabled || !plan.composite.planFile) return {available: false, reason: 'Mixed rendering needs an agent-authored compositing plan with prepared layer inputs.'};
   if (!supported(caps.mixed, context.scene)) return {available: false, reason: caps.mixed?.reason || 'Mixed rendering is available through the local compositing CLI after its layer inputs are rendered.'};
@@ -151,9 +152,9 @@ export function resolveRenderPlan(input, context = {}) {
   let reason = plan.renderer !== 'auto' && plan.source === 'user' ? `User selected ${RENDERER_LABELS[plan.renderer]} for this export.` : plan.rationale;
   const estimateSeconds = estimateRenderSeconds(plan, context);
   if (plan.renderer === 'auto') {
-    const candidate = plan.preferredRenderer !== 'threejs' ? plan.preferredRenderer : plan.intent === 'photoreal' ? 'cycles' : 'threejs';
+    const candidate = context.scene==='procedural'&&plan.preferredRenderer==='threejs'&&plan.intent!=='photoreal'&&supported(context.capabilities?.skia,context.scene)?'skia':plan.preferredRenderer !== 'threejs' ? plan.preferredRenderer : plan.intent === 'photoreal' ? 'cycles' : 'threejs';
     const ready = availability(candidate, plan, context);
-    const withinBudget = candidate === 'threejs' || plan.budgetSeconds === null || (estimateSeconds !== null && estimateSeconds <= plan.budgetSeconds);
+    const withinBudget = ['threejs','skia'].includes(candidate) || plan.budgetSeconds === null || (estimateSeconds !== null && estimateSeconds <= plan.budgetSeconds);
     selectedRenderer = ready.available && withinBudget ? candidate : 'threejs';
     if (candidate !== 'threejs' && selectedRenderer === 'threejs') {
       warnings.push(!ready.available ? ready.reason : estimateSeconds === null ? 'Render time has not been measured for this device; Auto keeps the faster renderer within the requested budget.' : 'The Cycles estimate exceeds the requested time budget.');

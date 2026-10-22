@@ -13,16 +13,18 @@
 </div></fieldset>
 <p id="auto-summary" class="hint">Checking this Mac…</p>
 <details id="advanced"><summary>Advanced options</summary>
-<label class="browser-label" for="browser">Rendering browser</label>
-<div class="browser-row"><select id="browser"><option value="auto">Automatic (recommended)</option><option value="chrome">Use Google Chrome</option><option value="chromium">Install Chromium</option></select><button id="locate" type="button" hidden>Locate Chrome</button></div>
+<label class="browser-label" for="browser">Production mode</label>
+<div class="browser-row"><select id="browser"><option value="native">Native production · Apple Silicon Mac</option><option value="auto">Legacy browser · automatic</option><option value="chrome">Legacy browser · use Google Chrome</option><option value="chromium">Legacy browser · install Chromium</option></select><button id="locate" type="button" hidden>Locate Chrome</button></div>
+<p class="hint">Native production uses local Canvas and video encoding for migrated scenes, without a rendering browser download. Some 3D scenes still need the legacy browser path. Studio opens in your default browser, including Safari.</p>
 <p id="chrome-status" class="hint"></p>
 <p class="hint">For AI creation, we recommend models such as Sol, Astra, Opus, Fable or equivalents. No specific model or subscription is required by Framevolve. Your provider manages access and usage costs.</p>
 <p id="provider-help" class="hint" hidden><a id="provider-docs" target="_blank" rel="noreferrer">Official agent setup guide</a></p>
 <p class="hint">Keep this project folder in place: <span id="repo"></span></p>
 </details>
-<div class="memory-choice"><label><input id="cycles-download" type="checkbox"> Download Rendering Cycles after setup <span>Optional · for supported scenes</span></label></div>
+<div class="memory-choice"><label><input id="cycles-download" type="checkbox"> Download Rendering Cycles during setup <span>Optional · PULSE and LOOP on Apple Silicon Macs</span></label></div>
 <details id="cycles-component"><summary>Rendering Cycles <span>Optional</span></summary>
-<p class="hint">This preview component requires your approval in macOS. After downloading, open its app and, if macOS blocks it, choose Open Anyway in System Settings → Privacy &amp; Security. Then check authorization here. Three.js remains available while you decide.</p>
+<p class="hint">This preview requires manual macOS approval. After downloading, select Authorize in macOS. If macOS blocks the app, choose Open Anyway in System Settings → Privacy &amp; Security, then return here and select Check authorization.</p>
+<p class="hint">Apple Developer ID signing and notarization are coming soon. Once available, this manual authorization step will no longer be needed. The current preview still requires it.</p>
 <p id="cycles-status" role="status" class="hint">Checking optional component…</p>
 <progress id="cycles-progress" max="1" value="0" hidden aria-label="Rendering Cycles download"></progress>
 <div class="ready-actions"><button id="cycles-install" type="button" hidden>Download Rendering Cycles</button><button id="cycles-update" type="button" hidden>Update Rendering Cycles</button><button id="cycles-authorize" type="button" hidden>Authorize in macOS</button><button id="cycles-check" type="button" hidden>Check authorization</button><button id="cycles-remove" type="button" hidden>Remove Rendering Cycles</button></div>

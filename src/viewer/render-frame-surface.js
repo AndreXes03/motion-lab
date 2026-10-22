@@ -21,11 +21,11 @@ export function mountRenderFrameSurface({container, onInteractive, onSettings, o
   function render(next) {
     state = next; root.hidden = next.status === 'idle';
     root.dataset.status = next.status;
-    deviceBadge.hidden=!next.device;deviceBadge.textContent=next.device ? `${next.backend==='cycles-standalone'?'Cycles standalone':'Cycles'} · ${next.device} · ${next.deviceName||''}` : '';
+    deviceBadge.hidden=!next.device;const deviceRenderer=next.engine==='skia'?'Skia':next.engine==='cycles'?(next.backend==='cycles-standalone'?'Cycles standalone':'Cycles'):next.engine==='mixed'?'Mixed':'Renderer';deviceBadge.textContent=next.device ? `${deviceRenderer} · ${next.deviceName||next.device}` : '';
     image.alt=next.device?`Final frame · ${deviceBadge.textContent}`:'Final rendered frame';
     root.setAttribute('aria-busy', String(['pending', 'rendering'].includes(next.status)));
     if (next.status === 'idle') { displayed = null; image.hidden = true; image.removeAttribute('src'); return; }
-    const engine = next.engine === 'cycles' ? 'Cycles' : next.engine === 'mixed' ? 'Mixed' : 'Three.js';
+    const engine = next.engine === 'cycles' ? 'Cycles' : next.engine === 'mixed' ? 'Mixed' : next.engine === 'skia' ? 'Skia' : 'Three.js';
     if (displayed?.scene !== next.scene) { displayed = null; image.hidden = true; }
     const failed = ['error', 'unavailable', 'cancelled'].includes(next.status);
     actions.hidden = !failed && !['pending','rendering'].includes(next.status); retry.hidden = !['error','cancelled'].includes(next.status); cancel.hidden = !['pending','rendering'].includes(next.status);cancel.disabled=next.phase==='cancelling';

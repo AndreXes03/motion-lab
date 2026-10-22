@@ -14,6 +14,7 @@
 | Add movement-driven audio | [Sound design](SOUND_DESIGN.md) |
 | Build tactile product films | [3D look development](3d-lookdev.md) · [Agent skill](../.agents/skills/motion-lab-product-film/SKILL.md) |
 | Select a final renderer and local strategy | [Renderer selection](RENDERER_SELECTION.md) |
+| Follow the native production migration | [Native production](NATIVE_PRODUCTION.md) |
 | Render an experimental path-traced still | [Photorealism](PHOTOREALISM.md) |
 | Review models and frames | [Visual checks](QUALITY-GATES.md) |
 | Check validation and limits | [Validation](VALIDATION.md) |

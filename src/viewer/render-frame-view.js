@@ -84,7 +84,7 @@ export function createRenderFrameView({
       const key = JSON.stringify({engine, body});
       if (!force && desired?.key === key) return;
       desired = {key, engine, body, generation: ++generation, readyAt: now() + debounceMs};
-      if (publicDemo || selection?.runnable === false || !['threejs', 'cycles', 'mixed'].includes(engine)) {
+      if (publicDemo || selection?.runnable === false || !['threejs', 'cycles', 'mixed', 'skia'].includes(engine)) {
         emit({status: 'unavailable', error: publicDemo ? 'Open the local Studio to render final-engine frames.' : selection?.availability || 'Select an available final renderer.'});
         // Invalid requests must not be submitted when the preceding job finishes.
         desired = null;

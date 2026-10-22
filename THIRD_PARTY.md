@@ -12,6 +12,7 @@ may change them within the declared version ranges.
 | [ffmpeg-static](https://github.com/eugeneware/ffmpeg-static) | 5.3.0 | GPL 3.0 or later for the npm package; see copied `LICENSE` | Locates a local FFmpeg executable for video encoding |
 | [ffprobe-static](https://github.com/joshwnj/ffprobe-static) | 3.1.0 | MIT; see copied `LICENSE` | Locates a local ffprobe executable for output inspection |
 | [Vite](https://github.com/vitejs/vite) | 8.3.4 | [MIT](https://github.com/vitejs/vite/blob/main/LICENSE.md) | Local viewer server and asset build |
+| [skia-canvas](https://github.com/samizdatco/skia-canvas/tree/v4.0.0) | 4.0.0 (exact lock) | MIT wrapper; Skia BSD 3-clause and additional native dependency licenses; [preserved notices and scoped audit](licenses/skia-canvas/SOURCES.md) | CPU Canvas 2D scene preparation, native graphics and procedural rendering |
 | [sharp](https://github.com/lovell/sharp) | 0.35.5 | [Apache 2.0](https://github.com/lovell/sharp/blob/main/LICENSE) | Contact-sheet image assembly |
 
 Three.js addons include RoundedBoxGeometry, RoomEnvironment, GTAOPass,
@@ -137,3 +138,14 @@ and release details, including the light-reader patch and notice gate, are in
 [`docs/CYCLES_STANDALONE_BUILD.md`](docs/CYCLES_STANDALONE_BUILD.md). The public preview component is separate from a stable-release claim; hosted
 download, installation, normal macOS approval and scene output require their
 own verification.
+
+## Native Canvas dependency notices
+
+The npm `skia-canvas` package is pinned to 4.0.0. Its direct MIT notice, the
+locked Skia BSD notice, Rust binding MIT notice and vendored simplecss notices
+are preserved in [`licenses/skia-canvas/`](licenses/skia-canvas/SOURCES.md),
+along with the official v4 Cargo manifest and lockfile. The audit does not
+establish a complete notice set for every library in the prebuilt native
+module. No native Skia binary or `node_modules` is vendored in this repository;
+local dependency installation uses the exact npm lockfile. A future binary
+redistribution requires a separate linked-dependency and notice inventory.

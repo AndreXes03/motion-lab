@@ -1,6 +1,5 @@
 import {browserLaunchOptions} from './browser-runtime.mjs';
 import {createServer} from 'vite';
-import {chromium} from 'playwright';
 import {readFile,writeFile,mkdir} from 'node:fs/promises';
 import path from 'node:path';
 import {fileURLToPath} from 'node:url';
@@ -13,12 +12,13 @@ if(!args.video||!args.recipe||!args.out)throw Error('Use --video source.mp4 --re
 const recipe=JSON.parse(await readFile(args.recipe,'utf8')),out=path.resolve(args.out),base=out.replace(/\.[^.]+$/,'');
 const settings=args.settings?JSON.parse(await readFile(args.settings,'utf8')):(recipe.parameters?.sound??soundDefaults);
 const parameters={...recipe.parameters,sound:settings};
-const server=await createServer({root,server:{host:'127.0.0.1',port:0},logLevel:'error'});await server.listen();
-let browser;
+let server,browser,telemetry;
 try{
+ if(parameters.scene==='procedural'){const {createProductionScene}=await import('../src/engine/production-scene.js');telemetry=createProductionScene(parameters).sampleMotion();}
+ else {server=await createServer({root,server:{host:'127.0.0.1',port:0},logLevel:'error'});await server.listen();const {chromium}=await import('playwright');
  browser=await chromium.launch({headless:true,...await browserLaunchOptions(),args:['--autoplay-policy=no-user-gesture-required']});
  const page=await browser.newPage();await page.goto(`http://127.0.0.1:${server.httpServer.address().port}/?render=1`);await page.waitForFunction(()=>window.motion?.sampleMotion);await page.evaluate(()=>window.motion.ready);
- const telemetry=await page.evaluate(p=>window.motion.sampleMotion(p),parameters);
+ telemetry=await page.evaluate(p=>window.motion.sampleMotion(p),parameters);}
  const plan=planSound(telemetry,settings),result=renderSound(plan,{stems:true});
  const start=recipe.start??0,end=recipe.end??telemetry.duration;
  const trim=channels=>channels.map(c=>c.slice(Math.round(start*result.sampleRate),Math.round(end*result.sampleRate)));await mkdir(path.dirname(out),{recursive:true});
@@ -29,4 +29,4 @@ try{
  await writeFile(out+'.project.json',JSON.stringify({...recipe,parameters},null,2));
  await new Promise((resolve,reject)=>{const p=spawn(ffmpeg,['-hide_banner','-loglevel','error','-n','-i',path.resolve(args.video),'-i',base+'.wav','-map','0:v:0','-map','1:a:0','-c:v','copy','-c:a','aac','-b:a','256k','-movflags','+faststart','-shortest',out],{stdio:'inherit'});p.on('error',reject);p.on('exit',c=>c===0?resolve():reject(Error('Mux failed '+c)));});
  console.log(JSON.stringify({output:out,...result.stats,modules:Object.fromEntries(['camera','objects','accents'].map(m=>[m,plan.events.filter(e=>e.module===m).length]))},null,2));
-}finally{await browser?.close();await server.close();}
+}finally{await browser?.close();await server?.close();}
