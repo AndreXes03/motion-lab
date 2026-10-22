@@ -1,19 +1,21 @@
 # Renderer selection
 
+> Standalone migration: the default local Cycles backend now uses the direct native host. It is a development integration, with no published stable component yet. See [verification and release blockers](CYCLES_STANDALONE_VALIDATION.md) and [native build](CYCLES_STANDALONE_BUILD.md). The previous Blender route is developer comparison only (`--backend blender-reference`).
+
 Framevolve keeps its interactive 3D preview in Three.js and its procedural 2D preview in Canvas. Each recipe can also store an agent-authored final-render strategy in `parameters.renderPolicy`. The user can override the engine in the export panel. Selecting an engine is separate from verifying that the local machine can execute it.
 
 - **Auto** uses the agent's preference when local capabilities and the requested time budget permit it. Otherwise it selects Three.js and explains the reason.
 - **Three.js** preserves the working scene, procedural shaders and existing finish. It is the default for motion graphics and fast iteration.
-- **Cycles** uses the local Blender path for a supported scene. Supported scenes are PULSE and LOOP; other scenes require an explicit converter and a quality check. Blender installation, available devices and scene support must be checked locally before exporting.
+- **Cycles** uses the optional standalone component for PULSE and LOOP. The installed component, actual device and validated scene list must be checked locally. A missing component blocks explicit Cycles; it never launches Blender or silently substitutes Three.js. Other scenes require a converter and visual review.
 - **Mixed** records a strategy for rendered layers or shots from different engines. It requires a prepared local compositing plan and verified inputs. Metadata by itself never starts a mixed render.
 
-In browsers with canvas recording support, the public Studio exports browser-rendered video at 720p or 1080p, PNG frames and JSON recipes. MP4 is offered when the browser supports its encoder; otherwise it offers WebM. Public video uses the real-time Three.js/Canvas path. Blender/Cycles and prepared file-based compositing run in the local app. The selector may preserve a requested local renderer in a downloaded recipe, but the public site does not execute Cycles or Mixed jobs.
+In browsers with canvas recording support, the public Studio exports browser-rendered video at 720p or 1080p, PNG frames and JSON recipes. MP4 is offered when the browser supports its encoder; otherwise it offers WebM. Public video uses the real-time Three.js/Canvas path. Standalone Cycles and prepared file-based compositing run in the local app. The selector may preserve a requested local renderer in a downloaded recipe, but the public site does not execute Cycles or Mixed jobs.
 
 ## Full-resolution Render View
 
-**Render View** pauses playback and renders the current timeline position at the output dimensions selected in Export. **Final look** uses that resolved final engine: Three.js/Canvas renders directly in the browser; a selected Cycles or Mixed engine requests an actual local frame. Cycles supports **PULSE and LOOP** and requires a successful Blender capability check. Its samples, device, denoising and motion-blur choice come from the same recipe and output settings as export. The frame may take time to finish; increasing display resolution does not turn a Three.js preview into Cycles.
+**Render View** pauses playback and renders the current timeline position at the output dimensions selected in Export. **Final look** uses that resolved final engine: Three.js/Canvas renders directly in the browser; a selected Cycles or Mixed engine requests an actual local frame. Cycles supports **PULSE and LOOP** and requires a successful standalone component capability check. Its samples, device, denoising and motion-blur choice come from the same recipe and output settings as export. The frame may take time to finish; increasing display resolution does not turn a Three.js preview into Cycles.
 
-For viewport-only Cycles jobs, one Blender process first traces a quarter-resolution pass with up to 4 samples, then a half-resolution pass with up to 16 samples, and finally the requested full-resolution/sample settings. These are real render passes with the same scene, materials, display grade and titles; they are not blurred placeholders. Scene baking and Blender setup must complete before the first image can appear. Ordinary PNG/video exports keep their single final-quality path.
+For viewport-only Cycles jobs, the native host first traces a quarter-resolution pass with up to 4 samples, then a half-resolution pass with up to 16 samples, and finally the requested full-resolution/sample settings. These are real render passes with the same scene, materials, display grade and titles; they are not blurred placeholders. Scene baking and native setup must complete before the first image can appear. Ordinary PNG/video exports keep their single final-quality path.
 
 The viewport displays these intermediate images as they arrive and keeps the previous rendered frame visible while the next one is pending. Changes are debounced, only one local frame runs at a time, and intermediate requests are replaced by the newest snapshot. Obsolete completions are never displayed. Render failures and unavailable engines are shown explicitly, with Retry, renderer settings and a return to interactive preview. Playback returns to interactive mode. Diagnostic Clay, Wireframe and Normals remain browser inspection modes.
 
@@ -60,7 +62,7 @@ parameters.renderPolicy = {
 
 ## Local capability contract
 
-The integrated local API exposes `GET /api/studio/capabilities` and returns `{capabilities: {...}}`. The Cycles helper supplies Blender's actual device probe; do not infer GPU support from installation or RAM/CPU usage.
+The integrated local API exposes `GET /api/studio/capabilities` and returns `{capabilities: {...}}`. The Cycles helper supplies the native host’s actual device probe; do not infer GPU support from installation or RAM/CPU usage.
 
 ```js
 {
@@ -70,8 +72,9 @@ The integrated local API exposes `GET /api/studio/capabilities` and returns `{ca
     scenes: ['pulse'],
     device: 'METAL',
     devices: [{type: 'METAL', name: 'Verified local GPU'}],
-    reason: 'Local Blender ready',
-    limits: {workers: 2, samples: 4096},
+    backend: 'cycles-standalone',
+    reason: 'Installed standalone component ready',
+    limits: {workers: 1, samples: 4096},
     measured: {secondsPerFrame: 2, width: 640, height: 480, samples: 64, device: 'METAL'}
   },
   mixed: {available: true, reason: 'Local compositor ready; prepared plan and inputs are checked before queueing.'}
@@ -86,11 +89,11 @@ The renderer panel lives in `src/viewer/render-panel.js`, imports its own CSS, a
 
 `mountRenderPanel({container, getScene, getParameters, getExportSettings, publicDemo, onChange})` exposes `getPlan`, `setPlan`, `getSelection`, `refresh`, and `setCapabilities`. `getParameters` reads the authored source recipe, without recursively attaching the panel's current plan. The panel remembers each scene's user preference during the open session; explicit recipe imports and resets call `setPlan`. Export-setting changes refresh any available time estimate.
 
-The viewer fetches `/api/studio/capabilities` locally, unwraps `data.capabilities`, and supplies it to the panel. The public site does not probe local Blender. It offers browser-rendered Three.js/Canvas video when recording is supported, plus PNG frames and JSON recipes; Cycles and prepared Mixed jobs remain local-only.
+The viewer fetches `/api/studio/capabilities` locally, unwraps `data.capabilities`, and supplies it to the panel. The public site does not probe local native components. It offers browser-rendered Three.js/Canvas video when recording is supported, plus PNG frames and JSON recipes; Cycles and prepared Mixed jobs remain local-only.
 
 The server normalizes `parameters.renderPolicy` with `validateRenderPlan`, resolves it against local capabilities, and rejects unavailable explicit requests. It records the actual engine and resolved selection in each job. Three.js uses the established renderer; verified Cycles jobs use `scripts/cycles.mjs` with the canonical plan's samples, device, bounded workers and denoising settings. Cycles currently produces PNG frames and MP4 videos; WebM/ProRes require the existing Three.js route. All unrelated scene controls, animation groups/rates, and numeric tracks remain in the snapshot.
 
-The interactive Three.js preview and Cycles output have different finishing paths; a Cycles Render View shows the actual Cycles result. PULSE materials, light units and Filmic response are translated; custom shaders and per-material environment maps are not equivalent. Preview depth of field, fisheye/edge softness, bloom and ambient occlusion do not transfer. Camera/object animation and group/rate controls are baked at absolute time; deformation and animated textures update per output frame and do not receive deformation/texture motion blur. PULSE scene exposure is preserved through its authored exposure control; `look.post.exposure` is not a separate Cycles exposure control. The default `display` finish applies the same `look.post.colorContrast` and `look.post.colorSaturation` formula as the Studio after Cycles Filmic, sampled at each absolute frame time. This shares the grading controls while preserving the renderer's different color response. CLI `--finish raw` skips this display grade.
+The interactive Three.js preview and Cycles output have different finishing paths; a Cycles Render View shows the actual Cycles result. PULSE materials and light units are translated; standalone uses ACES SDR with a different response from Blender Filmic; custom shaders and per-material environment maps are not equivalent. Preview depth of field, fisheye/edge softness, bloom and ambient occlusion do not transfer. Camera/object animation and group/rate controls are baked at absolute time; deformation and animated textures update per output frame and do not receive deformation/texture motion blur. PULSE scene exposure is preserved through its authored exposure control; `look.post.exposure` is not a separate Cycles exposure control. The default `display` finish applies the same `look.post.colorContrast` and `look.post.colorSaturation` formula as the Studio after the standalone ACES SDR display transform, sampled at each absolute frame time. This shares the grading controls while preserving the renderer's different color response. CLI `--finish raw` skips this display grade.
 
 ## Simple compositing
 
@@ -106,6 +109,6 @@ Use `scripts/composite.mjs --plan project/pulse-composite.json --assets renders 
 
 ### LOOP hybrid film
 
-LOOP bakes its native Canvas graphics separately, renders all product geometry with Cycles, and composites the graphics above that beauty pass. Full 2D sections bypass Blender rendering. LOOP beauty frames retain alpha and are composited over a separate animated Canvas linear gradient; the digital background does not receive scene lighting or perspective. Camera focus distance and aperture are transferred as physical Cycles depth of field; area and spot lights remain animated. Three.js preview post effects are not part of the Cycles conversion. The fictional startup brief and partial controls are authored examples, not recordings of generation latency.
+LOOP bakes its native Canvas graphics separately, renders all product geometry with Cycles, and composites the graphics above that beauty pass. Full 2D sections use the authored Canvas output and bypass native 3D tracing. LOOP beauty frames retain alpha and are composited over a separate animated Canvas linear gradient; the digital background does not receive scene lighting or perspective. Camera focus distance and aperture are transferred as physical Cycles depth of field; area and spot lights remain animated. Three.js preview post effects are not part of the Cycles conversion. The fictional startup brief and partial controls are authored examples, not recordings of generation latency.
 
 The optional local `loop-audio.json` manifest supplies the edited soundtrack to LOOP interactive playback and browser exports. Procedural music/SFX controls are hidden for that authored track; volume and WAV download remain available. Cycles CLI exports use the explicit `--audio` source.

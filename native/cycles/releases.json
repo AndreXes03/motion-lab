@@ -1,0 +1,26 @@
+{
+  "protocol": 1,
+  "unavailableReason": "Rendering Cycles is currently available only for macOS Apple Silicon. Other platforms can use Three.js.",
+  "releases": [
+    {
+      "platform": "darwin-arm64",
+      "protocol": 1,
+      "revision": "a456b761034dda42c32eef9f4aae0fa5a5c9f604",
+      "version": "0.1.0-preview.2",
+      "format": "tar.gz",
+      "security": "manual-macos",
+      "signed": false,
+      "notarized": false,
+      "channel": "preview",
+      "tested": true,
+      "validatedScenes": [
+        "pulse",
+        "loop"
+      ],
+      "bytes": 57536471,
+      "installedBytes": 93535672,
+      "sha256": "461dc04c5cb4156faf49933567bda0bbf523e11170eba97dc56622472ce33af6",
+      "url": "https://github.com/AndreXes03/motion-lab/releases/download/cycles-v0.1.0-preview.2/framevolve-cycles-0.1.0-preview.2.tar.gz"
+    }
+  ]
+}

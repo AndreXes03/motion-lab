@@ -14,6 +14,10 @@ function render(data) {
   if (!memoryChanged) $('feedback-memory').checked = !!state.feedbackMemory;
   const busy = state.busy || pending, ready = state.ready && !selectionChanged;
   document.querySelectorAll('button,input,select').forEach(el => { el.disabled = busy || disconnected; });
+  const cycles = state.cyclesComponent ?? {};
+  $('cycles-status').textContent = cycles.busy ? `Rendering Cycles · ${cycles.phase}${cycles.phase === 'downloading' ? ` ${Math.round((cycles.progress || 0) * 100)}%` : ''}` : cycles.reason || (cycles.compatible ? `Rendering Cycles ${cycles.installed.version} · installed` : 'Rendering Cycles is unavailable.');
+  $('cycles-progress').hidden = !cycles.busy; $('cycles-progress').value = cycles.progress || 0;
+  for (const [id, allowed] of [['cycles-install',cycles.canInstall && !cycles.installed], ['cycles-update',cycles.canUpdate], ['cycles-authorize',cycles.canAuthorize], ['cycles-check',cycles.canCheck], ['cycles-remove',cycles.canRemove]]) { $(id).hidden = !allowed; $(id).disabled = !allowed || busy || disconnected || cycles.busy; }
   $('install').textContent = busy ? 'Working…' : ready ? 'Open Studio' : (state.error || clientError) ? 'Retry setup & open Framevolve' : 'Set up & open Framevolve';
   $('install-note').textContent = ready ? 'Ready on this Mac. You can close setup whenever you like.' : 'No account needed to explore. First setup needs an internet connection.';
   $('auto-summary').textContent = $('browser').value === 'auto' ? (state.chrome ? 'Chrome found. We’ll use it and open your demo automatically.' : 'We’ll install Chromium for you and open your demo automatically.') : $('browser').value === 'chrome' ? 'We’ll use Google Chrome to preview and render your scenes.' : 'We’ll install Chromium for Framevolve and open your demo.';
@@ -48,8 +52,9 @@ async function persistMemory() { if (memoryChanged) { state = await api('memory'
 $('install').onclick = () => action(async () => {
   await persistMemory();
   if (state.ready && !selectionChanged) state = await api('finish', {});
-  else { state = await api('install', { provider: provider(), browser: $('browser').value }); selectionChanged = false; }
+  else { state = await api('install', { provider: provider(), browser: $('browser').value, cyclesOptional: $('cycles-download').checked }); selectionChanged = false; }
 });
+for (const name of ['install','update','authorize','check','remove']) $('cycles-' + name).onclick = () => action(async () => { state = await api('components/cycles/' + name, {}); });
 $('agent').onclick = () => action(async () => { state = await api('provider', { provider: provider() }); state = await api('agent', {}); });
 $('locate').onclick = () => action(async () => { state = await api('locate', {}); selectionChanged = true; });
 $('copy-prompt').onclick = () => action(async () => { await navigator.clipboard.writeText(document.querySelector('blockquote').textContent); $('copy-prompt').textContent = 'Copied'; });

@@ -1,0 +1,170 @@
+[
+  {
+    "component": "OpenColorIO",
+    "revision": "v2.5.0",
+    "source": "https://raw.githubusercontent.com/AcademySoftwareFoundation/OpenColorIO/v2.5.0/LICENSE",
+    "file": "OpenColorIO-LICENSE",
+    "sha256": "82a40c52065ee968aa62015735e84378ac11425db7a233e6a2dcd2c83fc24276"
+  },
+  {
+    "component": "OpenImageIO",
+    "revision": "v3.1.13.1",
+    "source": "https://raw.githubusercontent.com/AcademySoftwareFoundation/OpenImageIO/v3.1.13.1/LICENSE.md",
+    "file": "OpenImageIO-LICENSE.md",
+    "sha256": "c71d239df91726fc519c6eb72d318ec65820627232b2f796219e87dcf35d0ab4"
+  },
+  {
+    "component": "OpenImageIO",
+    "revision": "v3.1.13.1",
+    "source": "https://raw.githubusercontent.com/AcademySoftwareFoundation/OpenImageIO/v3.1.13.1/THIRD-PARTY.md",
+    "file": "OpenImageIO-THIRD-PARTY.md",
+    "sha256": "1e86c485c25256a807b11c6f56014acac43bdc297944c2d6b4af16fd65188c2b"
+  },
+  {
+    "component": "OpenImageDenoise",
+    "revision": "v2.5.0",
+    "source": "https://raw.githubusercontent.com/RenderKit/oidn/v2.5.0/LICENSE.txt",
+    "file": "OpenImageDenoise-LICENSE.txt",
+    "sha256": "cfc7749b96f63bd31c3c42b5c471bf756814053e847c10f3eb003417bc523d30"
+  },
+  {
+    "component": "OpenImageDenoise",
+    "revision": "v2.5.0",
+    "source": "https://raw.githubusercontent.com/RenderKit/oidn/v2.5.0/third-party-programs.txt",
+    "file": "OpenImageDenoise-third-party-programs.txt",
+    "sha256": "43905db59c86bc1de8cee0f24878d9a127c319d87c57f53f68d904043eefe98f"
+  },
+  {
+    "component": "Embree",
+    "revision": "v4.4.1",
+    "source": "https://raw.githubusercontent.com/RenderKit/embree/v4.4.1/LICENSE.txt",
+    "file": "Embree-LICENSE.txt",
+    "sha256": "cfc7749b96f63bd31c3c42b5c471bf756814053e847c10f3eb003417bc523d30"
+  },
+  {
+    "component": "Embree",
+    "revision": "v4.4.1",
+    "source": "https://raw.githubusercontent.com/RenderKit/embree/v4.4.1/third-party-programs.txt",
+    "file": "Embree-third-party-programs.txt",
+    "sha256": "29688ddc73ea2369e7e94f37f4794bf1b5ccd549b73d0debc022c4533c854a42"
+  },
+  {
+    "component": "oneTBB",
+    "revision": "v2022.3.0",
+    "source": "https://raw.githubusercontent.com/uxlfoundation/oneTBB/v2022.3.0/LICENSE.txt",
+    "file": "oneTBB-LICENSE.txt",
+    "sha256": "c71d239df91726fc519c6eb72d318ec65820627232b2f796219e87dcf35d0ab4"
+  },
+  {
+    "component": "oneTBB",
+    "revision": "v2022.3.0",
+    "source": "https://raw.githubusercontent.com/uxlfoundation/oneTBB/v2022.3.0/third-party-programs.txt",
+    "file": "oneTBB-third-party-programs.txt",
+    "sha256": "1634857eb058dce5278c57a832b8974190785145f4be9acdbdb511f3a0c4091c"
+  },
+  {
+    "component": "OpenEXR",
+    "revision": "v3.4.10",
+    "source": "https://raw.githubusercontent.com/AcademySoftwareFoundation/openexr/v3.4.10/LICENSE.md",
+    "file": "OpenEXR-LICENSE.md",
+    "sha256": "84853c91d4c2e0310741d4773469d98bb93e61029608e0ba0882a3fffdf330bd"
+  },
+  {
+    "component": "Imath",
+    "revision": "v3.2.2",
+    "source": "https://raw.githubusercontent.com/AcademySoftwareFoundation/Imath/v3.2.2/LICENSE.md",
+    "file": "Imath-LICENSE.md",
+    "sha256": "c20236d3b39fd20eba8e3d1fb3b892a5483df2e7d8d61bf43f165d3fac22f601"
+  },
+  {
+    "component": "pugixml",
+    "revision": "v1.10",
+    "source": "https://raw.githubusercontent.com/zeux/pugixml/v1.10/LICENSE.md",
+    "file": "pugixml-LICENSE.md",
+    "sha256": "9ddc2f8e3003601aff5a4d37f3caf3b6b60a729ebbc466bafd965cdf0883b12c"
+  },
+  {
+    "component": "Zstandard",
+    "revision": "v1.5.7",
+    "source": "https://raw.githubusercontent.com/facebook/zstd/v1.5.7/LICENSE",
+    "file": "Zstandard-LICENSE",
+    "sha256": "7055266497633c9025b777c78eb7235af13922117480ed5c674677adc381c9d8"
+  },
+  {
+    "component": "fmt",
+    "revision": "12.1.0",
+    "source": "https://raw.githubusercontent.com/fmtlib/fmt/12.1.0/LICENSE",
+    "file": "fmt-LICENSE",
+    "sha256": "07580f2a3b35709ce703d523f447b242f6dfec7582a8c0df102c7fa2849375f8"
+  },
+  {
+    "component": "libdeflate",
+    "revision": "v1.18",
+    "source": "https://raw.githubusercontent.com/ebiggers/libdeflate/v1.18/COPYING",
+    "file": "libdeflate-COPYING",
+    "sha256": "5d246dd2537307b80fed9ba5fdddf5d0fe7a8f023393a071182b9daed56b40fe"
+  },
+  {
+    "component": "libpng",
+    "revision": "v1.6.58",
+    "source": "https://raw.githubusercontent.com/pnggroup/libpng/v1.6.58/LICENSE",
+    "file": "libpng-LICENSE",
+    "sha256": "bdb0a645ea18c60507d0368379b1ac5474b92255fcc2d115e07486a7672ba526"
+  },
+  {
+    "component": "pystring",
+    "revision": "v1.1.3",
+    "source": "https://raw.githubusercontent.com/imageworks/pystring/v1.1.3/LICENSE",
+    "file": "pystring-LICENSE",
+    "sha256": "7b565d49be50a0490b38ae69d22f1e93ce9449546a99a8a1efcaf0ae922b7442"
+  },
+  {
+    "component": "minizip-ng",
+    "revision": "4.0.10",
+    "source": "https://raw.githubusercontent.com/zlib-ng/minizip-ng/4.0.10/LICENSE",
+    "file": "minizip-ng-LICENSE",
+    "sha256": "675181c03fc1302a1c8554c00f7be9bb420c5dbc9dcc2013433cec144413de03"
+  },
+  {
+    "component": "robin-map",
+    "revision": "v1.3.0",
+    "source": "https://raw.githubusercontent.com/Tessil/robin-map/v1.3.0/LICENSE",
+    "file": "robin-map-LICENSE",
+    "sha256": "11f2c685ba565a31aef1219f63a7a8845602c97bff70016b9e3278dfe51a2ec5"
+  },
+  {
+    "component": "yaml-cpp",
+    "revision": "0.8.0",
+    "source": "https://raw.githubusercontent.com/jbeder/yaml-cpp/0.8.0/LICENSE",
+    "file": "yaml-cpp-LICENSE",
+    "sha256": "aa6fcc27be034e41e21dd832f9175bfe694a48491d9e14ff0fa278e19ad14f1b"
+  },
+  {
+    "component": "libtiff",
+    "revision": "v4.7.1",
+    "source": "https://raw.githubusercontent.com/libsdl-org/libtiff/v4.7.1/LICENSE.md",
+    "file": "libtiff-LICENSE.md",
+    "sha256": "0e27c2382d7b8147972bbb746e04059a1152c8d0fda9d03ef1399d1a433c4ade"
+  },
+  {
+    "component": "OpenImageDenoise",
+    "revision": "v2.5.0",
+    "source": "https://raw.githubusercontent.com/RenderKit/oidn/v2.5.0/README.md",
+    "file": "OpenImageDenoise-README.md",
+    "sha256": "54966c3d3a850c63b6f76410e8202b4647c8f91a544ee073a1af9b1c9bfeab66"
+  },
+  {
+    "component": "Embree",
+    "revision": "v4.4.1",
+    "source": "https://raw.githubusercontent.com/RenderKit/embree/v4.4.1/README.md",
+    "file": "Embree-README.md",
+    "sha256": "6fcf12b3f085e1b6c379f84cb32516b8a5e9af5a7cb2ad8e84bb0886bc878b63"
+  },
+  {
+    "component": "oneTBB",
+    "revision": "v2022.3.0",
+    "source": "https://raw.githubusercontent.com/uxlfoundation/oneTBB/v2022.3.0/README.md",
+    "file": "oneTBB-README.md",
+    "sha256": "8e709fedbc25581c4f8effcdc07d0c436d6a303d431cb30613fed39afab9d26a"
+  }
+]

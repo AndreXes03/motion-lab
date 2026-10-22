@@ -1,7 +1,7 @@
 name: Mac setup and export
 on:
   pull_request:
-    paths: ['src/**', 'project/**', 'index.html', 'vite.config.js', '.agents/**', 'scripts/**', 'Setup Framevolve.command', 'package*.json', '.github/workflows/mac-setup.yml']
+    paths: ['src/**', 'project/**', 'index.html', 'vite.config.js', '.agents/**', 'scripts/**', 'native/**', 'Setup Framevolve.command', 'package*.json', '.github/workflows/mac-setup.yml']
   workflow_dispatch:
 concurrency:
   group: mac-setup-${{ github.event.pull_request.number || github.ref }}
@@ -27,6 +27,10 @@ jobs:
           npm run test:updates
           node scripts/test-studio-update.mjs
           node scripts/agent-context.mjs setup
+      - name: Standalone adapter, component and cancellation contracts
+        run: |
+          npm run test:cycles:standalone
+          npm run test:cycles:cancel
       - name: Native storyboard and frame feedback contracts
         run: npm run test:creative
       - name: Storyboard and frame feedback interface

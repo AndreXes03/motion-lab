@@ -11,6 +11,7 @@ import { fileURLToPath } from 'node:url';
 import { ROOT, findChrome, chromeExecutable, executable, playwright, readSetup, saveSetup, resolveBrowser } from './browser-runtime.mjs';
 import { checkNode, launch } from './launch-studio.mjs';
 import { installLauncher } from './install-mac-launcher.mjs';
+import { cyclesComponentManager } from './cycles/component.mjs';
 
 const quote = value => "'" + value.replaceAll("'", "'\\''") + "'";
 export const PROVIDERS = {
@@ -60,8 +61,10 @@ export async function startSetup({ root = ROOT, open = true, operations = {} } =
   await writeFile(path.join(lock, 'owner.json'), JSON.stringify({ pid: process.pid }));
   const release = () => rm(lock, { recursive: true, force: true });
   let settings; try { settings = await readSetup(root); } catch { settings = {}; }
+  const componentManager = operations.componentManager ?? cyclesComponentManager(root);
+  const componentStatus = () => componentManager.status().catch(error => ({busy:false,canInstall:false,canUpdate:false,canRemove:false,reason:error.message}));
   const token = randomBytes(32).toString('hex');
-  const state = { feedbackMemory: (await readMemory(root)).consent.enabled, busy: false, stage: 'welcome', message: '', error: '', ready: false, provider: settings.provider ?? 'other', browser: settings.browser?.kind ?? 'auto', chrome: await (operations.findChrome ?? findChrome)(), agent: null, log: '', root, launcherWarning: '' };
+  const state = { feedbackMemory: (await readMemory(root)).consent.enabled, busy: false, stage: 'welcome', message: '', error: '', ready: false, provider: settings.provider ?? 'other', browser: settings.browser?.kind ?? 'auto', chrome: await (operations.findChrome ?? findChrome)(), agent: null, log: '', root, launcherWarning: '', cyclesComponent: await componentStatus() };
   const env = { ...process.env, PATH: `${path.dirname(process.execPath)}${path.delimiter}${process.env.PATH ?? ''}` };
   const run = operations.run ?? ((command, args) => new Promise((resolve, reject) => {
     const child = spawn(command, args, { cwd: root, env, stdio: ['ignore', 'pipe', 'pipe'] });
@@ -96,10 +99,12 @@ export async function startSetup({ root = ROOT, open = true, operations = {} } =
       browser = { kind: 'chromium' };
     }
     state.message = 'Checking the browser and video encoder…';
-    const selected = await resolveBrowser({ root, settings: { browser }, env: {} });
-    const instance = await playwright(root).chromium.launch({ executablePath: selected.executablePath, headless: true });
-    try { const page = await instance.newPage(); await page.setContent('<canvas width="8" height="8"></canvas>'); if (!await page.evaluate(() => !!document.querySelector('canvas').getContext('webgl2'))) throw Error('WebGL2 is unavailable. Try another browser or update macOS.'); }
-    finally { await instance.close(); }
+    await (operations.verifyBrowser ?? (async () => {
+      const selected = await resolveBrowser({ root, settings: { browser }, env: {} });
+      const instance = await playwright(root).chromium.launch({ executablePath: selected.executablePath, headless: true });
+      try { const page = await instance.newPage(); await page.setContent('<canvas width="8" height="8"></canvas>'); if (!await page.evaluate(() => !!document.querySelector('canvas').getContext('webgl2'))) throw Error('WebGL2 is unavailable. Try another browser or update macOS.'); }
+      finally { await instance.close(); }
+    }))({browser, root});
     const require = createRequire(path.join(root, 'package.json'));
     await run(require('ffmpeg-static'), ['-version']);
     await run(require('ffprobe-static').path, ['-version']);
@@ -137,20 +142,33 @@ export async function startSetup({ root = ROOT, open = true, operations = {} } =
         response.writeHead(200, { 'Content-Type': type, 'Cache-Control': 'no-store' }); response.end(await readFile(new URL(file, import.meta.url))); return;
       }
       if (request.headers['x-framevolve-setup'] !== token || (request.headers.origin && request.headers.origin !== origin)) return json(403, { error: 'Reopen setup to continue.' });
-      if (request.method === 'GET' && url.pathname === '/api/state') { state.feedbackMemory = (await readMemory(root)).consent.enabled; return json(200, state); }
+      if (request.method === 'GET' && url.pathname === '/api/state') { state.feedbackMemory = (await readMemory(root)).consent.enabled; state.cyclesComponent = await componentStatus(); return json(200, state); }
       if (request.method !== 'POST' || request.headers.origin !== origin || request.headers['content-type'] !== 'application/json') return json(403, { error: 'Invalid setup request.' });
       let raw = ''; for await (const chunk of request) { raw += chunk; if (raw.length > 8192) return json(413, { error: 'Request too large.' }); }
       const body = JSON.parse(raw || '{}');
       if (state.busy) return json(409, { error: 'A setup step is still running.' });
-      if (url.pathname === '/api/install') {
+      const componentAction = url.pathname.match(/^\/api\/components\/cycles\/(install|update|authorize|check|remove)$/);
+      if (componentAction) {
+        if (Object.keys(body).length) return json(400,{error:'Component actions do not accept package URLs or paths.'});
+        job('cycles', async () => {
+          state.message = 'Preparing optional Rendering Cycles…';
+          await componentManager[componentAction[1] === 'check' ? 'checkAuthorization' : componentAction[1]]();
+          state.cyclesComponent = await componentStatus(); state.message = componentAction[1] === 'remove' ? 'Rendering Cycles removed. Three.js is ready.' : state.cyclesComponent.pendingAuthorization ? 'Rendering Cycles is downloaded and waiting for macOS approval.' : 'Rendering Cycles is ready.';
+        });
+      } else if (url.pathname === '/api/install') {
         if (!Object.hasOwn(PROVIDERS, body.provider)) return json(400, { error: 'Choose an available agent.' });
         if (!['auto', 'chrome', 'chromium'].includes(body.browser)) return json(400, { error: 'Choose Automatic, Chrome or Chromium.' });
         if (body.feedbackMemory !== undefined && typeof body.feedbackMemory !== 'boolean') return json(400, { error: 'Choose whether to save feedback memory.' });
+        if (body.cyclesOptional !== undefined && typeof body.cyclesOptional !== 'boolean') return json(400, { error: 'Choose whether to download Rendering Cycles.' });
         job('install', async () => {
           if (body.feedbackMemory !== undefined) { await setMemoryConsent(root, body.feedbackMemory); state.feedbackMemory = body.feedbackMemory; }
           state.provider = body.provider;
           await prepare(body);
           await finish();
+          if (body.cyclesOptional) {
+            try {state.message = 'Downloading optional Rendering Cycles…'; await componentManager.install(); state.cyclesComponent = await componentStatus(); state.message = state.cyclesComponent.pendingAuthorization ? 'Framevolve is ready. Rendering Cycles needs your macOS approval.' : 'Framevolve and Rendering Cycles are ready.';}
+            catch (error) {state.cyclesComponent = await componentStatus(); state.message = `Framevolve is ready. Optional Rendering Cycles could not be installed: ${error.message}`;}
+          }
         });
       } else if (url.pathname === '/api/memory') {
         const memory = await setMemoryConsent(root, body.enabled); state.feedbackMemory = memory.consent.enabled;

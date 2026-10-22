@@ -6,6 +6,7 @@ import {validateParameterAnimation} from '../src/engine/parameter-animation.js';
 import {validateAuthoredMotion} from '../src/engine/authored-animation.js';
 import {validateRenderPlan,resolveRenderPlan} from '../src/engine/render-policy.js';
 import {getCyclesCapabilities,buildCyclesCommand} from './cycles/studio.mjs';
+import {cyclesComponentManager} from './cycles/component.mjs';
 import {getMixedCapabilities,preflightMixed,buildMixedCommand} from './mixed/studio.mjs';
 import {sceneConfig,sceneIds,isNewScene} from '../src/scene-registry.js';
 import { spawn as nodeSpawn } from 'node:child_process';
@@ -255,7 +256,7 @@ function jobManifest(job) {
     progress: job.progress, frames: job.frames, total: job.total, phase: job.phase, samples: job.samples, totalSamples: job.totalSamples,
     createdAt: job.createdAt, startedAt: job.startedAt,
     finishedAt: job.finishedAt, time: job.time, sourceHash: job.sourceHash,
-    sourceHashAfter: job.sourceHashAfter ?? null, error: job.error,
+    sourceHashAfter: job.sourceHashAfter ?? null, error: job.error, backend:job.backend,device:job.device,deviceName:job.deviceName,cancelRequested:job.cancelRequested,
     parameters: job.parameters, settings: job.settings ?? null, destination: job.destination, engine:job.engine??'threejs', rendererSelection:job.rendererSelection??null
   };
 }
@@ -274,12 +275,12 @@ async function loadPersistedJobs() {
     const [, id, ext] = match;
     try {
       const record = JSON.parse(await readFile(path.join(RENDER_DIR, entry.name), 'utf8'));
-      if (record.id !== id || !['frame', 'preview', 'export'].includes(record.kind) || !['completed', 'failed', 'running'].includes(record.status)) continue;
+      if (record.id !== id || !['frame', 'preview', 'export'].includes(record.kind) || !['completed', 'failed', 'running', 'cancelling', 'cancelled'].includes(record.status)) continue;
       const outputPath = record.destination === 'downloads' ? downloadPath(id, `.${ext}`) : path.join(RENDER_DIR,...(record.engine==='cycles'?['cycles']:[]), `${id}.${ext}`);
       const output = await stat(outputPath).catch(() => null);
       let status = record.status;
       let error = record.error ?? null;
-      if (status === 'running') {
+      if (status === 'running' || status === 'cancelling') {
         status = 'failed';
         error = 'Viewer stopped before this render finished.';
       } else if (status === 'completed' && !output?.isFile()) {
@@ -301,7 +302,7 @@ async function loadPersistedJobs() {
         error, extension: `.${ext}`, outputPath, destination: record.destination,
         manifestPath: path.join(RENDER_DIR, entry.name),
         sourceHash: record.sourceHash ?? null, sourceHashAfter: record.sourceHashAfter ?? null,
-        parameters: record.parameters ?? {}, settings: record.settings ?? null, engine:record.engine??'threejs', rendererSelection:record.rendererSelection??null
+        backend:record.backend,device:record.device,deviceName:record.deviceName,parameters: record.parameters ?? {}, settings: record.settings ?? null, engine:record.engine??'threejs', rendererSelection:record.rendererSelection??null
       };
       if (job.status === 'completed' && job.destination !== 'downloads' && job.purpose !== 'viewport') {
         try { await publishDownload(job); await writeJobManifest(job); }
@@ -315,7 +316,7 @@ async function loadPersistedJobs() {
 }
 
 function publicJob(job) {
-  const { sourceHash, sourceHashAfter, pid, logs, snapshotPath, manifestPath, parameters, ...publicFields } = job;
+  const { sourceHash, sourceHashAfter, pid, child, logs, snapshotPath, manifestPath, parameters, ...publicFields } = job;
   return {
     ...publicFields,
     previewUrl: job.previewStage ? `/api/studio/jobs/${job.id}/preview?stage=${job.previewStage}` : job.frames > 0 ? `/api/studio/jobs/${job.id}/preview?frame=${job.previewFrame??job.frames}` : null,
@@ -335,17 +336,21 @@ function revealWithFinder(job, spawnFn = nodeSpawn) {
 function launchJob(job, invocation, spawnFn) {
   job.status = 'running'; job.progress = 0; job.phase = 'rendering'; job.startedAt = new Date().toISOString(); processState.activeRenderId = job.id;
   const child = spawnFn(invocation.command, invocation.args, { cwd: invocation.cwd??ROOT, shell: false, windowsHide: true, stdio: ['ignore', 'pipe', 'pipe'] });
-  job.pid = child.pid;
+  job.pid = child.pid; job.child = child;
   let stdout = '', stderr = '', buffer = '';
   const consumeLine = line => {
     if (!line.trim()) return;
     try {
       const event = JSON.parse(line);
+      if (event.backend === 'cycles-standalone') job.backend = event.backend;
+      if (typeof event.device === 'string') job.device = event.device.slice(0,80);
+      if (typeof event.deviceName === 'string') job.deviceName = event.deviceName.slice(0,200);
+      if (job.cancelRequested) return;
       if(event.type==='preview'&&job.purpose==='viewport'&&job.engine==='cycles'&&[1,2].includes(event.stage)){
         job.previewStage=event.stage;job.previewWidth=event.width;job.previewHeight=event.height;job.previewSamples=event.samples;job.phase='refining';job.progress=Math.max(job.progress,Number(event.percent)||0);
       }
       if (['progress','frame'].includes(event.type)) {
-        if (Number.isFinite(event.percent)) job.progress = Math.max(0, Math.min(99, event.percent));
+        if (Number.isFinite(event.percent)) job.progress = Math.max(job.progress, Math.min(99, event.percent));
         if (Number.isFinite(event.frames)) job.frames = Math.max(job.frames ?? 0, Math.min(job.total, event.frames));
         if (Number.isFinite(event.total)) job.total = Math.max(1, event.total);
         if (Number.isInteger(event.previewFrame)) job.previewFrame = event.previewFrame;
@@ -370,7 +375,7 @@ function launchJob(job, invocation, spawnFn) {
   child.on('close', async code => {
     if (buffer) consumeLine(buffer);
     try {
-      if (code !== 0) {
+      if (job.cancelRequested) {job.status='cancelled';job.phase='cancelled';job.error='Render cancelled.';job.url=null;job.downloadUrl=null;} else if (code !== 0) {
         job.status = 'failed'; job.phase = 'failed'; job.error ||= stderr.trim() || `Render CLI exited with code ${code}`;
       } else {
         const current = await sourceFingerprint();
@@ -386,6 +391,7 @@ function launchJob(job, invocation, spawnFn) {
         }
       }
     } catch (error) { job.status = 'failed'; job.phase = 'failed'; job.error = error.message; }
+    delete job.child;
     job.finishedAt = new Date().toISOString();
     job.logs = stdout.slice(-8000);
     try {
@@ -397,7 +403,7 @@ function launchJob(job, invocation, spawnFn) {
   });
 }
 
-export function createStudioApi({ spawnFn = nodeSpawn, revealFn = revealWithFinder, capabilitiesFn=rendererCapabilities } = {}) {
+export function createStudioApi({ spawnFn = nodeSpawn, revealFn = revealWithFinder, capabilitiesFn=rendererCapabilities, componentManager=cyclesComponentManager(ROOT) } = {}) {
   return async function studioApi(req, res, next) {
     const route = new URL(req.url ?? '/', 'http://127.0.0.1').pathname;
     if (!route.startsWith('/studio')) return next();
@@ -413,6 +419,7 @@ export function createStudioApi({ spawnFn = nodeSpawn, revealFn = revealWithFind
         const currentJobs = [...jobs.values()].filter(job => job.purpose !== 'viewport').sort((a, b) => String(b.createdAt).localeCompare(String(a.createdAt))).map(publicJob);
         return send(res, 200, { versions, jobs: currentJobs, outputDirectory: DOWNLOAD_DIR });
       }
+      if(req.method==='GET'&&route==='/studio/components/cycles')return send(res,200,{component:await componentManager.status()});
       if(req.method==='GET'&&route==='/studio/capabilities')return send(res,200,{capabilities:await capabilitiesFn()});
       if (req.method === 'GET' && route.startsWith('/studio/versions/')) {
         const id = decodeURIComponent(route.slice('/studio/versions/'.length));
@@ -459,6 +466,16 @@ export function createStudioApi({ spawnFn = nodeSpawn, revealFn = revealWithFind
         return;
       }
       const revealMatch = route.match(/^\/studio\/jobs\/([a-f0-9-]{36})\/reveal$/);
+      const cancelMatch = route.match(/^\/studio\/jobs\/([a-f0-9-]{36})\/cancel$/);
+      if (req.method === 'POST' && cancelMatch) {
+        if (!req.headers.origin || new URL(req.headers.origin).host !== host || req.headers['content-type']?.split(';')[0] !== 'application/json') return send(res,403,{error:'Cancel renders from this Studio tab.'});
+        const body=await readJson(req);if(!isRecord(body)||Object.keys(body).length)return send(res,400,{error:'Cancel expects an empty object.'});
+        await loadPersistedJobs(); const job=jobs.get(cancelMatch[1]);if(!job)return send(res,404,{error:'Render job not found.'});
+        if(['completed','failed','cancelled'].includes(job.status))return send(res,200,publicJob(job));
+        if(!job.child)return send(res,409,{error:'This render cannot be cancelled from this Studio instance.'});
+        job.cancelRequested=true;job.status='cancelling';job.phase='cancelling';job.child.kill('SIGTERM');
+        return send(res,202,publicJob(job));
+      }
       if (req.method === 'POST' && revealMatch) {
         await loadPersistedJobs();
         const job = jobs.get(revealMatch[1]);
@@ -479,6 +496,16 @@ export function createStudioApi({ spawnFn = nodeSpawn, revealFn = revealWithFind
       if (req.method !== 'POST') return send(res, 404, { error: 'Unknown studio endpoint' });
 
       const body = await readJson(req);
+      const componentAction = route.match(/^\/studio\/components\/cycles\/(install|update|authorize|check|remove)$/);
+      if (componentAction) {
+        if (!req.headers.origin || new URL(req.headers.origin).host !== host || req.headers['content-type']?.split(';')[0] !== 'application/json') return send(res,403,{error:'Use Rendering Cycles controls from this Studio tab.'});
+        if (!isRecord(body) || Object.keys(body).length) return send(res,400,{error:'Component actions do not accept package URLs or paths.'});
+        if (processState.activeRenderId) return send(res,409,{error:'Wait for the current render to finish before changing Rendering Cycles.'});
+        if ((await componentManager.status()).busy) return send(res,409,{error:'A Rendering Cycles component operation is already running.'});
+        // Start locally and return immediately; progress is available through GET.
+        componentManager[componentAction[1] === 'check' ? 'checkAuthorization' : componentAction[1]]().catch(() => {}).finally(() => {cyclesProbe=null;cyclesProbeAt=0;});
+        return send(res,202,{component:await componentManager.status()});
+      }
       if (route === '/studio/versions') {
         if (!isRecord(body) || Object.keys(body).some(k => !['name', 'parameters'].includes(k))) return send(res, 400, { error: 'Expected name and parameters' });
         const name = safeName(body.name);
@@ -497,6 +524,7 @@ export function createStudioApi({ spawnFn = nodeSpawn, revealFn = revealWithFind
         if (body.purpose !== undefined && (body.purpose !== 'viewport' || body.kind !== 'frame')) return send(res, 400, { error: 'Viewport jobs must be single frames' });
         try{await Promise.any(['checkpoint-restore.json','checkpoint.lock'].map(name=>stat(path.join(ROOT,'.motion-cache',name))));return send(res,409,{error:'Wait for the project restore to finish before rendering.'});}catch(error){if(!(error instanceof AggregateError)||error.errors.some(e=>e.code!=='ENOENT'))throw error;}
         if (processState.activeRenderId) return send(res, 409, { error: 'Another local render is already running' });
+        if ((await componentManager.status()).busy) return send(res,409,{error:'Wait for the Rendering Cycles component operation to finish before rendering.'});
         const time = body.time ?? 0;
         const selectedConfig=sceneConfig(body.parameters?.scene??'objects');if (typeof time !== 'number' || !Number.isFinite(time) || time < 0 || time > selectedConfig.duration) return send(res, 400, { error: `time must be a number from 0 to ${selectedConfig.duration} seconds` });
         reservation = `pending:${randomUUID()}`;

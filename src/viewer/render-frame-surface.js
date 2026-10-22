@@ -1,17 +1,19 @@
 import './render-frame-surface.css';
 
 /** Keep a real rendered frame visible while the next frame is being computed. */
-export function mountRenderFrameSurface({container, onInteractive, onSettings, onRetry}) {
+export function mountRenderFrameSurface({container, onInteractive, onSettings, onRetry, onCancel}) {
   const root = document.createElement('section');
   root.id = 'final-frame-view'; root.hidden = true;
   root.setAttribute('aria-label', 'Final renderer preview');
   const image = document.createElement('img'); image.alt = 'Final rendered frame'; image.hidden = true;
+  const deviceBadge=document.createElement('small');deviceBadge.className='final-frame-device';deviceBadge.hidden=true;root.append(deviceBadge);
   const message = document.createElement('div'); message.className = 'final-frame-message';
   const title = document.createElement('strong'); title.setAttribute('role', 'status');
   const detail = document.createElement('span');
   const actions = document.createElement('div'); actions.className = 'final-frame-actions';
   const button = (label, action) => { const el = document.createElement('button'); el.type = 'button'; el.textContent = label; el.onclick = action; actions.append(el); return el; };
   const retry = button('Retry frame', onRetry);
+  const cancel = button('Cancel render', onCancel); cancel.hidden = true;
   button('Renderer settings', onSettings);
   button('Back to interactive', onInteractive);
   message.append(title, detail, actions); root.append(image, message); container.append(root);
@@ -19,14 +21,16 @@ export function mountRenderFrameSurface({container, onInteractive, onSettings, o
   function render(next) {
     state = next; root.hidden = next.status === 'idle';
     root.dataset.status = next.status;
+    deviceBadge.hidden=!next.device;deviceBadge.textContent=next.device ? `${next.backend==='cycles-standalone'?'Cycles standalone':'Cycles'} · ${next.device} · ${next.deviceName||''}` : '';
+    image.alt=next.device?`Final frame · ${deviceBadge.textContent}`:'Final rendered frame';
     root.setAttribute('aria-busy', String(['pending', 'rendering'].includes(next.status)));
     if (next.status === 'idle') { displayed = null; image.hidden = true; image.removeAttribute('src'); return; }
     const engine = next.engine === 'cycles' ? 'Cycles' : next.engine === 'mixed' ? 'Mixed' : 'Three.js';
     if (displayed?.scene !== next.scene) { displayed = null; image.hidden = true; }
-    const failed = ['error', 'unavailable'].includes(next.status);
-    actions.hidden = !failed; retry.hidden = next.status !== 'error';
-    const phaseLabel = ['freezing','baking','starting','preparing'].includes(next.phase) ? 'preparing scene' : next.phase === 'final' ? 'final pass' : next.phase === 'refining' ? 'refining' : 'rendering';
-    title.textContent = failed ? `${engine} · ${next.status === 'error' ? 'render failed' : 'unavailable'}` : next.status === 'ready' ? `${engine} · loading frame…` : `${engine} · ${next.status === 'pending' ? (next.phase === 'waiting' ? 'renderer busy' : 'waiting') : phaseLabel}${next.progress > 0 ? ` ${Math.round(next.progress)}%` : '…'}`;
+    const failed = ['error', 'unavailable', 'cancelled'].includes(next.status);
+    actions.hidden = !failed && !['pending','rendering'].includes(next.status); retry.hidden = !['error','cancelled'].includes(next.status); cancel.hidden = !['pending','rendering'].includes(next.status);cancel.disabled=next.phase==='cancelling';
+    const phaseLabel = next.phase === 'cancelling' ? 'cancelling' : ['freezing','baking','starting','preparing'].includes(next.phase) ? 'preparing scene' : next.phase === 'final' ? 'final pass' : next.phase === 'refining' ? 'refining' : 'rendering';
+    title.textContent = failed ? `${engine} · ${next.status === 'error' ? 'render failed' : next.status === 'cancelled' ? 'cancelled' : 'unavailable'}` : next.status === 'ready' ? `${engine} · loading frame…` : `${engine} · ${next.status === 'pending' ? (next.phase === 'waiting' ? 'renderer busy' : 'waiting') : phaseLabel}${next.progress > 0 ? ` ${Math.round(next.progress)}%` : '…'}`;
     detail.textContent = failed ? next.error : next.previewUrl ? `${next.previewWidth} × ${next.previewHeight} · ${next.previewSamples} samples · refining to full resolution` : displayed ? 'Showing the previous rendered frame' : 'Preparing the scene for its first image';
     message.hidden = false;
     const url = next.status === 'ready' ? next.url : next.previewUrl;

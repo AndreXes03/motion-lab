@@ -29,6 +29,7 @@ export function mountRenderPanel({container, getScene, getParameters = () => ({}
   let activeScene = null;
   let plan = createRenderPlan();
   let destroyed = false;
+  let componentState = capabilities.cycles?.component ?? null, componentPending = false, componentTimer;
   const root = document.createElement('section');
   root.className = 'render-policy-panel';
   root.setAttribute('aria-label', 'Final renderer');
@@ -45,7 +46,7 @@ export function mountRenderPanel({container, getScene, getParameters = () => ({}
   const sampleCaption = document.createElement('span'); sampleCaption.textContent = 'Cycles samples';
   const samples = document.createElement('input'); samples.type = 'number'; samples.min = '1'; samples.max = '4096'; samples.step = '1'; samples.inputMode = 'numeric'; samples.setAttribute('aria-label', 'Cycles samples'); samples.title = 'More samples reduce noise and take longer to render.';
   sampleLabel.append(sampleCaption, samples); advanced.append(sampleLabel);
-  const device = field(advanced, 'Render device', [['auto', 'Auto · verified GPU or CPU'], ['gpu', 'GPU · if verified by Blender'], ['cpu', 'CPU']]);
+  const device = field(advanced, 'Render device', [['auto', 'Auto · verified GPU or CPU'], ['gpu', 'GPU · verified native device'], ['cpu', 'CPU']]);
   const workers = field(advanced, 'Parallel workers', [['auto', 'Auto · bounded for this computer'], ['1', '1 worker'], ['2', '2 workers']]);
   const denoiseLabel = document.createElement('label'); denoiseLabel.className = 'render-policy-denoise';
   const denoise = document.createElement('input'); denoise.type = 'checkbox'; denoiseLabel.append(denoise, document.createTextNode('Denoise')); advanced.append(denoiseLabel);
@@ -63,7 +64,54 @@ export function mountRenderPanel({container, getScene, getParameters = () => ({}
   details.append(detailsTitle, rationale, warnings, estimateNote, preview, adaptation, mixedNote);
   const outcome = document.createElement('div'); outcome.className = 'render-policy-outcome'; outcome.append(status, cost);
   root.insertBefore(outcome, cycleFields);
-  root.append(details); container.append(root);
+  const componentDetails = document.createElement('details'); componentDetails.className = 'render-policy-advanced render-policy-component';
+  const componentTitle = document.createElement('summary'); componentTitle.textContent = 'Rendering Cycles · optional';
+  const componentStatus = document.createElement('p'); componentStatus.className = 'render-policy-note'; componentStatus.setAttribute('role','status');
+  const componentProgress = document.createElement('progress'); componentProgress.max = 1; componentProgress.hidden = true; componentProgress.setAttribute('aria-label','Rendering Cycles installation');
+  const componentButtons = document.createElement('div'); componentButtons.className = 'render-policy-component-actions';
+  const installComponent = document.createElement('button'), updateComponent = document.createElement('button'), authorizeComponent = document.createElement('button'), checkComponent = document.createElement('button'), removeComponent = document.createElement('button');
+  for (const [button,label] of [[installComponent,'Download Rendering Cycles'],[updateComponent,'Update Rendering Cycles'],[authorizeComponent,'Authorize in macOS'],[checkComponent,'Check authorization'],[removeComponent,'Remove Rendering Cycles']]) {button.type='button';button.textContent=label;componentButtons.append(button);}
+  componentDetails.append(componentTitle,componentStatus,componentProgress,componentButtons);
+  root.append(details,componentDetails); container.append(root);
+  function syncComponent() {
+    const value = componentState ?? {}, busy = componentPending || value.busy;
+    componentStatus.textContent = publicDemo ? 'Install the local Framevolve app to manage this optional component. Three.js is included.' : busy ? `Rendering Cycles · ${value.phase || 'preparing'}${value.phase === 'downloading' ? ` ${Math.round((value.progress || 0) * 100)}%` : ''}` : value.reason || (value.compatible ? `Rendering Cycles ${value.installed.version} · installed` : 'Checking optional component…');
+    componentProgress.hidden = !busy; componentProgress.value = value.progress || 0;
+    installComponent.hidden = !value.canInstall || publicDemo; installComponent.disabled = !value.canInstall || !!busy;
+    updateComponent.hidden = !value.canUpdate || publicDemo; updateComponent.disabled = !!busy;
+    authorizeComponent.hidden = !value.canAuthorize || publicDemo; authorizeComponent.disabled = !value.canAuthorize || !!busy;
+    checkComponent.hidden = !value.canCheck || publicDemo; checkComponent.disabled = !value.canCheck || !!busy;
+    removeComponent.hidden = !value.canRemove || publicDemo; removeComponent.disabled = !value.canRemove || !!busy;
+  }
+  async function refreshComponent() {
+    if (destroyed || publicDemo) return;
+    try {
+      const response = await fetch('/api/studio/components/cycles'); const value = await response.json(); if (!response.ok) throw Error(value.error || 'Optional component status is unavailable.');
+      if (destroyed) return; const wasBusy=componentState?.busy; componentState=value.component; syncComponent();
+      if(wasBusy&&!componentState.busy){try{const caps=await fetch('/api/studio/capabilities');if(caps.ok){capState=(await caps.json()).capabilities;sync();}}catch{}}
+      if (componentState.busy) {clearTimeout(componentTimer);componentTimer=setTimeout(refreshComponent,700);}
+    } catch(error) {if (!destroyed) {componentState={reason:error.message};syncComponent();}}
+  }
+  async function componentAction(action) {
+    if (componentPending || componentState?.busy || publicDemo) return;
+    componentPending=true;syncComponent();
+    try {
+      const response=await fetch('/api/studio/components/cycles/' + action,{method:'POST',headers:{'Content-Type':'application/json'},body:'{}'}); const value=await response.json();
+      if(!response.ok) throw Error(value.error || 'Rendering Cycles operation failed.');
+      componentState=value.component;
+      const watch = async () => {
+        await refreshComponent();
+        if (destroyed) return;
+        if (componentState?.busy) return;
+        try {const response=await fetch('/api/studio/capabilities');if(response.ok) {capState=(await response.json()).capabilities;sync();}}catch {}
+      };
+      clearTimeout(componentTimer); componentTimer=setTimeout(watch,750);
+    } catch(error) {componentState={...componentState,reason:error.message};}
+    finally {componentPending=false;if(!destroyed)syncComponent();}
+  }
+  installComponent.onclick=()=>componentAction('install'); updateComponent.onclick=()=>componentAction('update'); authorizeComponent.onclick=()=>componentAction('authorize'); checkComponent.onclick=()=>componentAction('check'); removeComponent.onclick=()=>componentAction('remove');
+  componentDetails.addEventListener('toggle',()=>{if(componentDetails.open)refreshComponent();});
+  syncComponent(); refreshComponent();
 
   function context() {
     return {scene: sceneId(getScene()), publicDemo, capabilities: capState, ...getExportSettings()};
@@ -71,12 +119,16 @@ export function mountRenderPanel({container, getScene, getParameters = () => ({}
   function selection(contextOverrides = {}) { return resolveRenderPlan(plan, {...context(), ...contextOverrides}); }
   function sync() {
     if (destroyed) return;
+    const standalone=capState.cycles?.backend==='cycles-standalone';
+    if(standalone)plan.cycles.workers=1;
     const resolved = selection();
     renderer.value = plan.renderer; quality.value = plan.quality; samples.value = String(plan.cycles.samples);
+    workers.closest('label').hidden=standalone;
     device.value = plan.cycles.device === 'metal' ? 'gpu' : plan.cycles.device; workers.value = String(plan.cycles.workers); denoise.checked = plan.cycles.denoise;
     const usesCycles = resolved.selectedRenderer === 'cycles' || plan.renderer === 'cycles' || plan.renderer === 'mixed' || plan.preferredRenderer === 'cycles';
     cycleFields.hidden = !usesCycles;
     adaptation.hidden = !usesCycles;
+    adaptation.textContent = 'PULSE Cycles adapts materials and lighting. Depth of field, fisheye, bloom and ambient occlusion are not included.' + (standalone ? ' The standalone engine renders with one worker.' : '');
     mixedNote.hidden = !(plan.renderer === 'mixed' || resolved.selectedRenderer === 'mixed' || (plan.renderer === 'auto' && plan.preferredRenderer === 'mixed'));
     mixedNote.textContent = 'Re-render prepared layers after scene edits. ' + (plan.composite.audioFile ? 'Prepared audio selected; rebuild it after audio changes.' : 'No prepared soundtrack. Prepare audio to include your current mix.');
     for (const input of cycleFields.querySelectorAll('input,select')) input.disabled = publicDemo;
@@ -134,8 +186,8 @@ export function mountRenderPanel({container, getScene, getParameters = () => ({}
       if (notify) onChange(structuredClone(plan), selection());
       return structuredClone(plan);
     },
-    setCapabilities(next) {capState = next ?? {}; sync(); return selection();},
+    setCapabilities(next) {capState = next ?? {}; if(capState.cycles?.component)componentState=capState.cycles.component; syncComponent(); sync(); return selection();},
     refresh,
-    destroy() {destroyed = true; destroyExportSheet(); root.remove();}
+    destroy() {destroyed = true; clearTimeout(componentTimer); destroyExportSheet(); root.remove();}
   };
 }

@@ -1,0 +1,95 @@
+{
+  "date": "2026-10-22",
+  "upstreamRevision": "a456b761034dda42c32eef9f4aae0fa5a5c9f604",
+  "stable": false,
+  "evidence": [
+    {
+      "title": "PULSE · 2.0s · Metal · 16 samples",
+      "reference": "pulse-reference-01.png",
+      "standalone": "pulse-native-02.png",
+      "rgbMeanAbsoluteDifference8bit": 2.611815843621399,
+      "alphaMeanAbsoluteDifference8bit": 0
+    },
+    {
+      "title": "PULSE · 7.5s · CPU · alpha + motion blur",
+      "reference": "pulse-reference-alpha-cpu.png",
+      "standalone": "pulse-native-alpha-cpu.png",
+      "rgbMeanAbsoluteDifference8bit": 1.8505066872427984,
+      "alphaMeanAbsoluteDifference8bit": 0.3847685185185185
+    },
+    {
+      "title": "LOOP · 4.0s · Metal · physical camera",
+      "reference": "loop-reference-01.png",
+      "standalone": "loop-native-01.png",
+      "rgbMeanAbsoluteDifference8bit": 7.460843621399177,
+      "alphaMeanAbsoluteDifference8bit": 0
+    },
+    {
+      "title": "LOOP · 6.0s · Metal · Canvas overlay + motion blur",
+      "reference": "loop-reference-overlay.png",
+      "standalone": "loop-native-motion.mp4.cycles/hybrid/frame-000001.png",
+      "rgbMeanAbsoluteDifference8bit": 0.22868312757201645,
+      "alphaMeanAbsoluteDifference8bit": 0
+    },
+    {
+      "video": "pulse-native-motion.mp4",
+      "backend": "standalone",
+      "device": "METAL",
+      "width": 480,
+      "height": 270,
+      "frames": 6,
+      "fps": 30,
+      "duration": 0.2,
+      "completeDecode": true,
+      "streams": [
+        {
+          "type": "video",
+          "codec": "h264",
+          "duration": "0.200000",
+          "frames": "6"
+        },
+        {
+          "type": "audio",
+          "codec": "aac",
+          "duration": "0.200000",
+          "frames": "11"
+        }
+      ],
+      "renderWallSeconds": 97.277
+    },
+    {
+      "video": "loop-native-motion.mp4",
+      "backend": "standalone",
+      "device": "METAL",
+      "width": 480,
+      "height": 270,
+      "frames": 6,
+      "fps": 12,
+      "duration": 0.5,
+      "completeDecode": true,
+      "streams": [
+        {
+          "type": "video",
+          "codec": "h264",
+          "duration": "0.500000",
+          "frames": "6"
+        }
+      ],
+      "renderWallSeconds": 38.013
+    },
+    {
+      "cleanRuntime": {
+        "samePixels": true,
+        "denied": [
+          "/Applications/Blender.app",
+          "Cycles source",
+          "Cycles build",
+          "build tooling",
+          "/Library/Developer"
+        ],
+        "device": "CPU",
+        "note": "Separate HOME, empty environment, PATH only /usr/bin:/bin. This is a runtime isolation test, not end-user installer verification."
+      }
+    }
+  ]
+}
