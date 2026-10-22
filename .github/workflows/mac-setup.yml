@@ -33,6 +33,10 @@ jobs:
           npm run test:cycles:cancel
       - name: Native audio and project records
         run: |
+          # A fresh macOS runner can spend more than the media-probe deadline
+          # starting a downloaded executable for the first time. Keep that
+          # bounded startup separate from the unchanged 15-second media check.
+          node --input-type=module -e "import {execFileSync} from 'node:child_process'; import ffprobe from 'ffprobe-static'; execFileSync(ffprobe.path,['-version'],{stdio:'inherit',timeout:60000});"
           node scripts/test-audio-import.mjs
           node scripts/test-native-audio.mjs
           node scripts/test-native-project.mjs
