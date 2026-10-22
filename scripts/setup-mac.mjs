@@ -138,7 +138,7 @@ export async function startSetup({ root = ROOT, open = true, operations = {} } =
   const finish = async () => {
     state.message = 'Opening Studio…';
     const result = await (operations.launch ?? launch)({ action: 'start', root, port: 4173, open: false, update: false });
-    state.studioUrl = `${result.url}?scene=${state.browser === 'native' ? 'procedural' : 'pop'}`;
+    state.studioUrl = `${result.url}?scene=${state.browser === 'native' ? 'procedural' : 'pop'}&welcome=1`;
     await (operations.openStudio ?? (url => runFile('/usr/bin/open', [url])))(state.studioUrl);
     state.message = state.browser === 'native' ? 'Studio is open with the native Procedural demo.' : 'Studio is open with the PLAY.EXE demo.';
     // Keep optional agent setup available after Studio opens; never interrupt an active job.

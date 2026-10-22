@@ -3,21 +3,37 @@
 <head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Set up Framevolve</title><link rel="stylesheet" href="/setup.css"><script type="module" src="/setup.js"></script></head>
 <body><main>
 <header><img src="/mark.png" width="32" height="32" alt=""><strong>framevolve</strong><span>MAC SETUP</span></header>
+<nav class="setup-navigation" aria-label="Setup steps"><span id="setup-step">WELCOME</span><button id="setup-back" type="button" hidden>← How it works</button></nav>
+<section id="welcome-stage" aria-label="Welcome to Framevolve">
 <h1>Make your first move.</h1>
-<p class="intro">We’ll prepare everything and open a demo. You can start creating right away.</p>
+<p class="intro">Create and render locally on your Mac. Add your own AI assistant whenever you want.</p>
+<section class="workflow" aria-labelledby="workflow-title">
+<div class="workflow-heading"><h2 id="workflow-title">Your workspace, side by side.</h2><span>EXAMPLE LAYOUT</span></div>
+<div class="workspace-schematic" role="img" aria-label="Workflow illustration: your own AI assistant beside Framevolve Studio">
+<div class="workspace-pane"><span class="pane-label">YOUR AI ASSISTANT</span><div class="example-prompt">“Make a bold, playful product launch.”</div><p class="example-response"><span aria-hidden="true">↳</span> Plan the story. Shape the motion.</p></div>
+<div class="workspace-pane studio-pane"><span class="pane-label">FRAMEVOLVE STUDIO</span><div class="scene-schematic" aria-hidden="true"><i></i><i></i><i></i></div><div class="example-timeline" aria-hidden="true"><i></i><i></i><i></i><i></i></div><p>See your idea take shape.</p></div>
+</div>
+<details class="workflow-details"><summary>How to use this workspace</summary><p class="hint">Use a local assistant session with an integrated browser that can open localhost. Browser tools depend on your assistant. You can also open Studio in Safari or Firefox and keep your assistant alongside it. This illustration shows the layout, not a connected session.</p></details>
+</section>
+<p class="hint ai-access">AI is optional. Bring your own compatible account, subscription or API access; Framevolve does not include AI access.</p>
+<div class="welcome-actions"><button id="setup-continue" class="primary" type="button">Continue to setup</button><button id="setup-skip" type="button">Skip introduction</button></div>
+</section>
+<section id="setup-stage" aria-label="Set up Framevolve" hidden>
+<h1 class="setup-title">Make it yours.</h1><p class="intro setup-intro">A few choices, then you’re ready to create.</p>
 <fieldset id="providers"><legend>Your AI agent <span>Optional · you can decide later</span></legend>
 <div class="choices">
 <label><input type="radio" name="provider" value="codex"><img src="/logos/codex.svg" width="32" height="32" alt=""><span><b>Codex</b><small>OpenAI</small></span></label>
 <label><input type="radio" name="provider" value="claude"><img src="/logos/claude.svg" width="32" height="32" alt=""><span><b>Claude Code</b><small>Anthropic</small></span></label>
-<label><input type="radio" name="provider" value="other" checked><span><b>Decide later</b><small>Explore the demo first</small></span></label>
+<label><input type="radio" name="provider" value="other" checked><span><b>Decide later</b><small>Explore Studio first</small></span></label>
 </div></fieldset>
+<p class="hint ai-access">You’ll sign in through your assistant. Selecting it here does not connect an account.</p>
 <p id="auto-summary" class="hint">Checking this Mac…</p>
 <details id="advanced"><summary>Advanced options</summary>
 <label class="browser-label" for="browser">Production mode</label>
 <div class="browser-row"><select id="browser"><option value="native">Native production · Apple Silicon Mac</option><option value="auto">Legacy browser · automatic</option><option value="chrome">Legacy browser · use Google Chrome</option><option value="chromium">Legacy browser · install Chromium</option></select><button id="locate" type="button" hidden>Locate Chrome</button></div>
 <p class="hint">Native production uses local Canvas and video encoding for migrated scenes, without a rendering browser download. Some 3D scenes still need the legacy browser path. Studio opens in your default browser, including Safari.</p>
 <p id="chrome-status" class="hint"></p>
-<p class="hint">For AI creation, we recommend models such as Sol, Astra, Opus, Fable or equivalents. No specific model or subscription is required by Framevolve. Your provider manages access and usage costs.</p>
+<p class="hint">Local rendering runs on this Mac. AI requests run through your chosen provider, which manages access and any usage costs. You can explore and use Studio without AI.</p>
 <p id="provider-help" class="hint" hidden><a id="provider-docs" target="_blank" rel="noreferrer">Official agent setup guide</a></p>
 <p class="hint">Keep this project folder in place: <span id="repo"></span></p>
 </details>
@@ -34,10 +50,13 @@
 <div class="actions"><button id="install" class="primary" type="button" disabled>Set up &amp; open Framevolve</button><p id="install-note" class="hint">No account needed to explore. First setup needs an internet connection.</p></div>
 <div id="feedback" aria-live="polite" hidden><p id="message" role="status"></p><p id="error" role="alert"></p><p id="launcher-warning" class="hint"></p><details id="logs" hidden><summary>Installation details</summary><pre id="log"></pre></details></div>
 <section id="ready" aria-label="Ready to create" hidden>
-<p class="hint">Your demo is ready. To make something new, choose an agent above.</p>
+<h2>Studio is ready.</h2>
+<p class="hint">Open Studio to explore the demo. For AI help, copy this prompt into an existing assistant session with local project access.</p>
+<div class="studio-link-row"><a id="studio-link" target="_blank" rel="noreferrer"></a><button id="copy-studio-link" type="button">Copy Studio link</button></div>
+<div id="prompt-area"><blockquote id="starter-prompt"></blockquote><button id="copy-prompt" type="button">Copy starter prompt</button></div>
 <div class="ready-actions"><button id="agent" type="button" hidden>Create with AI</button><button id="close" type="button">Close setup</button></div>
-<p id="agent-note" class="hint" hidden>Opens your agent in Terminal and installs it if needed. Sign in there if requested, then send:</p>
-<div id="prompt-area" hidden><blockquote>Read docs/FOUNDER_START.md and help me create my first video.</blockquote><button id="copy-prompt" type="button">Copy prompt</button></div>
+<p id="agent-note" class="hint" hidden>Create with AI launches the selected command-line agent in Terminal and installs it if needed. Sign in there if requested. It does not open an embedded browser or connect browser tools.</p>
+</section>
 </section>
 <footer>Local on your Mac. Your work stays in your project folder.</footer>
 </main></body></html>

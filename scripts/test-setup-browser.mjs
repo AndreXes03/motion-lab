@@ -20,6 +20,12 @@ try {
   const page = await browser.newPage({ viewport: { width: 1100, height: 800 } });
   const errors = []; page.on('pageerror', error => errors.push(error.message));
   await page.goto(setup.url);
+  await page.locator('#setup-continue:enabled').waitFor();
+  assert.equal(await page.locator('#welcome-stage').isVisible(),true);
+  assert.equal(await page.locator('.workspace-schematic').isVisible(),true);
+  assert.match(await page.locator('.workflow-heading').textContent(),/EXAMPLE LAYOUT/);
+  await page.locator('#setup-continue').click();
+  assert.equal(await page.locator('#welcome-stage').isVisible(),false);
   await page.locator('#install:enabled').waitFor();
   assert.equal(await page.locator('#advanced').evaluate(el => el.open), false);
   assert.equal(await page.locator('#browser').inputValue(), process.platform === 'darwin' && process.arch === 'arm64' ? 'native' : 'auto');
@@ -39,6 +45,9 @@ try {
   await page.locator('#memory-enable').click();
   assert.equal(await page.locator('#feedback-memory').isChecked(), true);
   await page.locator('input[value="codex"]').check();
+  await page.locator('#setup-back').click();
+  await page.locator('#setup-skip').click();
+  assert.equal(await page.locator('input[value="codex"]').isChecked(),true);
   assert.match(await page.locator('#provider-docs').getAttribute('href'), /openai.com/);
   await mkdir('outputs/setup-check', { recursive: true });
   await page.screenshot({ path: 'outputs/setup-check/01-single-screen.png', fullPage: true });
