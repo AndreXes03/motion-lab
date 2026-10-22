@@ -29,3 +29,9 @@ The second section compares the familiar describe / see / refine pattern with Ba
 ## LOOP V12 publication — 2026-10-21
 
 The user authorized V12 export and publication on all existing landing pages. V12 replaces the featured V11 media while preserving the Electro soundtrack, film order and prior assets. The Full HD file is byte-identical to the delivered master; the silent 720p preview and poster at 9.933333s derive from it. Cycles rendered up to 1024 samples (adaptive minimum 256). Full decode and compressed frame-sequence review passed. Browser/device playback was not verified because local browser access was unavailable and the Mac was locked; this is not a claim of fresh user creative approval.
+
+## LOOP V13 publication — 2026-10-22
+
+V13 is the current featured film: 22.5 seconds, 1080p30, approved Electro soundtrack, native Cycles at 1024 maximum / 128 minimum adaptive samples and a 0.003 threshold, with no render time cap. Download uses the delivered master (measured 30.63 Mbps); the player uses a separate 6 Mbps encode and the muted hero a 3 Mbps preview. Keep those routes distinct on GitHub Pages and both Sites.
+
+All four delivered variants passed full 675-frame decode, audio-duration/source-correlation and seek checks. Compressed frame sequences and contact sheets were visually reviewed, including the moving waves and closing transition. Local browser playback and subjective audio listening were not verified. This publication follows the user's export authorization and does not imply new creative approval.

@@ -66,10 +66,15 @@ export function coatingField(u,v,scale=1){
   return .09+.82*clamp(.08+.68*sweep+.32*(coatingNoise(u,v,scale)-.2)+.06*Math.sin(v*19));
 }
 export function coatingSample(u,v,progress,scale=1,edge=1){
+  return coatingFromField(coatingField(u,v,scale),coatingNoise(u,v,scale*2.8),progress,edge);
+}
+export function coatingFromField(field,noise,progress,edge=1){
   if(progress<=0)return {blend:0,wet:0};if(progress>=1)return {blend:1,wet:0};
-  const delta=progress-coatingField(u,v,scale),width=.028*edge;
+  const delta=progress-field,width=.028*edge;
   const smooth=x=>{x=clamp(x);return x*x*(3-2*x);};
-  const n=coatingNoise(u,v,scale*2.8);
+  const n=noise;
   const seeds=n>.75?smooth((n-.75)*12)*smooth((delta+.09*edge)/(.09*edge)):0;
-  return {blend:Math.max(smooth((delta+width)/(width*2)),seeds),wet:Math.exp(-((delta/width)**2))};
+  const blend=Math.max(smooth((delta+width)/(width*2)),seeds);
+  // Wet relief belongs to the actual colour boundary, including small islands.
+  return {blend,wet:4*blend*(1-blend)};
 }

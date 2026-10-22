@@ -84,7 +84,10 @@ for (const button of document.querySelectorAll('[data-film]')) {
     document.querySelector('#dialog-title').textContent = film.title;
     player.setAttribute('aria-label', film.title);
     player.poster = asset(film.poster);
-    player.src = asset(film.file);
+    player.src = asset(film.playback || film.file);
+    const download = document.querySelector('#film-download');
+    download.href = asset(film.file);
+    download.textContent = film.playback ? 'Download master · 30 Mbps ↓' : 'Download film ↓';
     dialog.showModal();
     hero.pause();
     player.play().catch(() => { status.textContent = 'Press play to watch the film.'; });

@@ -62,8 +62,8 @@ if (heroVideo) {
 const films = {
   loop: {
     title: 'LOOP',
-    description: 'From a written brief to a cinematic product commercial. LOOP V12.1, with the original Electro soundtrack.',
-    file: 'loop-v12-1-electro-1080.mp4', poster: 'loop-v12-1-poster.jpg', specs: 'Cycles · 1080p · 30 fps · 22 s · Electro', source: null
+    description: 'From a written brief to a cinematic product commercial. LOOP V13, with the original Electro soundtrack.',
+    file: 'loop-v13-electro-1080.mp4', playback: 'loop-v13-playback-1080.mp4', poster: 'loop-v13-poster.jpg', specs: 'Cycles · 1080p · 30 fps · 22.5 s · 30 Mbps master · Electro', source: null
   },
   pulse: {
     title: 'PULSE',
@@ -143,7 +143,7 @@ function selectFilm(id) {
   if (!film) return;
   player.pause();
   videoStatus.hidden = true;
-  player.src = asset('demo/' + film.file);
+  player.src = asset('demo/' + (film.playback || film.file));
   player.poster = asset('demo/' + film.poster);
   player.setAttribute('aria-label', film.title + ' rendered film');
   player.load();

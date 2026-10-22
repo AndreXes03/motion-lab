@@ -116,6 +116,12 @@ const FinishShader = {
   `
 };
 
+export function preserveBokehCoverage(shader){
+  const forcedAlpha='gl_FragColor.a = 1.0;';
+  if(!shader.includes(forcedAlpha)||!shader.includes('gl_FragColor = col / 41.0;'))throw new Error('Bokeh shader changed; review transparent coverage before enabling it.');
+  return shader.replace(forcedAlpha,'// Retain the averaged RGBA coverage.');
+}
+
 /** Builds the 3D image treatment; composited 2D titles can be drawn afterward. */
 export function createComposite(renderer, scene, camera, config) {
   const width = config.width ?? 1920;
@@ -157,6 +163,9 @@ export function createComposite(renderer, scene, camera, config) {
   const highlights=new ShaderPass({uniforms:{tDiffuse:{value:null}},vertexShader:FinishShader.vertexShader,fragmentShader:`uniform sampler2D tDiffuse;varying vec2 vUv;void main(){vec4 c=texture2D(tDiffuse,vUv);float peak=max(c.r,max(c.g,c.b));float excess=max(peak-2.0,0.0);float compressed=2.0+excess/(1.0+excess/6.0);c.rgb*=peak>2.0?compressed/peak:1.0;gl_FragColor=c;}`});
   highlights.material.toneMapped=false;composer.addPass(highlights);
   const dofPass=new BokehPass(scene,camera,{focus:8,aperture:.001,maxblur:.012});
+  // BokehShader averages RGBA, then forces alpha to 1. That would cover Canvas
+  // backdrops and procedural graphics behind isolated product renders.
+  dofPass.materialBokeh.fragmentShader=preserveBokehCoverage(dofPass.materialBokeh.fragmentShader);
   dofPass.enabled=false;dofPass.materialBokeh.toneMapped=false;
   composer.addPass(dofPass);
   const focusRay=new Raycaster(),focusPoint=new Vector3();let dofSettings={};

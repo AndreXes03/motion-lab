@@ -3,6 +3,12 @@ import * as T from 'three';
 import {createImpactMotion,createProductCameraMove} from '../src/product-kit/motion.js';
 import {createRotaryControl,createOpticalCell,createHousingPanel} from '../src/product-kit/models.js';
 import {resolveParameters} from '../src/engine/project-controls.js';
+import {BokehShader} from 'three/addons/shaders/BokehShader.js';
+import {preserveBokehCoverage} from '../src/engine/composite.js';
+const coverageShader=preserveBokehCoverage(BokehShader.fragmentShader);
+assert.ok(coverageShader.includes('gl_FragColor = col / 41.0;'));
+assert.ok(!/gl_FragColor\.a\s*=\s*1\.0/.test(coverageShader),'DOF must not turn transparent product backgrounds opaque');
+assert.throws(()=>preserveBokehCoverage('changed upstream shader'),/review transparent coverage/);
 const impact=createImpactMotion({start:1,hit:2,end:2.5,travel:3});
 assert.equal(impact(0),3);assert.equal(impact(2),0);assert.equal(impact(3),0);
 for(let t=0;t<4;t+=.001){const v=impact(t);assert.ok(Number.isFinite(v)&&v>=0&&v<=3);}

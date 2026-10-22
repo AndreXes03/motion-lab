@@ -29,4 +29,4 @@ assert.throws(()=>normalizeCyclesOptions({command:'export',progressive:true}),/v
 const progressiveCommand=buildCyclesCommand({kind:'frame',snapshotPath:'/tmp/project.json',outputPath:'/tmp/frame.png',settings:{progressive:true}});assert.deepEqual(progressiveCommand.args.slice(-2),['--progressive','on']);
 console.log('Progressive Cycles option is frame-only, opt-in and preserves final output settings');
 
-const loop=normalizeCyclesOptions({scene:'loop',command:'export'});assert.equal(loop.duration,22);assert.equal(loop.count,660);assert.equal(loop.sceneDuration,22);
+const loop=normalizeCyclesOptions({scene:'loop',command:'export'});assert.equal(loop.duration,22.5);assert.equal(loop.count,675);assert.equal(loop.sceneDuration,22.5);

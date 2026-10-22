@@ -1,3 +1,4 @@
+import {loopDuration} from '../../src/scenes/loop-timing.js';
 import path from 'node:path';
 const bool = (v, name, fallback) => {
   if (v === undefined) return fallback;
@@ -33,7 +34,7 @@ export function normalizeCyclesOptions(input={}, snapshot={}) {
   const width=numeric(input.width??saved.width??snapshot.width,'width',1920,64,4096,true), height=numeric(input.height??saved.height??snapshot.height,'height',1080,64,4096,true);
   if (command!=='frame'&&(width%2||height%2)) throw Error('MP4 dimensions must be even');
   const fps=numeric(input.fps??saved.fps??snapshot.fps,'fps',30,1,120,true);
-  const sceneDuration=scene==='loop'?22:13.9, start=numeric(input.start??snapshot.start,'start',0,0,sceneDuration);
+  const sceneDuration=scene==='loop'?loopDuration:13.9, start=numeric(input.start??snapshot.start,'start',0,0,sceneDuration);
   const duration=numeric(input.duration??(input.end!==undefined?Number(input.end)-start:undefined)??(snapshot.end!==undefined?snapshot.end-start:undefined),'duration',sceneDuration-start,1/fps,sceneDuration-start);
   const time=numeric(input.time??snapshot.time,'time',0,0,sceneDuration);
   const device=input.device??saved.device??'auto';
