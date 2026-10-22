@@ -58,3 +58,7 @@ Use `.agents/skills/motion-lab-product-film/references/client-feedback.md` for s
 ## Efficient context and validation
 
 Follow [docs/AGENT_EFFICIENCY.md](docs/AGENT_EFFICIENCY.md). Start with `npm run agent:context -- TOPIC`, read scoped files, reuse supported controls and run affected checks after each fix. Complete required final gates and visual review before delivery; avoid duplicate full-suite runs and unbounded tool output.
+
+## Native storyboard and creative review
+
+For new video layouts use `.agents/skills/motion-lab-product-film/references/native-storyboard.md`: compose real scene elements, register named native poses and present Storyboard mode before animating the same elements. Do not generate unrelated images as storyboard substitutes. Read frame-linked user comments with `node scripts/creative.mjs comments SCENE`. Before delivery use the creative-review reference and record evidence, not an invented quality score.
