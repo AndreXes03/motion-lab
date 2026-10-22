@@ -1,3 +1,4 @@
+import {verifyExportDestination} from './export-preflight.mjs';
 import {migrateLegacyScene} from '../src/engine/legacy-scene.js';
 import {studyControlDefinitions} from '../src/engine/scene-capabilities.js';
 import {resolveControlManifest} from '../src/engine/control-catalog.js';
@@ -494,6 +495,7 @@ export function createStudioApi({ spawnFn = nodeSpawn, revealFn = revealWithFind
         if (!isRecord(body) || Object.keys(body).some(k => !['kind', 'time', 'parameters', 'settings', 'purpose'].includes(k))) return send(res, 400, { error: 'Expected kind, time, parameters, and optional settings' });
         if (!['frame', 'preview', 'export'].includes(body.kind)) return send(res, 400, { error: 'kind must be frame, preview, or export' });
         if (body.purpose !== undefined && (body.purpose !== 'viewport' || body.kind !== 'frame')) return send(res, 400, { error: 'Viewport jobs must be single frames' });
+        try{await Promise.any(['checkpoint-restore.json','checkpoint.lock'].map(name=>stat(path.join(ROOT,'.motion-cache',name))));return send(res,409,{error:'Wait for the project restore to finish before rendering.'});}catch(error){if(!(error instanceof AggregateError)||error.errors.some(e=>e.code!=='ENOENT'))throw error;}
         if (processState.activeRenderId) return send(res, 409, { error: 'Another local render is already running' });
         const time = body.time ?? 0;
         const selectedConfig=sceneConfig(body.parameters?.scene??'objects');if (typeof time !== 'number' || !Number.isFinite(time) || time < 0 || time > selectedConfig.duration) return send(res, 400, { error: `time must be a number from 0 to ${selectedConfig.duration} seconds` });
@@ -514,7 +516,8 @@ export function createStudioApi({ spawnFn = nodeSpawn, revealFn = revealWithFind
         const id = randomUUID();
         const extension = outputExtension(body.kind, settings);
         const outputDir=path.join(RENDER_DIR,...(selection.selectedRenderer==='cycles'?['cycles']:[]));
-        await mkdir(outputDir, { recursive: true });
+        await verifyExportDestination(outputDir);
+        if(body.purpose!=='viewport')await verifyExportDestination(DOWNLOAD_DIR);
         const outputPath = path.join(outputDir, `${id}${extension}`);
         const snapshotPath = path.join(RENDER_DIR, `.${id}.snapshot.json`);
         const width = settings?.width ?? config.width;

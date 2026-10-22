@@ -40,6 +40,7 @@
     "test:motion:fluid": "node scripts/test-fluid-editor-browser.mjs",
     "studio": "node scripts/mac-start.mjs",
     "setup": "node scripts/mac-start.mjs --setup",
+    "test:session": "node --test scripts/test-session-support.mjs",
     "test:updates": "node --test scripts/test-zip-update.mjs",
     "agent:context": "node scripts/agent-context.mjs",
     "test:setup": "node --test scripts/test-browser-runtime.mjs scripts/test-setup-mac.mjs scripts/test-mac-launcher.mjs",

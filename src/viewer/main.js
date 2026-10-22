@@ -1,3 +1,5 @@
+import {mountSessionTools} from './session-tools.js';
+import './session-tools.css';
 import {mountLiveReview,readLiveRecovery} from './live-review.js';
 import {mountPreparedPreview} from './prepared-preview.js';
 import {canonicalScene,migrateLegacyScene} from '../engine/legacy-scene.js';
@@ -230,7 +232,7 @@ async function api(url,body){if(publicDemo){const versions=browserVersions();if(
 function renderVersions(){const select=$('versions');select.replaceChildren(new Option('Choose a version…',''));for(const v of versionList.filter(v=>!v.scene||v.scene===scene))select.add(new Option(v.name,v.id));}
 async function refresh(){try{const data=await api('');versionList=data.versions||[];renderVersions();showExports(data);const running=(data.jobs||[]).find(j=>['running','queued'].includes(j.status));if(running&&!activeJob)watchJob(running.id,revision);}catch(e){$('version-status').textContent='Local versions unavailable: '+e.message;}}
 $('save-version').onclick=async()=>{const b=$('save-version');b.disabled=true;try{await api('/versions',{name:$('version-name').value.trim()||'Direction '+new Date().toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit'}),parameters:parameters()});$('version-name').value='';await refresh();$('version-status').textContent=publicDemo?'Version saved in this browser':'Version saved in the project';}catch(e){$('version-status').textContent=e.message;}finally{b.disabled=false;}};
-$('versions').onchange=async()=>{if(!$('versions').value)return;try{const v=await api('/versions/'+encodeURIComponent($('versions').value));restore(v.snapshot??v);$('version-status').textContent='Version restored';}catch(e){$('version-status').textContent=e.message;}};
+$('versions').onchange=async()=>{if(!$('versions').value)return;try{const v=await api('/versions/'+encodeURIComponent($('versions').value));await api('/versions',{name:'Before restore '+new Date().toLocaleTimeString(),parameters:parameters()});restore(v.snapshot??v);await refresh();$('version-status').textContent='Version restored · previous state saved';}catch(e){$('version-status').textContent=e.message;}};
 function busy(on){$('render-frame').disabled=on||publicDemo;$('render-preview').disabled=on||publicDemo;$('render-final').disabled=on||(publicDemo&&!browserExportCaps.available);$('render-progress').hidden=!on;}
 function jobDescription(j){const label=jobContentDescription(j);return j.engine&&j.engine!=='threejs'?(j.engine==='cycles'?'Cycles · ':'Mixed · ')+label:label;}
 function jobContentDescription(j){if(j.kind==='preview')return 'Preview';const s=j.settings??jobSettings.get(j.id);if(j.kind==='frame')return s?`PNG · ${s.width} × ${s.height}`:'Frame PNG';if(j.kind!=='export')return 'Export';if(!s)return 'Export';const format=s.format==='prores'?'ProRes':s.format==='webm'?'WebM':'MP4';return `${format} · ${s.width} × ${s.height} · ${s.fps} fps${s.format==='prores'||s.bitrateMbps==null||!Number.isFinite(Number(s.bitrateMbps))?'':` · ${s.bitrateMbps} Mb/s`}`;}
@@ -266,6 +268,7 @@ window.motionLive=mountLiveReview({container:$('live-review'),enabled:!publicDem
  getView:()=>({scene,time,panel:document.body.dataset.panel}),setView:view=>{pause();time=Math.max(0,Math.min(lastFrame/fps,Number(view?.time)||0));if(view?.panel)inspector?.setTab(view.panel);draw();},
  isBusy:()=>!!activeJob||!!browserExportController});
 
+if(!publicDemo&&canRecoverDraft)mountSessionTools({container:document.querySelector('.browser-bottom'),getSnapshot:snapshot,isBusy:()=>!!activeJob||!!browserExportController});
 
 function syncDivider(){const d=$('panel-divider'),horizontal=document.body.dataset.layout==='controls';d.setAttribute('aria-valuemin',horizontal?'150':'300');d.setAttribute('aria-valuemax',horizontal?String(Math.max(150,document.querySelector('.workspace').clientHeight-155)):'600');requestAnimationFrame(()=>{d.setAttribute('aria-valuenow',String(Math.round(horizontal?document.querySelector('.stage-column').getBoundingClientRect().height:document.querySelector('.direction').getBoundingClientRect().width)));});}
 function setWide(wide){setLayout(wide?'focus':'balanced');}

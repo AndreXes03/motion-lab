@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+import {saveCheckpoint} from './session-checkpoints.mjs';
 import path from 'node:path';
 import { readFile, realpath } from 'node:fs/promises';
 import { fileURLToPath } from 'node:url';
@@ -30,9 +31,11 @@ export async function liveCommand(options) {
   const previous=await readReview(root);
   if(command==='status')return previous;
   if(command==='begin'){
+    if(options.task&&!previous.tasks.some(t=>t.id===options.task))throw Error('Unknown feedback id. Add it to the plan first.');
     try{const response=await fetch(`http://127.0.0.1:${port}/api/studio`,{signal:AbortSignal.timeout(1500)});const data=await response.json();if(data.jobs?.some(j=>['running','queued'].includes(j.status)))throw Error('Wait for the active Studio render before changing its source files.');}
     catch(error){if(error.message.startsWith('Wait for'))throw error;}
   }
+  if(command==='begin'&&previous.phase!=='editing')await saveCheckpoint(root,{label:'Before: '+(previous.tasks.find(t=>t.id===options.task)?.title??options.label??'revision')});
   const tasks=options.file?JSON.parse(await readFile(path.resolve(root,options.file),'utf8')):undefined;
   if(command==='plan'&&!Array.isArray(tasks))throw Error('Use plan --file with a JSON array of feedback items.');
   const snapshot=options.recipe?JSON.parse(await readFile(path.resolve(root,options.recipe),'utf8')):undefined;

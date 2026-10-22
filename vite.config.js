@@ -1,3 +1,4 @@
+import {sessionSupportPlugin} from './scripts/session-support-server.mjs';
 import { feedbackMemoryPlugin } from './scripts/feedback-memory-server.mjs';
 import { liveStudioPlugin } from './scripts/live-studio-server.mjs';
 import { defineConfig } from 'vite';
@@ -12,7 +13,7 @@ export default defineConfig({
   // Experimental renderers have their own dependencies. The Studio must use
   // one Three.js version for both scene matrices and renderer add-ons.
   optimizeDeps: { entries: ['index.html'] },
-  plugins: [feedbackMemoryPlugin(),liveStudioPlugin(),{name:'lightweight-public-demo',transformIndexHtml:{order:'pre',handler(html){return process.env.VITE_PUBLIC_DEMO==='true'?html.replace('/src/viewer/main.js','/src/viewer/demo-main.js'):html;}}},{
+  plugins: [sessionSupportPlugin(),feedbackMemoryPlugin(),liveStudioPlugin(),{name:'lightweight-public-demo',transformIndexHtml:{order:'pre',handler(html){return process.env.VITE_PUBLIC_DEMO==='true'?html.replace('/src/viewer/main.js','/src/viewer/demo-main.js'):html;}}},{
     name: 'motion-local-project',
     configureServer(server) {
       // Load authored schemas through Vite's module graph, not the config bundle.

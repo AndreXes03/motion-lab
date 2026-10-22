@@ -23,7 +23,7 @@ For revisions and live feedback, also follow [the live-review skill](../framevol
 
 ## Working loop
 
-1. **Distill the brief.** Establish who should care, the one takeaway, a demonstrable product moment and one next action. Separate supplied facts, creative assumptions and unresolved claims. For “you choose,” recommend suitable defaults and proceed on reversible work.
+1. **Distill the brief.** Request the website/product link if missing, inspect it when accessible, and reuse the Studio brief (`node scripts/session.mjs brief`). Accept screenshots or a description if there is no public site. Establish who should care, the one takeaway, a demonstrable product moment and one next action. Separate supplied facts, creative assumptions and unresolved claims. For “you choose,” recommend suitable defaults and proceed on reversible work.
 2. **Make a compact direction card.** State the hook, visual proof, tone, format, music direction and constraints in plain language. Then make a shot plan: purpose, dominant subject, framing, motion, light/material signature and transition into the next shot. Do not make the founder direct every shot.
 3. **Prove the look cheaply.** Show representative frames and a short motion passage, including the hardest close-up or UI-to-result interaction. Keep the footage understandable with sound muted. A contact sheet reveals repetitive compositions; it cannot prove good timing.
 4. **Build with control.** Work in the installed renderer and existing project. Use deterministic absolute-time animation, implemented scene controls and an authored tool layout. Expose useful curve and shot parameters for refinement without overwhelming the normal workspace.
@@ -52,3 +52,7 @@ Keep unrelated scenes, approved masters and private references intact. Expensive
 ## Client feedback and creative memory
 
 For nontechnical client feedback, dissatisfaction, subjective requests such as “more premium” or “too slow”, and iterative refinements, read [Client feedback](references/client-feedback.md). Diagnose the viewing problem, preserve approved choices, compare the affected passage before/after and separate implementation from client acceptance. Use the optional local memory only when the user has enabled it; sharing is always a separate user action.
+
+## Recoverable revisions
+
+Before editing scene source, use `node scripts/live-studio.mjs begin --task ID`; it saves a source/project checkpoint automatically before entering editing mode. For work outside live review, run `node scripts/session.mjs save "Before revision"`. Stop if the checkpoint fails and resolve the error before editing. Preserve original media assets, which are not included in source checkpoints. Use Studio’s Revision history to restore a checkpoint after the agent and renders finish; a new backup preserves the displaced state. Recipe versions preserve parameters, not source code.
