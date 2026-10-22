@@ -6,6 +6,7 @@
 
 | Film | Type | Duration | Watch / download |
 | --- | --- | --- | --- |
+| [![LOOP V13](loop-v13-poster.jpg)](https://andrexes03.github.io/motion-lab/#loop) | Cycles + 2D | 22.5 s | [Watch](https://andrexes03.github.io/motion-lab/#loop) · [1080p master · 30 Mbps](https://andrexes03.github.io/motion-lab/demo/loop-v13-electro-1080.mp4) |
 | [![PULSE](pulse-poster.jpg)](https://andrexes03.github.io/motion-lab/#pulse) | 3D | 12.9 s | [Watch](https://andrexes03.github.io/motion-lab/#pulse) · [1080p MP4](pulse-1080.mp4) |
 | [![CAMERA](camera-poster.jpg)](https://andrexes03.github.io/motion-lab/#camera) | 3D | 15.4 s | [Watch](https://andrexes03.github.io/motion-lab/#camera) · [1080p MP4](camera-1080.mp4) |
 | [![DOT](dot-poster.jpg)](https://andrexes03.github.io/motion-lab/#dot) | Hybrid | 16 s | [Watch](https://andrexes03.github.io/motion-lab/#dot) · [1080p MP4](dot-1080.mp4) |
