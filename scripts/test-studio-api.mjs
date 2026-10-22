@@ -1,13 +1,14 @@
 import assert from 'node:assert/strict';
+import { randomUUID } from 'node:crypto';
 import { createServer as createHttpServer } from 'node:http';
 import { homedir } from 'node:os';
 import path from 'node:path';
 import { setTimeout as delay } from 'node:timers/promises';
 import { createServer } from 'vite';
 import { ROOT } from './project-store.mjs';
-import { validateRenderSettings, validateStudioParameters } from './studio-api.mjs';
+import { createStudioApi, validateRenderSettings, validateStudioParameters } from './studio-api.mjs';
 import { validateLook } from './project-store.mjs';
-import { readFile, rm, stat } from 'node:fs/promises';
+import { mkdir, readFile, rm, stat, writeFile } from 'node:fs/promises';
 
 const validParameters = {
   scene: 'procedural',
@@ -45,6 +46,7 @@ assert.throws(() => validateLook(compatibleLook), /grainSize/);
 const server = await createServer({ root: ROOT, configFile: path.join(ROOT, 'vite.config.js'), server: { host: '127.0.0.1', port: 0, strictPort: false }, logLevel: 'error' });
 let createdVersion, jobId;
 let outputPath, sidecarPath, renderSnapshotPath;
+const temporaryArtifacts = [];
 try {
   await server.listen();
   const address = server.httpServer.address();
@@ -146,9 +148,76 @@ try {
   } finally {
     await new Promise(resolve => persistedServer.close(resolve));
   }
+
+  // A synchronous child-process launch failure must become a visible terminal
+  // job and release the one-render reservation for a subsequent request.
+  const api = createStudioApi({
+    capabilitiesFn: async () => ({ threejs: { available: true }, skia: { available: true, scenes: ['procedural'], device: 'CPU' } }),
+    skiaCapabilitiesFn: async () => ({ available: true, scenes: ['procedural'], device: 'CPU' }),
+    nativeRendererFactory: async () => ({ renderPng: async () => Buffer.from('native-thumbnail') }),
+    componentManager: { status: async () => ({ busy: false }) },
+    spawnFn: () => { throw new Error('simulated spawn failure'); }
+  });
+  const apiServer = createHttpServer((req, res) => api(req, res, () => { res.statusCode = 404; res.end(); }));
+  await new Promise(resolve => apiServer.listen(0, '127.0.0.1', resolve));
+  try {
+    const apiBase = `http://127.0.0.1:${apiServer.address().port}/studio`;
+    const thumbnailRequest = (parameters, width = 64, height = 64) => fetch(`${apiBase}/thumbnail`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ parameters, time: 0, width, height }) });
+    let thumbnailResponse = await thumbnailRequest({ scene: 'procedural' });
+    assert.equal(thumbnailResponse.status, 200);
+    assert.equal(thumbnailResponse.headers.get('content-type'), 'image/png');
+    assert.equal(await thumbnailResponse.text(), 'native-thumbnail');
+    thumbnailResponse = await thumbnailRequest({ scene: 'objects' });
+    assert.equal(thumbnailResponse.status, 400, 'native thumbnails reject non-procedural scenes');
+    thumbnailResponse = await thumbnailRequest({ scene: 'procedural' }, 641, 360);
+    assert.equal(thumbnailResponse.status, 400, 'native thumbnail dimensions are bounded');
+    const renderRequest = () => fetch(`${apiBase}/render`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ kind: 'frame', time: 0, parameters: { ...validParameters, renderPolicy: { renderer: 'threejs', source: 'user' } } }) });
+    let launchResponse = await renderRequest();
+    assert.equal(launchResponse.status, 202);
+    let launchId = (await launchResponse.json()).id;
+    temporaryArtifacts.push(path.join(ROOT, 'renders', 'studio', `${launchId}.png.job.json`), path.join(ROOT, 'renders', 'studio', `.${launchId}.snapshot.json`));
+    let launchJob = await fetch(`${apiBase}/jobs/${launchId}`).then(r => r.json());
+    assert.equal(launchJob.status, 'failed');
+    assert.match(launchJob.error, /simulated spawn failure/);
+    launchResponse = await renderRequest();
+    assert.equal(launchResponse.status, 202, 'a failed process launch releases the render slot');
+    launchId = (await launchResponse.json()).id;
+    temporaryArtifacts.push(path.join(ROOT, 'renders', 'studio', `${launchId}.png.job.json`), path.join(ROOT, 'renders', 'studio', `.${launchId}.snapshot.json`));
+    launchJob = await fetch(`${apiBase}/jobs/${launchId}`).then(r => r.json());
+    assert.equal(launchJob.status, 'failed');
+  } finally {
+    await new Promise(resolve => apiServer.close(resolve));
+  }
+
+  // A fresh module state turns a persisted in-flight job into a visible
+  // interrupted result when the local service has stopped.
+  const interruptedId = randomUUID();
+  const interruptedManifest = path.join(ROOT, 'renders', 'studio', `${interruptedId}.png.job.json`);
+  temporaryArtifacts.push(interruptedManifest);
+  await mkdir(path.dirname(interruptedManifest), { recursive: true });
+  await writeFile(interruptedManifest, `${JSON.stringify({
+    id: interruptedId, kind: 'frame', purpose: 'export', scene: 'procedural', status: 'running',
+    progress: 34, frames: 0, total: 1, phase: 'rendering', samples: 0, totalSamples: 1,
+    createdAt: new Date().toISOString(), time: 0, settings: { width: 64, height: 64, fps: 30, temporalSamples: 1 },
+    destination: 'renders', engine: 'threejs', parameters: {}
+  }, null, 2)}\n`);
+  globalThis[Symbol.for('framevolve.studio-render-states')]?.delete(ROOT);
+  const restarted = await import(`./studio-api.mjs?interrupted-test=${Date.now()}`);
+  const restartApi = restarted.createStudioApi();
+  const restartServer = createHttpServer((req, res) => restartApi(req, res, () => { res.statusCode = 404; res.end(); }));
+  await new Promise(resolve => restartServer.listen(0, '127.0.0.1', resolve));
+  try {
+    const recovered = await fetch(`http://127.0.0.1:${restartServer.address().port}/studio`).then(r => r.json());
+    const interrupted = recovered.jobs.find(candidate => candidate.id === interruptedId);
+    assert.equal(interrupted.status, 'failed');
+    assert.match(interrupted.error, /Viewer stopped before this render finished/);
+  } finally {
+    await new Promise(resolve => restartServer.close(resolve));
+  }
   console.log(JSON.stringify({ type: 'test-result', validators: 'passed', versionApi: 'passed', renderJob: job.status, persistence: 'passed', reveal: 'passed', output: job.url }));
 } finally {
   await server.close();
   if (createdVersion) await rm(path.join(ROOT, 'project', 'versions', `${createdVersion.id}.json`), { force: true });
   if (outputPath) for (const file of [outputPath, `${outputPath}.progress.jpg`, path.join(homedir(), 'Downloads', `Motion-Lab-${jobId}.png`), sidecarPath, `${outputPath}.job.json`, renderSnapshotPath]) await rm(file, { force: true });
+  for (const file of temporaryArtifacts) await rm(file, { force: true });
 }

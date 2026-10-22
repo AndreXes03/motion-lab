@@ -3,7 +3,7 @@ import {spawn} from 'node:child_process';
 import {fileURLToPath} from 'node:url';
 import {readSetup,resolveBrowser} from './browser-runtime.mjs';
 import {launch,parseArgs} from './launch-studio.mjs';
-import {startSetup} from './setup-mac.mjs';
+import {startSetup,verifyNativeProduction} from './setup-mac.mjs';
 import {updateStudio} from './studio-update.mjs';
 const args=process.argv.slice(2),forceSetup=args.includes('--setup');
 const options=parseArgs(args.filter(arg=>arg!=='--setup'));
@@ -20,7 +20,7 @@ try {
   }
   delete process.env.FRAMEVOLVE_UPDATED_ONCE;
   let configured=false;
-  try{configured=Boolean((await readSetup(options.root)).completedAt);if(configured)await resolveBrowser({root:options.root});}catch{}
+  try{const saved=await readSetup(options.root);configured=Boolean(saved.completedAt);if(configured){if(saved.browser?.kind==='native')await verifyNativeProduction(options.root);else await resolveBrowser({root:options.root});}}catch{configured=false;}
   if(options.action!=='start'||(configured&&!forceSetup))await launch({...options,update:false});
   else await startSetup({root:options.root});
 }catch(error){console.error(`Framevolve: ${error.message}`);process.exitCode=1;}

@@ -51,11 +51,21 @@ const renderStates = globalThis[stateKey] ??= new Map();
 if (!renderStates.has(ROOT)) renderStates.set(ROOT, { jobs: new Map(), activeRenderId: null, persistedJobsLoaded: false });
 const processState = renderStates.get(ROOT);
 const { jobs } = processState;
+processState.nativeThumbnailActive ??= false;
 let cyclesProbe,cyclesProbeAt=0;
+let skiaProbe;
+async function nativeSkiaCapabilities(){
+  if(process.platform!=='darwin'||process.arch!=='arm64')return {available:false,scenes:[],reason:'Native Skia is available only on macOS Apple silicon.'};
+  if(!skiaProbe)skiaProbe=(async()=>{
+    try{const {createNativeCanvas}=await import('./native/canvas.mjs');const canvas=createNativeCanvas(1,1);if(!canvas.getContext('2d'))throw Error('Canvas 2D context is unavailable.');canvas.dispose();return {available:true,scenes:['procedural'],device:'CPU'};}
+    catch(error){return {available:false,scenes:[],reason:`Native Skia could not load or allocate its CPU canvas (${error.message}). Install or repair the local Skia component, then retry; no renderer fallback will run for an explicit Skia selection.`};}
+  })();
+  return skiaProbe;
+}
 async function rendererCapabilities(){
   if(!cyclesProbe||Date.now()-cyclesProbeAt>60000){cyclesProbeAt=Date.now();cyclesProbe=getCyclesCapabilities({root:ROOT});}
-  const [cycles,mixed]=await Promise.all([cyclesProbe,getMixedCapabilities({root:ROOT})]);
-  return {threejs:{available:true},cycles,mixed};
+  const [cycles,mixed,skia]=await Promise.all([cyclesProbe,getMixedCapabilities({root:ROOT}),nativeSkiaCapabilities()]);
+  return {threejs:{available:true},skia,cycles,mixed};
 }
 
 function apiError(status, message) { const error = new Error(message); error.status = status; return error; }
@@ -244,6 +254,7 @@ async function sourceFingerprint() {
   };
   for (const dir of ['src', 'project']) await walk(path.join(ROOT, dir));
   await walk(path.join(ROOT,'scripts','cycles'));
+  await walk(path.join(ROOT,'scripts','native'));
   await walk(path.join(ROOT,'scripts','mixed'));
   await walk(path.join(ROOT,'scripts','lib'));
   for (const file of ['index.html', 'package.json', 'package-lock.json', 'vite.config.js', 'scripts/cli.mjs', 'scripts/project-store.mjs','scripts/cycles.mjs','scripts/mixed-studio.mjs']) await addFile(path.join(ROOT, file));
@@ -262,7 +273,9 @@ function jobManifest(job) {
 }
 
 async function writeJobManifest(job) {
-  await writeFile(job.manifestPath, `${JSON.stringify(jobManifest(job), null, 2)}\n`);
+  const temporary = `${job.manifestPath}.tmp`;
+  await writeFile(temporary, `${JSON.stringify(jobManifest(job), null, 2)}\n`);
+  await rename(temporary, job.manifestPath);
 }
 
 async function loadPersistedJobs() {
@@ -333,16 +346,27 @@ function revealWithFinder(job, spawnFn = nodeSpawn) {
   });
 }
 
-function launchJob(job, invocation, spawnFn) {
+async function launchJob(job, invocation, spawnFn) {
   job.status = 'running'; job.progress = 0; job.phase = 'rendering'; job.startedAt = new Date().toISOString(); processState.activeRenderId = job.id;
-  const child = spawnFn(invocation.command, invocation.args, { cwd: invocation.cwd??ROOT, shell: false, windowsHide: true, stdio: ['ignore', 'pipe', 'pipe'] });
+  let child;
+  try {
+    child = spawnFn(invocation.command, invocation.args, { cwd: invocation.cwd??ROOT, shell: false, windowsHide: true, stdio: ['ignore', 'pipe', 'pipe'] });
+  } catch (error) {
+    job.status = 'failed'; job.phase = 'failed'; job.error = error.message || 'Could not start the render process.';
+    job.finishedAt = new Date().toISOString(); job.progress = 0; job.url = null; job.downloadUrl = null;
+    processState.activeRenderId = null;
+    try { await writeJobManifest(job); }
+    catch (manifestError) { job.error += ` Could not write render manifest: ${manifestError.message}`; }
+    return;
+  }
   job.pid = child.pid; job.child = child;
   let stdout = '', stderr = '', buffer = '';
   const consumeLine = line => {
     if (!line.trim()) return;
     try {
       const event = JSON.parse(line);
-      if (event.backend === 'cycles-standalone') job.backend = event.backend;
+      if (typeof event.backend === 'string') job.backend = event.backend.slice(0,80);
+      else if (event.type === 'ready' && typeof event.engine === 'string') job.backend = event.engine.slice(0,80);
       if (typeof event.device === 'string') job.device = event.device.slice(0,80);
       if (typeof event.deviceName === 'string') job.deviceName = event.deviceName.slice(0,200);
       if (job.cancelRequested) return;
@@ -403,7 +427,7 @@ function launchJob(job, invocation, spawnFn) {
   });
 }
 
-export function createStudioApi({ spawnFn = nodeSpawn, revealFn = revealWithFinder, capabilitiesFn=rendererCapabilities, componentManager=cyclesComponentManager(ROOT) } = {}) {
+export function createStudioApi({ spawnFn = nodeSpawn, revealFn = revealWithFinder, capabilitiesFn=rendererCapabilities, skiaCapabilitiesFn=nativeSkiaCapabilities, nativeRendererFactory=async parameters => (await import('./native/renderer.mjs')).createNativeRenderer(parameters), componentManager=cyclesComponentManager(ROOT) } = {}) {
   return async function studioApi(req, res, next) {
     const route = new URL(req.url ?? '/', 'http://127.0.0.1').pathname;
     if (!route.startsWith('/studio')) return next();
@@ -421,6 +445,26 @@ export function createStudioApi({ spawnFn = nodeSpawn, revealFn = revealWithFind
       }
       if(req.method==='GET'&&route==='/studio/components/cycles')return send(res,200,{component:await componentManager.status()});
       if(req.method==='GET'&&route==='/studio/capabilities')return send(res,200,{capabilities:await capabilitiesFn()});
+      if(req.method==='POST'&&route==='/studio/thumbnail'){
+        const body=await readJson(req);
+        if(!isRecord(body)||Object.keys(body).some(key=>!['parameters','time','width','height'].includes(key)))return send(res,400,{error:'Expected parameters, time, width, and height.'});
+        const parameters=await validateStudioParameters(body.parameters);
+        if(parameters.scene!=='procedural')return send(res,400,{error:'Native thumbnails currently support the procedural scene only.'});
+        const duration=sceneConfig(parameters.scene).duration;
+        if(!Number.isFinite(body.time)||body.time<0||body.time>=duration)return send(res,400,{error:`time must be from 0 to less than ${duration} seconds.`});
+        if(!Number.isInteger(body.width)||!Number.isInteger(body.height)||body.width<64||body.height<64||body.width>640||body.height>360||body.width*body.height>230400)return send(res,400,{error:'Thumbnail dimensions must be at least 64×64, no larger than 640×360, and at most 230,400 pixels.'});
+        if(processState.activeRenderId||processState.nativeThumbnailActive)return send(res,409,{error:'Wait for the active local render or thumbnail to finish.'});
+        processState.nativeThumbnailActive=true;
+        let renderer;
+        try{
+          const capability=await skiaCapabilitiesFn();
+          if(!capability.available)return send(res,503,{error:capability.reason||'Native Skia is unavailable on this computer.'});
+          renderer=await nativeRendererFactory(parameters);
+          const image=await renderer.renderPng(body.time,body.width,body.height,parameters,1,config.fps);
+          res.statusCode=200;res.setHeader('Content-Type','image/png');res.setHeader('Content-Length',image.length);res.setHeader('Cache-Control','no-store');res.end(image);return;
+        }catch(error){return send(res,500,{error:`Native Skia thumbnail failed: ${error.message}. No renderer fallback was attempted.`});}
+        finally{try{await renderer?.close?.();}finally{processState.nativeThumbnailActive=false;}}
+      }
       if (req.method === 'GET' && route.startsWith('/studio/versions/')) {
         const id = decodeURIComponent(route.slice('/studio/versions/'.length));
         if (!safeId(id)) return send(res, 400, { error: 'Invalid version id' });
@@ -523,7 +567,7 @@ export function createStudioApi({ spawnFn = nodeSpawn, revealFn = revealWithFind
         if (!['frame', 'preview', 'export'].includes(body.kind)) return send(res, 400, { error: 'kind must be frame, preview, or export' });
         if (body.purpose !== undefined && (body.purpose !== 'viewport' || body.kind !== 'frame')) return send(res, 400, { error: 'Viewport jobs must be single frames' });
         try{await Promise.any(['checkpoint-restore.json','checkpoint.lock'].map(name=>stat(path.join(ROOT,'.motion-cache',name))));return send(res,409,{error:'Wait for the project restore to finish before rendering.'});}catch(error){if(!(error instanceof AggregateError)||error.errors.some(e=>e.code!=='ENOENT'))throw error;}
-        if (processState.activeRenderId) return send(res, 409, { error: 'Another local render is already running' });
+        if (processState.activeRenderId||processState.nativeThumbnailActive) return send(res, 409, { error: 'Another local render or native thumbnail is already running' });
         if ((await componentManager.status()).busy) return send(res,409,{error:'Wait for the Rendering Cycles component operation to finish before rendering.'});
         const time = body.time ?? 0;
         const selectedConfig=sceneConfig(body.parameters?.scene??'objects');if (typeof time !== 'number' || !Number.isFinite(time) || time < 0 || time > selectedConfig.duration) return send(res, 400, { error: `time must be a number from 0 to ${selectedConfig.duration} seconds` });
@@ -533,7 +577,8 @@ export function createStudioApi({ spawnFn = nodeSpawn, revealFn = revealWithFind
         const settings = validateRenderSettings(body.kind, body.settings);if(['dot','replay'].includes(parameters.scene))settings.temporalSamples=1;else if(['pulse','camera'].includes(parameters.scene)&&body.settings?.temporalSamples===undefined)settings.temporalSamples=4;
         const plan=validateRenderPlan(parameters.renderPolicy);
         const needsProbe=plan.renderer!=='threejs'&&(plan.renderer!=='auto'||plan.preferredRenderer!=='threejs'||plan.intent==='photoreal');
-        const selection=resolveRenderPlan(plan,{scene:parameters.scene,kind:body.kind,...settings,duration:selectedConfig.duration,capabilities:needsProbe?await capabilitiesFn():{threejs:{available:true}}});
+        const capabilities=needsProbe?await capabilitiesFn():{threejs:{available:true},skia:await nativeSkiaCapabilities()};
+        const selection=resolveRenderPlan(plan,{scene:parameters.scene,kind:body.kind,...settings,duration:selectedConfig.duration,capabilities});
         if(!selection.runnable)throw Error(selection.availability);
         if(selection.selectedRenderer==='cycles'){
           if(body.kind!=='frame'&&settings.format!=='mp4')throw Error('Cycles currently exports MP4 video and PNG frames. Select MP4 or Three.js for WebM/ProRes.');
@@ -561,10 +606,12 @@ export function createStudioApi({ spawnFn = nodeSpawn, revealFn = revealWithFind
         jobs.set(id, job);
         await writeJobManifest(job);
         const args = [body.kind, '--out', outputPath, '--snapshot', snapshotPath];
+        if (selection.selectedRenderer === 'skia') args.push('--backend', 'native');
+        else if (selection.selectedRenderer === 'threejs' && parameters.scene === 'procedural') args.push('--backend', 'browser-reference');
         if (body.kind === 'frame') args.push('--time', String(time), '--width', String(width), '--height', String(height), '--fps', String(fps), '--temporal-samples', String(temporalSamples));
         else args.push('--temporal-samples', String(snapshot.temporalSamples), '--fps', String(fps), '--format', settings.format, ...(settings.bitrateMbps === null ? [] : ['--bitrate-mbps', String(settings.bitrateMbps)]));
         const invocation=selection.selectedRenderer==='mixed'?buildMixedCommand({kind:body.kind,snapshotPath,outputPath,root:ROOT,audioPath:plan.composite.audioFile??undefined,audioOffset:plan.composite.audioOffset}):selection.selectedRenderer==='cycles'?buildCyclesCommand({kind:body.kind,snapshotPath,outputPath,root:ROOT,settings:{width,height,fps,progressive:body.purpose==='viewport',cyclesSamples:plan.cycles.samples,device:plan.cycles.device,workers:plan.cycles.workers,denoise:plan.cycles.denoise,motionBlur:temporalSamples>1,shutter:Math.max(0,Math.min(1,(parameters.look?.post?.shutterAngle??180)/360)),composite:'titles'}}):{command:process.execPath,args:[CLI,...args],cwd:ROOT};
-        launchJob(job, invocation, spawnFn);
+        await launchJob(job, invocation, spawnFn);
         reservation = null;
         return send(res, 202, { id });
       }

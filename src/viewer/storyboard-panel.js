@@ -2,12 +2,12 @@ import {setIcon,icon} from './studio-icons.js';
 import {creativeCriteria,parameterKey} from './creative-model.js';
 import './storyboard-panel.css';
 
-export function mountStoryboard({container,getState,pause,seek,createRuntime,isBusy=()=>false}){
+export function mountStoryboard({container,getState,pause,seek,createRuntime,nativeThumbnail,isBusy=()=>false}){
  const toolbar=document.createElement('div');toolbar.className='story-toolbar';
  toolbar.innerHTML='<div role="group" aria-label="View mode"><button id="story-mode" type="button" aria-pressed="false">Storyboard</button><button id="video-mode" type="button" aria-pressed="true">Video</button></div><div><button id="frame-feedback" type="button">Comment on this frame</button><button id="creative-review" type="button">Creative review</button></div>';
  container.querySelector('.stage-heading').after(toolbar);
  const board=document.createElement('section');board.id='storyboard';board.hidden=true;board.setAttribute('aria-label','Storyboard');
- board.innerHTML='<div class="story-top"><div><p class="eyebrow">LAYOUTS BEFORE MOTION</p><h2 id="story-title">Your storyboard</h2></div><button id="story-refresh" type="button">Refresh previews</button></div><p id="story-status" role="status"></p><div id="story-empty" hidden><h3>Compose the scenes first.</h3><p>Ask your agent to build the actual layouts in this project and name the scenes. Their native previews will appear here. The same objects, typography and cameras will then be animated.</p><button id="story-copy-request" type="button">Copy storyboard request</button></div><div id="story-content" hidden><figure class="story-hero"><img id="story-hero" alt=""><figcaption><span id="story-position"></span><h3 id="story-name"></h3><details class="story-notes"><summary>Scene notes</summary><div><p id="story-intent"></p><p id="story-motion"></p></div></details></figcaption></figure><div class="story-navigation"><button id="story-previous" type="button">Previous scene</button><button id="story-comment" type="button">Comment on this scene</button><button id="story-edit" type="button">Open scene in editor</button><button id="story-next" type="button">Next scene</button></div><nav id="story-cards" aria-label="Storyboard scenes"></nav><p class="story-footnote">Native scene previews · changes to the project appear here. Final-render lighting and motion are reviewed separately.</p></div>';
+ board.innerHTML='<div class="story-top"><div><p class="eyebrow">LAYOUTS BEFORE MOTION</p><h2 id="story-title">Your storyboard</h2></div><button id="story-refresh" type="button">Refresh previews</button></div><p id="story-status" role="status"></p><div id="story-empty" hidden><h3>Compose the scenes first.</h3><p>Ask your agent to build the actual layouts in this project and name the scenes. Previews will appear here. The same objects, typography and cameras will then be animated.</p><button id="story-copy-request" type="button">Copy storyboard request</button></div><div id="story-content" hidden><figure class="story-hero"><img id="story-hero" alt=""><figcaption><span id="story-position"></span><h3 id="story-name"></h3><details class="story-notes"><summary>Scene notes</summary><div><p id="story-intent"></p><p id="story-motion"></p></div></details></figcaption></figure><div class="story-navigation"><button id="story-previous" type="button">Previous scene</button><button id="story-comment" type="button">Comment on this scene</button><button id="story-edit" type="button">Open scene in editor</button><button id="story-next" type="button">Next scene</button></div><nav id="story-cards" aria-label="Storyboard scenes"></nav><p class="story-footnote">Procedural layouts use native previews; other scenes use interactive previews. Final-render lighting and motion are reviewed separately.</p></div>';
  toolbar.after(board);
  const dialog=document.createElement('dialog');dialog.className='creative-dialog';dialog.setAttribute('aria-labelledby','creative-title');
  dialog.innerHTML='<header><h2 id="creative-title">Feedback</h2><button type="button" id="creative-close" aria-label="Close creative tools">Close</button></header><div id="creative-body"></div><p id="creative-status" role="status"></p>';
@@ -18,6 +18,7 @@ export function mountStoryboard({container,getState,pause,seek,createRuntime,isB
  let token='',data=null,mode='video',selectedId=null,images=new Map(),generation=0,renderKey='',loading=false,scene='',lastPoll=0,disposed=false;
  try{mode=sessionStorage.getItem('framevolve-view-mode')==='storyboard'?'storyboard':'video';selectedId=sessionStorage.getItem('framevolve-story-shot');}catch{}
  const message=value=>{$('story-status').textContent=value;};
+ function clearImages(){for(const image of images.values())if(image.startsWith('blob:'))URL.revokeObjectURL(image);images=new Map();}
  const node=(tag,content,cls)=>{const el=document.createElement(tag);if(content!==undefined)el.textContent=content;if(cls)el.className=cls;return el;};
  const button=(label,fn)=>{const el=node('button',label);el.type='button';el.onclick=fn;return el;};
  async function api(route,body){const response=await fetch('/__framevolve_session/'+route,{cache:'no-store',...(body===undefined?{}:{method:'POST',headers:{'Content-Type':'application/json','X-Framevolve-Session':token},body:JSON.stringify(body)})});const result=await response.json();if(!response.ok)throw Error(result.error||'Creative tools unavailable.');if(result.token)token=result.token;return result;}
@@ -25,7 +26,7 @@ export function mountStoryboard({container,getState,pause,seek,createRuntime,isB
  function currentShot(){return data?.board?.shots.find(s=>s.id===selectedId)??data?.board?.shots[0];}
  function select(id){if(!data?.board)return;selectedId=id;const shots=data.board.shots,shot=currentShot(),index=shots.indexOf(shot);if(!shot)return;
  try{sessionStorage.setItem('framevolve-story-shot',selectedId);}catch{}
- const image=images.get(shot.id);$('story-hero').hidden=!image;if(image)$('story-hero').src=image;$('story-hero').alt=shot.name+' — native layout';
+ const image=images.get(shot.id);$('story-hero').hidden=!image;if(image)$('story-hero').src=image;$('story-hero').alt=shot.name+' — storyboard layout preview';
  $('story-name').textContent=shot.name;$('story-position').textContent=`${index+1} / ${shots.length}`;$('story-intent').textContent=shot.intent;$('story-motion').textContent=shot.motion?'Planned motion: '+shot.motion:'';
  $('story-previous').disabled=index===0;$('story-next').disabled=index===shots.length-1;
  for(const card of $('story-cards').children){const active=card.dataset.id===shot.id;card.setAttribute('aria-current',String(active));if(active){const rail=$('story-cards'),left=card.offsetLeft;if(left<rail.scrollLeft)rail.scrollLeft=left;else if(left+card.offsetWidth>rail.scrollLeft+rail.clientWidth)rail.scrollLeft=left+card.offsetWidth-rail.clientWidth;}}
@@ -35,15 +36,17 @@ export function mountStoryboard({container,getState,pause,seek,createRuntime,isB
  if(shots.length)select(shots.some(s=>s.id===selectedId)?selectedId:shots[0].id);
  }
  async function generate(force=false){if(mode!=='storyboard'||!data?.board||disposed)return;if(['editing','blocked'].includes(data.phase)){message('Your agent is editing. Showing the last completed layouts.');return;}if(isBusy()){message('Previews will refresh when the active render finishes.');return;}
- const state=getState(),key=data.sourceRevision+parameterKey(state.snapshot);if(!force&&key===renderKey)return;renderKey=key;const epoch=++generation,shots=data.board.shots;images=new Map();drawCards();let runtime;
- try{const canvas=document.createElement('canvas');runtime=createRuntime(canvas,{initialScene:state.scene});await runtime.ready;
- for(const [index,shot]of shots.entries()){if(epoch!==generation||mode!=='storyboard'||disposed)return;message(`Rendering native layouts ${index+1} / ${shots.length}…`);const cfg=state.snapshot.config,width=960,height=Math.max(1,Math.round(width*(cfg.height/cfg.width)));
- runtime.render(shot.time,{width,height,previewQuality:'full',previewReview:'beauty',parameters:state.snapshot.parameters});images.set(shot.id,canvas.toDataURL('image/png'));drawCards();await new Promise(resolve=>setTimeout(resolve,0));}
+ const state=getState(),key=data.sourceRevision+parameterKey(state.snapshot);if(!force&&key===renderKey)return;renderKey=key;const epoch=++generation,shots=data.board.shots;clearImages();drawCards();let runtime;
+ try{const cfg=state.snapshot.config,scale=Math.min(640/cfg.width,360/cfg.height),width=Math.max(64,Math.round(cfg.width*scale)),height=Math.max(64,Math.round(cfg.height*scale));let canvas;
+ for(const [index,shot]of shots.entries()){if(epoch!==generation||mode!=='storyboard'||disposed)return;message(`Rendering native layouts ${index+1} / ${shots.length}…`);
+ if(state.scene==='procedural'&&nativeThumbnail)images.set(shot.id,await nativeThumbnail(state.snapshot.parameters,shot.time,width,height));
+ else{if(!runtime){canvas=document.createElement('canvas');runtime=createRuntime(canvas,{initialScene:state.scene});await runtime.ready;}runtime.render(shot.time,{width,height,previewQuality:'full',previewReview:'beauty',parameters:state.snapshot.parameters});images.set(shot.id,canvas.toDataURL('image/png'));}
+ drawCards();await new Promise(resolve=>setTimeout(resolve,0));}
  message('Layouts rendered from your project. Browse scenes before reviewing animation.');
  }catch(e){renderKey='';message('Could not render the layout: '+e.message);}finally{runtime?.dispose();}
  }
  async function refresh(force=false){if(loading||disposed)return;loading=true;try{const state=getState(),result=await api('creative?scene='+encodeURIComponent(state.scene));const live=window.motionLive?.getState?.();if(data?.board&&((live?.paused||live?.pending)&&result.sourceRevision!==data.sourceRevision)){message('Live updates are paused or waiting. Keeping the previous storyboard.');return;}const changed=scene!==state.scene||data?.sourceRevision!==result.sourceRevision;scene=state.scene;data=result;
- if(changed&&data.phase!=='editing'){images=new Map();renderKey='';drawCards();}if(force)renderKey='';await generate(force);
+ if(changed&&data.phase!=='editing'){clearImages();renderKey='';drawCards();}if(force)renderKey='';await generate(force);
  }catch(e){message(e.message);}finally{loading=false;}}
  function setMode(next){pause();mode=next;document.body.dataset.creativeMode=next;board.hidden=next!=='storyboard';$('story-mode').setAttribute('aria-pressed',String(next==='storyboard'));$('video-mode').setAttribute('aria-pressed',String(next==='video'));$('frame-feedback').hidden=next==='storyboard';
  try{sessionStorage.setItem('framevolve-view-mode',next);}catch{}

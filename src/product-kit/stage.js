@@ -6,14 +6,14 @@ import {createComposite} from '../engine/composite.js';
 import {configureDetailSampling} from '../engine/detail-sampling.js';
 
 /** Shared render stage; the caller owns renderer and model geometry. */
-export function createProductStage(renderer,{width=960,height=540,colors={},lighting={},look={},background='#070c17'}={}) {
+export function createProductStage(renderer,{width=960,height=540,colors={},lighting={},look={},background='#070c17',environmentFactory,compositeFactory=createComposite}={}) {
   configureStudioRenderer(renderer);
   const scene=new T.Scene();scene.background=new T.Color(background);
   const camera=new T.PerspectiveCamera(65,width/height,.025,150);camera.position.set(0,0,4);
-  const kit=createStudioMaterials(renderer,{colors});scene.environment=kit.environment;
+  const kit=createStudioMaterials(renderer,{colors,environmentFactory});scene.environment=kit.environment;
   const lights=createStudioLighting(scene,lighting);
   const baseLook={...STUDIO_BASELINE.look,dofAuto:false,dofFocus:4,...look};
-  const composite=createComposite(renderer,scene,camera,{width,height,look:baseLook});
+  const composite=compositeFactory(renderer,scene,camera,{width,height,look:baseLook});
   const reviews=createReviewMaterials();
   let size='',disposed=false;
   return {scene,camera,kit,lights,composite,prepare(){return configureDetailSampling(renderer,scene);},

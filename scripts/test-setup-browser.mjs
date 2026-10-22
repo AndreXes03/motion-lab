@@ -22,7 +22,10 @@ try {
   await page.goto(setup.url);
   await page.locator('#install:enabled').waitFor();
   assert.equal(await page.locator('#advanced').evaluate(el => el.open), false);
-  assert.equal(await page.locator('#browser').inputValue(), 'auto');
+  assert.equal(await page.locator('#browser').inputValue(), process.platform === 'darwin' && process.arch === 'arm64' ? 'native' : 'auto');
+  await page.locator('#advanced summary').click();
+  await page.locator('#browser').selectOption('auto');
+  await page.locator('#advanced summary').click();
   assert.equal(await page.locator('#agent').isVisible(), false);
   assert.equal(await page.locator('#install').evaluate(el => el.getBoundingClientRect().bottom < innerHeight), true);
   assert.equal(await page.locator('.choices img').evaluateAll(images => images.length === 2 && images.every(img => img.complete && img.naturalWidth > 0)), true);

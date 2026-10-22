@@ -43,6 +43,7 @@ export async function resolveBrowser({ root = ROOT, env = process.env, settings,
   }
   settings ??= await readSetup(root);
   const preference = settings.browser?.kind ?? 'auto';
+  if (preference === 'native') throw Error('This scene still needs a rendering browser. Reopen setup and choose Chrome or Chromium for legacy browser exports.');
   if (preference === 'chrome') {
     const file = settings.browser.path ? chromeExecutable(settings.browser.path) : await findChrome();
     if (await executable(file)) return { executablePath: file, kind: 'chrome' };

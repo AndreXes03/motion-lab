@@ -1,0 +1,33 @@
+{
+  "status": "representative-frame-review-only",
+  "results": [
+    {
+      "scene": "pulse-0.5",
+      "width": 480,
+      "height": 270,
+      "samples": 8,
+      "device": "Apple M4 Max METAL",
+      "meanRGBByteDifference": 0.4319753086419753,
+      "maxRGBByteDifference": 19,
+      "cameraAndLightsMatch": true,
+      "alpha": "opaque255",
+      "typography": "No large typography visible at chosen times; not verified",
+      "visualReview": "Same silhouette/crop, lighting and background; no blank/missing texture or alpha holes observed",
+      "reference": "Sibling framevolve-cycles-standalone Chromium preparation, standalone Cycles; no Blender"
+    },
+    {
+      "scene": "loop-8",
+      "width": 480,
+      "height": 270,
+      "samples": 8,
+      "device": "Apple M4 Max METAL",
+      "meanRGBByteDifference": 0.04197530864197531,
+      "maxRGBByteDifference": 3,
+      "cameraAndLightsMatch": true,
+      "alpha": "opaque255",
+      "typography": "No large typography visible at chosen times; not verified",
+      "visualReview": "Same silhouette/crop, lighting and background; no blank/missing texture or alpha holes observed",
+      "reference": "Sibling framevolve-cycles-standalone Chromium preparation, standalone Cycles; no Blender"
+    }
+  ]
+}

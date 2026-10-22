@@ -1,3 +1,4 @@
+import {createSceneCanvas} from '../engine/scene-canvas.js';
 import {Reflector} from 'three/addons/objects/Reflector.js';
 import * as THREE from 'three';
 import {RoundedBoxGeometry} from 'three/addons/geometries/RoundedBoxGeometry.js';
@@ -40,7 +41,7 @@ export function buildInstruments(){
 }
 export function buildHeadphones(){
  const group=new THREE.Group(),gold=mat('#c7ae61',.88,.21),silver=mat('#bfc8d5',.93,.21),leather=mat('#0c101d',.03,.36);const band=new THREE.Mesh(new THREE.TorusGeometry(1.05,.10,20,96,Math.PI),gold);band.position.y=.2;group.add(band);for(const z of [-.08,.08]){const rail=new THREE.Mesh(new THREE.TorusGeometry(1.05,.033,12,96,Math.PI),silver);rail.position.set(0,.2,z);group.add(rail);}const pad=new THREE.Mesh(new THREE.TorusGeometry(.98,.07,16,96,Math.PI),leather);pad.position.set(0,.2,0);group.add(pad);
- const c=document.createElement('canvas');c.width=256;c.height=256;const x=c.getContext('2d');x.fillStyle='#030609';x.fillRect(0,0,256,256);for(let j=0;j<25;j++){let xx=19+j*9,h=40+115*Math.pow(Math.max(0,Math.cos((xx-128)/110*Math.PI/2)),2);x.fillStyle=['#ffd994','#d89443','#79562c'][j%3];x.fillRect(xx,128-h/2,3.5,h);}const tex=new THREE.CanvasTexture(c);tex.colorSpace=THREE.SRGBColorSpace;const grille=new THREE.MeshPhysicalMaterial({map:tex,emissiveMap:tex,emissive:'#ffd18b',emissiveIntensity:1.8,metalness:.25,roughness:.3,side:THREE.DoubleSide});
+ const c=createSceneCanvas();c.width=256;c.height=256;const x=c.getContext('2d');x.fillStyle='#030609';x.fillRect(0,0,256,256);for(let j=0;j<25;j++){let xx=19+j*9,h=40+115*Math.pow(Math.max(0,Math.cos((xx-128)/110*Math.PI/2)),2);x.fillStyle=['#ffd994','#d89443','#79562c'][j%3];x.fillRect(xx,128-h/2,3.5,h);}const tex=new THREE.CanvasTexture(c);tex.colorSpace=THREE.SRGBColorSpace;const grille=new THREE.MeshPhysicalMaterial({map:tex,emissiveMap:tex,emissive:'#ffd18b',emissiveIntensity:1.8,metalness:.25,roughness:.3,side:THREE.DoubleSide});
  for(const side of [-1,1]){const cup=new THREE.Group();cup.position.set(side*1.0,-.10,0);cup.rotation.z=side*.10;const outer=make(new THREE.CylinderGeometry(.57,.57,.44,64),leather);outer.rotation.z=Math.PI/2;cup.add(outer);for(const k of [-1,1]){const rim=make(new THREE.TorusGeometry(.535,.045,16,72),gold,k*.24,0,0);rim.rotation.y=Math.PI/2;cup.add(rim);const face=make(new THREE.CircleGeometry(.5,64),grille,k*.285,0,0);face.rotation.y=k*Math.PI/2;cup.add(face);}const fork=box(.10,.76,.15,.035,gold,side*.10,.49,-.14);cup.add(fork);for(let j=0;j<7;j++)cup.add(box(.045,.055,.157,.008,leather,side*.10,.25+j*.07,-.139));group.add(cup);}
  return group;
 }

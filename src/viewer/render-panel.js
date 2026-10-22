@@ -67,15 +67,18 @@ export function mountRenderPanel({container, getScene, getParameters = () => ({}
   const componentDetails = document.createElement('details'); componentDetails.className = 'render-policy-advanced render-policy-component';
   const componentTitle = document.createElement('summary'); componentTitle.textContent = 'Rendering Cycles · optional';
   const componentStatus = document.createElement('p'); componentStatus.className = 'render-policy-note'; componentStatus.setAttribute('role','status');
+  const componentSigning = document.createElement('p'); componentSigning.className = 'render-policy-note';
+  componentSigning.textContent = 'Apple Developer ID signing and notarization are coming soon. Once available, this manual authorization step will no longer be needed. The current preview still requires it.';
   const componentProgress = document.createElement('progress'); componentProgress.max = 1; componentProgress.hidden = true; componentProgress.setAttribute('aria-label','Rendering Cycles installation');
   const componentButtons = document.createElement('div'); componentButtons.className = 'render-policy-component-actions';
   const installComponent = document.createElement('button'), updateComponent = document.createElement('button'), authorizeComponent = document.createElement('button'), checkComponent = document.createElement('button'), removeComponent = document.createElement('button');
   for (const [button,label] of [[installComponent,'Download Rendering Cycles'],[updateComponent,'Update Rendering Cycles'],[authorizeComponent,'Authorize in macOS'],[checkComponent,'Check authorization'],[removeComponent,'Remove Rendering Cycles']]) {button.type='button';button.textContent=label;componentButtons.append(button);}
-  componentDetails.append(componentTitle,componentStatus,componentProgress,componentButtons);
+  componentDetails.append(componentTitle,componentStatus,componentSigning,componentProgress,componentButtons);
   root.append(details,componentDetails); container.append(root);
   function syncComponent() {
     const value = componentState ?? {}, busy = componentPending || value.busy;
     componentStatus.textContent = publicDemo ? 'Install the local Framevolve app to manage this optional component. Three.js is included.' : busy ? `Rendering Cycles · ${value.phase || 'preparing'}${value.phase === 'downloading' ? ` ${Math.round((value.progress || 0) * 100)}%` : ''}` : value.reason || (value.compatible ? `Rendering Cycles ${value.installed.version} · installed` : 'Checking optional component…');
+    componentSigning.hidden = publicDemo || value.security !== 'manual-macos';
     componentProgress.hidden = !busy; componentProgress.value = value.progress || 0;
     installComponent.hidden = !value.canInstall || publicDemo; installComponent.disabled = !value.canInstall || !!busy;
     updateComponent.hidden = !value.canUpdate || publicDemo; updateComponent.disabled = !!busy;
