@@ -47,7 +47,8 @@
     "studio:live": "node scripts/live-studio.mjs",
     "test:live": "node --test scripts/test-live-review.mjs",
     "feedback": "node scripts/feedback-memory.mjs",
-    "test:feedback": "node --test scripts/test-feedback-memory.mjs"
+    "test:feedback": "node --test scripts/test-feedback-memory.mjs",
+    "test:creative": "node --test scripts/test-creative.mjs"
   },
   "keywords": [
     "threejs",

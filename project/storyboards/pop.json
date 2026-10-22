@@ -1,0 +1,11 @@
+{
+  "version": 1,
+  "scene": "pop",
+  "title": "POP · From play to your next move",
+  "shots": [
+    {"id":"press-play","name":"Press play","time":1.1,"intent":"Introduce the player and establish the graphic identity.","motion":"Reveal the player and settle the headline before the next cut."},
+    {"id":"visible-bass","name":"Bass you can see","time":3.3,"intent":"Give the sound a visible scale through the city and lettering.","motion":"Pulse the skyline around readable typography."},
+    {"id":"make-noise","name":"Make some noise","time":5.8,"intent":"Build energy with orbiting graphic shapes and a new composition.","motion":"Use the rings and lettering as one coherent accent."},
+    {"id":"next-move","name":"Your next move","time":8.8,"intent":"Return to the player and leave a clear closing message.","motion":"Resolve the movement into a readable closing pose."}
+  ]
+}

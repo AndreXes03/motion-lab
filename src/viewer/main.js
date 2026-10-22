@@ -1,3 +1,4 @@
+import {mountStoryboard} from './storyboard-panel.js';
 import {mountSessionTools} from './session-tools.js';
 import './session-tools.css';
 import {mountLiveReview,readLiveRecovery} from './live-review.js';
@@ -205,7 +206,7 @@ $('inspect').onchange=()=>{revision++;draw();};$('review').onchange=()=>{syncRev
 for(const [key,id,,format] of finishFields){$(id).oninput=()=>{if(exact){values={...unpackControlValues(exact),...values};baseLook=structuredClone(exact.look??baseLook);}else baseLook=structuredClone(baseLook);baseLook.post[key]=Number($(id).value);$(id+'-value').textContent=format($(id).value);changed();};}
 for(const key of ['dofEnabled','dofAuto'])$('finish-'+key).onchange=()=>{if(exact){values={...unpackControlValues(exact),...values};baseLook=structuredClone(exact.look??baseLook);}else baseLook=structuredClone(baseLook);baseLook.post[key]=$('finish-'+key).checked;changed();syncFinishControls();};
 $('finish-antialias').onchange=()=>{if(exact){values={...unpackControlValues(exact),...values};baseLook=structuredClone(exact.look??baseLook);}else baseLook=structuredClone(baseLook);baseLook.post.antialias=$('finish-antialias').checked;changed();};
-document.addEventListener('keydown',e=>{if($('render-dialog').open||e.target.closest('input,select,textarea,button,summary'))return;if(e.code==='Space'){e.preventDefault();$('play').click();}if(['ArrowLeft','ArrowRight'].includes(e.key)){e.preventDefault();pause();time=Math.max(0,Math.min(lastFrame/fps,time+(e.key==='ArrowLeft'?-1:1)/fps));draw();}});
+document.addEventListener('keydown',e=>{if(document.body.dataset.creativeMode==='storyboard'||document.querySelector('dialog[open]'))return;if($('render-dialog').open||e.target.closest('input,select,textarea,button,summary'))return;if(e.code==='Space'){e.preventDefault();$('play').click();}if(['ArrowLeft','ArrowRight'].includes(e.key)){e.preventDefault();pause();time=Math.max(0,Math.min(lastFrame/fps,time+(e.key==='ArrowLeft'?-1:1)/fps));draw();}});
 function tick(now){if(playing){const audioTime=preparedPreview.currentTime()??soundPanel.currentTime();time=audioTime??(time+Math.min((now-last)/1000,.2));if(time>=duration){if(loop){time=0;pause();$('play').click();}else{time=lastFrame/fps;pause();}}if(now-lastDraw>=1000/fps||!playing){draw();lastDraw=now;}}last=now;requestAnimationFrame(tick);}
 function download(name,blob){const a=document.createElement('a'),url=URL.createObjectURL(blob);a.href=url;a.download=name;a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);}
 $('save').onclick=async()=>{pause();if(preparedPreview.active()){const blob=await preparedPreview.capture();if(blob)download(`framevolve-${scene}-${Math.round(time*fps)}-cycles.png`,blob);return;}if(needsFinalFrame()){const frame=finalFrameSurface.getReadyFrame();if(frame){const a=document.createElement('a');a.href=frame.url;a.download=`framevolve-${scene}-${Math.round(time*fps)}-${frame.engine}.png`;a.click();}else $('render-status').textContent='Wait for the rendered frame before downloading.';return;}runtime.render(time,{width,height,previewReview:resolvePreviewReview(scene,$('review').value),parameters:parameters()});$('renderCanvas').toBlob(blob=>{if(blob)download(`framevolve-${scene}-${Math.round(time*fps)}${$('review').value==='beauty'?'':'-'+$('review').value}.png`,blob);},'image/png');draw();};
@@ -267,6 +268,8 @@ window.motionLive=mountLiveReview({container:$('live-review'),enabled:!publicDem
  setSnapshot:data=>{restore(data);authoredMotionCache.clear();runtime.render(time,{...previewOptions(),parameters:parameters()});inspector?.resetScene();inspector?.sync();},
  getView:()=>({scene,time,panel:document.body.dataset.panel}),setView:view=>{pause();time=Math.max(0,Math.min(lastFrame/fps,Number(view?.time)||0));if(view?.panel)inspector?.setTab(view.panel);draw();},
  isBusy:()=>!!activeJob||!!browserExportController});
+
+if(!publicDemo&&canRecoverDraft)window.motionStoryboard=mountStoryboard({container:document.querySelector('.stage-column'),getState:()=>({scene,time,fps,snapshot:snapshot()}),pause,seek:t=>{pause();time=Math.max(0,Math.min(lastFrame/fps,t));draw();},createRuntime,isBusy:()=>!!activeJob||!!browserExportController});
 
 if(!publicDemo&&canRecoverDraft)mountSessionTools({container:document.querySelector('.browser-bottom'),getSnapshot:snapshot,isBusy:()=>!!activeJob||!!browserExportController});
 
