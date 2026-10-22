@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+import {autosaveActiveProject} from './project-library-session.mjs';
 import {saveCheckpoint} from './session-checkpoints.mjs';
 import path from 'node:path';
 import { readFile, realpath } from 'node:fs/promises';
@@ -39,7 +40,9 @@ export async function liveCommand(options) {
   const tasks=options.file?JSON.parse(await readFile(path.resolve(root,options.file),'utf8')):undefined;
   if(command==='plan'&&!Array.isArray(tasks))throw Error('Use plan --file with a JSON array of feedback items.');
   const snapshot=options.recipe?JSON.parse(await readFile(path.resolve(root,options.recipe),'utf8')):undefined;
-  return writeReview(root,updateReview(previous,command,{task:options.task,tasks,snapshot,label:options.label}));
+  const result=await writeReview(root,updateReview(previous,command,{task:options.task,tasks,snapshot,label:options.label}));
+  if(command==='publish')await autosaveActiveProject(root,{snapshot:result.snapshot});
+  return result;
 }
 if(process.argv[1]&&await realpath(process.argv[1])===fileURLToPath(import.meta.url)){
   try{console.log(JSON.stringify(await liveCommand(liveArgs(process.argv.slice(2))),null,2));}

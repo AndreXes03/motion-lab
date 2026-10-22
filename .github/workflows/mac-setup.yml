@@ -49,6 +49,7 @@ jobs:
         run: |
           npm run test:session
           node --test scripts/test-onboarding.mjs
+          node --test scripts/test-project-library.mjs scripts/test-project-library-session.mjs scripts/test-project-library-server.mjs
       - name: Clean ZIP first founder session
         run: node scripts/test-founder-session-browser.mjs
       - name: Live feedback contracts

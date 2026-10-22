@@ -1,3 +1,4 @@
+import {projectSession} from './project-library-session.mjs';
 import { parseSync } from 'vite';
 import path from 'node:path';
 import { readFile } from 'node:fs/promises';
@@ -21,7 +22,7 @@ export function liveStudioPlugin() {
   let state={epoch,revision:0,sourceRevision:0,error:'',label:'Live updates ready',tasks:[],phase:'idle',snapshot:null};
   const schedule=()=>{clearTimeout(timer);if(!stopped)timer=setTimeout(flush,350);};
   async function flush(){
-    if(stopped)return;if(working){schedule();return;}working=true;const start=generation;
+    if(stopped)return;if(projectSession(root).working){schedule();return;}if(working){schedule();return;}working=true;const start=generation;
     try{
       const next=await readReview(root);review=next;
       state={...state,tasks:next.tasks,phase:next.phase,label:next.label??state.label,error:''};
