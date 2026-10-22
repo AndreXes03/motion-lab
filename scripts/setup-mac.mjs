@@ -138,9 +138,9 @@ export async function startSetup({ root = ROOT, open = true, operations = {} } =
   const finish = async () => {
     state.message = 'Opening Studio…';
     const result = await (operations.launch ?? launch)({ action: 'start', root, port: 4173, open: false, update: false });
-    state.studioUrl = `${result.url}?scene=pop`;
+    state.studioUrl = `${result.url}?scene=${state.browser === 'native' ? 'procedural' : 'pop'}`;
     await (operations.openStudio ?? (url => runFile('/usr/bin/open', [url])))(state.studioUrl);
-    state.message = 'Studio is open with the PLAY.EXE demo.';
+    state.message = state.browser === 'native' ? 'Studio is open with the native Procedural demo.' : 'Studio is open with the PLAY.EXE demo.';
     // Keep optional agent setup available after Studio opens; never interrupt an active job.
     clearTimeout(expiry);
     const expire = () => { if (state.busy) expiry = setTimeout(expire, 60000).unref(); else server.close(); };

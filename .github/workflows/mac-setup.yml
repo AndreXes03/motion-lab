@@ -31,6 +31,12 @@ jobs:
         run: |
           npm run test:cycles:standalone
           npm run test:cycles:cancel
+      - name: Native audio and project records
+        run: |
+          node scripts/test-audio-import.mjs
+          node scripts/test-native-audio.mjs
+          node scripts/test-native-project.mjs
+          node scripts/test-cycles-video-encode.mjs
       - name: Native storyboard and frame feedback contracts
         run: npm run test:creative
       - name: Storyboard and frame feedback interface

@@ -87,7 +87,7 @@ test('local setup API enforces token, host, origin and provider allowlist; retry
   assert.equal(browserChecks, 3, 'each successful setup checks its selected browser');
   if (nativeProductionSupported()) {
     assert.equal((await post('install', { provider: 'other', browser: 'native' })).status, 200);
-    await wait(); assert.equal(setup.state.browser, 'native'); assert.equal(nativeChecks, 1);
+    await wait(); assert.equal(setup.state.browser, 'native'); assert.equal(nativeChecks, 1); assert.match(setup.state.studioUrl, /scene=procedural$/);
     assert.equal(downloads, 3, 'native production does not download a rendering browser');
     assert.equal(browserChecks, 3, 'native production does not probe a rendering browser');
   } else assert.equal((await post('install', { provider: 'other', browser: 'native' })).status, 400);

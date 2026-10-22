@@ -8,7 +8,7 @@ export const MANIFEST='.framevolve-distribution.json';
 const API='https://api.github.com/repos/AndreXes03/motion-lab';
 export const blobHash=bytes=>createHash('sha1').update(`blob ${bytes.length}\0`).update(bytes).digest('hex');
 export function safeUpdatePath(name){
- return typeof name==='string'&&name.length>0&&!name.includes('\\')&&!name.includes('\0')&&!path.posix.isAbsolute(name)&&!name.split('/').some(p=>!p||p==='.'||p==='..')&&!/^(?:\.git|\.motion-cache|node_modules|renders|outputs|archive|\.env(?:\..*)?)(?:\/|$)/.test(name)&&name!==MANIFEST;
+ return typeof name==='string'&&name.length>0&&!name.includes('\\')&&!name.includes('\0')&&!path.posix.isAbsolute(name)&&!name.split('/').some(p=>!p||p==='.'||p==='..')&&!/^(?:\.git|\.motion-cache|node_modules|renders|outputs|archive|\.env(?:\..*)?)(?:\/|$)/.test(name)&&!/^project\/audio(?:\/|$)/.test(name)&&name!==MANIFEST;
 }
 export function validateManifest(value){
  if(value?.version!==1||!value.files||typeof value.files!=='object'||Array.isArray(value.files))throw Error('Invalid update manifest.');

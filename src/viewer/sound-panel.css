@@ -33,3 +33,9 @@
 #sound-tools .sound-timbre[hidden],#sound-tools .sound-actions button[hidden]{display:none!important}
 
 #sound-tools.sound-panel>summary{display:none}
+#sound-tools .audio-import-note{font-size:11px;color:#aeb9c6;line-height:1.5}
+#sound-tools .imported-audio input[type=file]{max-width:100%;font-size:11px;color:#c4cbd4}
+#sound-tools .imported-audio-track{border:1px solid #30363e;border-radius:6px;margin:12px 0;padding:12px;min-width:0}
+#sound-tools .imported-audio-track legend{font-size:12px;overflow-wrap:anywhere;max-width:100%;color:#eef0f3}
+#sound-tools .audio-track-enabled{font-size:12px;display:flex;gap:7px;align-items:center}
+#sound-tools .imported-audio-track button{margin-top:12px;background:#20242a;border:1px solid #30363e;border-radius:6px;color:#c4cbd4;padding:7px;cursor:pointer}
