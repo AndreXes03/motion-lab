@@ -1,0 +1,11 @@
+{
+  "protocol": 1,
+  "version": "0.1.0-dev.1",
+  "source": "https://projects.blender.org/blender/cycles.git",
+  "revision": "a456b761034dda42c32eef9f4aae0fa5a5c9f604",
+  "libraries": {"darwin-arm64": "5a140a8ccc8c070221b1b06e2c6f89f136c5758d"},
+  "colorSource": "https://github.com/blender/blender.git",
+  "colorRevision": "32f5fdce0a0a571a39198edf8d7b5d719bf59f2c",
+  "cmake": "3.31.10",
+  "ninja": "1.13.0"
+}

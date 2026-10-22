@@ -40,3 +40,7 @@ Preferences and optional agent binaries live under `.motion-cache/`; no provider
 Technical references: [Playwright browsers](https://playwright.dev/docs/browsers), [Node.js downloads](https://nodejs.org/en/download), [Codex CLI](https://developers.openai.com/codex/cli/), [Claude Code setup](https://code.claude.com/docs/en/setup). Installation methods checked on 2026-10-21.
 
 The setup and installed app now offer **Update / Later** when a compatible update is available, including ZIP copies. See [updates and local-work protection](UPDATES.md).
+
+## Optional Rendering Cycles component
+
+Setup and local Studio offer component install/update/removal independently of the base browser renderer. No stable standalone package is published yet, so Install remains unavailable with an explanation. Base setup and Three.js exports remain usable. A future release must pass checksum, Developer ID signature, quarantine and Gatekeeper checks before activation. See [actual development verification and release blockers](CYCLES_STANDALONE_VALIDATION.md). End users will not compile Cycles or install Blender.

@@ -1,5 +1,6 @@
 import {access} from 'node:fs/promises';
-import {spawn} from 'node:child_process';
+import {probeNative} from './standalone/runtime.mjs';
+import {getCyclesComponentStatus} from './component.mjs';
 import path from 'node:path';
 import {fileURLToPath} from 'node:url';
 import {adaptations,supportedScenes} from './options.mjs';
@@ -9,13 +10,18 @@ export async function findBlender(explicit) {
  for(const candidate of candidates){try{await access(candidate);return candidate;}catch{if(candidate===explicit||candidate===process.env.BLENDER_PATH)throw Error('Configured Blender executable is unavailable: '+candidate);}}
  throw Error('Install Blender locally or set BLENDER_PATH. Cycles is optional and is not installed by Motion Lab.');
 }
-export async function getCyclesCapabilities({root=ROOT,blenderPath}={}) {
- try{
-  const executable=await findBlender(blenderPath);
-  const details=await new Promise((resolve,reject)=>{const child=spawn(executable,['--background','--factory-startup','--python',path.join(ROOT,'scripts/cycles/probe.py')],{cwd:root});let output='',errors='';const timer=setTimeout(()=>{child.kill('SIGTERM');reject(Error('Blender device probe timed out'));},20000);child.stdout.on('data',d=>output+=d);child.stderr.on('data',d=>errors+=d);child.on('error',e=>{clearTimeout(timer);reject(e);});child.on('close',code=>{clearTimeout(timer);const row=output.split('\n').find(x=>x.startsWith('MOTION_CYCLES '));if(code||!row)reject(Error(errors.slice(-1000)||'Blender device probe failed'));else resolve(JSON.parse(row.slice(14)));});});
-  const metal=details.devices.some(d=>d.type==='METAL');
-  return {available:true,path:executable,...details,device:metal?'METAL':'CPU',scenes:supportedScenes,limits:{workers:2,samples:4096},adaptations};
- }catch(error){return {available:false,scenes:supportedScenes,reason:error.message,adaptations};}
+export async function getCyclesCapabilities({root=ROOT}={}) {
+ const component = await getCyclesComponentStatus({root});
+ try {
+  const details = await probeNative();
+  const devices = Array.isArray(details.devices) ? details.devices : [];
+  const metal = devices.some(device => device.type === 'METAL');
+  const development = !!process.env.FRAMEVOLVE_CYCLES_DIR;
+  return {available:true, path:details.executable, backend:details.backend, protocol:details.protocol, revision:details.revision,
+   devices, device:metal?'METAL':'CPU', scenes: development ? supportedScenes : (details.validatedScenes ?? []), limits:{workers:1,samples:4096}, adaptations,
+   experimental:development, developmentOverride:development, component,
+   ...(development ? {notice:'Experimental development component. This is not an installed stable release.'} : {})};
+ } catch(error) {return {available:false, backend:'cycles-standalone', scenes:[], reason:error.message, adaptations, component};}
 }
 export const probeCycles=getCyclesCapabilities;
 export function buildCyclesCommand({kind,snapshotPath,outputPath,settings={},root=ROOT}) {

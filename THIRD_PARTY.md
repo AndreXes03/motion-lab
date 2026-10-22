@@ -103,3 +103,30 @@ weight and checksum. No system font installation is required. The official logo 
 ## Setup provider logos
 
 The Codex and Claude logo SVGs in `scripts/setup/logos/` are from [LobeHub Icons](https://github.com/lobehub/lobe-icons), licensed under MIT. The copyright and license are included in [`scripts/setup/logos/LICENSE`](scripts/setup/logos/LICENSE). Provider names and logos remain the trademarks of their respective owners; their inclusion identifies available integrations and does not imply endorsement.
+
+## Experimental standalone Cycles component
+
+The optional macOS arm64 renderer is built from the Cycles source commit and
+precompiled dependency submodule recorded in
+[`native/cycles/lock.json`](native/cycles/lock.json). Its custom host executable
+contains no Blender application or `bpy`. `native/cycles/build.mjs` configures
+the enabled features; `native/cycles/package.mjs` copies only the custom
+executable, its installed shared libraries, kernel and utility headers, color
+configuration data, and notices. The package manifest records checksums and
+marks the current output experimental, unsigned, and not notarized.
+
+| Bundled component | License / notice | Evidence and use |
+| --- | --- | --- |
+| Blender Cycles source and in-tree code | Apache-2.0 by default; BSD-3-Clause, MIT and Zlib portions marked by SPDX | Pinned Cycles source; upstream `doc/license/` files copied into the component |
+| OpenImageIO, Embree, OpenImageDenoise, oneTBB | Apache-2.0 | Present in the installed dynamic dependency set; Apache-2.0 text is included |
+| OpenColorIO, OpenEXR and Imath | BSD-3-Clause | Present in the installed dynamic dependency set; BSD-3-Clause text is included |
+| OpenJPH | BSD-2-Clause | Present through OpenEXR/OpenImageIO; separate upstream notice included |
+| pugixml | MIT | Static dependency in the pinned Cycles library bundle; MIT text included |
+| Zstandard | BSD license | Static dependency in the pinned Cycles library bundle; BSD-3-Clause text included |
+| Blender color-management config and LUTs | Sony Pictures Imageworks notice in `ocio-license.txt` | Separate historical Blender notice; current locked color-data commit omits it, so packaging is blocked until a matching official notice checkout is verified |
+| Apple system zlib, libc++ and frameworks | Platform-provided | Linked as macOS system components, not copied into the component |
+
+The exact package file list and hashes are written to `component.json`. Build
+and release details, including the light-reader patch and notice gate, are in
+[`docs/CYCLES_STANDALONE_BUILD.md`](docs/CYCLES_STANDALONE_BUILD.md). No stable
+distribution is authorized by the current unsigned experimental artifact.

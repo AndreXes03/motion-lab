@@ -28,7 +28,7 @@ try{
  assert.equal(recipe.renderPolicy.cycles.samples,16);
  await assert.rejects(()=>validateStudioParameters({scene:'pulse',renderPolicy:{cycles:{command:'unsafe'}}}),/Unknown Cycles field/);
  let response=await request('/capabilities');assert.equal(response.status,200);assert.equal((await response.json()).capabilities.cycles.device,'METAL');
- response=await request('/render',{kind:'frame',parameters:{scene:'camera',renderPolicy:policy},settings:{width:64,height:64}});assert.equal(response.status,400);assert.match((await response.json()).error,/PULSE/);
+ response=await request('/render',{kind:'frame',parameters:{scene:'camera',renderPolicy:policy},settings:{width:64,height:64}});assert.equal(response.status,400);assert.match((await response.json()).error,/adapter/);
  response=await request('/render',{kind:'export',parameters:recipe,settings:{format:'webm'}});assert.equal(response.status,400);assert.match((await response.json()).error,/MP4/);
  response=await request('/render',{kind:'frame',time:9.23,parameters:recipe,settings:{width:64,height:64,temporalSamples:1}});assert.equal(response.status,202);const {id}=await response.json();jobs.push(id);
  let job;for(let i=0;i<60;i++){job=await (await request('/jobs/'+id)).json();if(job.status!=='running')break;await new Promise(r=>setTimeout(r,30));}

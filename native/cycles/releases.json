@@ -1,0 +1,5 @@
+{
+  "protocol": 1,
+  "unavailableReason": "Rendering Cycles is not available for installation yet. A signed, tested standalone package has not been published. Three.js rendering remains available.",
+  "releases": []
+}

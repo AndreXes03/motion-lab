@@ -35,7 +35,7 @@ try{
    allCaptureTracksStopped,callerAudioPreserved,fallback:{extension:fallback.extension,mimeType:fallback.mimeType,size:fallback.blob.size,hasAudio:fallback.hasAudio}};
  });
  assert.equal(proof.cancelled,true);assert.equal(proof.callerScene,'objects');assert.equal(proof.hasAudio,true);assert.ok(proof.framesRendered>1);assert.equal(proof.progress.at(-1),'complete');
- assert.equal(proof.filename,`motion-lab-procedural.${proof.extension}`);assert.equal(proof.allCaptureTracksStopped,true);assert.equal(proof.callerAudioPreserved,true);
+ assert.equal(proof.filename,`framevolve-procedural.${proof.extension}`);assert.equal(proof.allCaptureTracksStopped,true);assert.equal(proof.callerAudioPreserved,true);
  assert.equal(proof.fallback.extension,'webm');assert.ok(proof.fallback.mimeType.startsWith('video/webm'));assert.ok(proof.fallback.size>0);assert.equal(proof.fallback.hasAudio,true);
  const file=new URL(`procedural-audio.${proof.extension}`,output);await writeFile(file,Buffer.from(proof.base64,'base64'));delete proof.base64;
  const metadata=JSON.parse(execFileSync(probe.path,['-v','error','-show_format','-show_streams','-of','json',file.pathname],{encoding:'utf8'}));

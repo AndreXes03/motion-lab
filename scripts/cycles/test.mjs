@@ -1,8 +1,12 @@
 import assert from 'node:assert/strict';
 import {normalizeCyclesOptions,parseCyclesArgs} from './options.mjs';
-import {buildCyclesCommand,getCyclesCapabilities} from './studio.mjs';
-const o=normalizeCyclesOptions({command:'export',out:'/tmp/test.mp4',width:1440,height:1920,fps:30,duration:1,device:'gpu',workers:2},{parameters:{scene:'pulse',sceneControls:{keyLight:1.5},animation:{groups:{mechanisms:{rate:.5}}}}});
+import {buildCyclesCommand,findBlender,getCyclesCapabilities} from './studio.mjs';
+const o=normalizeCyclesOptions({command:'export',out:'/tmp/test.mp4',width:1440,height:1920,fps:30,duration:1,device:'gpu',workers:1},{parameters:{scene:'pulse',sceneControls:{keyLight:1.5},animation:{groups:{mechanisms:{rate:.5}}}}});
 assert.equal(o.count,30);assert.equal(o.device,'metal');assert.equal(o.parameters.sceneControls.keyLight,1.5);assert.equal(o.parameters.animation.groups.mechanisms.rate,.5);
+assert.equal(o.backend,'standalone');
+assert.equal(normalizeCyclesOptions({backend:'blender-reference'}).backend,'blender-reference');
+assert.equal(normalizeCyclesOptions({backend:'blender-reference',workers:2}).workers,2);
+assert.throws(()=>normalizeCyclesOptions({backend:'unsupported'}),/backend/);
 assert.throws(()=>normalizeCyclesOptions({scene:'camera'}),/PULSE and LOOP/);
 assert.throws(()=>normalizeCyclesOptions({command:'export',width:101}),/even/);
 assert.throws(()=>normalizeCyclesOptions({samples:0}),/samples/);
@@ -12,8 +16,9 @@ assert.throws(()=>parseCyclesArgs(['frame','--out','/tmp/frame.png','--unknown',
 assert.equal(normalizeCyclesOptions({command:'frame',out:'/tmp/frame.png',time:13.9}).count,1);
 const command=buildCyclesCommand({kind:'frame',snapshotPath:'/tmp/project.json',outputPath:'/tmp/frame.png',settings:{cyclesSamples:64,denoise:false,device:'metal'}});
 assert.equal(command.args[1],'frame');assert.deepEqual(command.args.slice(-6),['--samples','64','--device','metal','--denoise','off']);
-const missing=await getCyclesCapabilities({blenderPath:'/nonexistent/motion-lab-blender'});assert.equal(missing.available,false);assert.match(missing.reason,/unavailable/);
-console.log('Cycles options, parameter preservation, limits and Studio command contract passed');
+await assert.rejects(()=>findBlender('/nonexistent/motion-lab-blender'),/unavailable/);
+const capabilities=await getCyclesCapabilities();assert.equal(capabilities.backend,'cycles-standalone');assert.ok(Array.isArray(capabilities.scenes));
+console.log('Cycles standalone default, explicit Blender reference, parameter preservation, limits and legacy Studio command contract passed');
 const transparent=normalizeCyclesOptions({command:'frame',out:'/tmp/transparent.png',background:'transparent'});assert.equal(transparent.background,'transparent');
 assert.throws(()=>normalizeCyclesOptions({command:'export',out:'/tmp/transparent.mp4',background:'transparent'}),/cannot retain alpha/);
 const pass=normalizeCyclesOptions({command:'export',out:'/tmp/pass.json',background:'transparent','sequence-only':'on',finish:'raw',duration:1});assert.equal(pass.sequenceOnly,true);assert.equal(pass.finish,'raw');

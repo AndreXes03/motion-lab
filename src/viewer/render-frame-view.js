@@ -32,19 +32,20 @@ export function createRenderFrameView({
       const job = await api(`/jobs/${request.jobId}`);
       if (disposed || active !== request) return;
       if (job.engine && job.engine !== request.engine) throw new Error(`Expected ${request.engine}, but the renderer returned ${job.engine}.`);
+      if (job.status === 'cancelled') {emit({status:'cancelled',jobId:job.id,error:'Render cancelled.'},request);if(desired===request)desired=null;finish(request);return;}
       if (job.status === 'completed') {
         if (job.engine !== request.engine) throw new Error(`Expected ${request.engine}, but the renderer returned ${job.engine || 'an unknown engine'}.`);
         if (!job.url) throw new Error('The rendered frame has no image URL.');
         if (desired === request) {
-          lastReady = {key: request.key, url: job.url, engine: job.engine};
-          emit({status: 'ready', url: job.url, jobId: job.id, progress: 100, elapsedMs: now() - request.startedAt}, request);
+          lastReady = {key: request.key, url: job.url, engine: job.engine, backend:job.backend,device:job.device,deviceName:job.deviceName};
+          emit({status: 'ready', backend:job.backend,device:job.device,deviceName:job.deviceName, url: job.url, jobId: job.id, progress: 100, elapsedMs: now() - request.startedAt}, request);
         }
         finish(request);
       } else if (job.status === 'failed' || job.status === 'cancelled') {
         throw new Error(job.error || 'Frame render failed.');
       } else {
         if (now() - request.startedAt > timeoutMs) throw new Error('Frame render timed out. Check the local render job before retrying.');
-        emit({status: 'rendering', jobId: request.jobId, progress: Math.max(0, Math.min(99, Number(job.progress) || 0)), phase: job.phase || 'preparing', ...(job.previewStage&&job.previewUrl ? {previewUrl:job.previewUrl,stage:job.previewStage,previewWidth:job.previewWidth,previewHeight:job.previewHeight,previewSamples:job.previewSamples} : {})}, request);
+        emit({status: 'rendering', backend:job.backend,device:job.device,deviceName:job.deviceName, jobId: request.jobId, progress: Math.max(0, Math.min(99, Number(job.progress) || 0)), phase: job.phase || 'preparing', ...(job.previewStage&&job.previewUrl ? {previewUrl:job.previewUrl,stage:job.previewStage,previewWidth:job.previewWidth,previewHeight:job.previewHeight,previewSamples:job.previewSamples} : {})}, request);
         later(() => poll(request), pollMs);
       }
     } catch (error) { emit({status: 'error', error: error.message}, request); finish(request); }
@@ -60,6 +61,7 @@ export function createRenderFrameView({
       if (disposed || active !== request) return;
       if (!job.id) throw new Error('The renderer did not return a job ID.');
       request.jobId = job.id;
+      if(request.cancelRequested)await api(`/jobs/${request.jobId}/cancel`,{});
       // Continue observing obsolete jobs until completion: the local renderer is single-job.
       // Only the newest desired snapshot is ever displayed or submitted next.
       later(() => poll(request), 0);
@@ -89,9 +91,17 @@ export function createRenderFrameView({
         if (!active) clearTimer();
         return;
       }
-      if (!force && lastReady?.key === key && !active) { emit({status: 'ready', url: lastReady.url, progress: 100}); return; }
+      if (!force && lastReady?.key === key && !active) { emit({status: 'ready', backend:lastReady.backend,device:lastReady.device,deviceName:lastReady.deviceName, url: lastReady.url, progress: 100}); return; }
       emit({status: 'pending', progress: 0, phase: active ? 'waiting' : 'settling'});
       if (!active) later(start, debounceMs);
+    },
+    async cancel() {
+      clearTimer();
+      if(!active){desired=null;emit({status:'cancelled',error:'Render cancelled.'});return;}
+      const request=active;desired=request;request.cancelRequested=true;
+      emit({status:'rendering',phase:'cancelling',jobId:request.jobId,progress:state.progress||0},request);
+      try {if(request.jobId){await api(`/jobs/${request.jobId}/cancel`,{});later(()=>poll(request),pollMs);}}
+      catch(error){emit({status:'error',error:error.message},request);finish(request);}
     },
     suspend() {
       desired = null;
