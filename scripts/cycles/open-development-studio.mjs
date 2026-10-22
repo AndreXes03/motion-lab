@@ -9,7 +9,7 @@ process.env.FRAMEVOLVE_CYCLES_DIR ||= path.resolve(root, '../outputs/cycles-nati
 try {
   const runtime = await probeNative();
   console.log('Cycles standalone ready: ' + runtime.devices.map(device => device.name).join(', '));
-  await launch({root, port:4190, action:'start', open:true, update:false});
+  await launch({root, port:4191, action:'start', open:true, update:false});
 } catch (error) {
   console.error('Framevolve Cycles: ' + error.message);
   process.exitCode = 1;

@@ -34,7 +34,7 @@ The color/licensing blockers above have been resolved for the new payload: it us
 
 The new payload completed real 480×270 PULSE/Metal and LOOP/CPU frames. The production UI build passed, component tests passed 10/10 and focused setup tests passed 3/3. The optional download checkbox, nested component app, macOS manual-authorization flow and activation only after successful native probing are implemented. No Developer ID is required for this preview path; quarantine and Gatekeeper remain intact.
 
-**Still pending:** public archive upload, actual download and macOS authorization of that archive, final activation/render through the installed component, and main PR merge. The unified public download and replacement of the user's primary installation are not complete. The production manifest remains empty until package verification. No component is advertised as stable.
+**Package published:** the 57,535,848-byte macOS Apple Silicon preview archive is available in GitHub release `cycles-v0.1.0-preview.1`. A real download through the component manager matched pinned SHA-256 `7b7a79e8e4954175962294e545424926dd801c8ae8cd4078498e7ac1f52fa23c`, extracted successfully, preserved quarantine and reached the normal macOS “Open Anyway” approval. The release manifest now points to this exact preview. Native CPU/Metal rendering is verified; final macOS approval/activation and the installed-component render are pending. No component is advertised as stable.
 
 Remaining visual scope: PULSE/LOOP only; ACES response differs from Filmic; custom browser shaders/post effects and deformation/texture motion blur remain unsupported. Long-film seeking, full soundtrack review and GPU-tracing cancellation have not been verified. Other platforms are unavailable.
 
