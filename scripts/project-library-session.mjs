@@ -1,17 +1,16 @@
-import {mkdir,lstat,rename,rm,open} from 'node:fs/promises';
+import {mkdir,lstat,rename,rm,open,realpath} from 'node:fs/promises';
 import path from 'node:path';
-import {constants} from 'node:fs';
+import {constants,realpathSync} from 'node:fs';
 import {randomUUID,createHash} from 'node:crypto';
 import {setTimeout as delay} from 'node:timers/promises';
-import {listProjects,readProject,saveProject,openProject,importProject,exportProject,recoverProjectOpen} from './project-library-store.mjs';
+import {listProjects,readProject,saveProject,openProject,importProject,exportProject,recoverProjectOpen,assertProjectLibraryIdle} from './project-library-store.mjs';
 import {readReview,writeReview,validateReview} from './live-review-store.mjs';
-import {assertSessionIdle} from './session-checkpoints.mjs';
 
 const sessions=globalThis[Symbol.for('framevolve.project-library.sessions')]??=new Map();
 const idPattern=/^[a-f0-9]{8}-[a-f0-9]{4}-4[a-f0-9]{3}-[89ab][a-f0-9]{3}-[a-f0-9]{12}$/;
 const failure=(message,status=409)=>Object.assign(Error(message),{status});
 const hash=snapshot=>createHash('sha256').update(JSON.stringify(snapshot)).digest('hex');
-export function projectSession(root){root=path.resolve(root);if(!sessions.has(root))sessions.set(root,{working:false,error:'',pending:false});return sessions.get(root);}
+export function projectSession(root){root=realpathSync(path.resolve(root));if(!sessions.has(root))sessions.set(root,{working:false,error:'',pending:false});return sessions.get(root);}
 async function cache(root){
  const base=path.resolve(root);let current=path.parse(base).root;for(const part of base.slice(current.length).split(path.sep).filter(Boolean)){current=path.join(current,part);const info=await lstat(current);if(info.isSymbolicLink()||!info.isDirectory())throw Error('Project storage cannot be a link.');}
  const dir=path.join(base,'.motion-cache');await mkdir(dir,{recursive:true});const info=await lstat(dir);if(info.isSymbolicLink()||!info.isDirectory())throw Error('Project storage cannot be a link.');return dir;
@@ -39,7 +38,7 @@ async function recoverSession(root){
  if(await exists(sessionJournal(root)))await restoreSession(root,await readJson(sessionJournal(root),8*1024*1024));
 }
 function publicRecord(record){if(!record)return null;return {id:record.id,name:record.name,revision:record.revision,updatedAt:record.updatedAt,snapshot:record.snapshot,snapshotHash:hash(record.snapshot),customCode:record.customCode,imported:record.imported,warnings:record.portabilityWarnings??[]};}
-export async function libraryState(root){await cache(root);if(await exists(sessionJournal(root))||await exists(storeJournal(root)))await exclusive(root,async()=>{});const current=await pointer(root),state=projectSession(root);return {active:current?publicRecord(await readProject(root,current.id)):null,projects:await listProjects(root),working:state.working,pending:state.pending,error:state.error};}
+export async function libraryState(root){root=await realpath(path.resolve(root));await cache(root);if(await exists(sessionJournal(root))||await exists(storeJournal(root)))await exclusive(root,async()=>{});const current=await pointer(root),state=projectSession(root);return {active:current?publicRecord(await readProject(root,current.id)):null,projects:await listProjects(root),working:state.working,pending:state.pending,error:state.error};}
 async function exclusive(root,operation){
  const lock=path.join(await cache(root),'project-session.lock'),state=projectSession(root);let acquired=false;
  for(let attempt=0;attempt<30;attempt++){
@@ -56,25 +55,25 @@ async function exclusive(root,operation){
  try{await recoverSession(root);const result=await operation();state.error='';return result;}catch(e){state.error=e.message;throw e;}finally{state.working=false;await rm(lock,{recursive:true,force:true});}
 }
 async function expected(root,id){const current=await pointer(root);if((current?.id??null)!==(id??null))throw failure('The active project changed in another window. Reload to continue; your local draft is preserved.');return current;}
-export async function saveActiveProject(root,input){return exclusive(root,async()=>{
+export async function saveActiveProject(root,input){root=await realpath(path.resolve(root));return exclusive(root,async()=>{
  const current=await expected(root,input.activeId);
  if(!current){const record=await saveProject(root,{name:input.name||'Untitled project',snapshot:input.snapshot});await activate(root,record.id);return publicRecord(record);}
  const previous=await readProject(root,current.id);
  if(input.revision!==previous.revision&&input.baseSnapshotHash!==hash(previous.snapshot))throw failure('This project has newer changes. Your draft is preserved; reload before saving over them.');
  const record=await saveProject(root,{id:previous.id,name:input.name||previous.name,snapshot:input.snapshot,expectedRevision:previous.revision});return publicRecord(record);
 });}
-export async function autosaveActiveProject(root,{snapshot}={}){return exclusive(root,async()=>{
+export async function autosaveActiveProject(root,{snapshot}={}){root=await realpath(path.resolve(root));return exclusive(root,async()=>{
  const current=await pointer(root);if(!current)return null;
  const previous=await readProject(root,current.id);
  const nextSnapshot=snapshot?.parameters?.scene?snapshot:previous.snapshot;
  return publicRecord(await saveProject(root,{id:previous.id,name:previous.name,snapshot:nextSnapshot,expectedRevision:previous.revision}));
 });}
-export async function createActiveProject(root,input){return exclusive(root,async()=>{
- const current=await expected(root,input.activeId);await assertSessionIdle(root);
+export async function createActiveProject(root,input){root=await realpath(path.resolve(root));return exclusive(root,async()=>{
+ const current=await expected(root,input.activeId);await assertProjectLibraryIdle(root);
  const record=await saveProject(root,{name:input.name,snapshot:input.snapshot});await activate(root,record.id,current?.trusted??[]);await writeReview(root,{version:1,phase:'ready',tasks:[],checkpoint:randomUUID(),snapshot:record.snapshot,label:'Project created',updatedAt:new Date().toISOString()});return publicRecord(record);
 });}
 /** beforeActivate is a private failure-injection hook; never accept it from API input. */
-export async function openActiveProject(root,input,{beforeActivate=async()=>{}}={}){return exclusive(root,async()=>{
+export async function openActiveProject(root,input,{beforeActivate=async()=>{}}={}){root=await realpath(path.resolve(root));return exclusive(root,async()=>{
  const current=await expected(root,input.activeId),record=await readProject(root,input.id),trusted=current?.trusted??[];
  if(!record.snapshot?.parameters?.scene)throw failure('This package has no scene recipe to open in Studio.',400);
  if(record.imported&&record.customCode&&!trusted.includes(record.id)&&input.trusted!==true)throw failure('This imported project contains scene code. Confirm that you trust its source before opening it.',428);
@@ -99,5 +98,5 @@ export async function openActiveProject(root,input,{beforeActivate=async()=>{}}=
   throw error;
  }
 });}
-export async function importLibraryProject(root,bytes){return exclusive(root,async()=>publicRecord(await importProject(root,bytes)));}
-export async function exportLibraryProject(root,id){return exclusive(root,async()=>{await expected(root,id);return exportProject(root,id);});}
+export async function importLibraryProject(root,bytes){root=await realpath(path.resolve(root));return exclusive(root,async()=>publicRecord(await importProject(root,bytes)));}
+export async function exportLibraryProject(root,id){root=await realpath(path.resolve(root));return exclusive(root,async()=>{await expected(root,id);return exportProject(root,id);});}

@@ -269,7 +269,7 @@ const liveBaseline=snapshot();
 if(canRecoverDraft&&!liveRecovery){try{const draft=JSON.parse(sessionStorage.getItem('framevolve-session-draft'));if(draft?.version===1&&!draft.projectId&&(!initialScene||initialScene===draft.snapshot.parameters.scene)){restore(draft.snapshot);time=Math.max(0,Math.min(lastFrame/fps,Number(draft.time)||0));if(draft.panel)inspector.setTab(draft.panel);$('version-status').textContent='Session draft recovered';}}catch{}}
 if(!publicDemo&&canRecoverDraft){
  const libraryContainer=document.createElement('div');libraryContainer.id='project-library';document.querySelector('.project-switch').before(libraryContainer);
- projectLibrary=await mountProjectLibrary({container:libraryContainer,getSnapshot:snapshot,setSnapshot:restore,isBusy:()=>!!activeJob||!!browserExportController||$('render-frame').disabled,
+ projectLibrary=await mountProjectLibrary({container:libraryContainer,getSnapshot:snapshot,setSnapshot:restore,liveRecovery:!!liveRecovery,canApplyExternal:()=>{const live=window.motionLive?.getState();return !live?.paused&&!live?.dirty&&!live?.pending;},isBusy:()=>!!activeJob||!!browserExportController||$('render-frame').disabled,
   newSnapshot:()=>{$('scene').value='procedural';$('scene').onchange();$('reset').click();setExportSettings({width:1920,height:1080,fps:30,format:'mp4',bitrateMbps:16,temporalSamples:1});return snapshot();}});
  document.querySelector('.project-switch').firstChild.textContent='Scene';$('scene').setAttribute('aria-label','Scene');
 }

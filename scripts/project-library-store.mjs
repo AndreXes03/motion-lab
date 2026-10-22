@@ -1,6 +1,6 @@
 /** Disk-backed authored projects. Packages contain code: import is storage-only. */
-import {constants} from 'node:fs';
-import {open, lstat, mkdir, readdir, rename, rm} from 'node:fs/promises';
+import {constants,realpathSync} from 'node:fs';
+import {open, lstat, mkdir, readdir, rename, rm, realpath} from 'node:fs/promises';
 import path from 'node:path';
 import {createHash, randomUUID} from 'node:crypto';
 import {gzipSync, gunzipSync} from 'node:zlib';
@@ -18,6 +18,14 @@ const validId=id=>typeof id==='string'&&/^[a-f0-9]{8}-[a-f0-9]{4}-4[a-f0-9]{3}-[
 const validSha=value=>typeof value==='string'&&/^[a-f0-9]{64}$/.test(value);
 const fail=(status,message)=>Object.assign(Error(message),{status});
 const store=root=>path.join(root,'.motion-cache/project-library');
+// Workspace aliases (/var -> /private/var on macOS) may key runtime state differently.
+// Canonicalize only the trusted workspace root; managed descendants still reject links.
+export async function assertProjectLibraryIdle(root){
+ const canonical=await realpath(path.resolve(root));await assertSessionIdle(canonical);
+ const states=globalThis[Symbol.for('framevolve.studio-render-states')];
+ for(const [alias,state]of states??[]){if(!state?.activeRenderId||typeof alias!=='string')continue;let resolved;try{resolved=realpathSync(alias);}catch(error){if(error.code==='ENOENT')continue;throw error;}if(resolved===canonical)throw fail(409,'Wait for the current render to finish.');}
+}
+
 const secret=part=>/^(?:\.|history$|versions$|briefs$|private$|feedback(?:[-_.].*)?$|feedback-memory$|node_modules$|renders?$|cache$|credentials?(?:\..*)?$|secrets?(?:\..*)?$)/i.test(part);
 export function isManagedProjectPath(name){
  if(typeof name!=='string'||name.length>500||/[\\\x00-\x1f:]/.test(name)||name.startsWith('/'))return false;
@@ -46,7 +54,7 @@ async function acquire(root){
  }
  try{await atomic(root,relative+'/owner.json',Buffer.from(JSON.stringify({pid:process.pid})));}catch(error){await rm(file,{recursive:true,force:true});throw error;}
 }
-async function serialized(root,operation){root=path.resolve(root);const previous=queues.get(root)??Promise.resolve();let release;const gate=new Promise(resolve=>{release=resolve;});const next=previous.catch(()=>{}).then(()=>gate);queues.set(root,next);await previous.catch(()=>{});let acquired=false;try{await ensure(root);await acquire(root);acquired=true;return await operation(root);}finally{if(acquired)await rm(await safePath(root,'.motion-cache/project-library/operation.lock'),{recursive:true,force:true});release();if(queues.get(root)===next)queues.delete(root);}}
+async function serialized(root,operation){root=await realpath(path.resolve(root));const previous=queues.get(root)??Promise.resolve();let release;const gate=new Promise(resolve=>{release=resolve;});const next=previous.catch(()=>{}).then(()=>gate);queues.set(root,next);await previous.catch(()=>{});let acquired=false;try{await ensure(root);await acquire(root);acquired=true;return await operation(root);}finally{if(acquired)await rm(await safePath(root,'.motion-cache/project-library/operation.lock'),{recursive:true,force:true});release();if(queues.get(root)===next)queues.delete(root);}}
 function json(value,max,label){let encoded;try{encoded=JSON.stringify(value);}catch{throw fail(400,'Invalid '+label+'.');}if(!encoded||Buffer.byteLength(encoded)>max)throw fail(400,label+' is too large.');return JSON.parse(encoded);}
 function snapshot(value){if(value==null)return null;const copy=json(value,L.snapshotBytes,'Project snapshot');if(!copy||Array.isArray(copy)||typeof copy!=='object'||!copy.parameters||Array.isArray(copy.parameters)||typeof copy.parameters!=='object'||typeof copy.parameters.scene!=='string'||!/^[a-zA-Z0-9][a-zA-Z0-9_-]{0,99}$/.test(copy.parameters.scene))throw fail(400,'Project snapshot needs parameters.scene as a valid scene id.');return copy;}
 function projectName(value){if(typeof value!=='string'||!value.trim()||value.trim().length>160)throw fail(400,'Choose a project name of 1–160 characters.');return value.trim();}
@@ -103,17 +111,17 @@ async function rollback(root,journal){const backup=await readRecord(root,journal
 /** beforeWrite persists session metadata after the backup/apply journal, before any source write.
  * Callbacks are private and must never be accepted from an HTTP request. */
 export async function openProject(root,id,{snapshot:recipe,beforeWrite=async()=>{},afterWrite=async()=>{}}={}){return serialized(root,async root=>{
- if(await info(await safePath(root,'.motion-cache/project-library/apply.json')))throw fail(409,'An interrupted project open requires recovery.');await assertSessionIdle(root);const record=await readRecord(root,id);if(record.snapshot&&!sceneIds.includes(canonicalScene(record.snapshot.parameters.scene)))throw fail(400,'This project scene is not supported by the installed Framevolve application.');const desired=await loadData(root,record),before=await capture(root);await assertSessionIdle(root);
+ if(await info(await safePath(root,'.motion-cache/project-library/apply.json')))throw fail(409,'An interrupted project open requires recovery.');await assertProjectLibraryIdle(root);const record=await readRecord(root,id);if(record.snapshot&&!sceneIds.includes(canonicalScene(record.snapshot.parameters.scene)))throw fail(400,'This project scene is not supported by the installed Framevolve application.');const desired=await loadData(root,record),before=await capture(root);await assertProjectLibraryIdle(root);
  const backup=await persist(root,{name:('Workspace backup before '+record.name).slice(0,160),snapshot:recipe,backup:true},before),changes=[...new Set([...before.keys(),...desired.keys()])].filter(name=>before.get(name)?.sha!==desired.get(name)?.sha);
  // Validate every destination before any source mutation.
- for(const name of changes)await safePath(root,name);await assertSessionIdle(root);
+ for(const name of changes)await safePath(root,name);await assertProjectLibraryIdle(root);
  const journal={version:1,backupId:backup.id,targetId:id,written:[]},journalPath='.motion-cache/project-library/apply.json';await atomic(root,journalPath,Buffer.from(JSON.stringify(journal)));
  try{await beforeWrite({backupId:backup.id,record});for(const name of changes){const old=before.get(name),next=desired.get(name);if(await currentHash(root,name)!==(old?.sha??null))throw fail(409,'Project changed during open: '+name);journal.written.push({name,before:old?.sha??null,after:next?.sha??null});await atomic(root,journalPath,Buffer.from(JSON.stringify(journal)));if(next)await atomic(root,name,next.bytes);else await rm(await safePath(root,name),{force:true});await afterWrite(name);}
  // Catch concurrent edits even in a path outside the change set.
  if(JSON.stringify(filesOf(await scan(root)))!==JSON.stringify(filesOf(new Map([...desired].sort(([a],[b])=>a.localeCompare(b))))))throw fail(409,'Workspace changed during open.');await rm(await safePath(root,journalPath));return {record,backupId:backup.id,snapshot:record.snapshot,sourceChanged:changes.some(name=>name.startsWith('src/')),filesChanged:changes.length};
  }catch(error){try{await rollback(root,journal);}catch(recovery){throw fail(409,`${error.message} Automatic rollback stopped: ${recovery.message} Backup ${backup.id} and recovery journal were preserved.`);}throw error;}
  });}
-export async function recoverProjectOpen(root){return serialized(root,async root=>{await assertSessionIdle(root);const journal=JSON.parse(await readBytes(root,'.motion-cache/project-library/apply.json',L.manifestBytes));if(journal.version!==1||!validId(journal.backupId)||!Array.isArray(journal.written)||journal.written.length>L.files*2||journal.written.some(item=>!isManagedProjectPath(item.name)||(item.before!==null&&!validSha(item.before))||(item.after!==null&&!validSha(item.after))))throw fail(400,'Invalid project recovery journal.');await rollback(root,journal);return {recovered:true,backupId:journal.backupId};});}
+export async function recoverProjectOpen(root){return serialized(root,async root=>{await assertProjectLibraryIdle(root);const journal=JSON.parse(await readBytes(root,'.motion-cache/project-library/apply.json',L.manifestBytes));if(journal.version!==1||!validId(journal.backupId)||!Array.isArray(journal.written)||journal.written.length>L.files*2||journal.written.some(item=>!isManagedProjectPath(item.name)||(item.before!==null&&!validSha(item.before))||(item.after!==null&&!validSha(item.after))))throw fail(400,'Invalid project recovery journal.');await rollback(root,journal);return {recovered:true,backupId:journal.backupId};});}
 
 export async function exportProject(root,id){return serialized(root,async root=>{const record=await readRecord(root,id),data=await loadData(root,record),blobs={};for(const {bytes,sha:hash}of data.values())blobs[hash]=bytes.toString('base64');const raw=Buffer.from(JSON.stringify({format:'framevolve',version:1,application:record.application,project:record,blobs}));const bytes=gzipSync(raw);if(bytes.length>L.compressedBytes)throw fail(400,'Portable project exceeds the 100 MiB compressed limit.');return bytes;});}
 export async function importProject(root,buffer){
