@@ -32,10 +32,20 @@ int main(void) {
           ![details[@"protocol"] isEqual:@1]) failure = @"The Cycles runtime self-check failed. Return to Framevolve to retry installation.";
     }
     if (!failure) {
-      NSURL *receipt = [[bundle.bundleURL URLByDeletingLastPathComponent] URLByAppendingPathComponent:@"approval.json"];
+      // Gatekeeper may run this app from a read-only App Translocation volume.
+      // Store approval in the installed version's Application Support directory,
+      // never beside the running (potentially translocated) bundle.
+      NSString *version = [bundle objectForInfoDictionaryKey:@"CFBundleShortVersionString"];
+      NSURL *directory = [NSURL fileURLWithPath:[[NSHomeDirectory() stringByAppendingPathComponent:@"Library/Application Support/Framevolve/components/cycles"] stringByAppendingPathComponent:version]];
+      NSData *installedData = [NSData dataWithContentsOfURL:[directory URLByAppendingPathComponent:@"component.json"]];
+      NSDictionary *installed = installedData ? [NSJSONSerialization JSONObjectWithData:installedData options:0 error:nil] : nil;
+      if (![installed[@"version"] isEqual:version] || ![installed[@"revision"] isEqual:details[@"revision"]]) {
+        failure = @"The installed component does not match this app. Return to Framevolve and download the current version.";
+      }
+      NSURL *receipt = [directory URLByAppendingPathComponent:@"approval.json"];
       NSDictionary *approval = @{@"approved":@YES, @"protocol":@1, @"revision":details[@"revision"], @"approvedAt":[[NSISO8601DateFormatter new] stringFromDate:NSDate.date]};
       NSData *data = [NSJSONSerialization dataWithJSONObject:approval options:NSJSONWritingPrettyPrinted error:&error];
-      if (!data || ![data writeToURL:receipt options:NSDataWritingAtomic error:&error]) failure = error.localizedDescription;
+      if (!failure && (!data || ![data writeToURL:receipt options:NSDataWritingAtomic error:&error])) failure = error.localizedDescription;
     }
     NSAlert *alert = [NSAlert new];
     alert.messageText = failure ? @"Rendering Cycles could not start" : @"Rendering Cycles is ready";

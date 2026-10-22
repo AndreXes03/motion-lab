@@ -1,6 +1,6 @@
 {
   "protocol": 1,
-  "version": "0.1.0-preview.1",
+  "version": "0.1.0-preview.2",
   "source": "https://projects.blender.org/blender/cycles.git",
   "revision": "a456b761034dda42c32eef9f4aae0fa5a5c9f604",
   "libraries": {

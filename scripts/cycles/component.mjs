@@ -85,7 +85,7 @@ async function unpack(archive, destination, maxBytes) {
   if (file || remaining || padding || !ended || buffer.some(byte => byte !== 0)) throw Error('Incomplete component archive');
  } finally { await file?.close(); input.destroy(); }
 }
-export function createCyclesComponentManager({root = ROOT, componentHome = cyclesComponentHome(), platform = process.platform, arch = process.arch, fetchFn = globalThis.fetch, validateInstalled = installedPackage, probeInstalled = verifyProbe, openApp = app => runFile('/usr/bin/open', [app]), beforeChange = () => assertSessionIdle(root, {allowEditing:true})} = {}) {
+export function createCyclesComponentManager({root = ROOT, componentHome = cyclesComponentHome(), platform = process.platform, arch = process.arch, fetchFn = globalThis.fetch, validateInstalled = installedPackage, probeInstalled = verifyProbe, openApp = app => runFile('/usr/bin/open', ['-n', app]), beforeChange = () => assertSessionIdle(root, {allowEditing:true})} = {}) {
  let operation = {phase: 'idle', busy: false, progress: 0, error: null};
  const manifestFile = path.join(root, 'native/cycles/releases.json'), lockFile = path.join(root, 'native/cycles/lock.json');
  async function release() {
