@@ -3,6 +3,8 @@ const $ = id => document.getElementById(id);
 const token = location.hash.slice(1);
 history.replaceState(null, '', '/');
 let state = {}, pending = false, disconnected = false, selectionChanged = false, memoryChanged = false, clientError = '';
+let stage='welcome';
+function showStage(next,{focus=false}={}){stage=next;$('welcome-stage').hidden=stage!=='welcome';$('setup-stage').hidden=stage!=='setup';$('setup-back').hidden=stage!=='setup';$('setup-step').textContent=stage==='welcome'?'WELCOME':'SETUP';if(focus){window.scrollTo({top:0,behavior:'instant'});const heading=$(stage==='welcome'?'welcome-stage':'setup-stage').querySelector('h1');heading.tabIndex=-1;heading.focus({preventScroll:true});}}
 const docs = { codex: 'https://developers.openai.com/codex/cli/', claude: 'https://code.claude.com/docs/en/setup' };
 const provider = () => document.querySelector('input[name="provider"]:checked').value;
 async function api(route, body) {
@@ -35,7 +37,14 @@ function render(data) {
   $('repo').textContent = state.root || '';
   $('ready').hidden = !ready;
   const hasAgent = !!docs[provider()];
-  $('agent').hidden = !hasAgent; $('agent-note').hidden = !hasAgent; $('prompt-area').hidden = !hasAgent;
+  $('agent').hidden = !hasAgent; $('agent-note').hidden = !hasAgent;
+  let studioUrl='';
+  try { const url=new URL(state.studioUrl);if(url.protocol==='http:'&&['localhost','127.0.0.1','[::1]'].includes(url.hostname)&&!url.username&&!url.password)studioUrl=url.href; } catch {}
+  $('studio-link').textContent=studioUrl||'Studio link will appear when setup finishes.';
+  if(studioUrl)$('studio-link').href=studioUrl;else $('studio-link').removeAttribute('href');
+  $('copy-studio-link').disabled=busy||disconnected||!studioUrl;
+  const assistant=provider()==='codex'?'Codex':provider()==='claude'?'Claude Code':'my assistant';
+  $('starter-prompt').textContent=`Help me create my first Framevolve video using ${assistant}.\nLocal project folder: ${state.root||'(available after setup)'}\nStudio: ${studioUrl||'(available after setup)'}\nRead AGENTS.md and docs/FOUNDER_START.md in this project first. Ask me for the brief and use the local Studio for preview and editing. If your integrated browser can open localhost, keep chat and Studio side by side; otherwise help me use Studio in Safari or Firefox. Use native local rendering where supported. Ask before any paid generation or provider usage.`;
   $('provider-help').hidden = !hasAgent;
   if (hasAgent) $('provider-docs').href = docs[provider()];
 }
@@ -45,6 +54,8 @@ async function action(fn) {
   try { await fn(); } catch (error) { clientError = error.message; }
   finally { pending = false; render(state); }
 }
+$('setup-continue').onclick=$('setup-skip').onclick=()=>showStage('setup',{focus:true});
+$('setup-back').onclick=()=>showStage('welcome',{focus:true});
 document.querySelectorAll('input[name="provider"]').forEach(el => el.addEventListener('change', () => render(state)));
 $('browser').onchange = () => { selectionChanged = true; render(state); };
 $('cycles-download').onchange = () => { if ($('cycles-download').checked) $('cycles-component').open = true; render(state); };
@@ -62,10 +73,12 @@ $('install').onclick = () => action(async () => {
 for (const name of ['install','update','authorize','check','remove']) $('cycles-' + name).onclick = () => action(async () => { state = await api('components/cycles/' + name, {}); });
 $('agent').onclick = () => action(async () => { state = await api('provider', { provider: provider() }); state = await api('agent', {}); });
 $('locate').onclick = () => action(async () => { state = await api('locate', {}); selectionChanged = true; });
-$('copy-prompt').onclick = () => action(async () => { await navigator.clipboard.writeText(document.querySelector('blockquote').textContent); $('copy-prompt').textContent = 'Copied'; });
+$('copy-prompt').onclick = () => action(async () => { await navigator.clipboard.writeText($('starter-prompt').textContent); $('copy-prompt').textContent = 'Copied'; });
+$('copy-studio-link').onclick = () => action(async () => { await navigator.clipboard.writeText($('studio-link').href); $('copy-studio-link').textContent = 'Copied'; });
 $('close').onclick = () => action(async () => { await persistMemory(); await api('close', {}); disconnected = true; state.message = 'Setup is complete. You can close this tab and its Terminal window.'; });
 try {
   state = await api('state');
+  showStage(state.ready?'setup':'welcome');
   $('feedback-memory').checked = !!state.feedbackMemory;
   document.querySelector(`input[name="provider"][value="${['codex','claude','other'].includes(state.provider) ? state.provider : 'other'}"]`).checked = true;
   $('browser').value = ['native','auto','chrome','chromium'].includes(state.browser) ? state.browser : 'auto';
@@ -77,4 +90,4 @@ try {
     setTimeout(poll, 700);
   };
   setTimeout(poll, 700);
-} catch { disconnected = true; clientError = 'Reopen Setup Framevolve.command to start a new setup session.'; render(state); }
+} catch { showStage('setup'); disconnected = true; clientError = 'Reopen Setup Framevolve.command to start a new setup session.'; render(state); }

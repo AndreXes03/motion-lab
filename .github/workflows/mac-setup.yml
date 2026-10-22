@@ -42,7 +42,9 @@ jobs:
       - name: Storyboard and frame feedback interface
         run: node scripts/test-storyboard-browser.mjs
       - name: Founder session safety
-        run: npm run test:session
+        run: |
+          npm run test:session
+          node --test scripts/test-onboarding.mjs
       - name: Clean ZIP first founder session
         run: node scripts/test-founder-session-browser.mjs
       - name: Live feedback contracts
