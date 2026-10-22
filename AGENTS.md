@@ -54,3 +54,7 @@ New Framevolve contributions are proprietary under the root Framevolve Free Use 
 ## Interpret client feedback
 
 Use `.agents/skills/motion-lab-product-film/references/client-feedback.md` for subjective or nontechnical video feedback. Diagnose the viewing problem before choosing effects, preserve approved choices, compare before/after and keep client approval distinct from technical completion. Optional local feedback memory is off by default: check `node scripts/feedback-memory.mjs status`, respect consent, and never send it automatically.
+
+## Efficient context and validation
+
+Follow [docs/AGENT_EFFICIENCY.md](docs/AGENT_EFFICIENCY.md). Start with `npm run agent:context -- TOPIC`, read scoped files, reuse supported controls and run affected checks after each fix. Complete required final gates and visual review before delivery; avoid duplicate full-suite runs and unbounded tool output.

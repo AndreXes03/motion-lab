@@ -9,3 +9,7 @@ Reuse known brief answers and make technical recommendations in plain language. 
 For revisions and integrated-browser requests, follow [.agents/skills/framevolve-live-review/SKILL.md](.agents/skills/framevolve-live-review/SKILL.md). Show the feedback checklist, release each coherent change to the same Studio tab, and verify it before marking it Done. Use only browser capabilities actually available in this session.
 
 For natural-language client feedback, follow `.agents/skills/motion-lab-product-film/references/client-feedback.md` alongside live review. The same optional memory consent, before/after evidence and separate client-approval rules apply to every provider. See `docs/FEEDBACK_MEMORY.md`.
+
+## Efficient context and validation
+
+Follow [docs/AGENT_EFFICIENCY.md](docs/AGENT_EFFICIENCY.md). Start with `npm run agent:context -- TOPIC`, read scoped files, reuse supported controls and run affected checks after each fix. Complete required final gates and visual review before delivery; avoid duplicate full-suite runs and unbounded tool output.

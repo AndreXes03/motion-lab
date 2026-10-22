@@ -78,7 +78,7 @@ npm run setup
 
 To watch your agent work, ask it to use the [live-review workflow](docs/LIVE_STUDIO.md): Studio updates after each coherent change and shows the feedback checklist. An integrated browser can be used on request when the agent session provides one.
 
-After setup, launch the app shortcut or run `npm run studio`. Studio opens at <http://127.0.0.1:4173/>. The launcher checks official `origin/main` on every launch and applies only fast-forward updates. Local edits and work branches are preserved; offline launches use the installed copy. ZIP copies also launch; automatic updates require a Git clone.
+After setup, launch the app shortcut or run `npm run studio`. Studio opens at <http://127.0.0.1:4173/>. The Mac setup and app check for updates on launch, including ZIP installations, and offer **Update / Later**. Local edits are preserved; conflicting changes block installation. Close an existing Studio session to update. Offline launches use the installed copy. Git checkouts update only clean `main` with a fast-forward. See [update details](docs/UPDATES.md).
 
 Try the bundled recipe, [`demo/pop-motion.project.json`](demo/pop-motion.project.json):
 

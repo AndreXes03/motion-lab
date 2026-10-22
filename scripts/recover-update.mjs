@@ -1,0 +1,13 @@
+import {readFile,rm} from 'node:fs/promises';
+import path from 'node:path';
+import {ROOT} from './browser-runtime.mjs';
+import {hasRunningStudio,restoreUpdate} from './zip-update.mjs';
+if(await hasRunningStudio(ROOT))throw Error('Close Studio before recovering an interrupted update.');
+const file=path.join(ROOT,'.motion-cache/update-transaction.json');
+const journal=JSON.parse(await readFile(file,'utf8'));
+if(journal.version!==1||!path.resolve(journal.backup).startsWith(path.join(ROOT,'.motion-cache/update-backups')+path.sep))throw Error('Invalid recovery journal.');
+await restoreUpdate(ROOT,journal);
+const {execFileSync}=await import('node:child_process');
+execFileSync('npm',['ci','--no-audit','--no-fund'],{cwd:ROOT,stdio:'inherit'});
+await rm(file);await rm(path.join(ROOT,'.motion-cache/distribution-update.lock'),{recursive:true,force:true});
+console.log('Previous source restored. Reopen setup to check dependencies before opening Studio.');

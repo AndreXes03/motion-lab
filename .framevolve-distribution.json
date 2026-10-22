@@ -1,0 +1,1718 @@
+{
+  "version": 1,
+  "revision": "d4b7761a8bd6a98d9bc6c3726b3fdc41156e7718",
+  "files": {
+    ".agents/skills/framevolve-live-review/SKILL.md": {
+      "sha": "43c2fb9ea4e244cf9a14b31bf41c656ac5bd252b",
+      "mode": "100644"
+    },
+    ".agents/skills/motion-lab-product-film/SKILL.md": {
+      "sha": "cbf08f641fd2d6a6c5516db767ba1e35ea069337",
+      "mode": "100644"
+    },
+    ".agents/skills/motion-lab-product-film/references/client-feedback.md": {
+      "sha": "dff692ac3ab454e2ea1275c3d29ff10c251067dc",
+      "mode": "100644"
+    },
+    ".agents/skills/motion-lab-product-film/references/commercial-direction.md": {
+      "sha": "76da34eb644dc166c39b12902cd190a5623505e6",
+      "mode": "100644"
+    },
+    ".agents/skills/motion-lab-product-film/references/founder-discovery.md": {
+      "sha": "5c9f62efec43bcccbeb3a733e783478036ad424e",
+      "mode": "100644"
+    },
+    ".agents/skills/motion-lab-product-film/references/production-and-review.md": {
+      "sha": "0fca432babf681b8234b5503a620b68fa6a5a5fe",
+      "mode": "100644"
+    },
+    ".agents/skills/motion-lab-product-film/references/typography-and-motion.md": {
+      "sha": "69e5ae69fdd45e6a739236451249b338b6bf1a24",
+      "mode": "100644"
+    },
+    ".github/workflows/demo-pages.yml": {
+      "sha": "225ee62965091078f529ef76796498c32f833d2b",
+      "mode": "100644"
+    },
+    ".github/workflows/mac-setup.yml": {
+      "sha": "243db5405c8f08a29e1908f0966ba3fac12c9400",
+      "mode": "100644"
+    },
+    ".gitignore": {
+      "sha": "5d84312ad38821f6f501916829c9887cc70756f0",
+      "mode": "100644"
+    },
+    "AGENTS.md": {
+      "sha": "7b6c6f1464dfd5f5b6ab248bd0d0d438a059de2b",
+      "mode": "100644"
+    },
+    "CLAUDE.md": {
+      "sha": "d3e1ce0d81478e931509ef59a3336c0342c471a1",
+      "mode": "100644"
+    },
+    "LICENSE": {
+      "sha": "b4ef971bc1d5ff5770e503bfdbd7030639556fb7",
+      "mode": "100644"
+    },
+    "README.md": {
+      "sha": "93e3184dc006ce02706dc13d7dd7c17b0d233363",
+      "mode": "100644"
+    },
+    "Setup Framevolve.command": {
+      "sha": "eec8acf38b46e64592f1479a1175a58f5ee24641",
+      "mode": "100755"
+    },
+    "THIRD_PARTY.md": {
+      "sha": "bf9eefd24cad7547649c20b71478b5f78ad295b3",
+      "mode": "100644"
+    },
+    "demo/README.md": {
+      "sha": "3fbdcad671a5399ca5d897d25e80508fb1b6d7d5",
+      "mode": "100644"
+    },
+    "demo/andrea-salvo-logo.png": {
+      "sha": "6157bcba703c4e2d5b100aba7db1846c024292ea",
+      "mode": "100644"
+    },
+    "demo/camera-1080.mp4": {
+      "sha": "977ae3efa7995d0f7bf670adc14080adca874833",
+      "mode": "100644"
+    },
+    "demo/camera-poster.jpg": {
+      "sha": "1c997b338b136af8eb0fc15f931bf830749f8c95",
+      "mode": "100644"
+    },
+    "demo/dot-1080.mp4": {
+      "sha": "b9f3e25b7d63a1efad6c750f18274adb03e3c471",
+      "mode": "100644"
+    },
+    "demo/dot-poster.jpg": {
+      "sha": "97bfa83c44d5f25b014378b0a702768136a0f771",
+      "mode": "100644"
+    },
+    "demo/loop-v11-electro-1080.mp4": {
+      "sha": "048602dba299efa59460c36559af1e4da0ff6ea0",
+      "mode": "100644"
+    },
+    "demo/loop-v11-poster.jpg": {
+      "sha": "a257ec3c6a8a25ba42e9d3f6645060dfdca53366",
+      "mode": "100644"
+    },
+    "demo/loop-v11-web-preview.mp4": {
+      "sha": "9577a5f3dc34cba007203194f1e29f436e7f9e1c",
+      "mode": "100644"
+    },
+    "demo/loop-v12-1-electro-1080.mp4": {
+      "sha": "d68f04f30c8f8ed903b42d97331b287a5948e9ff",
+      "mode": "100644"
+    },
+    "demo/loop-v12-1-poster.jpg": {
+      "sha": "68d83920824efa2f9c2ec9f7fb3536ec9399c18e",
+      "mode": "100644"
+    },
+    "demo/loop-v12-1-web-preview.mp4": {
+      "sha": "23944a882258074b0b78a4d22262ce6b8171b913",
+      "mode": "100644"
+    },
+    "demo/loop-v12-electro-1080.mp4": {
+      "sha": "fa21cee391f81e8335768811733d6fb3eb656556",
+      "mode": "100644"
+    },
+    "demo/loop-v12-poster.jpg": {
+      "sha": "68d83920824efa2f9c2ec9f7fb3536ec9399c18e",
+      "mode": "100644"
+    },
+    "demo/loop-v12-web-preview.mp4": {
+      "sha": "97131dfe513ac8cb189044f68e23cc87fc695982",
+      "mode": "100644"
+    },
+    "demo/loop-v13-electro-1080.mp4": {
+      "sha": "9df5b0b43a6e2101b26bdad4fe4e5c5a24883935",
+      "mode": "100644"
+    },
+    "demo/loop-v13-playback-1080.mp4": {
+      "sha": "077062ca09c0cb1d72fc624a66a14596e44dbcfd",
+      "mode": "100644"
+    },
+    "demo/loop-v13-poster.jpg": {
+      "sha": "2c3615cb85991d4002873c52b19870ea75998c21",
+      "mode": "100644"
+    },
+    "demo/loop-v13-web-preview.mp4": {
+      "sha": "71123ce55a1a6dfccb831fa6f88922bffe8b36f4",
+      "mode": "100644"
+    },
+    "demo/photorealism-detail.jpg": {
+      "sha": "512ebc75573ce7c93409502d076470b199cff90b",
+      "mode": "100644"
+    },
+    "demo/photorealism-metrics.json": {
+      "sha": "b9967297ee948f5941918a80fc015ccddd49b958",
+      "mode": "100644"
+    },
+    "demo/photorealism-raster.jpg": {
+      "sha": "06fee27fdabe480d8dda170eb88a77fe477d8e35",
+      "mode": "100644"
+    },
+    "demo/photorealism.jpg": {
+      "sha": "05331fc69b6fc57afca0faa672954a867639e13c",
+      "mode": "100644"
+    },
+    "demo/photorealism.png": {
+      "sha": "d1fe9f9d0337f36e81cf8391e3b2bf000694af9f",
+      "mode": "100644"
+    },
+    "demo/pop-contact-sheet.png": {
+      "sha": "15823d1eedc116427443346b47f04091b459a771",
+      "mode": "100644"
+    },
+    "demo/pop-hero.jpg": {
+      "sha": "a3dd857bcb1495895201e3ec29b504ee22c64d54",
+      "mode": "100644"
+    },
+    "demo/pop-motion.mp4": {
+      "sha": "ac93c5c813b356cb96407c95ab82a167ce10f1e4",
+      "mode": "100644"
+    },
+    "demo/pop-motion.project.json": {
+      "sha": "157ea0fb7bfee673fda950f393cda2ec4e34ac49",
+      "mode": "100644"
+    },
+    "demo/procedural-contact-sheet.png": {
+      "sha": "7d77281f5c78f5ffc86dd5c977f0cdde1ef7090d",
+      "mode": "100644"
+    },
+    "demo/procedural-field-poster.png": {
+      "sha": "f23f281d90bdc6ffe88c9d658c7f1d3d4bb8c583",
+      "mode": "100644"
+    },
+    "demo/procedural-motion.gif": {
+      "sha": "24ac4e61ee8403758959ae13fb9eb176b1217c1e",
+      "mode": "100644"
+    },
+    "demo/procedural-showcase.gif": {
+      "sha": "871a5eccf95bd026754eb853cf8a77f2758ffafb",
+      "mode": "100644"
+    },
+    "demo/procedural-techno-poster.jpg": {
+      "sha": "461a3d2d186bb30044086c0294cb66872664f3eb",
+      "mode": "100644"
+    },
+    "demo/procedural-techno.mp4": {
+      "sha": "71d0a331bfa56692d8c7044d171f2f1ed4d2dd86",
+      "mode": "100644"
+    },
+    "demo/procedural-techno.project.json": {
+      "sha": "f98d0d5727df6eb1241759367bea4a6ff2917b67",
+      "mode": "100644"
+    },
+    "demo/procedural.mp4": {
+      "sha": "18d49ad7b28bcf4d52a154aefeec186c8fbce77b",
+      "mode": "100644"
+    },
+    "demo/pulse-1080.mp4": {
+      "sha": "4022dd6268aeca4e70f8cea841d7196762031b56",
+      "mode": "100644"
+    },
+    "demo/pulse-poster.jpg": {
+      "sha": "426a29b8ac6c1a1c5e03aa7086c9542aff12ee33",
+      "mode": "100644"
+    },
+    "demo/pulse-web-preview.mp4": {
+      "sha": "bdcd0faf553ccf8d2b94ccc8bb580a5a38a9b455",
+      "mode": "100644"
+    },
+    "demo/render-manifest.json": {
+      "sha": "d56953a9b50b89b16faf6c8e7343432f484bfe9e",
+      "mode": "100644"
+    },
+    "demo/replay-1080.mp4": {
+      "sha": "336be5212c8f8f43ecfecd8608f12b9eec65591c",
+      "mode": "100644"
+    },
+    "demo/replay-poster.jpg": {
+      "sha": "d4d40daafd0ac68d3a9673ff6f6e9ef4c725b101",
+      "mode": "100644"
+    },
+    "demo/ui-procedural.png": {
+      "sha": "0483163beae0938faaf1d569b7477eddfe10a328",
+      "mode": "100644"
+    },
+    "demo/ui-studio-easy.jpg": {
+      "sha": "9e72c469e6ee70580791c1752b5f3e31b2a19594",
+      "mode": "100644"
+    },
+    "demo/ui-studio-export.jpg": {
+      "sha": "d3ffc7297502d633db581128e941318450c5c729",
+      "mode": "100644"
+    },
+    "demo/ui-studio-pro.jpg": {
+      "sha": "ad383c5de720b18fed10ae29b3d86d4cd6a45ad7",
+      "mode": "100644"
+    },
+    "docs/3d-lookdev.md": {
+      "sha": "1a3c58b6f71ce2cdb44066deb744b8c2348fe8d8",
+      "mode": "100644"
+    },
+    "docs/ADAPTIVE_CONTROLS.md": {
+      "sha": "c98551088da5f45ddd2577c7b7f0c107fe149a08",
+      "mode": "100644"
+    },
+    "docs/AGENT_WORKFLOW.md": {
+      "sha": "ac7309124ed05b8e821263a7be4b0ca2492802fd",
+      "mode": "100644"
+    },
+    "docs/ARCHITECTURE.md": {
+      "sha": "c553c4620643fa52107ee34ddb9fb16d49407f97",
+      "mode": "100644"
+    },
+    "docs/AUTHORED_MOTION_PROTOCOL.md": {
+      "sha": "7bdd3226598a69de6cc9d7fbe594e11cc8cd4345",
+      "mode": "100644"
+    },
+    "docs/COMPOSITING.md": {
+      "sha": "392f223186641433c6dab5db2da4d43030633131",
+      "mode": "100644"
+    },
+    "docs/FEEDBACK_MEMORY.md": {
+      "sha": "03622bc0b3a19de7f7907e676dc493ba1524144c",
+      "mode": "100644"
+    },
+    "docs/FLUID_EDITING.md": {
+      "sha": "8d148c4a663ce47a284be0a5bfccb62d8ed32437",
+      "mode": "100644"
+    },
+    "docs/FOUNDER_START.md": {
+      "sha": "1e176c1b2c50c9ada03e1309199850f2b9ca566c",
+      "mode": "100644"
+    },
+    "docs/LICENSING.md": {
+      "sha": "c63563d74cc58f9589f4914f11a006550d99ca6b",
+      "mode": "100644"
+    },
+    "docs/LIVE_STUDIO.md": {
+      "sha": "ca2c5326519be906fc20f25cc56e608bf4c54f66",
+      "mode": "100644"
+    },
+    "docs/MAC_SETUP.md": {
+      "sha": "bead0fd9f3b6a62b12a97cc8dd41ff8a6fdff6c5",
+      "mode": "100644"
+    },
+    "docs/MIXED_STUDIO.md": {
+      "sha": "91e06f6d6ed04e0602dff995f7f9d269ecbca1d5",
+      "mode": "100644"
+    },
+    "docs/PHOTOREALISM.md": {
+      "sha": "a02fde92b0c356024c415ad9e6adf657a9519e74",
+      "mode": "100644"
+    },
+    "docs/POP_MOTION.md": {
+      "sha": "31ded5ecd7256c13475d5e1c2fa74cda5a2f7a15",
+      "mode": "100644"
+    },
+    "docs/PROCEDURAL-EXAMPLE.md": {
+      "sha": "2ce8785ea5754a57ab96910d08a66396eb673305",
+      "mode": "100644"
+    },
+    "docs/PROCEDURAL.md": {
+      "sha": "729009e2ee0fae0b4fade958b046c5cf1f89180a",
+      "mode": "100644"
+    },
+    "docs/PRODUCT_KIT.md": {
+      "sha": "3e3364fe2b44473c594dd207a17c53907d6231c9",
+      "mode": "100644"
+    },
+    "docs/QUALITY-GATES.md": {
+      "sha": "e369d7b8473e73a7327fb9597dc6352e96d85de8",
+      "mode": "100644"
+    },
+    "docs/README.md": {
+      "sha": "d4dcd9aa7d772efa787558c76c64b08e7dc822ca",
+      "mode": "100644"
+    },
+    "docs/RENDERER_SELECTION.md": {
+      "sha": "33eca83e99f4540744b2f05645f9a0ad8745368e",
+      "mode": "100644"
+    },
+    "docs/SOUND_DESIGN.md": {
+      "sha": "a06df4cee60c36a30fec710a5864ba437b69632f",
+      "mode": "100644"
+    },
+    "docs/STUDIO.md": {
+      "sha": "ffaa9a7d722a4cfe9dd135f80cb406911dd1ebb6",
+      "mode": "100644"
+    },
+    "docs/USAGE.md": {
+      "sha": "9d4942c1349f6cd16806d42a6a54a5dcf9e9cab6",
+      "mode": "100644"
+    },
+    "docs/VALIDATION.md": {
+      "sha": "b1c282bc1e6d37753bee7557c616349d6e2b2c3e",
+      "mode": "100644"
+    },
+    "examples/README.md": {
+      "sha": "8f1ef2e49c85d8a1703b473ea2cb6cdf8f0a4316",
+      "mode": "100644"
+    },
+    "examples/procedural-field.html": {
+      "sha": "5a6b3a1e8bfd60a696676a584b339c621899b838",
+      "mode": "100644"
+    },
+    "examples/procedural-live.js": {
+      "sha": "1c24b1af97f8d7f7b5afd6096ed6a09feb872324",
+      "mode": "100644"
+    },
+    "examples/procedural-page.js": {
+      "sha": "b4ce132c22225d212704b20d0c029bc7bdce8c1d",
+      "mode": "100644"
+    },
+    "examples/render-procedural.mjs": {
+      "sha": "98db98fe173d061b343a51aa15e7c2c082f77851",
+      "mode": "100644"
+    },
+    "experiments/photoreal/headphone-detail.js": {
+      "sha": "13d232508ce1a6a41c05723674483cf1c6c832dc",
+      "mode": "100644"
+    },
+    "experiments/photoreal/index.html": {
+      "sha": "9fa3b149d20a118a533c89cfaef12ed605a74411",
+      "mode": "100644"
+    },
+    "experiments/photoreal/main.js": {
+      "sha": "1b5e3621553df487a7c54e851d00bfedc7a1733e",
+      "mode": "100644"
+    },
+    "experiments/photoreal/package-lock.json": {
+      "sha": "322d8efacebf9efb9e3cebba9b538b4a65a2d5e9",
+      "mode": "100644"
+    },
+    "experiments/photoreal/package.json": {
+      "sha": "f0faf9cffc444e91dea83a55f13627524ee1a96b",
+      "mode": "100644"
+    },
+    "experiments/photoreal/scene.js": {
+      "sha": "927e5e57d1552d8e1ca6dbf16f750080b59011b4",
+      "mode": "100644"
+    },
+    "index.html": {
+      "sha": "fe35b131eeda79bb07dbf0d704c352d8c262deed",
+      "mode": "100644"
+    },
+    "licenses/ffmpeg-static/LICENSE": {
+      "sha": "f288702d2fa16d3cdf0035b15a9fcbc552cd88e7",
+      "mode": "100644"
+    },
+    "licenses/ffmpeg-static/ffmpeg.LICENSE": {
+      "sha": "613070e1b631a919a74c862f2a75a0f249a631ff",
+      "mode": "100644"
+    },
+    "licenses/ffprobe-static/LICENSE": {
+      "sha": "5f1176b0fd9379a868b6d5542ca43dccdde31bc4",
+      "mode": "100644"
+    },
+    "licenses/legacy/MIT.txt": {
+      "sha": "c826df6365f2e4347741181df7114ab0337a15a9",
+      "mode": "100644"
+    },
+    "licenses/photoreal/three-LICENSE": {
+      "sha": "cf781430404b0ae0ba7d8dea3457a3515dd7c9b9",
+      "mode": "100644"
+    },
+    "licenses/photoreal/three-gpu-pathtracer-LICENSE": {
+      "sha": "950920d1ed4a3e831659b71933311725b40e1787",
+      "mode": "100644"
+    },
+    "licenses/photoreal/three-mesh-bvh-LICENSE": {
+      "sha": "1ef1648d29324453fcd04a27bb8c6e385f6807c8",
+      "mode": "100644"
+    },
+    "licenses/photoreal/xatlas-web-LICENSE": {
+      "sha": "7af8b33238802fccddb9b24de9229d2bc95c7032",
+      "mode": "100644"
+    },
+    "licenses/playwright-core/LICENSE": {
+      "sha": "df112373eb2e23e459bf93ec412be1764dc5a38b",
+      "mode": "100644"
+    },
+    "licenses/playwright-core/NOTICE": {
+      "sha": "814ec1696f7ad36c1b524fb6adeef14b4b367fec",
+      "mode": "100644"
+    },
+    "licenses/playwright-core/ThirdPartyNotices.txt": {
+      "sha": "369e2025a75bcae36383b4705efe0c70d35b5e74",
+      "mode": "100644"
+    },
+    "licenses/playwright/LICENSE": {
+      "sha": "df112373eb2e23e459bf93ec412be1764dc5a38b",
+      "mode": "100644"
+    },
+    "licenses/playwright/NOTICE": {
+      "sha": "814ec1696f7ad36c1b524fb6adeef14b4b367fec",
+      "mode": "100644"
+    },
+    "licenses/playwright/ThirdPartyNotices.txt": {
+      "sha": "f9ee0a552ec4258fe553c1a7f8083b62fa954b6c",
+      "mode": "100644"
+    },
+    "licenses/sharp/LICENSE": {
+      "sha": "37ec93a14fdcd0d6e525d97c0cfa6b314eaa98d8",
+      "mode": "100644"
+    },
+    "licenses/three/LICENSE": {
+      "sha": "8ada2a5f982916b0ba4b7a0aa7de347587e745d7",
+      "mode": "100644"
+    },
+    "licenses/vite/LICENSE.md": {
+      "sha": "07a9200aa510184d439ec193cc4fe75947a50335",
+      "mode": "100644"
+    },
+    "package-lock.json": {
+      "sha": "02fcc6c92c71ade1baeb29a069f11677a783ec00",
+      "mode": "100644"
+    },
+    "package.json": {
+      "sha": "422d559a1301efaa8ab1050f36fd40a5f6f47c8c",
+      "mode": "100644"
+    },
+    "project/README.md": {
+      "sha": "a6792b5ed2e775a5f5b645eb438deaee526a0683",
+      "mode": "100644"
+    },
+    "project/control-presets.json": {
+      "sha": "bc0db6dd392c946f0ac0c5e16b61c26ed2738dd8",
+      "mode": "100644"
+    },
+    "project/control-selections.json": {
+      "sha": "1a94609090cafdd50adca3c20275a1753b314577",
+      "mode": "100644"
+    },
+    "project/graphics.json": {
+      "sha": "620d5a0d8d6caf8fb59c165b5efd06d1186e6ea6",
+      "mode": "100644"
+    },
+    "project/lighting-presets.json": {
+      "sha": "796191f1a36f0306fdb5ec112cf7c7c045400367",
+      "mode": "100644"
+    },
+    "project/look.json": {
+      "sha": "b6fa252f2aa614b29dde009251c8e08ae525742c",
+      "mode": "100644"
+    },
+    "project/looks/contrast-lighting.json": {
+      "sha": "5ae0efa4b5c9df9d63516d7ab209144856b251ac",
+      "mode": "100644"
+    },
+    "project/looks/contrast-wide.json": {
+      "sha": "2d0abb71e42fd12d91bb3ee0e756496861e6e7a5",
+      "mode": "100644"
+    },
+    "project/looks/coolrim-lighting.json": {
+      "sha": "9741aca2c802aedb08d1b7ee43c07d07545dd41a",
+      "mode": "100644"
+    },
+    "project/looks/side-lighting.json": {
+      "sha": "0cde33e6374525d5eef8636fed2d195a246abf6c",
+      "mode": "100644"
+    },
+    "project/looks/soft-lighting.json": {
+      "sha": "1be368e537d2bc8dab8a4c031b0b0e11c5b35fda",
+      "mode": "100644"
+    },
+    "project/looks/soft-studio.json": {
+      "sha": "0a81dc3f6a87c4fe099d7f9082ef1f32200ac397",
+      "mode": "100644"
+    },
+    "project/motion.json": {
+      "sha": "b99103ba7cd7c413d8aa8a1a43435d2ba50047be",
+      "mode": "100644"
+    },
+    "project/references.json": {
+      "sha": "fe51488c7066f6687ef680d6bfaa4f7768ef205c",
+      "mode": "100644"
+    },
+    "project/render-plans.json": {
+      "sha": "1811c73fa33c98a3e46e432ed1af150c0e22530b",
+      "mode": "100644"
+    },
+    "project/studio.json": {
+      "sha": "3f4de192417a532ba161512088d86752db48dd9c",
+      "mode": "100644"
+    },
+    "public/brand/framevolve-mark.png": {
+      "sha": "f557a30801260a08ea3d3993cfc77a2cb1a5a7cc",
+      "mode": "100644"
+    },
+    "public/brand/framevolve-mark.svg": {
+      "sha": "0e38ae101538c545f9fefd47393902f2b5483eaa",
+      "mode": "100644"
+    },
+    "public/brand/framevolve.icns": {
+      "sha": "bf5135adbdf3fb9cd718c5b4acaac3462b387795",
+      "mode": "100644"
+    },
+    "public/vendor/uicons/LICENSE.txt": {
+      "sha": "b14f91b26a02e164389d9242afb9419a6dc2913a",
+      "mode": "100644"
+    },
+    "public/vendor/uicons/SOURCE.json": {
+      "sha": "252c733f267f7b00a806a17de9ef1b5d19810241",
+      "mode": "100644"
+    },
+    "public/vendor/uicons/regular-rounded.svg": {
+      "sha": "d5b03989f1dd02b33ca7869cf91483c86c1d67c6",
+      "mode": "100644"
+    },
+    "scripts/Anteprima-Studio.command": {
+      "sha": "dc29dfac9923e2478c312403c66cae8eb015edf8",
+      "mode": "100755"
+    },
+    "scripts/LICENSE": {
+      "sha": "aa698792730ed230bdc07507d1a6aae91fd44e62",
+      "mode": "100644"
+    },
+    "scripts/README.md": {
+      "sha": "d16f3f34f6ee88506c956b3a86f058946d303ba1",
+      "mode": "100644"
+    },
+    "scripts/brief.mjs": {
+      "sha": "b8fb261b26cac61aeb3a6ca93595d817fac19a6f",
+      "mode": "100644"
+    },
+    "scripts/browser-runtime.mjs": {
+      "sha": "76087c5734b71ebd38f78389a4b86fbe6479e6dc",
+      "mode": "100644"
+    },
+    "scripts/camera-quality.mjs": {
+      "sha": "d9c4b8e0de2f4be773fa6846f5d207104daf9a02",
+      "mode": "100644"
+    },
+    "scripts/cli.mjs": {
+      "sha": "b98a642b2bdd9593ec3b3f29dbb26ff84828349c",
+      "mode": "100644"
+    },
+    "scripts/composite.mjs": {
+      "sha": "0729f9db248a146e1199833c0a518955009a9563",
+      "mode": "100644"
+    },
+    "scripts/controls.mjs": {
+      "sha": "e50b8d5ac6f0173bb6d1e5057e381a4527e7024a",
+      "mode": "100644"
+    },
+    "scripts/cycles.mjs": {
+      "sha": "19510dbeaa35b51ef663bfa3f8aa19231ce2e446",
+      "mode": "100644"
+    },
+    "scripts/cycles/audio.mjs": {
+      "sha": "576a02bd20fd866b012f3bc81755ec65c2f3e13c",
+      "mode": "100644"
+    },
+    "scripts/cycles/bake-browser.js": {
+      "sha": "bd434826c8769e77c2124ee02a42d3ff25859904",
+      "mode": "100644"
+    },
+    "scripts/cycles/finish.mjs": {
+      "sha": "84403a7e8d18775b8b46b9f75bece8bb4756b5fb",
+      "mode": "100644"
+    },
+    "scripts/cycles/loop-compose.mjs": {
+      "sha": "9808e1483019086dee29a67d89997cfb600defcc",
+      "mode": "100644"
+    },
+    "scripts/cycles/loop-optics.mjs": {
+      "sha": "264addc6488de9999f7803d05753f635c4795c1e",
+      "mode": "100644"
+    },
+    "scripts/cycles/options.mjs": {
+      "sha": "707fd7e27b9bc3c9fd1fd4590298deeefc15b43e",
+      "mode": "100644"
+    },
+    "scripts/cycles/probe.py": {
+      "sha": "577fcfbf12b8cc85169bd46102775fa12813caf3",
+      "mode": "100644"
+    },
+    "scripts/cycles/progressive.py": {
+      "sha": "25ccec263f85fc8914d5c88e3fa88dc262221da5",
+      "mode": "100644"
+    },
+    "scripts/cycles/render.py": {
+      "sha": "e95740f57f8ecb770852f611732efb6189464e9d",
+      "mode": "100644"
+    },
+    "scripts/cycles/studio.mjs": {
+      "sha": "3197ea308b9b4957c5846c29634fdcc7bf73b7ec",
+      "mode": "100644"
+    },
+    "scripts/cycles/test-audio.mjs": {
+      "sha": "825343b0d7b2279e3580bf39b071a7992d9e84f0",
+      "mode": "100644"
+    },
+    "scripts/cycles/test-browser.mjs": {
+      "sha": "1f9798ac0e35a366165bdb754e09c7863228ff78",
+      "mode": "100644"
+    },
+    "scripts/cycles/test-curves.py": {
+      "sha": "311a7c704b3977c3ee95a4141bf4b1c222dbff2b",
+      "mode": "100644"
+    },
+    "scripts/cycles/test-images.py": {
+      "sha": "d25308d1c612dfc180a56651f8187bc31669889c",
+      "mode": "100644"
+    },
+    "scripts/cycles/test-progressive.py": {
+      "sha": "ba1f2c2adeed68825c5c8ed2216a1eb5c5d7c66e",
+      "mode": "100644"
+    },
+    "scripts/cycles/test.mjs": {
+      "sha": "5aedf30b73f9253f8c7de4e1ea14b3158e4d89b0",
+      "mode": "100644"
+    },
+    "scripts/cycles/video-encode.mjs": {
+      "sha": "c30e95d87d24873a0fec1a586370537ebf6e21f9",
+      "mode": "100644"
+    },
+    "scripts/export-sfx-bank.mjs": {
+      "sha": "4b29f4dd7f0a5d7ad24042b658e5e7fd4065b497",
+      "mode": "100644"
+    },
+    "scripts/export-social.mjs": {
+      "sha": "d891c4b1b4d814b9aabc511264626a876455ee1b",
+      "mode": "100644"
+    },
+    "scripts/feedback-memory-server.mjs": {
+      "sha": "401a2a0cb6a8030175e2266451ed80c26ffa1801",
+      "mode": "100644"
+    },
+    "scripts/feedback-memory-store.mjs": {
+      "sha": "416a63744397fe8f62388927c58f16cd263ca96a",
+      "mode": "100644"
+    },
+    "scripts/feedback-memory.mjs": {
+      "sha": "cd646d79f561d0f1d2a5489cf88c0e0d018ba506",
+      "mode": "100644"
+    },
+    "scripts/finish-film.mjs": {
+      "sha": "6a62c84905511d9d83e2bbf4d8391eb4c527c102",
+      "mode": "100644"
+    },
+    "scripts/fixtures/procedural-authored-nodes.json": {
+      "sha": "13df716ba64f0efa8cf42b938b3038fab5e16e17",
+      "mode": "100644"
+    },
+    "scripts/install-mac-launcher.mjs": {
+      "sha": "6ab08f1e8f8c3f65f33dde32c15af37de7a916ef",
+      "mode": "100644"
+    },
+    "scripts/launch-studio.mjs": {
+      "sha": "e0b648e4f57c29ea28dccc1c61d75eea8c8eb12f",
+      "mode": "100644"
+    },
+    "scripts/lib/gradient-background.mjs": {
+      "sha": "75b72c8c8cbb9c4d664f379120e061db73cd6485",
+      "mode": "100644"
+    },
+    "scripts/lib/simple-compositor.mjs": {
+      "sha": "14b99cbcf88f6e29a53e5156f5ebc2f5e62d566f",
+      "mode": "100644"
+    },
+    "scripts/live-review-store.mjs": {
+      "sha": "658dc33fc61fe58b7be05431852a321fd2587c0a",
+      "mode": "100644"
+    },
+    "scripts/live-studio-server.mjs": {
+      "sha": "2cb6c939d09dfa672731e1779e77526f6f5429eb",
+      "mode": "100644"
+    },
+    "scripts/live-studio.mjs": {
+      "sha": "8a35ae7b5d016bb817084bd21abae41b388c05e9",
+      "mode": "100644"
+    },
+    "scripts/look.mjs": {
+      "sha": "81b628cbe4b38d25166e8f46deac3515b1675ad3",
+      "mode": "100644"
+    },
+    "scripts/mac-start.mjs": {
+      "sha": "af33fc332cb5e06d04a65367b7f195a5793165ec",
+      "mode": "100644"
+    },
+    "scripts/mixed-studio.mjs": {
+      "sha": "bbf6539e6895451180b277fba97d2087eca12916",
+      "mode": "100644"
+    },
+    "scripts/mixed/studio.mjs": {
+      "sha": "8c153c83c825d623fc03c35856f4179c8ea2548a",
+      "mode": "100644"
+    },
+    "scripts/photoreal.mjs": {
+      "sha": "6f1d4db2016878e7fbcdef9f436b8edc9783b372",
+      "mode": "100644"
+    },
+    "scripts/prepare-demo.mjs": {
+      "sha": "41d383d4374ad08906257a909fc658ef3ea4e3b9",
+      "mode": "100644"
+    },
+    "scripts/project-store.mjs": {
+      "sha": "b00220a7b650862321a7c10d50763a64a4cf3ce1",
+      "mode": "100644"
+    },
+    "scripts/quality.mjs": {
+      "sha": "789fe8b335d39ef7d4cf263ecea3bf1cd8213290",
+      "mode": "100644"
+    },
+    "scripts/reference.mjs": {
+      "sha": "5700e88c8b8918117393a40c3503524a3061dc65",
+      "mode": "100644"
+    },
+    "scripts/render-cache.mjs": {
+      "sha": "ba86e697149603cf1b8c888987b242b78cda2580",
+      "mode": "100644"
+    },
+    "scripts/review.mjs": {
+      "sha": "bf4a773ecfe8a2b4a98b5f0dfdbc1ba1bf737274",
+      "mode": "100644"
+    },
+    "scripts/setup-mac.mjs": {
+      "sha": "55ac442da4006bb252cb8517b1ece1515a0b5b44",
+      "mode": "100644"
+    },
+    "scripts/setup/index.html": {
+      "sha": "3c0962026dfdcd2160bac3ca66e1c47c1bc5f988",
+      "mode": "100644"
+    },
+    "scripts/setup/logos/LICENSE": {
+      "sha": "1dd53d2a9d99e5f91113831a850276ef530cb9d2",
+      "mode": "100644"
+    },
+    "scripts/setup/logos/claude.svg": {
+      "sha": "db1cbc5718b7122500bd3e9d4b2bd8b5e62e4d39",
+      "mode": "100644"
+    },
+    "scripts/setup/logos/codex.svg": {
+      "sha": "9ce4392927abd4c3c255ba7d68e6c82fe374f2af",
+      "mode": "100644"
+    },
+    "scripts/setup/setup.css": {
+      "sha": "c3d32e7782d96096335b775d7bc4fa54c30b0240",
+      "mode": "100644"
+    },
+    "scripts/setup/setup.js": {
+      "sha": "d263b1691f67536c8a1e10b69b2a0747e66d88b3",
+      "mode": "100644"
+    },
+    "scripts/soundtrack.mjs": {
+      "sha": "3434908203be71c6859d1d413fe3048abd21357e",
+      "mode": "100644"
+    },
+    "scripts/studio-api.mjs": {
+      "sha": "21e77d7e1e23945abeed3affc443e8178789f4b3",
+      "mode": "100644"
+    },
+    "scripts/studio-update.mjs": {
+      "sha": "57e926fd321136197c352b11eed4b55b07212840",
+      "mode": "100644"
+    },
+    "scripts/test-3d-temporal.mjs": {
+      "sha": "cc0162239e53ebec0b92f71e57286a2d7c62ad19",
+      "mode": "100644"
+    },
+    "scripts/test-adaptive-controls-browser.mjs": {
+      "sha": "8fb1e4398c60b50aa7945fb857ce100ae9bd655e",
+      "mode": "100644"
+    },
+    "scripts/test-adaptive-controls.mjs": {
+      "sha": "423265a08532826a9a958a36d166d7688c92e55a",
+      "mode": "100644"
+    },
+    "scripts/test-authored-curves-browser.mjs": {
+      "sha": "2cf44f68103ff2188d96765c7be5763d31675949",
+      "mode": "100644"
+    },
+    "scripts/test-authored-motion-protocol.mjs": {
+      "sha": "444defb4bc7b1d9d76801d1a083d97848761cece",
+      "mode": "100644"
+    },
+    "scripts/test-authored-sound.mjs": {
+      "sha": "3e60e83384d7cc256a5bd1ba13fcfec4ca9142cc",
+      "mode": "100644"
+    },
+    "scripts/test-browser-export-recording.mjs": {
+      "sha": "51af310a7a619b80e9c71c05fe6c3752db5c7c1f",
+      "mode": "100644"
+    },
+    "scripts/test-browser-export.mjs": {
+      "sha": "c7ac177be3ed419ad2390c87e3e569f59581f7d3",
+      "mode": "100644"
+    },
+    "scripts/test-browser-runtime.mjs": {
+      "sha": "2f6bb4e31058bf0218eed91a3ba53ec281eb1b51",
+      "mode": "100644"
+    },
+    "scripts/test-camera-lens-browser.mjs": {
+      "sha": "a88c817851660f5bb559585ec65943cc8c88eec3",
+      "mode": "100644"
+    },
+    "scripts/test-camera-lens.mjs": {
+      "sha": "1ae07e501b2d91a1775c5c1b420289a158112a2b",
+      "mode": "100644"
+    },
+    "scripts/test-camera-path.mjs": {
+      "sha": "e754258aeb63e7811156531fdfcbe16736d0da7b",
+      "mode": "100644"
+    },
+    "scripts/test-cli-replay.mjs": {
+      "sha": "b5bb37602025e351ceb562148879436a776e8b4c",
+      "mode": "100644"
+    },
+    "scripts/test-curve-interaction.mjs": {
+      "sha": "4aefcc01857ebd3928ee47875e20e0d918b178d5",
+      "mode": "100644"
+    },
+    "scripts/test-cycles-studio.mjs": {
+      "sha": "6b19bbc43c11c9df5fc803154258b04f61935042",
+      "mode": "100644"
+    },
+    "scripts/test-cycles-video-encode.mjs": {
+      "sha": "d73f56b7f1dbb9858c8d4e0da22e7b6baf85bdb2",
+      "mode": "100644"
+    },
+    "scripts/test-dof.mjs": {
+      "sha": "8a645086acbd0346e8f20d3ee04b14f071e00363",
+      "mode": "100644"
+    },
+    "scripts/test-feedback-memory-browser.mjs": {
+      "sha": "81d33085fe9617021b50b1d8795ed91ced55857a",
+      "mode": "100644"
+    },
+    "scripts/test-feedback-memory.mjs": {
+      "sha": "0e731c674eb0ac35844f78b58cdb0c08b19a21a9",
+      "mode": "100644"
+    },
+    "scripts/test-film-grain.mjs": {
+      "sha": "d6fafc0ac26a8940e295b6a7c982d374b5c86e27",
+      "mode": "100644"
+    },
+    "scripts/test-fluid-editor-browser.mjs": {
+      "sha": "d2ddda1d6f54d7556e97b5e47b60e8fd3f80ef04",
+      "mode": "100644"
+    },
+    "scripts/test-founder-brief.mjs": {
+      "sha": "0383f7dba93d3fe4db9c818dbf681f2492847c06",
+      "mode": "100644"
+    },
+    "scripts/test-graphic-controls.mjs": {
+      "sha": "b6d9ab423136063a047fabbb7c8a5c7884bee9d1",
+      "mode": "100644"
+    },
+    "scripts/test-live-review.mjs": {
+      "sha": "7ca2069ddc84ce58893b98f068e0a3039fb1c7ca",
+      "mode": "100644"
+    },
+    "scripts/test-live-studio-browser.mjs": {
+      "sha": "bd1a73929ef11ca784232068c97fc905b4be27f9",
+      "mode": "100644"
+    },
+    "scripts/test-loop-refinement.mjs": {
+      "sha": "e162fb3a4b0ef6fe4091295e4f999bc67a991a46",
+      "mode": "100644"
+    },
+    "scripts/test-mac-launcher.mjs": {
+      "sha": "a400fb0552cd3aeb47e425d507b88982ca61758a",
+      "mode": "100644"
+    },
+    "scripts/test-media-settings.mjs": {
+      "sha": "523e0d6ba349d1b1728018bda67d510575b76a77",
+      "mode": "100644"
+    },
+    "scripts/test-mixed-studio-api.mjs": {
+      "sha": "93a6c89c8f0f48f4d3e08501eac709495d95356d",
+      "mode": "100644"
+    },
+    "scripts/test-mixed-studio.mjs": {
+      "sha": "7286e32021c5d3e18be351aab1d401d0ad433cf6",
+      "mode": "100644"
+    },
+    "scripts/test-motion-curve-preview.mjs": {
+      "sha": "40db9ad54bb6b54d4b3b0bf0b3782b3c0c441763",
+      "mode": "100644"
+    },
+    "scripts/test-motion-interaction-browser.mjs": {
+      "sha": "0b61aba188fae9e5902d737ea9228d8aadb64c80",
+      "mode": "100644"
+    },
+    "scripts/test-motion-source-seek.mjs": {
+      "sha": "0115fb2c4dffdf61902a76d766c314113e91adb9",
+      "mode": "100644"
+    },
+    "scripts/test-motion-workflow.mjs": {
+      "sha": "4513d91c9535375915d6404fb799b92b10790263",
+      "mode": "100644"
+    },
+    "scripts/test-photoreal.mjs": {
+      "sha": "7202d57b355e69f722342d7e1ea570f49547c512",
+      "mode": "100644"
+    },
+    "scripts/test-pop.mjs": {
+      "sha": "d786560d719e4e1987b92b9b11d5d3c7829e8a46",
+      "mode": "100644"
+    },
+    "scripts/test-prepared-preview.mjs": {
+      "sha": "3a03eb508b31ebfa1bc72a319c895334515e1b09",
+      "mode": "100644"
+    },
+    "scripts/test-procedural-showcase.mjs": {
+      "sha": "2726e68092cddbc218a5115f669a3f036ed64869",
+      "mode": "100644"
+    },
+    "scripts/test-procedural.mjs": {
+      "sha": "047ce61754260da104bbb3ff66d013fb32e82d48",
+      "mode": "100644"
+    },
+    "scripts/test-product-kit-browser.mjs": {
+      "sha": "90a7a1b137742d8c87849a704aac3d4a68db9540",
+      "mode": "100644"
+    },
+    "scripts/test-product-kit.mjs": {
+      "sha": "abd9fbbe9be77539f0cf889b678c7f21090537b9",
+      "mode": "100644"
+    },
+    "scripts/test-project.mjs": {
+      "sha": "70dfe72c323fbfdf1843658bb1506de386923c66",
+      "mode": "100644"
+    },
+    "scripts/test-public-studio.mjs": {
+      "sha": "fbfbe1eab77a0453dda6c63b6bee04577d2b9af2",
+      "mode": "100644"
+    },
+    "scripts/test-pulse-controls.mjs": {
+      "sha": "6b55174cd3249d50a46cf355564ba4a072fc01cd",
+      "mode": "100644"
+    },
+    "scripts/test-render-cache.mjs": {
+      "sha": "f2063e73f63463b06628965bb846e6efcc376497",
+      "mode": "100644"
+    },
+    "scripts/test-render-frame-view.mjs": {
+      "sha": "4f9384094baeb8a8a39c390b36037a141a570f30",
+      "mode": "100644"
+    },
+    "scripts/test-render-policy.mjs": {
+      "sha": "9f0dfe1a589f2f8c2034d273a06e631a4228a26d",
+      "mode": "100644"
+    },
+    "scripts/test-renderer-studio-api.mjs": {
+      "sha": "9c08a0faaf2e50e6813bf0df427e6da722ec6857",
+      "mode": "100644"
+    },
+    "scripts/test-scene-control-contract.mjs": {
+      "sha": "643240c8e928d0457b6590fea997eb16474f9cab",
+      "mode": "100644"
+    },
+    "scripts/test-scene-tools-browser.mjs": {
+      "sha": "0fc8f7a9a7f142439ed83f9f19eb37a154475657",
+      "mode": "100644"
+    },
+    "scripts/test-setup-browser.mjs": {
+      "sha": "d34cda337d7491d135e29d272b15c517c92990b4",
+      "mode": "100644"
+    },
+    "scripts/test-setup-mac.mjs": {
+      "sha": "b51c0565edc335921d658df1b5764f363312afd8",
+      "mode": "100644"
+    },
+    "scripts/test-simple-compositor.mjs": {
+      "sha": "3ae3e9fbd5a98bb7761c113ff37c43715f162caf",
+      "mode": "100644"
+    },
+    "scripts/test-sound-2d-browser.mjs": {
+      "sha": "53987b20c5675fd55b92c43ef7ee143b1d8375f7",
+      "mode": "100644"
+    },
+    "scripts/test-sound-2d.mjs": {
+      "sha": "a2eddb6d97d84be92d963d1cce3bcaf2848e6e0f",
+      "mode": "100644"
+    },
+    "scripts/test-sound-browser.mjs": {
+      "sha": "56ec63b41313de366298976a76bf6299b0720d92",
+      "mode": "100644"
+    },
+    "scripts/test-sound.mjs": {
+      "sha": "29d5bdba30ee6eeffcd3125f3378bc77fb1b7b2b",
+      "mode": "100644"
+    },
+    "scripts/test-studio-api.mjs": {
+      "sha": "156fc3deb178f4cb2bac0d3fab35cc5685fe5ce1",
+      "mode": "100644"
+    },
+    "scripts/test-studio-runtime.mjs": {
+      "sha": "334c87c7f98da227417ef4689e54605544903023",
+      "mode": "100644"
+    },
+    "scripts/test-studio-update.mjs": {
+      "sha": "d341b259b3e3fcc907aa14f4f09bc82fbe4aae3d",
+      "mode": "100644"
+    },
+    "scripts/test-temporal.mjs": {
+      "sha": "712c72fdf2595a28a8fc3203259ef19faa549c3f",
+      "mode": "100644"
+    },
+    "scripts/test-workflow-browser.mjs": {
+      "sha": "01fcee7dcf795e992fc4dc6003be78194a5ce745",
+      "mode": "100644"
+    },
+    "scripts/test-workspace-model.mjs": {
+      "sha": "ad034060bb63f2daee4ed166c310fde09d1d0bfa",
+      "mode": "100644"
+    },
+    "scripts/tools-preview.mjs": {
+      "sha": "857d2b762fe2e6a60884092573b5d5b70229b97b",
+      "mode": "100644"
+    },
+    "showcase/README.md": {
+      "sha": "13cf52ddbba3cf004d5a05cb6b41697000347ae2",
+      "mode": "100644"
+    },
+    "showcase/founders/README.md": {
+      "sha": "f98c30434b032d659c100607898faf78174a3eed",
+      "mode": "100644"
+    },
+    "showcase/founders/brief.js": {
+      "sha": "0f0505dcde78c05d74944b331d954811f2b17326",
+      "mode": "100644"
+    },
+    "showcase/founders/films.js": {
+      "sha": "39d151f553900ce5dff0397e69382a027fb7112f",
+      "mode": "100644"
+    },
+    "showcase/founders/founders-polish.css": {
+      "sha": "e2d84aa1766f46dce4fc75e317f5cd200f9a2840",
+      "mode": "100644"
+    },
+    "showcase/founders/founders.css": {
+      "sha": "07dc5d5877ffb95bb4a00beebe21d197ba9d4fba",
+      "mode": "100644"
+    },
+    "showcase/founders/founders.js": {
+      "sha": "b2b8eb339cdeed4418325cdd81e6e1090865d349",
+      "mode": "100644"
+    },
+    "showcase/founders/index.html": {
+      "sha": "59a1b0d2f60de5b5fc9228ee7bd4b1e9a2051a9e",
+      "mode": "100644"
+    },
+    "showcase/index.html": {
+      "sha": "6facaed502c17c026dbe96ab56a48bfb551aebee",
+      "mode": "100644"
+    },
+    "showcase/site.css": {
+      "sha": "72f1e3335bcdec1e2414dd0dc7356d32be1ce662",
+      "mode": "100644"
+    },
+    "showcase/site.js": {
+      "sha": "ee45c01a54f86832396e739cd71d31201c6c5f56",
+      "mode": "100644"
+    },
+    "src/README.md": {
+      "sha": "4269f6e7d0c889d5dcf8305011bc35c28c325156",
+      "mode": "100644"
+    },
+    "src/assets/audio/provenance.json": {
+      "sha": "c03e1198297ff16059c51b5823702b6b053edc10",
+      "mode": "100644"
+    },
+    "src/assets/audio/wind-magnific.mp3": {
+      "sha": "41f4becf91633a1945aad75f49d2678f1a5ffeb4",
+      "mode": "100644"
+    },
+    "src/assets/audio/wind-sample.js": {
+      "sha": "3cd8acd4fe0b9a91af8d4fae526c711be7d76549",
+      "mode": "100644"
+    },
+    "src/assets/fonts/LICENSE.txt": {
+      "sha": "77f69e971f7ba822a4ea158bd6fab40ba6e45301",
+      "mode": "100644"
+    },
+    "src/assets/fonts/helvetiker_bold.typeface.json": {
+      "sha": "872ce447fc0402fe1b562cc26546395ffe86a0cb",
+      "mode": "100644"
+    },
+    "src/assets/fonts/space-grotesk-OFL.txt": {
+      "sha": "cb512b9af44ff61e75e1aad387b7424cdfab36a3",
+      "mode": "100644"
+    },
+    "src/assets/fonts/space-grotesk-headlines.json": {
+      "sha": "1ab2a8ce8788abf677b3a5b4d544a409ebfab7f0",
+      "mode": "100644"
+    },
+    "src/components/README.md": {
+      "sha": "569bfdc21a9aeef3a24456a7fe86897a56e6352c",
+      "mode": "100644"
+    },
+    "src/components/brand.js": {
+      "sha": "ee57814771ce6746cf8d15335aa58142a4e98886",
+      "mode": "100644"
+    },
+    "src/components/comic.js": {
+      "sha": "5745d02c5579341a1a8a61ae8658193f77e72c3a",
+      "mode": "100644"
+    },
+    "src/components/device.js": {
+      "sha": "842ede2472142800328087534d51d73b7880edc9",
+      "mode": "100644"
+    },
+    "src/components/kinetic-type.js": {
+      "sha": "b81e6c730e782fecd69f0abe7ee8473751fc67c8",
+      "mode": "100644"
+    },
+    "src/components/led-sign.js": {
+      "sha": "591e380849fd272fc965f9e36a0b5c6767fc64a4",
+      "mode": "100644"
+    },
+    "src/components/materials.js": {
+      "sha": "e01f5d9f106b0561dc5a73824ed20e0db762f3cc",
+      "mode": "100644"
+    },
+    "src/components/objects-emblem.js": {
+      "sha": "adfa7306f8083eb180b00ae2be93cb79e28d98f3",
+      "mode": "100644"
+    },
+    "src/components/objects-kinetic.js": {
+      "sha": "60ed9c82645bf521081239bb343fa7aade9e283c",
+      "mode": "100644"
+    },
+    "src/config.js": {
+      "sha": "265a96deef955401847e3b2f4ded5625a0684a5a",
+      "mode": "100644"
+    },
+    "src/engine/README.md": {
+      "sha": "c27838e875dd19a81b61d4da65d788a7bd4244a5",
+      "mode": "100644"
+    },
+    "src/engine/animation-groups.js": {
+      "sha": "fa6c7ff41b7bd8834080b031e0e1838d41f91e6b",
+      "mode": "100644"
+    },
+    "src/engine/animation.js": {
+      "sha": "bf113afd860f408ed3e95c8a8dd0bb37011a7172",
+      "mode": "100644"
+    },
+    "src/engine/authored-animation.js": {
+      "sha": "f9ba721b35c296f7f90a0d365178875f4822b6ba",
+      "mode": "100644"
+    },
+    "src/engine/beat-clock.js": {
+      "sha": "38062108224bc554f37bc7bfff54b4098e3ffe16",
+      "mode": "100644"
+    },
+    "src/engine/camera-lens.js": {
+      "sha": "d02db99bca3858940fb9a4672e543e6a0e18b20f",
+      "mode": "100644"
+    },
+    "src/engine/camera-path.js": {
+      "sha": "1669f66ff75314ebc90cfebe1534e950473fb15a",
+      "mode": "100644"
+    },
+    "src/engine/composite.js": {
+      "sha": "444f493075733727891c6bdeee0ae6f270305347",
+      "mode": "100644"
+    },
+    "src/engine/control-catalog.js": {
+      "sha": "c1e7064625c8c4641758bf8953eb839b9f9ea5cf",
+      "mode": "100644"
+    },
+    "src/engine/control-presets.js": {
+      "sha": "a1ff7d106fb36c88109cca73c9ab541755659b1b",
+      "mode": "100644"
+    },
+    "src/engine/curve-interaction.js": {
+      "sha": "318ed846b5e4b149811863a01d322d5dd3c87b7b",
+      "mode": "100644"
+    },
+    "src/engine/detail-sampling.js": {
+      "sha": "242e497d95ff8c7a160ad4ea68372817534451f6",
+      "mode": "100644"
+    },
+    "src/engine/display-grade.js": {
+      "sha": "cd916471b4f13f30ffa0815d5155eb0bc0a9014c",
+      "mode": "100644"
+    },
+    "src/engine/film-grain.js": {
+      "sha": "388e8fca8caa980c2a9ef0944d5e571adb9a83ec",
+      "mode": "100644"
+    },
+    "src/engine/graphic-camera.js": {
+      "sha": "fd52f04227fabfdd82c4e78833adf8da3e91067c",
+      "mode": "100644"
+    },
+    "src/engine/graphic-lens.js": {
+      "sha": "bd724471c95b938a42f63b34581fc87f76a2fd92",
+      "mode": "100644"
+    },
+    "src/engine/impact-motion.js": {
+      "sha": "ee3923825ef0297250fef2afe3a355d5f28eefd6",
+      "mode": "100644"
+    },
+    "src/engine/legacy-scene.js": {
+      "sha": "a3ce61e9c3f62d7be37918a50b5ea6fc545821f6",
+      "mode": "100644"
+    },
+    "src/engine/motion-curve-preview.js": {
+      "sha": "09f1fc0d47e4e03ef8169ca9a0ac10dfc1315658",
+      "mode": "100644"
+    },
+    "src/engine/motion-source-seek.js": {
+      "sha": "eb9365790e3cc9581befcd5b247acee2a04dd808",
+      "mode": "100644"
+    },
+    "src/engine/music-techno.js": {
+      "sha": "9debff54e9dbe3497db259f08905b39fa0d6031f",
+      "mode": "100644"
+    },
+    "src/engine/object-editor.js": {
+      "sha": "5f3da0a57e037486ab95cbecd67a5b524a2795f8",
+      "mode": "100644"
+    },
+    "src/engine/parameter-animation.js": {
+      "sha": "5bff992d789950b869b33c582ae073674a819d56",
+      "mode": "100644"
+    },
+    "src/engine/preview-review.js": {
+      "sha": "96378a497bdfaf0a3e69bc43da14ec7c373b2149",
+      "mode": "100644"
+    },
+    "src/engine/procedural.js": {
+      "sha": "60b4ac62b2798534055645466817687f868b3f94",
+      "mode": "100644"
+    },
+    "src/engine/project-controls.js": {
+      "sha": "ba8c59b6bfea02400f23945dd834c494b9ae17e2",
+      "mode": "100644"
+    },
+    "src/engine/render-policy.js": {
+      "sha": "d510d5b9b66089c155342049684a416c9e96764f",
+      "mode": "100644"
+    },
+    "src/engine/render-quality.js": {
+      "sha": "a9c1169013aa0e6c26886a11f18a36b78e716316",
+      "mode": "100644"
+    },
+    "src/engine/runtime.js": {
+      "sha": "7944d485cad314368bc4eeb8f37cb8d00cd212ec",
+      "mode": "100644"
+    },
+    "src/engine/scene-capabilities.js": {
+      "sha": "271a59a7182228c84789fa4281ac6b50c25a11d2",
+      "mode": "100644"
+    },
+    "src/engine/shadow-ground.js": {
+      "sha": "412793aae5ed978bfc722d6e8fd09ed4ba26707a",
+      "mode": "100644"
+    },
+    "src/engine/sound-design.js": {
+      "sha": "2ed39ef4169746428229fffbae7463e3445fbc7e",
+      "mode": "100644"
+    },
+    "src/engine/sound-foley.js": {
+      "sha": "024cc3682f8117c32ed6641b4b8b4c6f2d92605e",
+      "mode": "100644"
+    },
+    "src/engine/sound-procedural.js": {
+      "sha": "780d7e67b9186d1426bcf5d162d438c732b797d5",
+      "mode": "100644"
+    },
+    "src/engine/studio-baseline.js": {
+      "sha": "0a255d5be1f31a9d16cc07e614e03f15e484cee5",
+      "mode": "100644"
+    },
+    "src/engine/studio-lookdev.js": {
+      "sha": "7648cae6879a61a9c74a23c95efc592f0a7a405c",
+      "mode": "100644"
+    },
+    "src/engine/studio.js": {
+      "sha": "0962433682a4ef57c395525989f378e3084f0238",
+      "mode": "100644"
+    },
+    "src/engine/temporal.js": {
+      "sha": "f255555865d0f8b979a330aeb8fa3405a0d12a8b",
+      "mode": "100644"
+    },
+    "src/engine/timeline.js": {
+      "sha": "d9db184f77a83b6cf2d7b71499094573e868726d",
+      "mode": "100644"
+    },
+    "src/product-kit/assets.js": {
+      "sha": "6d8d5fb608cded6566e5b3df751136dc23053e80",
+      "mode": "100644"
+    },
+    "src/product-kit/index.js": {
+      "sha": "bd3ac61c1e545fe4f01eb7e067d6f72bd948d556",
+      "mode": "100644"
+    },
+    "src/product-kit/models.js": {
+      "sha": "e186b77008aaf2b87950044bc52ab2d1705fa4b8",
+      "mode": "100644"
+    },
+    "src/product-kit/motion.js": {
+      "sha": "3002bbc70b19ff9a6f4a42cf764fc03f1fddac31",
+      "mode": "100644"
+    },
+    "src/product-kit/stage.js": {
+      "sha": "10b055127b6d853d2eb3575d74da9195edbf8d3c",
+      "mode": "100644"
+    },
+    "src/scene-registry.js": {
+      "sha": "631ea126b9c514855ce6c4d2477753242c086843",
+      "mode": "100644"
+    },
+    "src/scenes/README.md": {
+      "sha": "42bb7d2254606f05b72ee6299c9af86c7092184d",
+      "mode": "100644"
+    },
+    "src/scenes/afterhours-demo.js": {
+      "sha": "e39d927da659ac52041e7c658e9a797e0848f90e",
+      "mode": "100644"
+    },
+    "src/scenes/aperture-hardware-detail.js": {
+      "sha": "19d33ab39c5ebbfae7269b0d5e14bdce43ef51ca",
+      "mode": "100644"
+    },
+    "src/scenes/camera-city.js": {
+      "sha": "cb701d6dba345e6174a5764b4e064cc7cf53817e",
+      "mode": "100644"
+    },
+    "src/scenes/camera-hardware-detail.js": {
+      "sha": "9b3c8f7169d4067377654351026bb717060bef7a",
+      "mode": "100644"
+    },
+    "src/scenes/camera-props.js": {
+      "sha": "baaec7aa31ce1b57ff4e273bf17586e09bf9e6d3",
+      "mode": "100644"
+    },
+    "src/scenes/camera-surface.js": {
+      "sha": "986d9906fdcd57394ef8fee30b9bd3a853d5ad14",
+      "mode": "100644"
+    },
+    "src/scenes/dot-device.js": {
+      "sha": "79e0393de7b900c2f8f288111af543ea7ecd7753",
+      "mode": "100644"
+    },
+    "src/scenes/dot-motion.js": {
+      "sha": "8e96926b327675aba9d93398e7d6f4c6cf2fb769",
+      "mode": "100644"
+    },
+    "src/scenes/dot-optics.js": {
+      "sha": "023e963f20db9bbc8ee781f9132976d8d6e9fec5",
+      "mode": "100644"
+    },
+    "src/scenes/dot-pixels.js": {
+      "sha": "3a53f5139fdc358633cae041909ec8beb90710d8",
+      "mode": "100644"
+    },
+    "src/scenes/dot-sound.js": {
+      "sha": "04fb3f796bd3907c6ebf5cb502730562f06fb68d",
+      "mode": "100644"
+    },
+    "src/scenes/gloss-studio.js": {
+      "sha": "10e7b4a128b984d9d68407ea73fdbfff95147ae3",
+      "mode": "100644"
+    },
+    "src/scenes/graphic-controls.js": {
+      "sha": "610847703a6d3ed9e6cfb42309d2d304676c464b",
+      "mode": "100644"
+    },
+    "src/scenes/loop-headlines.js": {
+      "sha": "466aa87ec00a755938975dd9c883fd2b7acb6a78",
+      "mode": "100644"
+    },
+    "src/scenes/loop-launch.js": {
+      "sha": "afd9b7a23aea64559843612d43cb37340b0e38bf",
+      "mode": "100644"
+    },
+    "src/scenes/loop-motion.js": {
+      "sha": "2908a3405d6dae170bef27e078f2ffd149e380e2",
+      "mode": "100644"
+    },
+    "src/scenes/loop-product-detail.js": {
+      "sha": "2441c9367f573a193816407c279351c75d71437c",
+      "mode": "100644"
+    },
+    "src/scenes/loop-surface.js": {
+      "sha": "06a4bea53248c89aef4fb8f099f3f57b584a4f1d",
+      "mode": "100644"
+    },
+    "src/scenes/loop-timing.js": {
+      "sha": "c47978b610084e7556ffd5d01c758b8e3ceee46a",
+      "mode": "100644"
+    },
+    "src/scenes/mascot-3d.js": {
+      "sha": "43b9266acf97c43113588de8718c799182ac4928",
+      "mode": "100644"
+    },
+    "src/scenes/mascot-demo.js": {
+      "sha": "35fd4616ad25d0ceb646459a1992b0bae93fa9ae",
+      "mode": "100644"
+    },
+    "src/scenes/objects.js": {
+      "sha": "07c939e10c6a2e384472c057fd8a12f516060332",
+      "mode": "100644"
+    },
+    "src/scenes/organic-surface.js": {
+      "sha": "fa57e004a0aad48af3ac1c434b22c9300051715e",
+      "mode": "100644"
+    },
+    "src/scenes/pop-demo.js": {
+      "sha": "2d7d96841997b1e3158bc83f434ed7ce17c3bb6a",
+      "mode": "100644"
+    },
+    "src/scenes/procedural-demo.js": {
+      "sha": "791cf73efadf84e1ef63d9ee2eeae258d9a29a7e",
+      "mode": "100644"
+    },
+    "src/scenes/product-starter.js": {
+      "sha": "ead8a26da12b586f55328ebe67cd43bf12b51d44",
+      "mode": "100644"
+    },
+    "src/scenes/pulse-demo.js": {
+      "sha": "2d224bc68b2c074c9fa759687b97348309c70037",
+      "mode": "100644"
+    },
+    "src/scenes/pulse-direction.js": {
+      "sha": "0583ee5c0353ec4806ad60079cef07d6c9c72690",
+      "mode": "100644"
+    },
+    "src/scenes/pulse-finish-v15.js": {
+      "sha": "32c338a0a91d09091c34552d8c200071ddbe679f",
+      "mode": "100644"
+    },
+    "src/scenes/pulse-hardware-detail.js": {
+      "sha": "1a759272d9c56620703efcf0adc78a0942caebad",
+      "mode": "100644"
+    },
+    "src/scenes/pulse-instruments.js": {
+      "sha": "1c65ff9ee1f367ad547b21610173a63d664b0d28",
+      "mode": "100644"
+    },
+    "src/scenes/pulse-props.js": {
+      "sha": "a472694afef48759d8c6c294dbe8cc586f291265",
+      "mode": "100644"
+    },
+    "src/scenes/pulse-surface-controls.js": {
+      "sha": "25f7fc0f24a4f6ffab59f80c5dbcc08287673135",
+      "mode": "100644"
+    },
+    "src/scenes/refined-finishes.js": {
+      "sha": "93248c194bc41b4577b98b587a8e5aaa98389a70",
+      "mode": "100644"
+    },
+    "src/scenes/replay-camera-rail.js": {
+      "sha": "10f505894676ce5fdb8cc118a318e20f621e6300",
+      "mode": "100644"
+    },
+    "src/scenes/replay-card-world.js": {
+      "sha": "c56e52971ee06fd636ccf35f37081e04d302a026",
+      "mode": "100644"
+    },
+    "src/scenes/replay-demo.js": {
+      "sha": "32f29c933d5164ef6f328c373ddc5957df8f2507",
+      "mode": "100644"
+    },
+    "src/scenes/replay-illustrations.js": {
+      "sha": "62606dcb440e72fc182b881c9e017d3cef8d8c24",
+      "mode": "100644"
+    },
+    "src/scenes/replay-motion-curves.js": {
+      "sha": "623fe8c118c30dd739b00b0928377c892a3fbdea",
+      "mode": "100644"
+    },
+    "src/scenes/replay-motion-direction.js": {
+      "sha": "5d0f19a1d3119e67decf342e1fbb7181876dc489",
+      "mode": "100644"
+    },
+    "src/scenes/replay-paper-format.js": {
+      "sha": "97ee62de789d95de3a9ce5b3b1cb82930c418a12",
+      "mode": "100644"
+    },
+    "src/scenes/replay-perspective.js": {
+      "sha": "1fe62f9703502ffcf10965b36b219b4849c238b2",
+      "mode": "100644"
+    },
+    "src/scenes/signal.js": {
+      "sha": "666b5c34842c585f34276784b89c819368c2da25",
+      "mode": "100644"
+    },
+    "src/scenes/speaker-hardware-detail.js": {
+      "sha": "05b708850f67624b591cc33aca22646e0c81a79c",
+      "mode": "100644"
+    },
+    "src/viewer/LICENSE": {
+      "sha": "fe7f1098766f947f191ac76a0b7f289b7166c057",
+      "mode": "100644"
+    },
+    "src/viewer/README.md": {
+      "sha": "a5d442619b0617cfe5997262de6a579d53cd1a11",
+      "mode": "100644"
+    },
+    "src/viewer/browser-export.js": {
+      "sha": "e004b2ace572556e1379eeacb0e3a2cad100be82",
+      "mode": "100644"
+    },
+    "src/viewer/control-widget.js": {
+      "sha": "e0be46cf922e87d0dfc080d101369f12a5c1c234",
+      "mode": "100644"
+    },
+    "src/viewer/demo-main.js": {
+      "sha": "8c4964ca4f37206df49317e28a515edf5bce063b",
+      "mode": "100644"
+    },
+    "src/viewer/demo-runtime.js": {
+      "sha": "8a84338a7816830c0323ebf0527e3ab25e8b0863",
+      "mode": "100644"
+    },
+    "src/viewer/demo.css": {
+      "sha": "5b47f8f21c4d59e022bd2f7c4105188353ed3f72",
+      "mode": "100644"
+    },
+    "src/viewer/export-panel.css": {
+      "sha": "0dd2adf7b41edeeb36c80bf3de6b574c21aed750",
+      "mode": "100644"
+    },
+    "src/viewer/export-panel.js": {
+      "sha": "6b53df4b38b019bed7199baea0017079262c80c3",
+      "mode": "100644"
+    },
+    "src/viewer/feedback-memory.js": {
+      "sha": "80c36b82390e43aaeda2be2e8f6a99f49da7175d",
+      "mode": "100644"
+    },
+    "src/viewer/feedback-report.js": {
+      "sha": "0db6f2c4b689c8ee5f6731660a20f397eb3bb207",
+      "mode": "100644"
+    },
+    "src/viewer/live-review.js": {
+      "sha": "36c0d29b5936ec39b1c695c41d04b6f6b9cfffe4",
+      "mode": "100644"
+    },
+    "src/viewer/main.js": {
+      "sha": "6f3852160a31103001469ee7e04758f5fa0234db",
+      "mode": "100644"
+    },
+    "src/viewer/motion-curve-editor.css": {
+      "sha": "bbcb26e38f0b297421251195cb1708d8a8b4f6c9",
+      "mode": "100644"
+    },
+    "src/viewer/motion-panel.js": {
+      "sha": "42899bb56a270e3935e82d840d195c80ca500b0f",
+      "mode": "100644"
+    },
+    "src/viewer/prepared-preview-state.js": {
+      "sha": "75b0cf83533c39e59e9ba5767d3a08ee09be4b10",
+      "mode": "100644"
+    },
+    "src/viewer/prepared-preview.css": {
+      "sha": "27b9e0751f8840c7072b3d3ea7c2264b540ee957",
+      "mode": "100644"
+    },
+    "src/viewer/prepared-preview.js": {
+      "sha": "e884bee9a594e4be9d41deab65ac6375045ef516",
+      "mode": "100644"
+    },
+    "src/viewer/preview-quality.css": {
+      "sha": "d0688f1940df7627fae835e545ab5f296d9a758a",
+      "mode": "100644"
+    },
+    "src/viewer/preview-quality.js": {
+      "sha": "799bbece1eb2802ff2a15bab27cb396cb24ec7b1",
+      "mode": "100644"
+    },
+    "src/viewer/reference-panel.css": {
+      "sha": "24ab8374c4ca2739451e42ec784b51adc95d5ae9",
+      "mode": "100644"
+    },
+    "src/viewer/reference-panel.js": {
+      "sha": "43bc24bcdf14ec7d67840453b197a3b0208a365f",
+      "mode": "100644"
+    },
+    "src/viewer/render-frame-surface.css": {
+      "sha": "dc38f44b3b3d1a1c329ff2e6e7734d4f69ebc34c",
+      "mode": "100644"
+    },
+    "src/viewer/render-frame-surface.js": {
+      "sha": "21199e554219ad435fac547eb8ed965d2bd3f7bf",
+      "mode": "100644"
+    },
+    "src/viewer/render-frame-view.js": {
+      "sha": "7742d894d711e3be2ad4ec64d7b65fbaacfd6f5a",
+      "mode": "100644"
+    },
+    "src/viewer/render-panel.css": {
+      "sha": "06b2cdd7424c8c6695851217bce2e96c7d7d1f7e",
+      "mode": "100644"
+    },
+    "src/viewer/render-panel.js": {
+      "sha": "122dc6f38950548cef91263586929ce3a8b9b8e8",
+      "mode": "100644"
+    },
+    "src/viewer/sound-panel.css": {
+      "sha": "2fe0c814eb57a13d67a006e7ffbcaa6944b27b82",
+      "mode": "100644"
+    },
+    "src/viewer/sound-panel.js": {
+      "sha": "4ad19ff3c83b78eeb70de3230ed1292370d72b00",
+      "mode": "100644"
+    },
+    "src/viewer/studio-icons.css": {
+      "sha": "a605bc9f6f9a8d010a97d16fb8479101c0b43d50",
+      "mode": "100644"
+    },
+    "src/viewer/studio-icons.js": {
+      "sha": "e79584611846bf8da7b83b400526e96f64d8f70a",
+      "mode": "100644"
+    },
+    "src/viewer/studio-inspector.js": {
+      "sha": "9caed5b7ea116143a6682d828d969bfb4e1d9454",
+      "mode": "100644"
+    },
+    "src/viewer/style.css": {
+      "sha": "010fd144ac17045a19fcc33562563fa5099f85b9",
+      "mode": "100644"
+    },
+    "src/viewer/viewport-toolbar.js": {
+      "sha": "20eb10d96d50acffed000f2af55704368dcbe677",
+      "mode": "100644"
+    },
+    "src/viewer/workspace-model.js": {
+      "sha": "e7fcb294df74730887aa82b2868c8dc4fb798c10",
+      "mode": "100644"
+    },
+    "vite.config.js": {
+      "sha": "a49a84234db16aaed42b7e7535410e8d6d4eaa66",
+      "mode": "100644"
+    },
+    "docs/AGENT_EFFICIENCY.md": {
+      "sha": "46b46747ccf13f52dd18cdd66711f22babcec481",
+      "mode": "100644"
+    },
+    "docs/UPDATES.md": {
+      "sha": "8b1822d5451c79b0bb5dd0e8b9cff6c129a7139b",
+      "mode": "100644"
+    },
+    "scripts/agent-context.mjs": {
+      "sha": "e222e9f37701e247a01a1089f051a84d9920d499",
+      "mode": "100644"
+    },
+    "scripts/recover-update.mjs": {
+      "sha": "b4deaadd5e1302c94d64533876803d7258a9d756",
+      "mode": "100644"
+    },
+    "scripts/test-zip-update.mjs": {
+      "sha": "eeb97cf99b7007f7259b3927ec84cc24113e9a53",
+      "mode": "100644"
+    },
+    "scripts/update-dialog.mjs": {
+      "sha": "f084553a0dc23ea6cc85317b58f2b229136f33b6",
+      "mode": "100644"
+    },
+    "scripts/zip-update.mjs": {
+      "sha": "43242ab99d103e433b4c14a033652239c0a3bf1a",
+      "mode": "100644"
+    }
+  }
+}
