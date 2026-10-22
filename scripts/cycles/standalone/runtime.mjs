@@ -11,6 +11,7 @@ export async function resolveNative(){
  let directory=process.env.FRAMEVOLVE_CYCLES_DIR; const experimental=!!directory; let receipt;
  if(!directory){try{const installed=JSON.parse(await readFile(path.join(componentHome(),'current.json'),'utf8'));receipt=installed;if(!/^[A-Za-z0-9][A-Za-z0-9._-]{0,79}$/.test(installed.version))throw Error('Invalid component receipt');if(installed.protocol!==lock.protocol||installed.revision!==lock.revision||installed.version!==lock.version)throw Error('Installed Rendering Cycles needs an update.');directory=path.join(componentHome(),installed.version);}catch(e){if(e.code==='ENOENT')throw Error('Rendering Cycles is not installed. Install the optional component from Studio.');throw e;}}
  if(!path.isAbsolute(directory))throw Error('FRAMEVOLVE_CYCLES_DIR must be absolute');
+ if(!experimental&&receipt?.security==='manual-macos')directory=path.join(directory,'Rendering Cycles.app','Contents','Resources','runtime');
  const executable=path.join(directory,'framevolve-cycles'),color=path.join(directory,'color','config.ocio');
  await access(executable,constants.X_OK);await access(color,constants.R_OK);
  return {directory,executable,color,lock,experimental,validatedScenes:experimental?['pulse','loop']:(receipt?.validatedScenes??[])};

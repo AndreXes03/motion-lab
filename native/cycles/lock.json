@@ -1,11 +1,68 @@
 {
   "protocol": 1,
-  "version": "0.1.0-dev.1",
+  "version": "0.1.0-preview.1",
   "source": "https://projects.blender.org/blender/cycles.git",
   "revision": "a456b761034dda42c32eef9f4aae0fa5a5c9f604",
-  "libraries": {"darwin-arm64": "5a140a8ccc8c070221b1b06e2c6f89f136c5758d"},
-  "colorSource": "https://github.com/blender/blender.git",
-  "colorRevision": "32f5fdce0a0a571a39198edf8d7b5d719bf59f2c",
+  "libraries": {
+    "darwin-arm64": "5a140a8ccc8c070221b1b06e2c6f89f136c5758d"
+  },
+  "colorSource": "https://github.com/AcademySoftwareFoundation/OpenColorIO",
+  "colorRevision": "v2.5.0",
   "cmake": "3.31.10",
-  "ninja": "1.13.0"
+  "ninja": "1.13.0",
+  "colorConfig": "cg-config-v2.2.0_aces-v1.3_ocio-v2.4",
+  "colorConfigSha256": "5aefc668796eabb1902b9593340496231758eceaec18ce290e12901042bd4440",
+  "colorLicenseSha256": "82a40c52065ee968aa62015735e84378ac11425db7a233e6a2dcd2c83fc24276",
+  "minimalOpenImageIO": {
+    "version": "3.1.13.1",
+    "source": "https://github.com/AcademySoftwareFoundation/OpenImageIO/archive/refs/tags/v3.1.13.1.tar.gz",
+    "sourceSha256": "0fc59b8e2708ded02d3793b8f3331f037ed49bfcde38158f05ac0e876ebb85b7",
+    "robinMap": {
+      "version": "1.3.0",
+      "source": "https://github.com/Tessil/robin-map/archive/refs/tags/v1.3.0.tar.gz",
+      "sha256": "a8424ad3b0affd4c57ed26f0f3d8a29604f0e1f2ef2089f497f614b1c94c7236"
+    },
+    "tiffHeader": {
+      "source": "https://raw.githubusercontent.com/libsdl-org/libtiff/v4.7.1/libtiff/tiff.h",
+      "sha256": "ff8668357867cefdb31d7807a441fea04422bcff929303be09e16d99c7528fa6"
+    },
+    "formats": [
+      "png",
+      "hdr",
+      "pnm",
+      "openexr"
+    ],
+    "disabledDependencies": [
+      "libjpeg-turbo",
+      "JPEG",
+      "libuhdr",
+      "TIFF",
+      "JXL",
+      "Freetype",
+      "OpenCV",
+      "DCMTK",
+      "FFmpeg",
+      "GIF",
+      "Libheif",
+      "LibRaw",
+      "OpenJPEG",
+      "openjph",
+      "OpenVDB",
+      "Ptex",
+      "WebP",
+      "R3DSDK",
+      "Nuke",
+      "BZip2"
+    ]
+  },
+  "color": {
+    "config": "cg-config-v2.2.0_aces-v1.3_ocio-v2.4",
+    "source": "https://github.com/AcademySoftwareFoundation/OpenColorIO",
+    "revision": "v2.5.0",
+    "sha256": "5aefc668796eabb1902b9593340496231758eceaec18ce290e12901042bd4440",
+    "input": "Linear Rec.709 (sRGB)",
+    "display": "sRGB - Display",
+    "view": "ACES 1.0 - SDR Video",
+    "look": null
+  }
 }

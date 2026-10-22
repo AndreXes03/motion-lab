@@ -5,7 +5,7 @@ import { spawnSync } from 'node:child_process';
 import path from 'node:path';
 import os from 'node:os';
 import http from 'node:http';
-import { ROOT, playwright } from './browser-runtime.mjs';
+import { ROOT } from './browser-runtime.mjs';
 import { authScript, ensureLauncher, startSetup } from './setup-mac.mjs';
 
 test('agent command quotes spaces, apostrophes and shell metacharacters', async t => {
@@ -35,9 +35,10 @@ test('local setup API enforces token, host, origin and provider allowlist; retry
   t.after(async () => { if (setup) await new Promise(resolve => setup.server.close(resolve)); await rm(root, { recursive: true, force: true }); });
   await writeFile(path.join(root, 'package.json'), '{"name":"motion-lab","type":"module"}');
   await symlink(path.join(ROOT, 'node_modules'), path.join(root, 'node_modules'), 'dir');
-  let failInstall = true, launched = 0, downloads = 0;
+  let failInstall = true, launched = 0, downloads = 0, browserChecks = 0;
   setup = await startSetup({ root, open: false, operations: {
     findChrome: async () => null,
+    verifyBrowser: async ({browser}) => { assert.ok(['chrome','chromium'].includes(browser.kind)); browserChecks++; },
     run: async (command, args) => { if (args.includes('install')) { downloads++; if (failInstall) throw Error('Simulated interrupted download'); } },
     installLauncher: async () => {}, launch: async () => { launched++; return { url: 'http://127.0.0.1:4173/' }; }, openStudio: async () => {}
   } });
@@ -66,21 +67,23 @@ test('local setup API enforces token, host, origin and provider allowlist; retry
   const wait = async () => { const deadline = Date.now() + 30000; while (setup.state.busy && Date.now() < deadline) await new Promise(resolve => setTimeout(resolve, 50)); assert.equal(setup.state.busy, false); };
   await wait();
   assert.match(setup.state.error, /interrupted/); assert.equal(setup.state.ready, false);
-  // CI downloads Chromium before this test. Real browser launch/WebGL check, no account login.
+  // API behavior uses an injected browser probe; the real browser check remains in setup.
   failInstall = false;
   assert.equal((await post('install', { provider: 'other', browser: 'auto' })).status, 200);
   await wait(); assert.equal(setup.state.error, ''); assert.equal(setup.state.ready, true);
   assert.equal((JSON.parse(await readFile(path.join(root, '.motion-cache/setup.json'), 'utf8'))).browser.kind, 'chromium');
   assert.equal(launched, 1, 'combined install opens Studio automatically');
   assert.equal(downloads, 2, 'automatic mode falls back to Chromium');
-  // Inject a real executable to exercise Chrome detection without relying on the runner's apps.
-  setup.state.chrome = playwright().chromium.executablePath();
+  // Use an executable fixture to exercise Chrome selection without a runner app.
+  setup.state.chrome = path.join(root,'fake-chrome');
+  await writeFile(setup.state.chrome, '#!/bin/sh\nexit 0\n', {mode:0o700});
   assert.equal((await post('install', { provider: 'claude', browser: 'auto' })).status, 200);
   await wait(); assert.equal(setup.state.error, ''); assert.equal(setup.state.browser, 'chrome');
   assert.equal(downloads, 2, 'existing Chrome avoids a browser download');
   assert.equal((await post('install', { provider: 'other', browser: 'chromium' })).status, 200);
   await wait(); assert.equal(setup.state.error, ''); assert.equal(setup.state.browser, 'chromium');
   assert.equal(downloads, 3, 'explicit Chromium overrides detected Chrome');
+  assert.equal(browserChecks, 3, 'each successful setup checks its selected browser');
   assert.equal((await post('finish')).status, 200); await wait(); assert.equal(launched, 4);
   assert.equal((await post('provider', { provider: 'codex' })).status, 200, 'optional agent setup remains available after Studio opens');
   assert.equal((await post('close')).status, 200);

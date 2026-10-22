@@ -69,16 +69,18 @@ export function mountRenderPanel({container, getScene, getParameters = () => ({}
   const componentStatus = document.createElement('p'); componentStatus.className = 'render-policy-note'; componentStatus.setAttribute('role','status');
   const componentProgress = document.createElement('progress'); componentProgress.max = 1; componentProgress.hidden = true; componentProgress.setAttribute('aria-label','Rendering Cycles installation');
   const componentButtons = document.createElement('div'); componentButtons.className = 'render-policy-component-actions';
-  const installComponent = document.createElement('button'), updateComponent = document.createElement('button'), removeComponent = document.createElement('button');
-  for (const [button,label] of [[installComponent,'Install Rendering Cycles'],[updateComponent,'Update Rendering Cycles'],[removeComponent,'Remove Rendering Cycles']]) {button.type='button';button.textContent=label;componentButtons.append(button);}
+  const installComponent = document.createElement('button'), updateComponent = document.createElement('button'), authorizeComponent = document.createElement('button'), checkComponent = document.createElement('button'), removeComponent = document.createElement('button');
+  for (const [button,label] of [[installComponent,'Download Rendering Cycles'],[updateComponent,'Update Rendering Cycles'],[authorizeComponent,'Authorize in macOS'],[checkComponent,'Check authorization'],[removeComponent,'Remove Rendering Cycles']]) {button.type='button';button.textContent=label;componentButtons.append(button);}
   componentDetails.append(componentTitle,componentStatus,componentProgress,componentButtons);
   root.append(details,componentDetails); container.append(root);
   function syncComponent() {
     const value = componentState ?? {}, busy = componentPending || value.busy;
     componentStatus.textContent = publicDemo ? 'Install the local Framevolve app to manage this optional component. Three.js is included.' : busy ? `Rendering Cycles · ${value.phase || 'preparing'}${value.phase === 'downloading' ? ` ${Math.round((value.progress || 0) * 100)}%` : ''}` : value.reason || (value.compatible ? `Rendering Cycles ${value.installed.version} · installed` : 'Checking optional component…');
     componentProgress.hidden = !busy; componentProgress.value = value.progress || 0;
-    installComponent.hidden = !!value.installed || publicDemo; installComponent.disabled = !value.canInstall || !!busy;
+    installComponent.hidden = !value.canInstall || publicDemo; installComponent.disabled = !value.canInstall || !!busy;
     updateComponent.hidden = !value.canUpdate || publicDemo; updateComponent.disabled = !!busy;
+    authorizeComponent.hidden = !value.canAuthorize || publicDemo; authorizeComponent.disabled = !value.canAuthorize || !!busy;
+    checkComponent.hidden = !value.canCheck || publicDemo; checkComponent.disabled = !value.canCheck || !!busy;
     removeComponent.hidden = !value.canRemove || publicDemo; removeComponent.disabled = !value.canRemove || !!busy;
   }
   async function refreshComponent() {
@@ -107,7 +109,7 @@ export function mountRenderPanel({container, getScene, getParameters = () => ({}
     } catch(error) {componentState={...componentState,reason:error.message};}
     finally {componentPending=false;if(!destroyed)syncComponent();}
   }
-  installComponent.onclick=()=>componentAction('install'); updateComponent.onclick=()=>componentAction('update'); removeComponent.onclick=()=>componentAction('remove');
+  installComponent.onclick=()=>componentAction('install'); updateComponent.onclick=()=>componentAction('update'); authorizeComponent.onclick=()=>componentAction('authorize'); checkComponent.onclick=()=>componentAction('check'); removeComponent.onclick=()=>componentAction('remove');
   componentDetails.addEventListener('toggle',()=>{if(componentDetails.open)refreshComponent();});
   syncComponent(); refreshComponent();
 

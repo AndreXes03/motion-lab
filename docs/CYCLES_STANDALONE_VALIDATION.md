@@ -28,14 +28,15 @@ Machine: macOS 26.6.2, Apple M4 Max. Native source revision `a456b761034dda42c32
 
 [Machine-readable measurements](cycles-evidence/results.json) record frame differences and clip metadata. Low sample counts and different Cycles generations mean pixel differences are diagnostic only. These are deliberately small integration probes, not complete-film delivery tests or performance benchmarks.
 
-## Remaining release blockers
+## Current release status (later update, 2026-10-22)
 
-1. **Downloaded-package authorization:** Developer ID is not a requirement for Cycles to render. On 2026-10-22 the user chose to proceed without it for now. This Mac runs the locally built runtime directly; Gatekeeper was not disabled and quarantine was not removed. The current download validator still requires Developer ID/notarization. Public unsigned distribution needs an explicit manual macOS authorization flow implemented and verified before that requirement can be relaxed. No valid signing identity is present, and `spctl --assess --type execute` rejects the development executable.
-2. **Color data notices:** the pinned Blender OCIO configuration points to `ocio-license.txt`, but that notice is absent from the pinned source tree. The historical notice is recorded separately, not asserted to cover all current LUTs. Final dependency attribution and color-data provenance must be completed before redistribution; package assembly currently refuses it.
-3. **Release and clean setup:** no production binary/archive was uploaded; `native/cycles/releases.json` is deliberately empty. The install/download UI explains unavailability, and base setup remains usable. A signed archive with pinned checksum, clean install/retry/update/removal, and actual Studio first-use download must be verified before a stable manifest is added.
-4. **Remaining picture coverage:** arbitrary shaders, per-material environments, hemisphere ambient lights and browser post effects are not equivalent. Deformation/animated-texture blur remains unsupported, as in the old adapter; object/camera/light transform blur is transferred. Animated light energy and material values are sampled once per output frame. Only the pictured PULSE/LOOP frames were visually inspected. Long-film seeking, rapid camera cuts, high-resolution throughput and complete soundtrack playback need release review. Other operating systems and architectures are unavailable.
+The color/licensing blockers above have been resolved for the new payload: it uses the self-contained, permissively licensed OCIO ACES SDR configuration instead of Blender Filmic data. OpenImageIO was rebuilt with PNG/HDR/PNM/OpenEXR only, excluding embedded LGPL libheif and unused codecs. Exact sources, hashes and dependency notices are included. Root Framevolve licensing is unchanged. Earlier comparison images and measurements in this report used the previous Filmic development payload and are historical evidence, not pixel comparisons of the ACES payload.
 
-Because these gates are open, this change must remain a draft PR: no merge and no replacement of the user's working installation. The repository's safe updater is not bypassed.
+The new payload completed real 480×270 PULSE/Metal and LOOP/CPU frames. The production UI build passed, component tests passed 10/10 and focused setup tests passed 3/3. The optional download checkbox, nested component app, macOS manual-authorization flow and activation only after successful native probing are implemented. No Developer ID is required for this preview path; quarantine and Gatekeeper remain intact.
+
+**Still pending:** public archive upload, actual download and macOS authorization of that archive, final activation/render through the installed component, and main PR merge. The unified public download and replacement of the user's primary installation are not complete. The production manifest remains empty until package verification. No component is advertised as stable.
+
+Remaining visual scope: PULSE/LOOP only; ACES response differs from Filmic; custom browser shaders/post effects and deformation/texture motion blur remain unsupported. Long-film seeking, full soundtrack review and GPU-tracing cancellation have not been verified. Other platforms are unavailable.
 
 ## Usable local installation (2026-10-22)
 

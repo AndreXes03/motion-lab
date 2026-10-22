@@ -17,23 +17,37 @@ export const cyclesComponentHome = () => path.join(os.homedir(), 'Library', 'App
 const safeVersion = value => typeof value === 'string' && /^[a-zA-Z0-9][a-zA-Z0-9._-]{0,79}$/.test(value) && !['.', '..'].includes(value);
 const fail = (code, message) => Object.assign(Error(message), {code});
 async function json(file) { return JSON.parse(await readFile(file, 'utf8')); }
-async function installedPackage(directory, entry) {
- for (const [name, mode] of [['framevolve-cycles', constants.X_OK], ['color/config.ocio', constants.R_OK]]) {
+const appName = 'Rendering Cycles.app';
+const appPath = directory => path.join(directory, appName);
+const manualExecutable = directory => path.join(appPath(directory), 'Contents/Resources/runtime/framevolve-cycles');
+async function verifyProbe(executable, entry) {
+ const probe = await runFile(executable, ['--probe'], {timeout:20000, maxBuffer:64000});
+ const line = probe.stdout.split('\n').find(value => value.startsWith('MOTION_CYCLES '));
+ const details = JSON.parse(line?.slice(14) || '{}');
+ if (details.protocol !== entry.protocol || details.revision !== entry.revision || details.backend !== 'cycles-standalone' || !Array.isArray(details.devices) || !details.devices.some(device => device.type === 'CPU')) throw Error('Rendering Cycles self-check failed');
+}
+async function installedPackage(directory, entry, {checkSecurity = true} = {}) {
+ const manual = entry?.security === 'manual-macos';
+ const files = manual ? [
+  [`${appName}/Contents/MacOS/Rendering Cycles`, constants.X_OK],
+  [`${appName}/Contents/Info.plist`, constants.R_OK],
+  [`${appName}/Contents/Resources/runtime/framevolve-cycles`, constants.X_OK],
+  [`${appName}/Contents/Resources/runtime/color/config.ocio`, constants.R_OK]
+ ] : [['framevolve-cycles', constants.X_OK], ['color/config.ocio', constants.R_OK]];
+ for (const [name, mode] of files) {
   const file = path.join(directory, name); if (!(await lstat(file)).isFile()) throw Error(`Invalid component file: ${name}`); await access(file, mode);
  }
- if (entry) {
-  const executable = path.join(directory, 'framevolve-cycles');
+ if (entry && checkSecurity) {
+  const executable = manual ? manualExecutable(directory) : path.join(directory, 'framevolve-cycles');
   // A downloaded component keeps normal macOS quarantine. Never clear or bypass it.
   try {await runFile('/usr/bin/xattr', ['-p', 'com.apple.quarantine', directory]);}
   catch(error) {if(error.code !== 1)throw error;await runFile('/usr/bin/xattr', ['-w', '-r', 'com.apple.quarantine', `0083;${Math.floor(Date.now()/1000).toString(16)};Framevolve;${randomUUID()}`, directory]);}
+  if (manual) return;
   await runFile('/usr/bin/codesign', ['--verify', '--deep', '--strict', executable]);
   const signature = await runFile('/usr/bin/codesign', ['-dv', '--verbose=4', executable]);
   if (!signature.stderr.split('\n').includes('TeamIdentifier=' + entry.teamId)) throw Error('Rendering Cycles signing identity does not match the pinned release');
   await runFile('/usr/sbin/spctl', ['--assess', '--type', 'execute', '--verbose', executable]);
-  const probe = await runFile(executable, ['--probe'], {timeout:20000, maxBuffer:64000});
-  const line = probe.stdout.split('\n').find(value => value.startsWith('MOTION_CYCLES '));
-  const details = JSON.parse(line?.slice(14) || '{}');
-  if (details.protocol !== entry.protocol || details.revision !== entry.revision || details.backend !== 'cycles-standalone' || !Array.isArray(details.devices) || !details.devices.some(device => device.type === 'CPU')) throw Error('Rendering Cycles self-check failed');
+  await verifyProbe(executable, entry);
  }
 }
 // Accept only ordinary tar files/directories. Release packages must dereference library
@@ -71,22 +85,29 @@ async function unpack(archive, destination, maxBytes) {
   if (file || remaining || padding || !ended || buffer.some(byte => byte !== 0)) throw Error('Incomplete component archive');
  } finally { await file?.close(); input.destroy(); }
 }
-export function createCyclesComponentManager({root = ROOT, componentHome = cyclesComponentHome(), platform = process.platform, arch = process.arch, fetchFn = globalThis.fetch, validateInstalled = installedPackage, beforeChange = () => assertSessionIdle(root, {allowEditing:true})} = {}) {
+export function createCyclesComponentManager({root = ROOT, componentHome = cyclesComponentHome(), platform = process.platform, arch = process.arch, fetchFn = globalThis.fetch, validateInstalled = installedPackage, probeInstalled = verifyProbe, openApp = app => runFile('/usr/bin/open', [app]), beforeChange = () => assertSessionIdle(root, {allowEditing:true})} = {}) {
  let operation = {phase: 'idle', busy: false, progress: 0, error: null};
  const manifestFile = path.join(root, 'native/cycles/releases.json'), lockFile = path.join(root, 'native/cycles/lock.json');
  async function release() {
   const [manifest, lock] = await Promise.all([json(manifestFile), json(lockFile)]);
   if (manifest.protocol !== 1 || !Array.isArray(manifest.releases)) throw Error('Invalid Cycles release manifest');
   const entry = manifest.releases.find(item => item.platform === `${platform}-${arch}` && item.protocol === lock.protocol && item.revision === lock.revision && item.version === lock.version);
-  if (!entry) return {lock, reason: manifest.unavailableReason || 'No signed and tested Rendering Cycles release is available for this computer.'};
-  if (!safeVersion(entry.version) || !/^[a-f0-9]{64}$/.test(entry.sha256) || !Number.isSafeInteger(entry.bytes) || entry.bytes <= 0 || !Number.isSafeInteger(entry.installedBytes) || entry.installedBytes <= 0 || entry.format !== 'tar.gz' || entry.signed !== true || entry.notarized !== true || entry.tested !== true || entry.channel !== 'stable' || !/^[A-Z0-9]{10}$/.test(entry.teamId) || !Array.isArray(entry.validatedScenes) || !['pulse', 'loop'].every(scene => entry.validatedScenes.includes(scene))) throw Error('Cycles release is not a signed, notarized, tested and pinned stable package');
+  if (!entry) return {lock, reason: manifest.unavailableReason || 'No tested Rendering Cycles release is available for this computer.'};
+  const signedStable = (entry.security === 'developer-id' || entry.security === undefined) && entry.signed === true && entry.notarized === true && entry.channel === 'stable' && /^[A-Z0-9]{10}$/.test(entry.teamId);
+  const manualPreview = entry.security === 'manual-macos' && entry.signed === false && entry.notarized === false && entry.channel === 'preview' && platform === 'darwin' && arch === 'arm64';
+  if (!safeVersion(entry.version) || !/^[a-f0-9]{64}$/.test(entry.sha256) || !Number.isSafeInteger(entry.bytes) || entry.bytes <= 0 || !Number.isSafeInteger(entry.installedBytes) || entry.installedBytes <= 0 || entry.format !== 'tar.gz' || entry.tested !== true || !Array.isArray(entry.validatedScenes) || !['pulse', 'loop'].every(scene => entry.validatedScenes.includes(scene)) || !(signedStable || manualPreview)) throw Error('Cycles release is not a tested and pinned package with an approved security mode');
   const url = new URL(entry.url); if (url.protocol !== 'https:' || url.username || url.password) throw Error('Cycles packages require a pinned HTTPS URL');
   return {lock, entry};
  }
  async function current() {
   let value;
   try {value = await json(path.join(componentHome, 'current.json'));} catch(error) {if(error.code==='ENOENT')return null;return {invalid:true,reason:error.message};}
-  try {if (!safeVersion(value.version) || value.protocol !== 1 || !/^[a-f0-9]{40}$/.test(value.revision)) throw Error('Invalid component receipt'); await validateInstalled(path.join(componentHome, value.version)); return value;}
+  try {
+   if (!safeVersion(value.version) || value.protocol !== 1 || !/^[a-f0-9]{40}$/.test(value.revision) || (value.security !== undefined && !['manual-macos','developer-id'].includes(value.security))) throw Error('Invalid component receipt');
+   const {entry}=await release(), directory=path.join(componentHome,value.version);
+   const layout = value.security === 'manual-macos' ? {security:'manual-macos'} : value.security === 'developer-id' ? undefined : entry?.version===value.version ? entry : undefined;
+   await validateInstalled(directory, layout, {checkSecurity:false}); return value;
+  }
   catch(error){return {invalid:true,version:value?.version,reason:'Rendering Cycles installation is incomplete. Remove it and retry. ' + error.message};}
  }
  async function status() {
@@ -96,7 +117,13 @@ export function createCyclesComponentManager({root = ROOT, componentHome = cycle
   const busy = operation.busy || externalBusy;
   let hasFiles=!!installed;try{hasFiles ||= (await readdir(componentHome)).some(name=>safeVersion(name)&&!name.startsWith('.'));}catch(error){if(error.code!=='ENOENT')throw error;}
   const compatible = !!installed && !installed.invalid && installed.protocol === available.lock.protocol && installed.revision === available.lock.revision && installed.version === available.lock.version;
-  return {...operation, busy, installed, compatible, availableRelease: available.entry ? {version: available.entry.version, bytes: available.entry.bytes, installedBytes: available.entry.installedBytes} : null, canInstall: !!available.entry && !compatible && !busy, canUpdate: !!available.entry && !!installed && !compatible && !busy, canRemove: hasFiles && !busy, reason: operation.error || (!compatible ? installed?.reason || available.reason || 'Install Rendering Cycles to enable this optional engine.' : ''), componentHome};
+  let pendingAuthorization = false, approvalReady = false;
+  if (available.entry?.security === 'manual-macos' && !compatible) {
+   try {const receipt = await json(path.join(componentHome, available.entry.version, 'component.json')); pendingAuthorization = receipt.sha256 === available.entry.sha256 && receipt.revision === available.lock.revision;} catch {}
+   if (pendingAuthorization) {try {const approval = await json(path.join(componentHome, available.entry.version, 'approval.json')); approvalReady = approval.protocol === available.lock.protocol && approval.revision === available.lock.revision && approval.approved === true;} catch {}}
+  }
+  const manualReason = pendingAuthorization ? approvalReady ? 'macOS approval recorded. Check authorization to activate Rendering Cycles.' : 'Open Rendering Cycles in macOS to approve it. If macOS blocks it, use System Settings → Privacy & Security → Open Anyway, then check authorization here.' : '';
+  return {...operation, busy, installed, compatible, pendingAuthorization, approvalReady, security:available.entry?.security??null, availableRelease: available.entry ? {version: available.entry.version, bytes: available.entry.bytes, installedBytes: available.entry.installedBytes, security:available.entry.security} : null, canInstall: !!available.entry && !compatible && !pendingAuthorization && !busy, canUpdate: !!available.entry && !!installed && !compatible && !pendingAuthorization && !busy, canAuthorize: pendingAuthorization && !busy, canCheck: pendingAuthorization && !busy, canRemove: hasFiles && !busy, reason: operation.error || (!compatible ? manualReason || installed?.reason || available.reason || 'Install Rendering Cycles to enable this optional engine.' : ''), componentHome};
  }
  async function withLock(task) {
   if (operation.busy) throw fail('BUSY', 'A Rendering Cycles component operation is already running.');
@@ -127,7 +154,8 @@ export function createCyclesComponentManager({root = ROOT, componentHome = cycle
   try {
    const saved = await json(path.join(target, 'component.json'));
    if (saved.protocol !== entry.protocol || saved.revision !== entry.revision || saved.sha256 !== entry.sha256) throw Error('Existing component package does not match the pinned release. Remove Rendering Cycles, then retry.');
-   await validateInstalled(target, entry);
+   await validateInstalled(target, entry, {checkSecurity:false});
+   if (entry.security === 'manual-macos') {operation.phase = 'awaiting-authorization'; operation.progress = 1; return {reused:true, pendingAuthorization:true};}
    const receipt = {protocol:lock.protocol, revision:lock.revision, version:entry.version, validatedScenes:entry.validatedScenes};
    const temporary = path.join(componentHome, '.current-' + randomUUID()); await writeFile(temporary, JSON.stringify(receipt)); await rename(temporary, path.join(componentHome, 'current.json'));
    operation.phase = 'ready'; operation.progress = 1; return {reused:true, installed:receipt};
@@ -158,19 +186,47 @@ export function createCyclesComponentManager({root = ROOT, componentHome = cycle
    await writeFile(path.join(directory, 'component.json'), JSON.stringify({...receipt, sha256: entry.sha256, installedAt: new Date().toISOString()}));
    try {await lstat(target); throw Error('An incomplete or incompatible component version already exists. Remove Rendering Cycles, then retry.');} catch (error) {if (error.code !== 'ENOENT') throw error;}
    await rename(directory, target);
+   if (entry.security === 'manual-macos') {operation.phase = 'awaiting-authorization'; operation.progress = 1; return {pendingAuthorization:true, reused:false};}
    const receiptFile = path.join(componentHome, '.current-' + randomUUID()); await writeFile(receiptFile, JSON.stringify(receipt)); await rename(receiptFile, path.join(componentHome, 'current.json'));
    operation.phase = 'ready'; operation.progress = 1; return {installed: receipt, reused: false};
   } finally {await rm(stage, {recursive: true, force: true});}
+ });}
+ async function authorize() {return withLock(async () => {
+  const {entry} = await release();
+  if (entry?.security !== 'manual-macos') throw fail('UNAVAILABLE', 'This release does not use macOS manual approval.');
+  const pending = await status();
+  if (!pending.pendingAuthorization) throw fail('NOT_READY', 'Download Rendering Cycles before opening it for macOS authorization.');
+  operation.phase = 'opening-authorization';
+  await openApp(appPath(path.join(componentHome, entry.version)));
+  operation.phase = 'awaiting-authorization'; operation.progress = 1;
+  return {pendingAuthorization:true};
+ });}
+ async function checkAuthorization() {return withLock(async () => {
+  const {entry, lock} = await release();
+  if (entry?.security !== 'manual-macos') throw fail('UNAVAILABLE', 'This release does not use macOS manual approval.');
+  const directory = path.join(componentHome, entry.version);
+  const packageReceipt = await json(path.join(directory, 'component.json'));
+  if (packageReceipt.sha256 !== entry.sha256 || packageReceipt.revision !== lock.revision || packageReceipt.version !== lock.version) throw fail('INVALID', 'Downloaded Rendering Cycles does not match the pinned release.');
+  await validateInstalled(directory, entry, {checkSecurity:false});
+  let approval; try {approval = await json(path.join(directory, 'approval.json'));} catch (error) {if (error.code === 'ENOENT') {operation.phase='awaiting-authorization';operation.progress=1;return {pendingAuthorization:true};} throw error;}
+  if (approval.protocol !== lock.protocol || approval.revision !== lock.revision || approval.approved !== true) throw fail('INVALID', 'Rendering Cycles approval does not match this release. Open the app and try again.');
+  operation.phase = 'verifying-authorization';
+  await probeInstalled(manualExecutable(directory), entry);
+  const receipt = {protocol:lock.protocol, revision:lock.revision, version:entry.version, security:'manual-macos', validatedScenes:entry.validatedScenes};
+  const temporary = path.join(componentHome, '.current-' + randomUUID()); await writeFile(temporary, JSON.stringify(receipt)); await rename(temporary, path.join(componentHome, 'current.json'));
+  operation.phase = 'ready'; operation.progress = 1; return {installed:receipt};
  });}
  async function remove() {return withLock(async () => {
   operation.phase = 'removing'; await rm(path.join(componentHome, 'current.json'), {force: true});
   for (const name of await readdir(componentHome)) if (safeVersion(name) && !name.startsWith('.')) {const directory = path.join(componentHome, name); if ((await lstat(directory)).isDirectory()) await rm(directory, {recursive: true, force: true});}
   operation.phase = 'idle'; operation.progress = 0; return {removed: true};
  });}
- return {status, install, update: install, remove};
+ return {status, install, update: install, authorize, checkAuthorization, remove};
 }
 const managers = globalThis[Symbol.for('framevolve.cycles-components')] ??= new Map();
 export function cyclesComponentManager(root = ROOT) {if (!managers.has(root)) managers.set(root, createCyclesComponentManager({root})); return managers.get(root);}
 export const getCyclesComponentStatus = options => cyclesComponentManager(options?.root).status();
 export const installCyclesComponent = options => cyclesComponentManager(options?.root).install();
+export const authorizeCyclesComponent = options => cyclesComponentManager(options?.root).authorize();
+export const checkCyclesComponentAuthorization = options => cyclesComponentManager(options?.root).checkAuthorization();
 export const removeCyclesComponent = options => cyclesComponentManager(options?.root).remove();

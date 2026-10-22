@@ -496,14 +496,14 @@ export function createStudioApi({ spawnFn = nodeSpawn, revealFn = revealWithFind
       if (req.method !== 'POST') return send(res, 404, { error: 'Unknown studio endpoint' });
 
       const body = await readJson(req);
-      const componentAction = route.match(/^\/studio\/components\/cycles\/(install|update|remove)$/);
+      const componentAction = route.match(/^\/studio\/components\/cycles\/(install|update|authorize|check|remove)$/);
       if (componentAction) {
         if (!req.headers.origin || new URL(req.headers.origin).host !== host || req.headers['content-type']?.split(';')[0] !== 'application/json') return send(res,403,{error:'Use Rendering Cycles controls from this Studio tab.'});
         if (!isRecord(body) || Object.keys(body).length) return send(res,400,{error:'Component actions do not accept package URLs or paths.'});
         if (processState.activeRenderId) return send(res,409,{error:'Wait for the current render to finish before changing Rendering Cycles.'});
         if ((await componentManager.status()).busy) return send(res,409,{error:'A Rendering Cycles component operation is already running.'});
         // Start locally and return immediately; progress is available through GET.
-        componentManager[componentAction[1]]().catch(() => {}).finally(() => {cyclesProbe=null;cyclesProbeAt=0;});
+        componentManager[componentAction[1] === 'check' ? 'checkAuthorization' : componentAction[1]]().catch(() => {}).finally(() => {cyclesProbe=null;cyclesProbeAt=0;});
         return send(res,202,{component:await componentManager.status()});
       }
       if (route === '/studio/versions') {

@@ -43,4 +43,8 @@ The setup and installed app now offer **Update / Later** when a compatible updat
 
 ## Optional Rendering Cycles component
 
-Setup and local Studio offer component install/update/removal independently of the base browser renderer. No stable standalone package is published yet, so Install remains unavailable with an explanation. Base setup and Three.js exports remain usable. A future release must pass checksum, Developer ID signature, quarantine and Gatekeeper checks before activation. See [actual development verification and release blockers](CYCLES_STANDALONE_VALIDATION.md). End users will not compile Cycles or install Blender.
+Check **Download Rendering Cycles after setup** to add the optional native 3D renderer, or install it later from **Studio → Export → Rendering Cycles**. The base setup remains usable without this component. There is one Framevolve app and one Desktop shortcut; the component has no separate launcher on the Desktop.
+
+The macOS Apple Silicon preview is precompiled and checksummed. It requires no Blender, terminal commands or compilation. Because it has no Developer ID certificate yet, choose **Authorize in macOS** after download. If macOS blocks the component, use **System Settings → Privacy & Security → Open Anyway**, then return to Framevolve and choose **Check authorization**. Gatekeeper stays enabled. Managed Macs may prohibit this exception.
+
+Choose PULSE or LOOP, set **Renderer → Cycles**, then use **Render View** or **Export MP4**. Other scenes/platforms remain unavailable for Cycles; Three.js remains available. The renderer uses ACES SDR and may differ from the interactive preview and the old Blender Filmic output. See [verification and limits](CYCLES_STANDALONE_VALIDATION.md).

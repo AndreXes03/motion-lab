@@ -34,11 +34,8 @@ class Output final: public OutputDriver {
   Output(std::string f, const std::string &config):file(std::move(f)) {
     auto cfg=OCIO::Config::CreateFromFile(config.c_str());
     auto view=OCIO::DisplayViewTransform::Create();
-    view->setSrc("Linear Rec.709"); view->setDisplay("sRGB"); view->setView("Filmic");
-    auto look=OCIO::LookTransform::Create();
-    look->setSrc("Linear Rec.709"); look->setDst("Linear Rec.709"); look->setLooks("Medium High Contrast");
-    auto group=OCIO::GroupTransform::Create(); group->appendTransform(look); group->appendTransform(view);
-    color=cfg->getProcessor(group)->getDefaultCPUProcessor();
+    view->setSrc("Linear Rec.709 (sRGB)"); view->setDisplay("sRGB - Display"); view->setView("ACES 1.0 - SDR Video");
+    color=cfg->getProcessor(view)->getDefaultCPUProcessor();
   }
   void write_render_tile(const Tile &tile) override {
     if (!(tile.size==tile.full_size)) { error="Unexpected tiled output"; return; }

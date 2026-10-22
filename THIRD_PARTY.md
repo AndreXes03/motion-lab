@@ -113,20 +113,27 @@ contains no Blender application or `bpy`. `native/cycles/build.mjs` configures
 the enabled features; `native/cycles/package.mjs` copies only the custom
 executable, its installed shared libraries, kernel and utility headers, color
 configuration data, and notices. The package manifest records checksums and
-marks the current output experimental, unsigned, and not notarized.
+marks the component as a preview using manual macOS approval, without a
+Developer ID identity or notarization. Quarantine and Gatekeeper are preserved.
 
 | Bundled component | License / notice | Evidence and use |
 | --- | --- | --- |
 | Blender Cycles source and in-tree code | Apache-2.0 by default; BSD-3-Clause, MIT and Zlib portions marked by SPDX | Pinned Cycles source; upstream `doc/license/` files copied into the component |
-| OpenImageIO, Embree, OpenImageDenoise, oneTBB | Apache-2.0 | Present in the installed dynamic dependency set; Apache-2.0 text is included |
+| Minimal OpenImageIO, Embree, OpenImageDenoise, oneTBB | Apache-2.0 with upstream third-party notices | Actual copyright/license and incorporated-code notices retained; same-version OIIO build enables only PNG/HDR/PNM/OpenEXR and excludes libheif |
 | OpenColorIO, OpenEXR and Imath | BSD-3-Clause | Present in the installed dynamic dependency set; BSD-3-Clause text is included |
 | OpenJPH | BSD-2-Clause | Present through OpenEXR/OpenImageIO; separate upstream notice included |
 | pugixml | MIT | Static dependency in the pinned Cycles library bundle; MIT text included |
 | Zstandard | BSD license | Static dependency in the pinned Cycles library bundle; BSD-3-Clause text included |
-| Blender color-management config and LUTs | Sony Pictures Imageworks notice in `ocio-license.txt` | Separate historical Blender notice; current locked color-data commit omits it, so packaging is blocked until a matching official notice checkout is verified |
+| Self-contained ACES 1.3 color config and built-in transforms | BSD-3-Clause, Copyright Contributors to the OpenColorIO Project | Serialized from OCIO 2.5.0 built-in `cg-config-v2.2.0_aces-v1.3_ocio-v2.4`; no external LUTs. Exact notice and config hashes are pinned; standalone appearance differs from Blender Filmic |
+| PNG, fmt, robin-map, libdeflate, yaml-cpp, pystring, minizip-ng; TIFF EXIF tag declarations | Permissive upstream notices in `native/cycles/licenses/` | Static or header dependencies of the included libraries; per-project copyright notices retained. TIFF codec is disabled |
 | Apple system zlib, libc++ and frameworks | Platform-provided | Linked as macOS system components, not copied into the component |
+
+Per-project official copyright notices and any bundled third-party notices are
+in `native/cycles/licenses/`; `sources.json` records versions, source URLs and
+checksums. General license templates alone do not replace these notices.
 
 The exact package file list and hashes are written to `component.json`. Build
 and release details, including the light-reader patch and notice gate, are in
-[`docs/CYCLES_STANDALONE_BUILD.md`](docs/CYCLES_STANDALONE_BUILD.md). No stable
-distribution is authorized by the current unsigned experimental artifact.
+[`docs/CYCLES_STANDALONE_BUILD.md`](docs/CYCLES_STANDALONE_BUILD.md). The public preview component is separate from a stable-release claim; hosted
+download, installation, normal macOS approval and scene output require their
+own verification.

@@ -1,0 +1,19 @@
+{
+  "source": "https://github.com/AcademySoftwareFoundation/OpenColorIO",
+  "revision": "v2.5.0",
+  "builtinConfig": "cg-config-v2.2.0_aces-v1.3_ocio-v2.4",
+  "generatorLibraryVersion": "2.5.0",
+  "input": "Linear Rec.709 (sRGB)",
+  "display": "sRGB - Display",
+  "view": "ACES 1.0 - SDR Video",
+  "look": null,
+  "configSha256": "5aefc668796eabb1902b9593340496231758eceaec18ce290e12901042bd4440",
+  "externalLuts": [],
+  "notice": {
+    "status": "verified",
+    "license": "BSD-3-Clause",
+    "source": "https://raw.githubusercontent.com/AcademySoftwareFoundation/OpenColorIO/v2.5.0/LICENSE",
+    "sha256": "82a40c52065ee968aa62015735e84378ac11425db7a233e6a2dcd2c83fc24276"
+  },
+  "visualCompatibility": "Uses ACES 1.3 SDR output instead of Blender Filmic / Medium High Contrast. Contrast, saturated highlights and exposure appearance differ."
+}

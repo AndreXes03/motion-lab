@@ -1,15 +1,18 @@
 # Experimental standalone Cycles component
 
-This produces the optional `framevolve-cycles` renderer for macOS arm64. It
-uses the upstream Cycles renderer without Blender or `bpy`. The component is
-experimental and cannot be treated as a stable downloadable release until the
-host release has passed the repository's release checks and received a valid
-Developer ID signature and notarization ticket.
+This builds the optional macOS arm64 Cycles preview component for the main
+Framevolve app, without Blender or `bpy`. The renderer is distributed as a
+prebuilt archive and installed from the app. It uses normal manual macOS
+approval with Gatekeeper and quarantine preserved; Developer ID and notarization
+are not required for this preview channel. The main app stays a single app,
+with a nested authorization helper and no additional Desktop icon. The tested
+preview scope is PULSE and LOOP; additional scenes need separate validation.
 
 ## Pinned inputs
 
-`native/cycles/lock.json` records the Cycles source commit, Blender color-data
-commit, precompiled library submodule commit, CMake version and Ninja version.
+`native/cycles/lock.json` records the Cycles source commit, precompiled library
+submodule commit, OpenColorIO built-in config identity and SHA-256, CMake
+version and Ninja version.
 The working copies and build products live beside this repository in
 `../outputs/cycles-native/`; generated native files do not enter the source
 checkout. The build refuses mismatched Git revisions and tool versions.
@@ -17,7 +20,7 @@ checkout. The build refuses mismatched Git revisions and tool versions.
 Developer prerequisite: Git LFS must be available for the official binary libraries. End users never run these build commands.
 
 Prepare the source checkouts at those exact locked commits. For a new setup,
-use sparse checkouts for the large Blender repository and fetch its color data:
+fetch Cycles and its locked library submodule:
 
 ```sh
 mkdir -p ../outputs/cycles-native
@@ -27,20 +30,22 @@ git -C ../outputs/cycles-native/source -c submodule.lib/macos_arm64.update=check
 git -C ../outputs/cycles-native/source/lib/macos_arm64 lfs pull
 git -C ../outputs/cycles-native/source/lib/macos_arm64 checkout --detach 5a140a8ccc8c070221b1b06e2c6f89f136c5758d
 
-git clone --filter=blob:none --no-checkout https://github.com/blender/blender.git ../outputs/cycles-native/color-source
-git -C ../outputs/cycles-native/color-source checkout --detach 32f5fdce0a0a571a39198edf8d7b5d719bf59f2c
-git -C ../outputs/cycles-native/color-source sparse-checkout init --no-cone
-printf '%s\n' '/release/datafiles/colormanagement/' > ../outputs/cycles-native/color-source/.git/info/sparse-checkout
-git -C ../outputs/cycles-native/color-source read-tree -mu HEAD
 ```
 
-The current locked color-data commit does not contain the `ocio-license.txt`
-notice referenced by the configuration data. A historical Blender copy of
-that notice is retained under `native/cycles/licenses/` with its source commit,
-but that alone does not establish the current color data's redistribution
-terms. The native build may still complete and records the unresolved state;
-packaging fails closed until the color-data pin itself provides a verifiable
-notice or the provenance is otherwise resolved and reviewed.
+Color management is a checked-in serialization of OpenColorIO 2.5.0's built-in
+`cg-config-v2.2.0_aces-v1.3_ocio-v2.4`. It contains no external LUT or
+`FileTransform` dependency. The matching upstream BSD-3-Clause copyright notice
+and hashes are recorded in `native/cycles/color/license-provenance.json` and
+`native/cycles/licenses/sources.json`. The build verifies their hashes against
+the lock before copying them into the component. No Blender color-data checkout
+is needed.
+
+The standalone host uses input `Linear Rec.709 (sRGB)`, display `sRGB - Display`,
+and view `ACES 1.0 - SDR Video` without an extra Look. This intentionally differs
+from the Blender Filmic / Medium High Contrast baseline: contrast, exposure
+appearance and saturated highlights require visual review. The old Filmic data
+is excluded because a matching permissive redistribution notice was not
+established. The historical Sony notice alone does not establish that grant.
 
 Provide CMake 3.31.10 and Ninja 1.13.0 at
 `../outputs/cycles-native/tooling/bin/cmake` and
@@ -54,7 +59,7 @@ From the repository root, run:
 
 ```sh
 node native/cycles/build.mjs
-node native/cycles/package.mjs --output ../outputs/cycles-native/framevolve-cycles-dev
+node native/cycles/package.mjs --output ../outputs/cycles-native/framevolve-cycles-0.1.0-preview.1
 ```
 
 The build configures a Release arm64 target with Metal, Embree, OpenImageDenoise
@@ -73,13 +78,30 @@ single source site is absent or ambiguous, and validates the exact change when
 it is already present. All other source changes cause review to fail; do not
 reuse a patched source tree for a different Cycles revision.
 
-`package.mjs` writes an explicit component manifest with each payload file's
-SHA-256. It labels the output `experimental`, `signed: false`, `notarized:
-false` and `stable: false`. It refuses to replace an existing output unless
-`--force` is supplied. `--stable` always fails until the final host installer
-release flow can verify actual test results, a valid Developer ID signature,
-Gatekeeper assessment and a stapled notarization ticket. A local render or an
-assembled component folder is not that release evidence.
+After the Cycles install, `build.mjs` runs `build-oiio.mjs` to replace the
+codec-heavy upstream OpenImageIO library with a same-version minimal build.
+Only PNG, HDR, PNM/PFM and OpenEXR are enabled. The pinned source tarballs and
+TIFF tag header are checksum-verified; TIFF tag declarations support EXIF
+metadata, while the TIFF codec and linkage stay disabled. The minimized build
+also disables HEIF, JPEG, OpenJPEG, WebP and other optional dependencies.
+A binary symbol gate rejects those codecs, removes absolute library load paths,
+and records library hashes in `install/oiio-provenance.json`. Only the two
+OpenImageIO libraries are replaced. This step runs after every upstream install
+so the broad prebuilt library cannot silently return to a release.
+
+`package.mjs` assembles a nested `Rendering Cycles.app` authorization helper and
+runtime, checks ad-hoc code integrity, and writes `component.json` with payload
+SHA-256 hashes. It emits a `.tar.gz` archive and `.release.json` metadata for the
+preview catalog (`security: manual-macos`, no Developer ID or notarization).
+Ad-hoc integrity signatures do not claim verified publisher identity.
+Existing output/archive paths are rejected; choose a fresh versioned output.
+There is no overwrite option. `--stable` is rejected because package assembly
+alone does not verify the final hosted download or macOS approval path.
+
+Before publishing a preview, verify the actual archive download checksum,
+clean installation and normal macOS approval, CPU/Metal availability and actual
+PULSE/LOOP output. Record the observed result; build success alone does not prove
+that the hosted release or visual output has been checked.
 
 ## Notices and scope
 
@@ -94,11 +116,11 @@ The lock's precompiled library bundle is from Blender's upstream library
 repository; `deps.md`, the CMake cache and `otool -L` output are the provenance
 records for versions and linkage.
 
-The bundled Blender color configuration and LUTs have a separate Sony Pictures
-Imageworks notice historically stored at Blender's official
-`release/text/ocio-license.txt` path. This notice is different from
-OpenColorIO's BSD-3-Clause library license. The current color-data commit omits
-that notice, so package assembly remains blocked pending provenance review.
+The self-contained ACES config and the OpenColorIO built-in transforms use
+OpenColorIO's BSD-3-Clause license, with the actual upstream copyright notice.
+Per-project upstream notices accompany the general Cycles license texts. The
+notice source URLs, pinned versions and SHA-256 hashes are in
+`native/cycles/licenses/sources.json`; the build verifies and copies every file.
 
 Blender source contains GPL-licensed build scripts, but those build-time files
 are not copied into this component. The package remains subject to Framevolve's

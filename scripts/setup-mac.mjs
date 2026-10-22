@@ -99,10 +99,12 @@ export async function startSetup({ root = ROOT, open = true, operations = {} } =
       browser = { kind: 'chromium' };
     }
     state.message = 'Checking the browser and video encoder…';
-    const selected = await resolveBrowser({ root, settings: { browser }, env: {} });
-    const instance = await playwright(root).chromium.launch({ executablePath: selected.executablePath, headless: true });
-    try { const page = await instance.newPage(); await page.setContent('<canvas width="8" height="8"></canvas>'); if (!await page.evaluate(() => !!document.querySelector('canvas').getContext('webgl2'))) throw Error('WebGL2 is unavailable. Try another browser or update macOS.'); }
-    finally { await instance.close(); }
+    await (operations.verifyBrowser ?? (async () => {
+      const selected = await resolveBrowser({ root, settings: { browser }, env: {} });
+      const instance = await playwright(root).chromium.launch({ executablePath: selected.executablePath, headless: true });
+      try { const page = await instance.newPage(); await page.setContent('<canvas width="8" height="8"></canvas>'); if (!await page.evaluate(() => !!document.querySelector('canvas').getContext('webgl2'))) throw Error('WebGL2 is unavailable. Try another browser or update macOS.'); }
+      finally { await instance.close(); }
+    }))({browser, root});
     const require = createRequire(path.join(root, 'package.json'));
     await run(require('ffmpeg-static'), ['-version']);
     await run(require('ffprobe-static').path, ['-version']);
@@ -145,23 +147,28 @@ export async function startSetup({ root = ROOT, open = true, operations = {} } =
       let raw = ''; for await (const chunk of request) { raw += chunk; if (raw.length > 8192) return json(413, { error: 'Request too large.' }); }
       const body = JSON.parse(raw || '{}');
       if (state.busy) return json(409, { error: 'A setup step is still running.' });
-      const componentAction = url.pathname.match(/^\/api\/components\/cycles\/(install|update|remove)$/);
+      const componentAction = url.pathname.match(/^\/api\/components\/cycles\/(install|update|authorize|check|remove)$/);
       if (componentAction) {
         if (Object.keys(body).length) return json(400,{error:'Component actions do not accept package URLs or paths.'});
         job('cycles', async () => {
           state.message = 'Preparing optional Rendering Cycles…';
-          await componentManager[componentAction[1]]();
-          state.cyclesComponent = await componentStatus(); state.message = componentAction[1] === 'remove' ? 'Rendering Cycles removed. Three.js is ready.' : 'Rendering Cycles is ready.';
+          await componentManager[componentAction[1] === 'check' ? 'checkAuthorization' : componentAction[1]]();
+          state.cyclesComponent = await componentStatus(); state.message = componentAction[1] === 'remove' ? 'Rendering Cycles removed. Three.js is ready.' : state.cyclesComponent.pendingAuthorization ? 'Rendering Cycles is downloaded and waiting for macOS approval.' : 'Rendering Cycles is ready.';
         });
       } else if (url.pathname === '/api/install') {
         if (!Object.hasOwn(PROVIDERS, body.provider)) return json(400, { error: 'Choose an available agent.' });
         if (!['auto', 'chrome', 'chromium'].includes(body.browser)) return json(400, { error: 'Choose Automatic, Chrome or Chromium.' });
         if (body.feedbackMemory !== undefined && typeof body.feedbackMemory !== 'boolean') return json(400, { error: 'Choose whether to save feedback memory.' });
+        if (body.cyclesOptional !== undefined && typeof body.cyclesOptional !== 'boolean') return json(400, { error: 'Choose whether to download Rendering Cycles.' });
         job('install', async () => {
           if (body.feedbackMemory !== undefined) { await setMemoryConsent(root, body.feedbackMemory); state.feedbackMemory = body.feedbackMemory; }
           state.provider = body.provider;
           await prepare(body);
           await finish();
+          if (body.cyclesOptional) {
+            try {state.message = 'Downloading optional Rendering Cycles…'; await componentManager.install(); state.cyclesComponent = await componentStatus(); state.message = state.cyclesComponent.pendingAuthorization ? 'Framevolve is ready. Rendering Cycles needs your macOS approval.' : 'Framevolve and Rendering Cycles are ready.';}
+            catch (error) {state.cyclesComponent = await componentStatus(); state.message = `Framevolve is ready. Optional Rendering Cycles could not be installed: ${error.message}`;}
+          }
         });
       } else if (url.pathname === '/api/memory') {
         const memory = await setMemoryConsent(root, body.enabled); state.feedbackMemory = memory.consent.enabled;

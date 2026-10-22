@@ -1,5 +1,6 @@
 #!/usr/bin/env node
 import {execFile} from 'node:child_process';
+import {createHash} from 'node:crypto';
 import {access,cp,mkdir,readFile,rm,writeFile} from 'node:fs/promises';
 import path from 'node:path';
 import {fileURLToPath} from 'node:url';
@@ -48,11 +49,10 @@ async function version(program,args,expected,label){
 }
 
 if(process.platform!=='darwin'||process.arch!=='arm64') throw new Error('This pinned build script currently supports macOS arm64 only.');
-for(const [file,label] of [[path.join(SOURCE,'.git'),'Cycles source checkout'],[path.join(SOURCE,'lib/macos_arm64/.git'),'Cycles precompiled library checkout'],[path.join(WORK,'color-source/.git'),'Blender color-data checkout'],[path.join(TOOLBIN,'cmake'),'pinned CMake'],[path.join(TOOLBIN,'ninja'),'pinned Ninja']]) await assertExists(file,label);
+for(const [file,label] of [[path.join(SOURCE,'.git'),'Cycles source checkout'],[path.join(SOURCE,'lib/macos_arm64/.git'),'Cycles precompiled library checkout'],[path.join(TOOLBIN,'cmake'),'pinned CMake'],[path.join(TOOLBIN,'ninja'),'pinned Ninja']]) await assertExists(file,label);
 const revisions=[
   ['Cycles source',SOURCE,LOCK.revision],
   ['Cycles libraries',path.join(SOURCE,'lib/macos_arm64'),LOCK.libraries['darwin-arm64']],
-  ['Blender color data',path.join(WORK,'color-source'),LOCK.colorRevision],
 ];
 for(const [label,dir,expected] of revisions){const actual=await gitHead(dir);if(actual!==expected)throw new Error(`${label} revision mismatch: expected ${expected}, got ${actual}`);}
 await version(path.join(TOOLBIN,'cmake'),['--version'],`cmake version ${LOCK.cmake}`,'CMake');
@@ -103,20 +103,27 @@ const common=[
 await run(cmake,['-S',SOURCE,'-B',BUILD,'-G','Ninja',...common]);
 await run(path.join(TOOLBIN,'ninja'),['-C',BUILD,'-j','6','framevolve-cycles']);
 await run(cmake,['--install',BUILD]);
+await run(process.execPath,[path.join(ROOT,'native/cycles/build-oiio.mjs')]);
 await rm(path.join(INSTALL,'color'),{recursive:true,force:true});
 await rm(path.join(INSTALL,'license/ocio-license.txt'),{force:true});
 await mkdir(path.join(INSTALL,'color'),{recursive:true});
-await cp(path.join(WORK,'color-source/release/datafiles/colormanagement'),path.join(INSTALL,'color'),{recursive:true,force:true});
-let colorNotice={status:'unresolved',reason:'The pinned color-data source has no verified ocio-license.txt notice.'};
-try{
-  const upstreamNotice=path.join(WORK,'color-source/release/text/ocio-license.txt');
-  const upstreamText=(await readFile(upstreamNotice,'utf8')).replaceAll('\r\n','\n').trim();
-  const vendoredText=(await readFile(path.join(ROOT,'native/cycles/licenses/ocio-license.txt'),'utf8')).replaceAll('\r\n','\n').trim();
-  if(upstreamText!==vendoredText) throw new Error('The local OCIO notice differs from its pinned official source.');
-  await cp(upstreamNotice,path.join(INSTALL,'license/ocio-license.txt'));
-  colorNotice={status:'verified',sourceRevision:LOCK.colorRevision,sourcePath:'release/text/ocio-license.txt'};
-}catch(error){if(error.code!=='ENOENT') throw error;}
-await writeFile(path.join(INSTALL,'color/license-provenance.json'),JSON.stringify({colorRevision:LOCK.colorRevision,notice:colorNotice},null,2)+'\n');
+const colorRoot=path.join(ROOT,'native/cycles/color');
+const configBytes=await readFile(path.join(colorRoot,'config.ocio'));
+const noticeBytes=await readFile(path.join(ROOT,'native/cycles/licenses/OpenColorIO-LICENSE'));
+const sha256=bytes=>createHash('sha256').update(bytes).digest('hex');
+if(sha256(configBytes)!==LOCK.colorConfigSha256||sha256(noticeBytes)!==LOCK.colorLicenseSha256) throw new Error('Color config or official notice hash differs from the pinned lock.');
+if(configBytes.toString().includes('!<FileTransform>')) throw new Error('Self-contained color config must not reference external LUT files.');
+const colorProvenance=JSON.parse(await readFile(path.join(colorRoot,'license-provenance.json'),'utf8'));
+if(colorProvenance.configSha256!==LOCK.colorConfigSha256||colorProvenance.notice?.sha256!==LOCK.colorLicenseSha256||colorProvenance.notice?.status!=='verified') throw new Error('Color provenance differs from the pinned lock.');
+await cp(colorRoot,path.join(INSTALL,'color'),{recursive:true,force:true});
+const noticeSources=JSON.parse(await readFile(path.join(ROOT,'native/cycles/licenses/sources.json'),'utf8'));
+for(const notice of noticeSources){
+  const source=path.join(ROOT,'native/cycles/licenses',notice.file);
+  if(sha256(await readFile(source))!==notice.sha256) throw new Error(`Official dependency notice hash mismatch: ${notice.file}`);
+  await cp(source,path.join(INSTALL,'license',notice.file));
+}
+await cp(path.join(ROOT,'native/cycles/licenses/sources.json'),path.join(INSTALL,'license/notice-sources.json'));
+await cp(path.join(ROOT,'native/cycles/licenses/README.md'),path.join(INSTALL,'license/FRAMEVOLVE-NOTICES.md'));
 await cp(path.join(ROOT,'native/cycles/licenses/openjph-BSD-2-Clause.txt'),path.join(INSTALL,'license/openjph-BSD-2-Clause.txt'));
 await assertExists(path.join(INSTALL,'framevolve-cycles'),'built executable');
 await assertExists(path.join(INSTALL,'color/config.ocio'),'pinned color config');

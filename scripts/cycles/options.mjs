@@ -16,7 +16,7 @@ export const adaptations = [
   'PULSE and LOOP have scoped Cycles adapters. Standalone remains a development component until its release gates pass; material/light/color differences require visual comparison.',
   'Custom GLSL, hemisphere ambient lights, per-material environment maps, screen-space reflectors/contact shadows, fisheye, bloom, AO and depth-of-field postprocessing are not transferred.',
   'PULSE LED instance color and emission are explicitly translated. Basic labels use an unlit emission material.',
-  'Display finish applies the shared color contrast and saturation after Filmic; raw finish skips them. PULSE exposure uses sceneControls.exposure; look.post.exposure is not consumed by the PULSE adapter.',
+  'Standalone uses ACES SDR instead of the old Blender Filmic response. Display finish then applies shared contrast and saturation; raw finish skips that grade. PULSE exposure uses sceneControls.exposure; look.post.exposure is not consumed by the PULSE adapter.',
   'LOOP combines native Canvas graphics with Cycles geometry, area/spot lights and physical lens depth of field. Browser post effects are not reproduced.',
   'Procedural sound uses the current runtime sampleMotion and sound-design engine; an explicit audio source takes precedence.',
   'Animation groups, rates and numeric parameter tracks are baked at absolute time; geometry/texture changes update once per output frame, so deformation/texture motion blur is not supported.',
