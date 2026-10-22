@@ -37,7 +37,7 @@ try{
  await page.locator('#video-mode').click();assert.equal(await page.locator('.playback').isVisible(),true);assert.equal(Number(await page.locator('#seek').inputValue()),42,'Browsing the storyboard must preserve the video position');
  await page.locator('#seek').fill('90');await page.locator('#seek').dispatchEvent('input');await page.evaluate(()=>window.motionPreview.whenIdle());
  const board=await readBoard(root,'pop');board.shots[0].name='Meet the player';await writeBoard(root,board);
- await page.locator('#story-mode').click();await page.waitForFunction(()=>document.querySelector('#story-name').textContent==='Meet the player'&&document.querySelector('#story-status').textContent.startsWith('Layouts rendered'),{timeout:60000});
+ await page.locator('#story-mode').click();await page.waitForFunction(()=>document.querySelector('#story-status').textContent.startsWith('Layouts rendered'),{timeout:60000});
  await page.locator('.story-card').first().click();assert.equal(await page.locator('#story-name').textContent(),'Meet the player');await page.locator('#story-edit').click();await page.waitForFunction(()=>Number(document.querySelector('#seek').value)===33);assert.equal(await page.locator('.playback').isVisible(),true);
  await page.locator('#scene').selectOption('starter');await page.locator('#story-mode').click();await page.locator('#story-empty').waitFor();assert.equal(await page.locator('.story-card').count(),0);assert.equal(await page.locator('#story-empty').isVisible(),true);
  await page.locator('#scene').selectOption('pop');await page.waitForFunction(()=>document.querySelectorAll('.story-card').length===4&&document.querySelector('#story-status').textContent.startsWith('Layouts rendered'));
