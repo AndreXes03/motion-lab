@@ -80,7 +80,7 @@ export function mountProjectLibraryUI({ container, actions = {}, isBusy = () => 
     status.textContent = statusText(state);
     status.title = status.textContent;
     status.dataset.state = state.status || 'unsaved';
-    const projects = (Array.isArray(state.projects) ? state.projects : []).slice(0, 8);
+    const projects = Array.isArray(state.projects) ? state.projects : [];
     const signature = JSON.stringify(projects.map(project => [project.id, project.name, project.updatedAt, project.imported, !!project.customCode, project.warnings ?? project.portabilityWarnings]));
     if (signature !== recentSignature) {
       recentSignature = signature;

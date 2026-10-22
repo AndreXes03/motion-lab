@@ -40,7 +40,7 @@
 .project-library-menu > button .studio-icon { width: 14px; height: 14px; color: #aab49a; }
 .project-library-chevron { margin-left: auto; color: #8f9883; font-size: 18px; }
 .project-library-menu-separator { height: 1px; margin: 5px 3px; background: #ffffff1a; }
-.project-library-recent { padding: 2px 0 3px 13px; border-left: 1px solid #ffffff19; margin: 0 0 0 16px; }
+.project-library-recent { padding: 2px 0 3px 13px; border-left: 1px solid #ffffff19; margin: 0 0 0 16px; max-height: min(300px, 40vh); overflow-y: auto; }
 .project-library-recent > button { display: block; min-width: 0; }
 .project-library-recent-name { display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .project-library-recent small { display: block; margin-top: 2px; color: #899183; font-size: 9px; }

@@ -76,6 +76,7 @@ export async function createActiveProject(root,input){return exclusive(root,asyn
 /** beforeActivate is a private failure-injection hook; never accept it from API input. */
 export async function openActiveProject(root,input,{beforeActivate=async()=>{}}={}){return exclusive(root,async()=>{
  const current=await expected(root,input.activeId),record=await readProject(root,input.id),trusted=current?.trusted??[];
+ if(!record.snapshot?.parameters?.scene)throw failure('This package has no scene recipe to open in Studio.',400);
  if(record.imported&&record.customCode&&!trusted.includes(record.id)&&input.trusted!==true)throw failure('This imported project contains scene code. Confirm that you trust its source before opening it.',428);
  const review=await readReview(root);let journal,result;
  try{
