@@ -1,7 +1,7 @@
 import {randomBytes} from 'node:crypto';
 import path from 'node:path';
 import {readReview,liveFile} from './live-review-store.mjs';
-import {libraryState,projectSession,saveActiveProject,createActiveProject,openActiveProject,importLibraryProject,exportLibraryProject,autosaveActiveProject} from './project-library-session.mjs';
+import {libraryState,projectSession,saveActiveProject,createActiveProject,openActiveProject,importLibraryProject,exportLibraryProject,autosaveActiveProject,manageLibraryProject,chooseLibraryScene,preflightLibraryProject} from './project-library-session.mjs';
 import {isManagedProjectPath} from './project-library-store.mjs';
 
 export function projectLibraryMiddleware(root){const token=randomBytes(32).toString('hex');return async(req,res)=>{
@@ -21,8 +21,11 @@ export function projectLibraryMiddleware(root){const token=randomBytes(32).toStr
   if(req.url==='/save')return send(200,{record:await saveActiveProject(root,body)});
   if(req.url==='/new')return send(200,{record:await createActiveProject(root,body)});
   if(req.url==='/open')return send(200,await openActiveProject(root,body));
+  if(req.url==='/manage')return send(200,{record:await manageLibraryProject(root,body)});
+  if(req.url==='/scene')return send(200,await chooseLibraryScene(root,body));
+  if(req.url==='/preflight')return send(200,await preflightLibraryProject(root,body));
   if(req.url==='/export'){
-   const result=await exportLibraryProject(root,body.id);
+   const result=await exportLibraryProject(root,body.id,body.revision);
    res.writeHead(200,{'Content-Type':'application/octet-stream','Content-Disposition':'attachment; filename="project.framevolve"','Content-Length':result.length,'Cache-Control':'no-store','X-Content-Type-Options':'nosniff'});return res.end(result);
   }
   return send(404,{error:'Unknown project action.'});

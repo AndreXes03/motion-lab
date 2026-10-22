@@ -5,13 +5,15 @@ import {planFoley,foleySample} from './sound-foley.js';
 /** Deterministic PCM sound engine. Shared by the viewer and offline exports. */
 const clamp=(v,a=0,b=1)=>Math.max(a,Math.min(b,v));
 const TAU=Math.PI*2;
-export const soundDefaults={enabled:true,camera:.22,objects:.38,accents:.25,dial:.85,hinge:.85,gyro:.5,music:.38,master:.8,density:.65,musicStyle:'scene',tempo:'auto',bpm:132,seed:42,cameraKit:'air',objectKit:'mechanical',accentKit:'soft'};
+export const soundDefaults={enabled:true,muted:false,camera:.22,objects:.38,accents:.25,dial:.85,hinge:.85,gyro:.5,music:.38,master:.8,density:.65,musicStyle:'scene',tempo:'auto',bpm:132,seed:42,cameraKit:'air',objectKit:'mechanical',accentKit:'soft'};
+/** Relative to the authored default mix, preserving older project loudness. */
+export function masterGain(sound={}){return sound.muted?0:(sound.master??soundDefaults.master)/soundDefaults.master;}
 export const soundKits={camera:['air','silk','deep','grain','swirl','reverse','bright','riser'],objects:['mechanical','metal','plastic','glass','rubber','wood','electric','ceramic'],accents:['soft','click','knock','snap','ping','sub','chime','pop']};
 export function normalizeSound(input={}){
  if(!input||typeof input!=='object'||Array.isArray(input))throw Error('Invalid sound settings');
  for(const k of Object.keys(input))if(!(k in soundDefaults))throw Error('Unknown sound setting: '+k);
  const s={...soundDefaults,...input};if(!['scene','ambient','techno'].includes(s.musicStyle))throw Error('Invalid music style');
- if(typeof s.enabled!=='boolean'||!['auto','manual'].includes(s.tempo))throw Error('Invalid sound mode');
+ if(typeof s.enabled!=='boolean'||typeof s.muted!=='boolean'||!['auto','manual'].includes(s.tempo))throw Error('Invalid sound mode');
  for(const k of ['camera','objects','accents','music','master','density','dial','hinge','gyro'])if(!Number.isFinite(s[k])||s[k]<0||s[k]>1)throw Error('Sound '+k+' must be 0..1');
  if(!Number.isFinite(s.bpm)||s.bpm<60||s.bpm>180)throw Error('BPM must be 60..180');
  if(!Number.isInteger(s.seed)||s.seed<0||s.seed>999999)throw Error('Invalid sound seed');
@@ -135,10 +137,10 @@ export function renderSound(plan,{sampleRate=48000,stems=false}={}){
  for(let i=0;i<n;i++){
   const t=i/sampleRate,fade=Math.min(1,t/.012,(duration-t)/.13);let duck=1;
   for(const e of plan.events)if(e.module==='accents'&&t>=e.time&&t<e.time+.22)duck=Math.min(duck,1-.45*e.gain*Math.exp(-(t-e.time)*13));
-  for(let c=0;c<2;c++){let x=0;for(const [key,bus] of Object.entries(buses)){bus[c][i]*=4*s[key]*s.master*fade*(key==='music'?duck:1);x+=bus[c][i];}mix[c][i]=x;peak=Math.max(peak,Math.abs(x));sum+=x*x;}
+  for(let c=0;c<2;c++){let x=0;for(const [key,bus] of Object.entries(buses)){bus[c][i]*=4*s[key]*soundDefaults.master*fade*(key==='music'?duck:1);x+=bus[c][i];}mix[c][i]=x;peak=Math.max(peak,Math.abs(x));sum+=x*x;}
  }
- // One shared gain preserves stem summation and avoids clipping without flattening dynamics.
- const gain=peak>.89?.89/peak:1;if(gain<1)for(let c=0;c<2;c++)for(let i=0;i<n;i++){mix[c][i]*=gain;for(const bus of Object.values(buses))bus[c][i]*=gain;}
+ // Limit at the authored reference level, then apply master once to preserve its full range and stem summation.
+ const limiter=peak>.89?.89/peak:1,gain=limiter*masterGain(s);if(gain!==1)for(let c=0;c<2;c++)for(let i=0;i<n;i++){mix[c][i]*=gain;for(const bus of Object.values(buses))bus[c][i]*=gain;}
  return {channels:mix,sampleRate,stems:stems?buses:undefined,stats:{peak:peak*gain,rms:Math.sqrt(sum/(n*2))*gain,gain,bpm,eventCount:plan.events.length,duration}};
 }
 export function encodeWav(channels,sampleRate=48000){const n=channels[0].length,buffer=new ArrayBuffer(44+n*4),v=new DataView(buffer);const str=(at,s)=>[...s].forEach((c,i)=>v.setUint8(at+i,c.charCodeAt(0)));str(0,'RIFF');v.setUint32(4,36+n*4,true);str(8,'WAVE');str(12,'fmt ');v.setUint32(16,16,true);v.setUint16(20,1,true);v.setUint16(22,2,true);v.setUint32(24,sampleRate,true);v.setUint32(28,sampleRate*4,true);v.setUint16(32,4,true);v.setUint16(34,16,true);str(36,'data');v.setUint32(40,n*4,true);for(let i=0;i<n;i++)for(let c=0;c<2;c++)v.setInt16(44+i*4+c*2,Math.round(clamp(channels[c][i],-1,1)*32767),true);return new Uint8Array(buffer);}

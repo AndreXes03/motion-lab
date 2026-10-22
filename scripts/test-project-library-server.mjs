@@ -36,3 +36,17 @@ test('watcher autosaves agent source edits without overwriting the saved UI reci
  assert.ok(state.active.revision>record.revision);assert.deepEqual(state.active.snapshot,record.snapshot);assert.equal(state.error,'');
  assert.notEqual((await readProject(root,record.id)).files['src/scenes/film.js'],undefined);
 });
+
+test('collection, example and preflight routes preserve recovery and reviewed revisions',async t=>{
+ const root=await fixture(t),server=http.createServer(projectLibraryMiddleware(root));await new Promise(resolve=>server.listen(0,'127.0.0.1',resolve));t.after(()=>new Promise(resolve=>server.close(resolve)));
+ const origin='http://127.0.0.1:'+server.address().port,{token}=await(await fetch(origin)).json();
+ const post=(route,body)=>fetch(origin+route,{method:'POST',headers:{Origin:origin,'Content-Type':'application/json','X-Framevolve-Project':token},body:JSON.stringify(body)});
+ const active=(await(await post('/save',{activeId:null,name:'Original project',snapshot:snapshot('preserved')})).json()).record;
+ const copied=(await(await post('/manage',{activeId:active.id,id:active.id,revision:active.revision,action:'duplicate'})).json()).record;
+ assert.notEqual(copied.id,active.id);assert.equal((await post('/manage',{activeId:active.id,id:active.id,revision:active.revision,action:'trash'})).status,409);
+ const trash=(await(await post('/manage',{activeId:active.id,id:copied.id,revision:copied.revision,action:'trash'})).json()).record;assert.ok(trash.trashedAt);
+ const restored=(await(await post('/manage',{activeId:active.id,id:trash.id,revision:trash.revision,action:'restore'})).json()).record;assert.equal(restored.trashedAt,null);
+ const replacedResponse=await post('/scene',{activeId:active.id,revision:active.revision,sceneId:'procedural',label:'Procedural',mode:'replace',snapshot:snapshot('example')});assert.equal(replacedResponse.status,200);const replaced=await replacedResponse.json();assert.deepEqual(replaced.checkpoint.snapshot,active.snapshot);
+ const preflight=await(await post('/preflight',{activeId:active.id})).json();assert.equal(preflight.revision,replaced.record.revision);assert.ok(preflight.files.some(file=>file.path==='src/scenes/film.js'));assert.match(preflight.limitations,/Computed paths/);
+ assert.equal((await post('/export',{id:active.id,revision:active.revision})).status,409);assert.equal((await post('/export',{id:active.id,revision:preflight.revision})).status,200);
+});

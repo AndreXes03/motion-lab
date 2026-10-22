@@ -161,7 +161,7 @@ async function exportVideo(page, target, width, height, parameters, start, end, 
       const channels=result.channels.map(c=>c.slice(Math.round(start*result.sampleRate),Math.round(end*result.sampleRate)));
       audioPath=path.join(frameDir,'sound.wav');await writeFile(audioPath,encodeWav(channels,result.sampleRate));
     }
-    audioPath=await renderTimelineAudio({root:ROOT,audio:parameters.audio,start,duration:total/fps,destination:path.join(frameDir,'timeline-mix.wav'),baseAudio:audioPath,run});
+    audioPath=await renderTimelineAudio({root:ROOT,audio:parameters.audio,sound:parameters.sound,start,duration:total/fps,destination:path.join(frameDir,'timeline-mix.wav'),baseAudio:audioPath,run});
     await encodeFrames(frameDir, target, width, height, fps, format, bitrateMbps,audioPath,total);
     success = true;
   } finally { await cache.close(success); }

@@ -143,7 +143,7 @@ async function main(){
  }else if(audioPath)await updateManifest({audio:{kind:'explicit-source',path:audioPath}});
  if(options.command!=='frame'){
   const {renderTimelineAudio}=await import(pathToFileURL(path.join(frozen,'scripts/native/audio.mjs')).href);
-  const mixed=await renderTimelineAudio({root:frozen,audio:options.parameters.audio,start:options.start,duration:options.count/options.fps,destination:path.join(directory,'timeline-mix.wav'),baseAudio:audioPath,baseOffset:audioOffset,run});
+  const mixed=await renderTimelineAudio({root:frozen,audio:options.parameters.audio,sound:options.parameters.sound,baseMastered:!options.audio,start:options.start,duration:options.count/options.fps,destination:path.join(directory,'timeline-mix.wav'),baseAudio:audioPath,baseOffset:audioOffset,run});
   if(mixed!==audioPath){audioPath=mixed;audioOffset=0;await updateManifest({audio:{kind:'timeline',path:audioPath,tracks:options.parameters.audio.tracks,base:manifest.audio??null}});}
  }
  if(options.command==='frame')await copyFile(path.join(sequence,'frame-000001.png'),temporary);

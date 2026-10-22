@@ -40,7 +40,7 @@ try{
  const synthesizedPath=base+'.synth.wav',mixedPath=base+'.wav';
  await writeFile(synthesizedPath,encodeWav(trim(result.channels),result.sampleRate));
  for(const [name,channels]of Object.entries(result.stems))await writeFile(base+'.'+name+'.wav',encodeWav(trim(channels),result.sampleRate));
- const mixed=await renderTimelineAudio({root,audio:importedAudio,start,duration:end-start,destination:mixedPath,baseAudio:synthesizedPath,baseOffset:0,run});
+ const mixed=await renderTimelineAudio({root,audio:importedAudio,sound:settings,start,duration:end-start,destination:mixedPath,baseAudio:synthesizedPath,baseOffset:0,run});
  if(mixed!==mixedPath)await copyFile(synthesizedPath,mixedPath);
  await writeFile(base+'.sound.json',JSON.stringify({settings,stats:result.stats,bpm:plan.bpm,phase:plan.phase,events:plan.events,start,end,telemetrySource,importedTracks:importedAudio.tracks,stems:Object.keys(result.stems),mix:mixedPath,syntheticStem:synthesizedPath,videoSource:path.basename(args.video),recipeSource:path.basename(args.recipe)},null,2));
  await writeFile(base+'.telemetry.json',JSON.stringify(telemetry));

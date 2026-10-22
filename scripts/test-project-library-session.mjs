@@ -5,7 +5,7 @@ import os from 'node:os';
 import path from 'node:path';
 import {spawnSync} from 'node:child_process';
 import {saveProject,exportProject,readProject,openProject} from './project-library-store.mjs';
-import {libraryState,saveActiveProject,autosaveActiveProject,createActiveProject,openActiveProject,importLibraryProject,projectSession} from './project-library-session.mjs';
+import {libraryState,saveActiveProject,autosaveActiveProject,createActiveProject,openActiveProject,importLibraryProject,projectSession,manageLibraryProject,chooseLibraryScene,preflightLibraryProject,exportLibraryProject} from './project-library-session.mjs';
 const recipe=label=>({parameters:{scene:'starter'},label});
 async function put(root,name,value){await mkdir(path.dirname(path.join(root,name)),{recursive:true});await writeFile(path.join(root,name),value);}
 async function fixture(t){const root=await realpath(await mkdtemp(path.join(os.tmpdir(),'framevolve-session-')));t.after(()=>rm(root,{recursive:true,force:true}));await put(root,'src/scenes/film.js','original');await put(root,'src/config.js','config');await put(root,'project/look.json','{}');return root;}
@@ -71,3 +71,56 @@ test('an interrupted activation journal restores the prior workspace before acce
  const outside=await fixture(t);await symlink(path.join(outside,'src/scenes/film.js'),path.join(root,'src/scenes/linked.js'));await assert.rejects(autosaveActiveProject(alias),/Linked/);await rm(path.join(root,'src/scenes/linked.js'));
  await rm(path.join(root,'.motion-cache'),{recursive:true,force:true});await symlink(path.join(outside,'project'),path.join(root,'.motion-cache'));await assert.rejects(libraryState(alias),/cannot be a link/);await assert.rejects(readProject(alias,created.id),/Linked/);assert.equal(await read(outside,'project/look.json'),'{}');
  });
+
+
+test('collection rename, duplicate and Trash preserve saved source and require current revisions',async t=>{
+ const root=await fixture(t),active=await createActiveProject(root,{activeId:null,name:'Current',snapshot:recipe('current')});
+ const manage=(record,action,extra={})=>manageLibraryProject(root,{activeId:active.id,id:record.id,revision:record.revision,action,...extra});
+ const copy=await manage(active,'duplicate');assert.notEqual(copy.id,active.id);assert.deepEqual(copy.snapshot,active.snapshot);
+ await put(root,'src/scenes/film.js','unsaved active source');
+ const renamed=await manage(copy,'rename',{name:'A clear name'});assert.equal(renamed.name,'A clear name');assert.equal(renamed.revision,copy.revision+1);
+ await assert.rejects(manage(copy,'trash'),{status:409});await assert.rejects(manage(active,'trash'),/Open another project/);
+ const trashed=await manage(renamed,'trash');assert.ok(trashed.trashedAt);assert.ok((await libraryState(root)).projects.find(project=>project.id===copy.id).trashedAt);
+ await assert.rejects(openActiveProject(root,{activeId:active.id,id:copy.id,snapshot:active.snapshot}),/Restore/);
+ const restored=await manage(trashed,'restore');assert.equal(restored.trashedAt,null);assert.equal((await libraryState(root)).active.id,active.id);assert.equal(await read(root,'src/scenes/film.js'),'unsaved active source');
+ assert.deepEqual((await readProject(root,copy.id)).files,(await readProject(root,active.id)).files);
+ await openActiveProject(root,{activeId:active.id,id:copy.id,snapshot:active.snapshot});assert.equal(await read(root,'src/scenes/film.js'),'original');
+});
+
+test('choosing an example creates a new project or a visible recoverable snapshot before replacement',async t=>{
+ const root=await fixture(t),active=await createActiveProject(root,{activeId:null,name:'Current',snapshot:recipe('edited current')});
+ const next={parameters:{scene:'procedural'},label:'example'};
+ const replaced=await chooseLibraryScene(root,{activeId:active.id,revision:active.revision,mode:'replace',sceneId:'procedural',label:'Procedural',snapshot:next});
+ assert.equal(replaced.record.id,active.id);assert.equal(replaced.record.snapshot.label,'example');assert.deepEqual(replaced.checkpoint.snapshot,active.snapshot);
+ assert.ok((await libraryState(root)).projects.some(project=>project.id===replaced.checkpoint.id&&!project.trashedAt));
+ await assert.rejects(chooseLibraryScene(root,{activeId:active.id,revision:active.revision,mode:'replace',sceneId:'procedural',snapshot:next}),{status:409});
+ const created=await chooseLibraryScene(root,{activeId:active.id,revision:replaced.record.revision,mode:'new',name:'Independent example',sceneId:'procedural',snapshot:next});
+ assert.notEqual(created.record.id,active.id);assert.equal((await libraryState(root)).active.id,created.record.id);assert.deepEqual((await readProject(root,active.id)).snapshot,next);
+ await openActiveProject(root,{activeId:created.record.id,id:replaced.checkpoint.id,snapshot:next});assert.deepEqual((await libraryState(root)).active.snapshot,active.snapshot);
+});
+
+test('portable preflight lists verified assets and warnings, and refuses a download after a newer save',async t=>{
+ const root=await fixture(t);await put(root,'project/assets/local.wav','local media');await put(root,'src/scenes/film.js','const external="https://example.com/missing.wav";');
+ const active=await createActiveProject(root,{activeId:null,name:'Portable review',snapshot:{parameters:{scene:'procedural',renderPolicy:{renderer:'cycles'}}}});
+ const preflight=await preflightLibraryProject(root,{activeId:active.id});assert.equal(preflight.revision,active.revision);assert.ok(preflight.files.some(file=>file.path==='project/assets/local.wav'&&file.bytes===11));assert.ok(preflight.warnings.some(warning=>warning.reference==='https://example.com/missing.wav'));assert.ok(preflight.requirements.some(requirement=>/Cycles separately/.test(requirement)));assert.match(preflight.limitations,/Computed paths cannot all/);
+ await put(root,'project/assets/new.txt','new asset');const newer=await autosaveActiveProject(root);
+ await assert.rejects(exportLibraryProject(root,active.id,preflight.revision),{status:409});assert.ok((await exportLibraryProject(root,active.id,newer.revision)).length);
+});
+
+test('collection and example operations respect render and stale-session guards',async t=>{
+ const root=await fixture(t),active=await createActiveProject(root,{activeId:null,name:'Guarded',snapshot:recipe('current')});
+ const key=Symbol.for('framevolve.studio-render-states'),prior=globalThis[key];globalThis[key]=new Map([[root,{activeRenderId:'render'}]]);
+ try{for(const operation of [()=>manageLibraryProject(root,{activeId:active.id,id:active.id,revision:active.revision,action:'duplicate'}),()=>chooseLibraryScene(root,{activeId:active.id,revision:active.revision,mode:'new',name:'Blocked',sceneId:'procedural',snapshot:{parameters:{scene:'procedural'}}})])await assert.rejects(operation(),/render/);}finally{globalThis[key]=prior;}
+ const second=await createActiveProject(root,{activeId:active.id,name:'Second',snapshot:recipe('second')});
+ await assert.rejects(manageLibraryProject(root,{activeId:active.id,id:active.id,revision:active.revision,action:'rename',name:'Stale'}),{status:409});assert.equal((await libraryState(root)).active.id,second.id);
+});
+
+
+test('example publish failures restore the prior active recipe and keep recoverable copies',async t=>{
+ for(const mode of ['new','replace']){
+  const root=await fixture(t),active=await createActiveProject(root,{activeId:null,name:'Current',snapshot:recipe('prior edited state')}),reviewBefore=await read(root,'.motion-cache/live-review.json');
+  await assert.rejects(chooseLibraryScene(root,{activeId:active.id,revision:active.revision,mode,name:'Example',sceneId:'procedural',label:'Procedural',snapshot:{parameters:{scene:'procedural'}}},{beforePublish:async()=>{throw Error('Injected publish failure');}}),/previous project was restored/);
+  const state=await libraryState(root);assert.equal(state.active.id,active.id);assert.deepEqual(state.active.snapshot,active.snapshot);assert.equal(await read(root,'.motion-cache/live-review.json'),reviewBefore);assert.equal(await read(root,'src/scenes/film.js'),'original');
+  assert.equal(state.projects.length,2);assert.ok(state.projects.some(project=>project.id!==active.id));
+ }
+});
