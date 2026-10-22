@@ -14,6 +14,13 @@ try{
  server=await createServer({root,configFile:path.join(root,'vite.config.js'),server:{host:'127.0.0.1',port:0},logLevel:'error'});await server.listen();
  browser=await playwright().chromium.launch({...await browserLaunchOptions(),headless:true});const page=await browser.newPage({viewport:{width:1440,height:1000}}),errors=[];page.on('pageerror',e=>errors.push(e.message));
  const origin='http://127.0.0.1:'+server.httpServer.address().port;await page.goto(origin+'/?scene=pop');await page.locator('#story-mode').waitFor({timeout:60000});
+ async function chooseExample(id){
+  await page.locator('#scene').selectOption(id);
+  await page.locator('[data-scene-dialog]').waitFor({state:'visible'});
+  await page.locator('[data-scene-new]').click();
+  await page.waitForFunction(id=>{const select=document.querySelector('#scene');return select.value===id&&!select.disabled;},id);
+  await page.evaluate(()=>window.motionPreview.whenIdle());
+ }
  await page.setViewportSize({width:945,height:855});
  const modeRow=await page.evaluate(()=>{const rect=id=>document.querySelector(id).getBoundingClientRect(),story=rect('#story-mode'),video=rect('#video-mode'),interactive=rect('#preview-mode-interactive'),render=rect('#preview-mode-render'),quality=rect('#preview-quality'),controls=rect('#preview-controls');return {ys:[story.top,video.top,interactive.top,render.top,quality.top],right:quality.right,controlsRight:controls.right,modeRight:video.right,previewLeft:interactive.left};});
  assert.ok(Math.max(...modeRow.ys)-Math.min(...modeRow.ys)<=2,`Storyboard/Video and preview controls should share one row at 945px: ${JSON.stringify(modeRow)}`);
@@ -39,8 +46,8 @@ try{
  const board=await readBoard(root,'pop');board.shots[0].name='Meet the player';await writeBoard(root,board);
  await page.locator('#story-mode').click();await page.waitForFunction(()=>document.querySelector('#story-status').textContent.startsWith('Layouts rendered'),{timeout:60000});
  await page.locator('.story-card').first().click();assert.equal(await page.locator('#story-name').textContent(),'Meet the player');await page.locator('#story-edit').click();await page.waitForFunction(()=>Number(document.querySelector('#seek').value)===33);assert.equal(await page.locator('.playback').isVisible(),true);
- await page.locator('#scene').selectOption('starter');await page.locator('#story-mode').click();await page.locator('#story-empty').waitFor();assert.equal(await page.locator('.story-card').count(),0);assert.equal(await page.locator('#story-empty').isVisible(),true);
- await page.locator('#scene').selectOption('pop');await page.waitForFunction(()=>document.querySelectorAll('.story-card').length===4&&document.querySelector('#story-status').textContent.startsWith('Layouts rendered'));
+ await chooseExample('starter');await page.locator('#story-mode').click();await page.locator('#story-empty').waitFor();assert.equal(await page.locator('.story-card').count(),0);assert.equal(await page.locator('#story-empty').isVisible(),true);
+ await chooseExample('pop');await page.waitForFunction(()=>document.querySelectorAll('.story-card').length===4&&document.querySelector('#story-status').textContent.startsWith('Layouts rendered'));
  await page.setViewportSize({width:390,height:844});
  await page.locator('#story-next').click();await page.locator('#story-next').click();await page.locator('#story-next').click();
  assert.equal(await page.locator('.story-card[aria-current=true]').evaluate(el=>{const card=el.getBoundingClientRect(),rail=el.parentElement.getBoundingClientRect();return card.left>=rail.left-1&&card.right<=rail.right+1;}),true,'Next scene must reveal its thumbnail inside the horizontal strip');
