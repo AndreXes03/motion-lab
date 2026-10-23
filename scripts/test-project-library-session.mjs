@@ -3,9 +3,10 @@ import assert from 'node:assert/strict';
 import {mkdtemp,realpath,mkdir,writeFile,readFile,rm,symlink,lstat} from 'node:fs/promises';
 import os from 'node:os';
 import path from 'node:path';
+import {randomUUID,createHash} from 'node:crypto';
 import {spawnSync} from 'node:child_process';
 import {saveProject,exportProject,readProject,openProject} from './project-library-store.mjs';
-import {libraryState,saveActiveProject,autosaveActiveProject,createActiveProject,openActiveProject,importLibraryProject,projectSession,manageLibraryProject,chooseLibraryScene,preflightLibraryProject,exportLibraryProject} from './project-library-session.mjs';
+import {libraryState,saveActiveProject,autosaveActiveProject,createActiveProject,openActiveProject,importLibraryProject,projectSession,manageLibraryProject,chooseLibraryScene,preflightLibraryProject,exportLibraryProject,saveCopyActiveProject} from './project-library-session.mjs';
 const recipe=label=>({parameters:{scene:'starter'},label});
 async function put(root,name,value){await mkdir(path.dirname(path.join(root,name)),{recursive:true});await writeFile(path.join(root,name),value);}
 async function fixture(t){const root=await realpath(await mkdtemp(path.join(os.tmpdir(),'framevolve-session-')));t.after(()=>rm(root,{recursive:true,force:true}));await put(root,'src/scenes/film.js','original');await put(root,'src/config.js','config');await put(root,'project/look.json','{}');return root;}
@@ -123,4 +124,48 @@ test('example publish failures restore the prior active recipe and keep recovera
   const state=await libraryState(root);assert.equal(state.active.id,active.id);assert.deepEqual(state.active.snapshot,active.snapshot);assert.equal(await read(root,'.motion-cache/live-review.json'),reviewBefore);assert.equal(await read(root,'src/scenes/film.js'),'original');
   assert.equal(state.projects.length,2);assert.ok(state.projects.some(project=>project.id!==active.id));
  }
+});
+
+
+test('save-copy preserves a newer same-project save, retries once and rejects an obsolete source checkpoint',async t=>{
+ const root=await fixture(t),original=await createActiveProject(root,{activeId:null,name:'Shared project',snapshot:recipe('initial')});
+ const oldReview=JSON.parse(await read(root,'.motion-cache/live-review.json'));
+ const latest=await saveActiveProject(root,{activeId:original.id,revision:original.revision,baseSnapshotHash:original.snapshotHash,snapshot:recipe('newest original')});
+ await put(root,'src/scenes/film.js','coherent current source');
+ const input={copyId:randomUUID(),sourceId:original.id,name:'My recovered edits',snapshot:recipe('unsaved local draft')};
+ const copied=await saveCopyActiveProject(root,input);assert.equal(copied.record.id,input.copyId);assert.equal(copied.reloadRequired,false);assert.equal(copied.replayed,false);
+ assert.deepEqual((await readProject(root,original.id)).snapshot,latest.snapshot);assert.equal((await libraryState(root)).active.snapshot.label,'unsaved local draft');
+ assert.notDeepEqual((await readProject(root,input.copyId)).files,(await readProject(root,original.id)).files);
+ const replay=await saveCopyActiveProject(root,input);assert.equal(replay.record.id,input.copyId);assert.equal(replay.replayed,true);assert.equal((await libraryState(root)).projects.length,2);
+ await assert.rejects(saveCopyActiveProject(root,{...input,snapshot:recipe('changed request')}),/copy id already belongs/);
+ const after=await autosaveActiveProject(root,{snapshot:oldReview.snapshot,reviewCheckpoint:oldReview.checkpoint});assert.equal(after.snapshot.label,'unsaved local draft');
+});
+
+test('save-copy after another project opens uses original assets and preserves the other shared workspace',async t=>{
+ const root=await fixture(t),audio=Buffer.from('source A music'),assetId=createHash('sha256').update(audio).digest('hex');
+ await put(root,'project/audio/'+assetId+'.audio',audio);await put(root,'project/audio/'+assetId+'.json',JSON.stringify({assetId,duration:2}));
+ const original=await createActiveProject(root,{activeId:null,name:'Source A',snapshot:recipe('saved A')});
+ await rm(path.join(root,'project/audio'),{recursive:true});await put(root,'src/scenes/film.js','project B source');await put(root,'project/assets/only-b.txt','B asset');
+ const other=await createActiveProject(root,{activeId:original.id,name:'Source B',snapshot:recipe('saved B')});await put(root,'src/scenes/film.js','pending B shared edit');
+ const local={...recipe('local edits from A'),parameters:{scene:'starter',audio:{version:1,tracks:[{id:'music',assetId,enabled:true}]}}};
+ const copied=await saveCopyActiveProject(root,{copyId:randomUUID(),sourceId:original.id,name:'A recovered',snapshot:local});assert.equal(copied.reloadRequired,true);assert.deepEqual(copied.record.snapshot,local);
+ const record=await readProject(root,copied.record.id);assert.ok(record.files['project/audio/'+assetId+'.audio']);assert.equal(record.files['project/assets/only-b.txt'],undefined);assert.equal(await read(root,'src/scenes/film.js'),'original');
+ assert.deepEqual((await readProject(root,original.id)).snapshot,original.snapshot);assert.equal((await readProject(root,other.id)).snapshot.label,'saved B');
+ await openActiveProject(root,{activeId:copied.record.id,id:other.id,snapshot:local});assert.equal(await read(root,'src/scenes/film.js'),'pending B shared edit');
+ const before=(await libraryState(root)).projects.length;
+ await assert.rejects(saveCopyActiveProject(root,{copyId:randomUUID(),sourceId:original.id,name:'Missing music',snapshot:{parameters:{scene:'starter',audio:{tracks:[{assetId:'a'.repeat(64)}]}}}}),/audio that is missing from its source project/);assert.equal((await libraryState(root)).projects.length,before);assert.equal((await libraryState(root)).active.id,other.id);
+});
+
+test('save-copy honors render and imported-code guards and rolls back failed activation without losing the saved draft',async t=>{
+ const root=await fixture(t),original=await createActiveProject(root,{activeId:null,name:'Original',snapshot:recipe('current')});
+ const input={copyId:randomUUID(),sourceId:original.id,name:'Recover draft',snapshot:recipe('draft')};
+ const key=Symbol.for('framevolve.studio-render-states'),prior=globalThis[key];globalThis[key]=new Map([[root,{activeRenderId:'render'}]]);
+ try{await assert.rejects(saveCopyActiveProject(root,input),/render/);}finally{globalThis[key]=prior;}
+ assert.equal((await libraryState(root)).projects.length,1);
+ const imported=await importLibraryProject(root,await exportProject(root,original.id));
+ await assert.rejects(saveCopyActiveProject(root,{...input,sourceId:imported.id}),{status:428});
+ const reviewBefore=await read(root,'.motion-cache/live-review.json');
+ await assert.rejects(saveCopyActiveProject(root,input,{beforeActivate:async()=>{throw Error('Injected recovery activation failure');}}),/Injected recovery activation failure/);
+ assert.equal((await libraryState(root)).active.id,original.id);assert.equal(await read(root,'src/scenes/film.js'),'original');assert.equal(await read(root,'.motion-cache/live-review.json'),reviewBefore);assert.equal((await readProject(root,input.copyId)).snapshot.label,'draft');
+ const retried=await saveCopyActiveProject(root,input);assert.equal(retried.record.id,input.copyId);assert.equal(retried.replayed,true);assert.equal((await libraryState(root)).active.id,input.copyId);
 });

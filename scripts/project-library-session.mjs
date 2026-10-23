@@ -3,7 +3,7 @@ import path from 'node:path';
 import {constants,realpathSync} from 'node:fs';
 import {randomUUID,createHash} from 'node:crypto';
 import {setTimeout as delay} from 'node:timers/promises';
-import {listProjects,readProject,saveProject,openProject,importProject,exportProject,recoverProjectOpen,assertProjectLibraryIdle,manageProject,replaceProjectScene,projectExportPreflight,restoreProjectRecord} from './project-library-store.mjs';
+import {listProjects,readProject,saveProject,openProject,importProject,exportProject,recoverProjectOpen,assertProjectLibraryIdle,manageProject,replaceProjectScene,projectExportPreflight,restoreProjectRecord,saveProjectCopy} from './project-library-store.mjs';
 import {readReview,writeReview,validateReview} from './live-review-store.mjs';
 
 const sessions=globalThis[Symbol.for('framevolve.project-library.sessions')]??=new Map();
@@ -60,13 +60,17 @@ export async function saveActiveProject(root,input){root=await realpath(path.res
  const current=await expected(root,input.activeId);
  if(!current){const record=await saveProject(root,{name:input.name||'Untitled project',snapshot:input.snapshot});await activate(root,record.id);return publicRecord(record);}
  const previous=await readProject(root,current.id);
- if(input.revision!==previous.revision&&input.baseSnapshotHash!==hash(previous.snapshot))throw failure('This project has newer changes. Your draft is preserved; reload before saving over them.');
+ if(input.revision!==previous.revision&&input.baseSnapshotHash!==hash(previous.snapshot))throw failure('This project has newer changes. Save a copy to keep your edits without replacing them.');
  const record=await saveProject(root,{id:previous.id,name:input.name||previous.name,snapshot:input.snapshot,expectedRevision:previous.revision});return publicRecord(record);
 });}
-export async function autosaveActiveProject(root,{snapshot}={}){root=await realpath(path.resolve(root));return exclusive(root,async()=>{
+export async function autosaveActiveProject(root,{snapshot,reviewCheckpoint}={}){root=await realpath(path.resolve(root));return exclusive(root,async()=>{
  const current=await pointer(root);if(!current)return null;
  const previous=await readProject(root,current.id);
- const nextSnapshot=snapshot?.parameters?.scene?snapshot:previous.snapshot;
+ const review=snapshot?.parameters?.scene?await readReview(root):null;
+ // A watcher may have read its checkpoint before waiting for this session lock.
+ // Recovery activation publishes a new checkpoint; never apply that stale recipe.
+ const published=review?.phase==='ready'&&review.snapshot&&hash(review.snapshot)===hash(snapshot)&&(reviewCheckpoint===undefined||review.checkpoint===reviewCheckpoint);
+ const nextSnapshot=published?snapshot:previous.snapshot;
  return publicRecord(await saveProject(root,{id:previous.id,name:previous.name,snapshot:nextSnapshot,expectedRevision:previous.revision}));
 });}
 export async function createActiveProject(root,input){root=await realpath(path.resolve(root));return exclusive(root,async()=>{
@@ -76,7 +80,8 @@ export async function createActiveProject(root,input){root=await realpath(path.r
  catch(error){try{const now=await pointer(root);if(now?.id!==record.id&&now?.id!==current?.id)throw failure('A newer active project prevents rollback.');if(current)await activate(root,current.id,current.trusted??[]);else await rm(path.join(await cache(root),'active-project.json'),{force:true});}catch(recovery){throw failure(`${error.message} The new project was saved as ${record.id}; activation recovery needs attention: ${recovery.message}`);}throw failure(`${error.message} The previous project remains open; the new project is saved in the collection.`,400);}
 });}
 /** beforeActivate is a private failure-injection hook; never accept it from API input. */
-export async function openActiveProject(root,input,{beforeActivate=async()=>{}}={}){root=await realpath(path.resolve(root));return exclusive(root,async()=>{
+export async function openActiveProject(root,input,options={}){root=await realpath(path.resolve(root));return exclusive(root,()=>openInSession(root,input,options));}
+async function openInSession(root,input,{beforeActivate=async()=>{}}={}){
  const current=await expected(root,input.activeId),record=await readProject(root,input.id),trusted=current?.trusted??[];
  if(!record.snapshot?.parameters?.scene)throw failure('This package has no scene recipe to open in Studio.',400);
  if(record.imported&&record.customCode&&!trusted.includes(record.id)&&input.trusted!==true)throw failure('This imported project contains scene code. Confirm that you trust its source before opening it.',428);
@@ -100,6 +105,23 @@ export async function openActiveProject(root,input,{beforeActivate=async()=>{}}=
   }catch(recovery){throw failure(`${error.message} Recovery could not finish: ${recovery.message} Workspace backup ${journal.backupId} was preserved.`);}
   throw error;
  }
+}
+/** copyId is a caller-generated idempotency key. Retry the exact payload. */
+export async function saveCopyActiveProject(root,input,{beforeActivate=async()=>{}}={}){root=await realpath(path.resolve(root));return exclusive(root,async()=>{
+ if(!idPattern.test(input.copyId)||!idPattern.test(input.sourceId)||input.copyId===input.sourceId)throw failure('Choose a fresh project id for this recovery copy.',400);
+ await assertProjectLibraryIdle(root);
+ const current=await pointer(root);if(!current)throw failure('No active project is available. Your local draft is preserved.');
+ const source=await readProject(root,input.sourceId),trusted=current.trusted??[];
+ if(source.imported&&source.customCode&&!trusted.includes(source.id))throw failure('This imported source contains scene code. Open it through the collection and confirm that you trust it before saving a recovery copy.',428);
+ const sameSource=current.id===source.id;
+ const {record,replayed}=await saveProjectCopy(root,{copyId:input.copyId,sourceId:source.id,name:input.name,snapshot:input.snapshot,captureWorkspace:sameSource});
+ if(current.id===record.id)return {record:publicRecord(record),reloadRequired:record.recoveryCopy.requiresReload,replayed};
+ // Another window may have switched projects since this tab last saved. Save
+ // that project's shared source first, using its own latest recipe, before apply.
+ let previous=await readProject(root,current.id);
+ if(!sameSource)previous=await saveProject(root,{id:previous.id,name:previous.name,snapshot:previous.snapshot,expectedRevision:previous.revision});
+ const opened=await openInSession(root,{activeId:current.id,id:record.id,snapshot:previous.snapshot,trusted:record.imported&&record.customCode&&trusted.includes(source.id)},{beforeActivate});
+ return {...opened,record:opened.record,reloadRequired:record.recoveryCopy.requiresReload||opened.filesChanged>0,replayed};
 });}
 export async function importLibraryProject(root,bytes){root=await realpath(path.resolve(root));return exclusive(root,async()=>publicRecord(await importProject(root,bytes)));}
 export async function exportLibraryProject(root,id,revision){root=await realpath(path.resolve(root));return exclusive(root,async()=>{await expected(root,id);return exportProject(root,id,{expectedRevision:revision});});}

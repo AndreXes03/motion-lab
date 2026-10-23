@@ -15,6 +15,10 @@
 .project-library-status[data-state="saved"] { color: #b7cf79; }
 .project-library-status[data-state="saving"], .project-library-status[data-state="loading"] { color: #c5d993; }
 .project-library-status[data-state="error"] { color: #f0a18e; }
+.project-library-recover { flex-shrink: 0; padding: 5px 8px; border: 1px solid #f0ba7955; border-radius: 6px; color: #f2c591; background: #f0ba7910; font: inherit; font-size: 10px; cursor: pointer; }
+.project-library-recover:hover { background: #f0ba7925; }
+.project-library-recover:disabled { opacity: .5; cursor: wait; }
+.project-library-recover[hidden] { display: none; }
 .project-library-controls { display: inline-flex; align-items: center; gap: 5px; }
 .project-library-icon {
   display: inline-grid; place-items: center; width: 32px; height: 32px; padding: 0;

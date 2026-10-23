@@ -1,7 +1,7 @@
 import {randomBytes} from 'node:crypto';
 import path from 'node:path';
 import {readReview,liveFile} from './live-review-store.mjs';
-import {libraryState,projectSession,saveActiveProject,createActiveProject,openActiveProject,importLibraryProject,exportLibraryProject,autosaveActiveProject,manageLibraryProject,chooseLibraryScene,preflightLibraryProject} from './project-library-session.mjs';
+import {libraryState,projectSession,saveActiveProject,createActiveProject,openActiveProject,importLibraryProject,exportLibraryProject,autosaveActiveProject,manageLibraryProject,chooseLibraryScene,preflightLibraryProject,saveCopyActiveProject} from './project-library-session.mjs';
 import {isManagedProjectPath} from './project-library-store.mjs';
 
 export function projectLibraryMiddleware(root){const token=randomBytes(32).toString('hex');return async(req,res)=>{
@@ -18,6 +18,7 @@ export function projectLibraryMiddleware(root){const token=randomBytes(32).toStr
   const bytes=Buffer.concat(chunks);
   if(binary)return send(200,{record:await importLibraryProject(root,bytes)});
   const body=JSON.parse(bytes.toString('utf8')||'{}');
+  if(req.url==='/save-copy')return send(200,await saveCopyActiveProject(root,body));
   if(req.url==='/save')return send(200,{record:await saveActiveProject(root,body)});
   if(req.url==='/new')return send(200,{record:await createActiveProject(root,body)});
   if(req.url==='/open')return send(200,await openActiveProject(root,body));
@@ -35,7 +36,7 @@ export function projectLibraryMiddleware(root){const token=randomBytes(32).toStr
 export function projectLibraryPlugin(){let server,root,timer,stopped=false,generation=0,reviewPending=false,lastCheckpoint=null;
  const schedule=()=>{clearTimeout(timer);if(!stopped)timer=setTimeout(flush,800);};
  async function flush(){const state=projectSession(root);if(stopped)return;if(state.working){schedule();return;}const start=generation;
-  try{const review=await readReview(root),published=reviewPending&&review.phase==='ready'&&review.checkpoint!==lastCheckpoint;await autosaveActiveProject(root,{snapshot:published?review.snapshot:undefined});if(published){lastCheckpoint=review.checkpoint;reviewPending=false;}if(start===generation)state.pending=false;else schedule();}
+  try{const review=await readReview(root),published=reviewPending&&review.phase==='ready'&&review.checkpoint!==lastCheckpoint;await autosaveActiveProject(root,{snapshot:published?review.snapshot:undefined,reviewCheckpoint:published?review.checkpoint:undefined});if(published){lastCheckpoint=review.checkpoint;if(start===generation)reviewPending=false;}if(start===generation)state.pending=false;else schedule();}
   catch(error){state.error='Autosave needs attention: '+error.message;state.pending=false;}
  }
  function changed(file){const relative=path.relative(root,file).split(path.sep).join('/');if(isManagedProjectPath(relative)||file===liveFile(root)){if(file===liveFile(root))reviewPending=true;generation++;projectSession(root).pending=true;schedule();}}

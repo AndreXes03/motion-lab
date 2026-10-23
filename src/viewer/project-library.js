@@ -1,11 +1,12 @@
 import {mountProjectLibraryUI} from './project-library-ui.js';
 const signature=value=>JSON.stringify(value);
-export async function mountProjectLibrary({container,getSnapshot,setSnapshot,newSnapshot,isBusy,liveRecovery=false,canApplyExternal=()=>true,onProjectCreated=()=>{}}){
+export async function mountProjectLibrary({container,getSnapshot,setSnapshot,newSnapshot,isBusy,liveRecovery=false,canApplyExternal=()=>true,onProjectCreated=()=>{},onProjectCopied=()=>{}}){
  let active=null,projects=[],token=null,base='',working=false,saving=false,stopped=false,conflict=false,externalPending=false,timer,pollTimer,observed='',changedAt=0,ready=false,switching=false,retryAt=0;
- let status='loading',message='';
- const ui=mountProjectLibraryUI({container,isBusy,actions:{save:()=>save(true),newProject,openProject,importProject,exportProject,manageProject}});
- function paint(){ui.render({active,projects,status,message,working:working||saving});}
- function fail(error){retryAt=Date.now()+5000;status='error';message=error.message;conflict=error.status===409;paint();}
+ let status='loading',message='',generation=0,copyAttempt=null,reloadPending=false;
+ const ui=mountProjectLibraryUI({container,isBusy,actions:{save:()=>save(true),saveCopy,newProject,openProject,importProject,exportProject,manageProject}});
+ function paint(){ui.render({active,projects,status,message,conflict:conflict||externalPending,working:working||saving});}
+ function preserveDraft(){try{const previous=JSON.parse(sessionStorage.getItem('framevolve-session-draft')||'{}');sessionStorage.setItem('framevolve-session-draft',JSON.stringify({...previous,version:1,projectId:active?.id,projectSnapshotHash:active?.snapshotHash,snapshot:getSnapshot(),savedAt:new Date().toISOString()}));}catch{}}
+ function fail(error){retryAt=Date.now()+5000;status='error';message=error.message;conflict=conflict||error.status===409;preserveDraft();paint();}
  async function request(route='',body,{binary=false,download=false,keepalive=false}={}){
   const response=await fetch('/__framevolve_projects'+route,body===undefined?{}:{method:'POST',headers:{'Content-Type':binary?'application/octet-stream':'application/json','X-Framevolve-Project':token},body:binary?body:JSON.stringify(body),keepalive});
   if(download&&response.ok)return response.blob();
@@ -13,13 +14,15 @@ export async function mountProjectLibrary({container,getSnapshot,setSnapshot,new
  }
  function installRecord(record,{restore=false}={}){active=record;base=signature(record.snapshot);if(restore)setSnapshot(record.snapshot);observed=signature(getSnapshot());projects=[record,...projects.filter(p=>p.id!==record.id)];status='saved';message='';conflict=false;externalPending=false;paint();}
  async function refresh({initial=false}={}){
-  const data=await request();if(!initial&&(working||saving||stopped))return;token=data.token;projects=data.projects;
+  const requestGeneration=generation,obsolete=()=>!initial&&(requestGeneration!==generation||working||saving||stopped);let data;
+  try{data=await request();}catch(error){if(obsolete())return;throw error;}
+  if(obsolete())return;token=data.token;projects=data.projects;
   if(initial){
    if(data.active){
     installRecord(data.active,{restore:!liveRecovery});
     try{const draft=JSON.parse(sessionStorage.getItem('framevolve-session-draft'));if(!liveRecovery&&draft?.projectId===active.id&&draft.savedAt>active.updatedAt&&draft.projectSnapshotHash===active.snapshotHash&&draft.snapshot){setSnapshot(draft.snapshot);observed=signature(getSnapshot());status='unsaved';}}catch{}
    }else{observed=signature(getSnapshot());base=observed;await save(true);}
-  }else if(data.active?.id!==active?.id){throw Object.assign(Error('A different project is open in another window. Reload to continue; your draft is preserved.'),{status:409});}
+  }else if(data.active?.id!==active?.id){throw Object.assign(Error('Another window opened a different project. Save a copy to keep working with your edits.'),{status:409});}
   else if(data.active&&data.active.revision>active.revision){
    if(signature(data.active.snapshot)===base){active=data.active;}
    else if(signature(getSnapshot())===signature(data.active.snapshot)){installRecord(data.active);}
@@ -27,22 +30,43 @@ export async function mountProjectLibrary({container,getSnapshot,setSnapshot,new
    else externalPending=true;
   }
   if(data.error){status='error';message=data.error;}
-  else if(externalPending){status='unsaved';message='New changes available · apply the live update, or export your local recipe before reloading.';}
+  else if(externalPending){status='unsaved';message='New changes available. Save a copy to keep your edits, or apply the live update.';}
   else if(data.pending||data.working){status='saving';message='Saving agent changes…';}
   else if(!conflict){status=signature(getSnapshot())===base?'saved':'unsaved';message='';}
   paint();
  }
  async function save(force=false){
-  if(saving)return; if(conflict||externalPending)throw Error(message||'Reload before saving over newer changes.');
+  if(saving)return; if(conflict||externalPending)throw Object.assign(Error(message||'Save a copy to keep your edits without replacing newer changes.'),{status:409});
   const snapshot=getSnapshot(),captured=signature(snapshot);
   if(!force&&active&&captured===base)return;
   saving=true;status='saving';message='';paint();
   try{if(!token){const data=await request();token=data.token;}
    const {record}=await request('/save',{activeId:active?.id??null,revision:active?.revision,baseSnapshotHash:active?.snapshotHash,name:active?.name||'My first project',snapshot});
    active=record;base=captured;projects=[record,...projects.filter(p=>p.id!==record.id)];status=signature(getSnapshot())===base?'saved':'unsaved';conflict=false;
+   if(reloadPending&&signature(getSnapshot())===base)reloadProject(record);
   }catch(error){fail(error);throw error;}finally{saving=false;paint();}
  }
  async function operation(fn){if(working||saving||isBusy())throw Error('Wait for the current render or project operation to finish.');working=true;paint();try{return await fn();}catch(error){fail(error);throw error;}finally{working=false;paint();}}
+ function reloadProject(record){
+  sessionStorage.removeItem('framevolve-session-draft');sessionStorage.removeItem('framevolve-live-reload');sessionStorage.removeItem('framevolve-before-live-update');
+  stopped=true;switching=true;clearTimeout(timer);clearTimeout(pollTimer);
+  const url=new URL(location.href);url.searchParams.set('scene',record.snapshot.parameters.scene);url.searchParams.delete('welcome');url.searchParams.delete('onboarding');location.replace(url.href);
+ }
+ async function saveCopy(name){return operation(async()=>{
+  if(!active)throw Error('Open a saved project before making a recovery copy.');
+  const body={sourceId:active.id,name,snapshot:getSnapshot()},key=signature(body);
+  // A lost response must not create another copy when the same request is retried.
+  if(copyAttempt?.key!==key)copyAttempt={key,body:{...body,copyId:crypto.randomUUID()}};
+  generation++;preserveDraft();status='saving';message='Saving your copy…';paint();
+  const result=await request('/save-copy',copyAttempt.body);
+  generation++;reloadPending=reloadPending||result.reloadRequired;
+  installRecord(result.record);copyAttempt=null;onProjectCopied(result.record.snapshot);
+  // Keep Undo, playhead and edits made while saving when the source is unchanged.
+  // If source files changed, persist any later edits before reloading this tab.
+  if(reloadPending){if(signature(getSnapshot())!==base)await save(true);else reloadProject(result.record);}
+  else {preserveDraft();status=signature(getSnapshot())===base?'saved':'unsaved';message='Copy saved · continue editing';paint();}
+  return result.record;
+ });}
  async function newProject(name){return operation(async()=>{
   await save(true);const snapshot=newSnapshot();const {record}=await request('/new',{activeId:active.id,name,snapshot});installRecord(record,{restore:true});onProjectCreated(record.snapshot);sessionStorage.removeItem('framevolve-session-draft');return record;
  });}
@@ -52,10 +76,7 @@ export async function mountProjectLibrary({container,getSnapshot,setSnapshot,new
   // Server has verified and applied the saved source. Reload only this tab with
   // its saved recipe; draft/live-reload state must never leak between projects.
   installRecord(result.record);
-  sessionStorage.removeItem('framevolve-session-draft');sessionStorage.removeItem('framevolve-live-reload');sessionStorage.removeItem('framevolve-before-live-update');
-  stopped=true;switching=true;clearTimeout(timer);clearTimeout(pollTimer);
-  const url=new URL(location.href);url.searchParams.set('scene',result.record.snapshot.parameters.scene);url.searchParams.delete('welcome');url.searchParams.delete('onboarding');
-  location.replace(url.href);return result.record;
+  reloadProject(result.record);return result.record;
  });}
  async function importProject(file){return operation(async()=>{
   if(file.size>100*1024*1024)throw Error('Project packages can be up to 100 MB.');
@@ -107,5 +128,5 @@ export async function mountProjectLibrary({container,getSnapshot,setSnapshot,new
  window.addEventListener('pagehide',flushOnHide);document.addEventListener('visibilitychange',()=>{if(document.hidden)flushOnHide();});
  try{await refresh({initial:true});ready=true;paint();}catch(error){fail(error);ready=true;}
  tick();pollTimer=setTimeout(poll,1800);
- return {getActiveId:()=>active?.id,save,chooseScene,getSnapshotHash:()=>active?.snapshotHash,isSwitching:()=>working||switching,dispose(){stopped=true;clearTimeout(timer);clearTimeout(pollTimer);window.removeEventListener('pagehide',flushOnHide);ui.dispose();}};
+ return {getActiveId:()=>active?.id,save,chooseScene,getSnapshotHash:()=>active?.snapshotHash,isSwitching:()=>working||switching||reloadPending,dispose(){stopped=true;clearTimeout(timer);clearTimeout(pollTimer);window.removeEventListener('pagehide',flushOnHide);ui.dispose();}};
 }

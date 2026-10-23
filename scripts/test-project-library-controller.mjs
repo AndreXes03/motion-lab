@@ -15,7 +15,7 @@ function record(id, revision, snapshot) {
 }
 const response = body => ({ ok: true, json: async () => body });
 
-async function harness(t, { initial, fetch, defaults = initial?.snapshot, liveRecovery = false, canApplyExternal = () => true, chooseScene = async () => null, confirmExport = async () => false, newSnapshot } = {}) {
+async function harness(t, { initial, fetch, defaults = initial?.snapshot, liveRecovery = false, canApplyExternal = () => true, chooseScene = async () => null, confirmExport = async () => false, newSnapshot, onProjectCopied = () => {} } = {}) {
   const prior = {
     fetch: globalThis.fetch,
     setTimeout: globalThis.setTimeout,
@@ -61,6 +61,7 @@ async function harness(t, { initial, fetch, defaults = initial?.snapshot, liveRe
     newSnapshot: newSnapshot || (() => structuredClone(current)),
     liveRecovery,
     canApplyExternal,
+    onProjectCopied,
     isBusy: () => false,
   });
 
@@ -202,4 +203,56 @@ test('portable export cancellation reviews preflight without starting a download
   return response({token:'token',projects:[],active:record('p1',1,original)});
  }});
  assert.equal(await env.actions.exportProject(),null);assert.equal(review.revision,1);assert.equal(review.warnings.length,1);assert.ok(!routes.some(route=>route.endsWith('/export')));
+});
+
+
+for(const staleError of [false,true])test(`save copy preserves edits and resumes autosave despite an old ${staleError?'failed':'successful'} poll`,async t=>{
+ const original={parameters:{scene:'starter',amount:1}},incoming={parameters:{scene:'starter',amount:2}},manual={parameters:{scene:'starter',amount:99}};
+ let gets=0,resolvePoll,copyBody,savedBody,copied;
+ const env=await harness(t,{initial:record('p1',1,original),canApplyExternal:()=>false,onProjectCopied:value=>{copied=value;},fetch:async(url,options={})=>{
+  if(url.endsWith('/save-copy')){copyBody=JSON.parse(options.body);return response({record:record('copy',1,copyBody.snapshot),reloadRequired:false});}
+  if(url.endsWith('/save')){savedBody=JSON.parse(options.body);return response({record:record('copy',2,savedBody.snapshot)});}
+  if(++gets>2)return new Promise(resolve=>{resolvePoll=resolve;});
+  return response({token:'token',projects:[],active:record('p1',gets,gets===1?original:incoming)});
+ }});
+ env.snapshot=manual;await env.fire(1800);assert.equal(env.views.at(-1).conflict,true);
+ const oldPoll=env.fire(1800);await Promise.resolve();
+ const restores=env.setCalls.length;await env.actions.saveCopy('My recovered edits');
+ assert.equal(copyBody.sourceId,'p1');assert.deepEqual(copyBody.snapshot,manual);assert.ok(copyBody.copyId);
+ assert.equal(savedBody,undefined,'copy never calls the conflicting save');assert.equal(env.app.getActiveId(),'copy');assert.equal(env.views.at(-1).conflict,false);
+ assert.deepEqual(copied,manual);assert.equal(env.setCalls.length,restores,'preserves Undo and playhead by not restoring the editor');
+ resolvePoll(staleError?{ok:false,status:409,json:async()=>({error:'Old project conflict'})}:response({token:'token',projects:[],active:record('p1',2,incoming)}));await oldPoll;
+ assert.equal(env.views.at(-1).conflict,false,'old-project response cannot lock the new copy');
+ env.snapshot={parameters:{scene:'starter',amount:100}};await env.fire(400);env.now=1500;await env.fire(400);
+ for(let i=0;i<6;i++)await Promise.resolve();
+ assert.equal(savedBody.activeId,'copy');assert.equal(savedBody.snapshot.parameters.amount,100);assert.deepEqual(env.snapshot,savedBody.snapshot);
+});
+
+test('a failed copy keeps the conflict and draft, and retries the same request id',async t=>{
+ const original={parameters:{scene:'starter',amount:1}},manual={parameters:{scene:'starter',amount:99}};const copies=[];let drafts=[];
+ const env=await harness(t,{initial:record('p1',1,original),fetch:async(url,options={})=>{
+  if(url.endsWith('/save-copy')){copies.push(JSON.parse(options.body));if(copies.length===1)throw Error('Connection lost');return response({record:record('copy',1,manual),reloadRequired:false});}
+  if(url.endsWith('/save'))return {ok:false,status:409,json:async()=>({error:'Newer saved changes'})};
+  return response({token:'token',projects:[],active:record('p1',1,original)});
+ }});
+ globalThis.sessionStorage.setItem=(key,value)=>{if(key==='framevolve-session-draft')drafts.push(JSON.parse(value));};
+ env.snapshot=manual;await assert.rejects(env.app.save(true),/Newer saved changes/);
+ await assert.rejects(env.actions.saveCopy('Recovery'),/Connection lost/);
+ assert.equal(env.views.at(-1).conflict,true);assert.deepEqual(env.snapshot,manual);assert.deepEqual(drafts.at(-1).snapshot,manual);
+ await env.fire(400);assert.equal(copies.length,1,'autosave must stay blocked until recovery succeeds');
+ await env.actions.saveCopy('Recovery');assert.deepEqual(copies[0],copies[1]);assert.equal(env.app.getActiveId(),'copy');
+});
+
+test('a source switch saves edits made during copy before reloading the persisted copy',async t=>{
+ const original={parameters:{scene:'loop',amount:1}},manual={parameters:{scene:'loop',amount:99}},later={parameters:{scene:'loop',amount:100}};
+ const priorLocation=globalThis.location;t.after(()=>{globalThis.location=priorLocation;});let redirected,resolveCopy,savedBody;
+ globalThis.location={href:'http://localhost:4212/?scene=loop',replace:url=>{redirected=url;}};
+ const env=await harness(t,{initial:record('p1',1,original),fetch:async(url,options={})=>{
+  if(url.endsWith('/save-copy'))return new Promise(resolve=>{resolveCopy=resolve;});
+  if(url.endsWith('/save')){savedBody=JSON.parse(options.body);return response({record:record('copy',2,savedBody.snapshot)});}
+  return response({token:'token',projects:[],active:record('p1',1,original)});
+ }});
+ env.snapshot=manual;const saving=env.actions.saveCopy('Recovered');await Promise.resolve();env.snapshot=later;
+ resolveCopy(response({record:record('copy',1,manual),reloadRequired:true}));await saving;
+ assert.equal(savedBody.activeId,'copy');assert.deepEqual(savedBody.snapshot,later);assert.match(redirected,/scene=loop/);assert.equal(env.app.isSwitching(),true);
 });

@@ -293,7 +293,7 @@ const liveBaseline=snapshot();
 if(canRecoverDraft&&!liveRecovery){try{const draft=JSON.parse(sessionStorage.getItem('framevolve-session-draft'));if(draft?.version===1&&!draft.projectId&&(!initialScene||initialScene===draft.snapshot.parameters.scene)){restore(draft.snapshot);time=Math.max(0,Math.min(lastFrame/fps,Number(draft.time)||0));if(draft.panel)inspector.setTab(draft.panel);$('version-status').textContent='Session draft recovered';}}catch{}}
 if(!publicDemo&&canRecoverDraft){
  const libraryContainer=document.createElement('div');libraryContainer.id='project-library';document.querySelector('.project-switch').before(libraryContainer);
- projectLibrary=await mountProjectLibrary({container:libraryContainer,getSnapshot:snapshot,setSnapshot:restore,liveRecovery:!!liveRecovery?.snapshot,onProjectCreated:data=>{time=0;inspector?.resetScene();window.motionLive?.resetProject(data);draw();},canApplyExternal:()=>{const live=window.motionLive?.getState();return !live?.paused&&!live?.dirty&&!live?.pending;},isBusy:()=>!!activeJob||!!browserExportController||$('render-frame').disabled,
+ projectLibrary=await mountProjectLibrary({container:libraryContainer,getSnapshot:snapshot,setSnapshot:restore,liveRecovery:!!liveRecovery?.snapshot,onProjectCreated:data=>{time=0;inspector?.resetScene();window.motionLive?.resetProject(data);draw();},onProjectCopied:data=>window.motionLive?.resetProject(data),canApplyExternal:()=>{const live=window.motionLive?.getState();return !live?.paused&&!live?.dirty&&!live?.pending;},isBusy:()=>!!activeJob||!!browserExportController||$('render-frame').disabled,
   newSnapshot:()=>exampleSnapshot('procedural')});
  document.querySelector('.project-switch').firstChild.textContent='Scene';$('scene').setAttribute('aria-label','Scene');
 }

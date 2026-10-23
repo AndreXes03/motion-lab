@@ -17,6 +17,7 @@ export function mountProjectLibraryUI({ container, actions = {}, isBusy = () => 
     <div class="project-library-identity">
       <span class="project-library-name" data-project-name>Untitled project</span>
       <span class="project-library-status" data-project-status role="status" aria-live="polite"></span>
+      <button type="button" class="project-library-recover" data-save-copy hidden>Save a copy…</button>
     </div>
     <div class="project-library-controls">
       <button type="button" class="project-library-icon" data-save aria-label="Save project" title="Save project" aria-keyshortcuts="Control+S Meta+S">${icon('save')}</button>
@@ -34,12 +35,12 @@ export function mountProjectLibraryUI({ container, actions = {}, isBusy = () => 
       </div>
       <input class="project-library-file" data-file type="file" accept=".framevolve" tabindex="-1" aria-hidden="true">
     </div>
-    <dialog class="project-library-dialog" data-dialog aria-labelledby="project-dialog-title">
+    <dialog class="project-library-dialog" data-dialog aria-labelledby="project-dialog-title" aria-describedby="project-dialog-note">
       <form data-new-form>
         <h2 id="project-dialog-title">New project</h2>
         <label for="project-library-new-name">Project name</label>
         <input id="project-library-new-name" name="name" type="text" maxlength="100" required autocomplete="off">
-        <p class="project-library-note">${NEW_NOTE}</p>
+        <p class="project-library-note" id="project-dialog-note">${NEW_NOTE}</p>
         <p class="project-library-error" data-dialog-error role="alert" hidden></p>
         <div class="project-library-dialog-actions"><button type="button" class="project-library-secondary" data-cancel>Cancel</button><button type="submit" class="project-library-primary" data-create>Create project</button></div>
       </form>
@@ -93,9 +94,12 @@ export function mountProjectLibraryUI({ container, actions = {}, isBusy = () => 
     $('[data-save]').disabled = busy();
     toggle.disabled = busy();
     $('[data-create]').disabled = busy();
+    $('[data-save-copy]').disabled = busy();
+    $('[data-cancel]').disabled = internalBusy;
     for(const button of root.querySelectorAll('[data-project-action]'))button.disabled=busy()||(button.dataset.projectAction==='trash'&&button.dataset.id===state.active?.id);
   };
   const statusText = current => {
+    if (current.conflict && !current.working) return 'Save conflict · edits kept';
     if (current.message) return current.message;
     return ({ loading: 'Loading…', saving: 'Saving…', saved: 'Saved', error: 'Could not save', unsaved: 'Unsaved changes' })[current.status] || '';
   };
@@ -104,8 +108,10 @@ export function mountProjectLibraryUI({ container, actions = {}, isBusy = () => 
     $('[data-project-name]').textContent = state.active?.name || 'Untitled project';
     const status = $('[data-project-status]');
     status.textContent = statusText(state);
-    status.title = status.textContent;
-    status.dataset.state = state.status || 'unsaved';
+    status.title = state.message || status.textContent;
+    status.dataset.state = state.conflict ? 'error' : state.status || 'unsaved';
+    $('[data-save-copy]').hidden = !state.conflict;
+    $('[data-save]').title = state.conflict ? 'Save a copy and continue' : 'Save project';
     const allProjects = Array.isArray(state.projects) ? state.projects : [];
     const projects = allProjects.filter(project=>!project.trashedAt);
     const signature = JSON.stringify(projects.map(project => [project.id, project.name, project.updatedAt, project.imported, !!project.customCode, project.warnings ?? project.portabilityWarnings]));
@@ -152,6 +158,14 @@ export function mountProjectLibraryUI({ container, actions = {}, isBusy = () => 
     closeMenu(); $('[data-dialog-error]').hidden = true; $('[data-dialog-error]').textContent = '';
     dialogReturnFocus = toggle; dialog.showModal(); nameInput.value = record?.name||''; nameInput.focus();
   }
+  function openCopyDialog(){
+    if(busy()||dialog.open)return;
+    openNewDialog();nameAction={action:'copy'};dialogReturnFocus=$('[data-save]');
+    $('#project-dialog-title').textContent='Keep your edits';
+    $('[data-create]').textContent='Save copy & continue';
+    $('#project-dialog-note').textContent='Your edits in this window will become a separate project. The latest saved original stays untouched. You can keep editing the copy, with autosave on. If another project is open, Studio will reload after saving to restore the correct project files.';
+    nameInput.value=((state.active?.name||'Untitled project').slice(0,93)+' · copy');nameInput.select();
+  }
   function openTrustDialog(record, returnFocus = toggle) {
     pendingTrustRecord = record;
     dialogReturnFocus = returnFocus;
@@ -178,10 +192,12 @@ export function mountProjectLibraryUI({ container, actions = {}, isBusy = () => 
     else if (trustCode && result.error) { const error = $('[data-trust-error]'); error.textContent = result.error.message || 'Could not open project.'; error.hidden = false; }
     return result;
   }
-  $('[data-save]').addEventListener('click', async () => { const result = await run('save'); if (result.ok) announce('Saved'); });
+  $('[data-save]').addEventListener('click', async () => {if(state.conflict){openCopyDialog();return;}const result = await run('save'); if (result.ok) announce('Saved');else if(state.conflict)openCopyDialog();});
+  $('[data-save-copy]').addEventListener('click',openCopyDialog);
   toggle.addEventListener('click', () => menu.hidden ? openMenu() : closeMenu());
   $('[data-new]').addEventListener('click', () => openNewDialog());
   $('[data-cancel]').addEventListener('click', () => dialog.close());
+  dialog.addEventListener('cancel',event=>{if(internalBusy)event.preventDefault();});
   dialog.addEventListener('close', () => { if (dialogReturnFocus?.isConnected) dialogReturnFocus.focus(); dialogReturnFocus = null; });
   trustDialog.addEventListener('close', () => {
     pendingTrustRecord = null;
@@ -192,7 +208,7 @@ export function mountProjectLibraryUI({ container, actions = {}, isBusy = () => 
     event.preventDefault();
     const name = nameInput.value.trim();
     if (!name) { nameInput.focus(); return; }
-    const result = nameAction?await run('manageProject','rename',nameAction.record.id,name):await run('newProject', name);
+    const result = nameAction?.action==='copy'?await run('saveCopy',name):nameAction?await run('manageProject','rename',nameAction.record.id,name):await run('newProject', name);
     if (result.ok) dialog.close();
     else if (result.error) { const error = $('[data-dialog-error]'); error.textContent = result.error.message || 'Could not create project.'; error.hidden = false; }
   });
