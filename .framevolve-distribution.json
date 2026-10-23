@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "revision": "bc0004b010d1cecab9bb317429809e92405ed287",
+  "revision": "3f8249e29f328301eccb50a731791d145e78d476",
   "files": {
     ".agents/skills/framevolve-live-review/SKILL.md": {
       "sha": "51ac340d4873da576a714514d070bd3009e02ae3",
@@ -1423,7 +1423,7 @@
       "mode": "100644"
     },
     "scripts/test-live-studio-browser.mjs": {
-      "sha": "bd1a73929ef11ca784232068c97fc905b4be27f9",
+      "sha": "e1aec78277c4adbaa7ef6408c2bf4bb9288816da",
       "mode": "100644"
     },
     "scripts/test-loop-refinement.mjs": {
@@ -1603,7 +1603,7 @@
       "mode": "100644"
     },
     "scripts/test-storyboard-browser.mjs": {
-      "sha": "fc47dad2c364bd3f72b44442f697d18309d81fa1",
+      "sha": "c0535cc9c2d7c602afd78176b6b87f37e6720a6c",
       "mode": "100644"
     },
     "scripts/test-studio-api.mjs": {
@@ -2247,11 +2247,11 @@
       "mode": "100644"
     },
     "src/viewer/live-review.js": {
-      "sha": "19ddcd565e31e8c780edc9ba42209a56d1fe9a37",
+      "sha": "600e590639d10d2185597ce2afa8412759bc4d34",
       "mode": "100644"
     },
     "src/viewer/main.js": {
-      "sha": "81805ef1109f7e61032bccc3311a61fe7c4d0c2c",
+      "sha": "cd29a42920e4732103dba181580e46240f77a9d6",
       "mode": "100644"
     },
     "src/viewer/motion-curve-editor.css": {
@@ -2363,7 +2363,7 @@
       "mode": "100644"
     },
     "src/viewer/storyboard-panel.js": {
-      "sha": "02f22ea4c0a59eb9cdac0de34972010216e74486",
+      "sha": "2221895ce05bb5ba15dcb8935afdbef63e3e1b9a",
       "mode": "100644"
     },
     "src/viewer/studio-icons.css": {
@@ -2383,7 +2383,7 @@
       "mode": "100644"
     },
     "src/viewer/toolbar-overflow.js": {
-      "sha": "c8b269f1aa11f9f1b200a31d67d610e1be10cdda",
+      "sha": "d294647597857ad8366a2f931c201b547b8f7628",
       "mode": "100644"
     },
     "src/viewer/viewport-toolbar.js": {
@@ -2392,6 +2392,14 @@
     },
     "src/viewer/workspace-model.js": {
       "sha": "e7fcb294df74730887aa82b2868c8dc4fb798c10",
+      "mode": "100644"
+    },
+    "src/viewer/workspace-panels.css": {
+      "sha": "5d08089e14c1345d42c8d5bd268e6cb9965eff28",
+      "mode": "100644"
+    },
+    "src/viewer/workspace-panels.js": {
+      "sha": "9d52dc3cbb42424ad8b4ecf9138bea626d48ec91",
       "mode": "100644"
     },
     "vite.config.js": {

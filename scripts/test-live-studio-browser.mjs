@@ -16,6 +16,7 @@ try{
  const url=`http://127.0.0.1:${server.httpServer.address().port}/?scene=procedural`;
  const ready=async()=>{await page.waitForFunction(()=>window.motionLive?.getState().revision!==undefined);await page.evaluate(()=>window.motionPreview.whenIdle());};
  const recipe=async()=>{await page.evaluate(()=>window.motionPreview.whenIdle());await page.locator('#experience-pro').click();await page.locator('#tab-code').click();return JSON.parse(await page.locator('#code-content').textContent());};
+ const openUpdates=async()=>{if(await page.locator('.studio-more').getAttribute('open')===null)await page.locator('.studio-more>summary').click();if(await page.locator('.workspace-updates').getAttribute('open')===null)await page.locator('.workspace-updates>summary').click();};
  const command=async(action,options={})=>writeReview(root,updateReview(await readReview(root),action,options));
  const waitRevision=async rev=>page.waitForFunction(rev=>window.motionLive?.getState().revision>=rev,rev);
  const pixelHash=()=>page.evaluate(()=>{const canvas=document.querySelector('#renderCanvas');let h=2166136261;for(const n of canvas.getContext('2d').getImageData(0,0,canvas.width,canvas.height).data)h=Math.imul(h^n,16777619);return h>>>0;});
@@ -56,12 +57,14 @@ try{
  await page.locator('#import-recipe').setInputFiles({name:'local.json',mimeType:'application/json',buffer:Buffer.from(JSON.stringify(local))});
  await page.waitForFunction(()=>window.motionLive.getState().dirty);
  await command('begin',{task:'f3'});const three=structuredClone(two);three.parameters.graphics.title='THIRD CHANGE';three.parameters.studio.values.title='THIRD CHANGE';
- await command('publish',{task:'f3',snapshot:three});await page.locator('#live-review-apply').waitFor({state:'visible'});
+ await command('publish',{task:'f3',snapshot:three});
+ await page.locator('.studio-more>summary').click();await page.locator('.workspace-updates>summary').click();
+ await page.locator('#live-review-apply').waitFor({state:'visible'});
  assert.equal((await recipe()).parameters.graphics.title,'MY LOCAL TITLE');
- await page.locator('#live-review-apply').click();await page.waitForFunction(()=>!window.motionLive.getState().pending);
+ await openUpdates();await page.locator('#live-review-apply').click();await page.waitForFunction(()=>!window.motionLive.getState().pending);
  assert.equal((await recipe()).parameters.graphics.title,'THIRD CHANGE');
- await page.locator('#live-review-restore').click();assert.equal((await recipe()).parameters.graphics.title,'MY LOCAL TITLE');assert.equal(await page.evaluate(()=>window.motionLive.getState().paused),true);
- await mkdir(path.join(ROOT,'outputs/live-studio'),{recursive:true});await page.locator('#live-review summary').click();await page.screenshot({path:path.join(ROOT,'outputs/live-studio/feedback-checklist.png'),fullPage:true});
+ await openUpdates();await page.locator('#live-review-restore').click();assert.equal((await recipe()).parameters.graphics.title,'MY LOCAL TITLE');assert.equal(await page.evaluate(()=>window.motionLive.getState().paused),true);
+ await mkdir(path.join(ROOT,'outputs/live-studio'),{recursive:true});await openUpdates();await page.locator('#live-review summary').click();await page.screenshot({path:path.join(ROOT,'outputs/live-studio/feedback-checklist.png'),fullPage:true});
  assert.deepEqual(errors,[]);
  console.log('Live Studio passed: authored defaults, sequential recipe updates with changed pixels, same-tab reuse, multi-file hold, source reload, time preservation, syntax recovery, checklist and manual-edit backup.');
 }catch(error){
