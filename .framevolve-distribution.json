@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "revision": "76437b20cffd0d2738f8451c86651722c514ba60",
+  "revision": "dc81b71cbba94023bcc9e978178912b33764c54e",
   "files": {
     ".agents/skills/framevolve-live-review/SKILL.md": {
       "sha": "51ac340d4873da576a714514d070bd3009e02ae3",
@@ -275,7 +275,7 @@
       "mode": "100644"
     },
     "docs/APP_DEMO.md": {
-      "sha": "f436ebbd40b1dcbb8d2a95f9d3ce21655d4290a8",
+      "sha": "9a3de1ff72efcc757ee8526c91911f823a6cb8a6",
       "mode": "100644"
     },
     "docs/ARCHITECTURE.md": {
@@ -407,7 +407,7 @@
       "mode": "100644"
     },
     "docs/app-demo-evidence/VERIFICATION.md": {
-      "sha": "aa1942cce2aad04f0c54d345af6493b96c0464a5",
+      "sha": "82999ff93fa4145d5fe417d769be783b6b745d6c",
       "mode": "100644"
     },
     "docs/app-demo-evidence/brief.png": {
@@ -1211,7 +1211,7 @@
       "mode": "100644"
     },
     "scripts/project-library-store.mjs": {
-      "sha": "d038138626bb5dfbaaf76735dce73c8c2012b72e",
+      "sha": "a4f6dbc96278be13fbf0d6de5fb370f32c2baf63",
       "mode": "100644"
     },
     "scripts/project-store.mjs": {
@@ -1527,7 +1527,7 @@
       "mode": "100644"
     },
     "scripts/test-project-library.mjs": {
-      "sha": "7d7f8d6d0998a20c9b87a0ffa53baae698c2a3ef",
+      "sha": "cfed46e8d1302af38cd14ca42a0c2b406735c698",
       "mode": "100644"
     },
     "scripts/test-project-sound-state.mjs": {
