@@ -46,7 +46,7 @@ export function mountMotionPanel({container, getScene, getParameters, getAnimati
     else if (!set.has(index)) { set.clear(); set.add(index); }
   };
   const resetSelection = () => { selectedTimes.clear(); selectedNativeKeys.clear(); selectedRetimeKeys.clear(); };
-  const snapStep = () => snap.input.checked ? 1 / sceneConfig(getScene()).fps : 0;
+  const snapStep = () => snap.input.checked ? 1 / sceneConfig(getScene(),getParameters()).fps : 0;
 
   const state = () => {
     const raw = getAnimation?.();
@@ -73,7 +73,7 @@ export function mountMotionPanel({container, getScene, getParameters, getAnimati
   const identityKeys = () => [{t: 0, value: 0, ease: 'linear'}, {t: limit(), value: 1, ease: 'linear'}];
   const keys = () => structuredClone(isGroup() ? currentGroup()?.keys ?? identityKeys() : getAnimation?.()?.tracks?.[selectedControl] ?? []).sort((a, b) => a.t - b.t);
   const definition = () => isGroup() ? {...groupDefinition(), min: 0, max: 1, step: .01} : catalog.find(d => d.id === selectedControl);
-  const duration = () => sceneConfig(getScene()).duration;
+  const duration = () => sceneConfig(getScene(),getParameters()).duration;
   const outputTime = () => Number(getTime?.() ?? 0);
   const limit = () => isGroup() ? clip().end - clip().start : duration();
   const sourceTime = () => clamp(round(clamp((outputTime() - (isGroup() ? clip().start : 0)) * targetRate(), 0, limit())), 0, limit());
@@ -433,7 +433,7 @@ export function mountMotionPanel({container, getScene, getParameters, getAnimati
     nativeShared.hidden = !track.sharedTiming;
   }
   function seekNativeSource(sourceTime) {
-    const window = clip(), config = sceneConfig(getScene());
+    const window = clip(), config = sceneConfig(getScene(),getParameters());
     const lastFrameTime = (Math.round(config.duration * config.fps) - 1) / config.fps;
     const end = Math.min(window.end - 1e-8, lastFrameTime);
     const time = end < window.start ? null : findAnimationGroupOutputTime({animation: getAnimation?.()}, groupId(), sourceTime, {start: window.start, end, referenceTime: outputTime()});
@@ -661,7 +661,7 @@ export function mountMotionPanel({container, getScene, getParameters, getAnimati
     if (!target || !['ArrowLeft','ArrowRight'].includes(event.key)) return;
     event.preventDefault(); event.stopPropagation();
     const index = Number(target.dataset.retimeKey), list = timingKeys(), key=list[index];
-    key.t = clamp(key.t + (event.key === 'ArrowRight' ? 1 : -1) / sceneConfig(getScene()).fps * (event.shiftKey ? 10 : 1), index ? list[index-1].t + 1e-5 : 0, index < list.length-1 ? list[index+1].t - 1e-5 : limit());
+    key.t = clamp(key.t + (event.key === 'ArrowRight' ? 1 : -1) / sceneConfig(getScene(),getParameters()).fps * (event.shiftKey ? 10 : 1), index ? list[index-1].t + 1e-5 : 0, index < list.length-1 ? list[index+1].t - 1e-5 : limit());
     write(a=>{if(!currentGroup(a))seedGroup(a,1);a.groups[groupId()].keys=list;});
     nativeGraph.querySelector(`[data-retime-key="${index}"]`)?.focus();
   });
@@ -944,11 +944,11 @@ export function mountMotionPanel({container, getScene, getParameters, getAnimati
     const direction=['ArrowRight','ArrowUp'].includes(event.key)?1:-1,horizontal=['ArrowLeft','ArrowRight'].includes(event.key);
     if(native&&!retiming()&&nativeEditable()) {
       const track=nativeTrack(),indices=[...selectedNativeKeys];if(!indices.length)return;
-      const moved=moveCurveSelection(track.keys,indices,horizontal?direction/sceneConfig(getScene()).fps:0,horizontal?0:direction*(nativeAxis.hi-nativeAxis.lo)/100,{maxTime:duration()});
+      const moved=moveCurveSelection(track.keys,indices,horizontal?direction/sceneConfig(getScene(),getParameters()).fps:0,horizontal?0:direction*(nativeAxis.hi-nativeAxis.lo)/100,{maxTime:duration()});
       try {const next=editAuthoredKeys(getScene(),groupId(),selectedNativeTrack,indices.map(index=>({index,t:moved[index].t,value:moved[index].value})),{motion:getParameters().motion});onAuthoredChange(next);refreshNativeSource(next);seekNativeSource(moved[selectedNativeKey??indices[0]].t);surface.focus();}catch(failure){nativeError.textContent=failure.message;}
     } else {
       const source=native?timingKeys():keys(),indices=native?[...selectedRetimeKeys]:source.map((key,i)=>selectedTimes.has(key.t)?i:-1).filter(i=>i>=0);if(!indices.length)return;
-      const def=definition(),moved=moveCurveSelection(source,indices,horizontal?direction*targetRate()/sceneConfig(getScene()).fps:0,native||horizontal?0:direction*(def.max-def.min)/100,{maxTime:limit(),minValue:def.min,maxValue:def.max});
+      const def=definition(),moved=moveCurveSelection(source,indices,horizontal?direction*targetRate()/sceneConfig(getScene(),getParameters()).fps:0,native||horizontal?0:direction*(def.max-def.min)/100,{maxTime:limit(),minValue:def.min,maxValue:def.max});
       if(!native){selectedTimes=new Set(indices.map(i=>moved[i].t));selectedTime=moved[indices[0]].t;}
       write(a=>setTargetKeys(a,moved));onSeek(seekTime(moved[indices[0]].t));surface.focus();
     }
@@ -980,7 +980,7 @@ export function mountMotionPanel({container, getScene, getParameters, getAnimati
     if (gesture || nativeGesture || retimeGesture) return;
     const nextScene = getScene();
     if (scene !== nextScene) { resetSelection(); showAllTools = false; selectedWindow = null; motionView = 'auto'; selectedNativeKey = null; }
-    groups = getAnimationGroups(nextScene);
+    groups = getAnimationGroups(nextScene,getParameters());
     const parameters = getParameters();
     const manifest = parameters.studio?.controlManifest ?? createControlManifest(nextScene);
     const trackedIds = new Set(Object.keys(getAnimation?.()?.tracks ?? {}));

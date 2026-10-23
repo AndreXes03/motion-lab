@@ -133,11 +133,26 @@ export async function saveProjectCopy(root,{copyId,sourceId,name,snapshot:recipe
  return {record,replayed:false};
 });}
 async function currentHash(root,name){try{return sha(await readBytes(root,name));}catch(e){if(e.code==='ENOENT')return null;throw e;}}
+// Older projects predate App Demo. Keep its installed entry point and example
+// assets available without replacing any source or content owned by the project.
+function retainAppDemoSupport(desired,before){
+ for(const name of ['src/scenes/app-demo.js',...['workspace','audio','delivery'].map(id=>`public/assets/app-demo/${id}.png`)]){
+  if(!desired.has(name)&&before.has(name))desired.set(name,before.get(name));
+ }
+ for(const name of ['project/control-selections.json','project/render-plans.json']){
+  const installed=before.get(name);if(!installed)continue;
+  let defaults,target;try{defaults=JSON.parse(installed.bytes);target=desired.has(name)?JSON.parse(desired.get(name).bytes):{version:1,scenes:{}};}catch{continue;}
+  if(defaults.scenes?.appdemo&&!target.scenes?.appdemo&&target.version===1&&target.scenes&&typeof target.scenes==='object'&&!Array.isArray(target.scenes)){
+   const bytes=Buffer.from(JSON.stringify({...target,scenes:{...target.scenes,appdemo:defaults.scenes.appdemo}},null,2)+'\n');desired.set(name,{bytes,sha:sha(bytes)});
+  }
+ }
+}
 async function rollback(root,journal){const backup=await readRecord(root,journal.backupId),before=await loadData(root,backup);for(const item of [...journal.written].reverse()){if(!isManagedProjectPath(item.name))throw fail(400,'Unsafe recovery path.');const current=await currentHash(root,item.name);if(current!==item.after&&current!==item.before)throw fail(409,'A newer workspace edit needs manual recovery: '+item.name);const old=before.get(item.name);if(old)await atomic(root,item.name,old.bytes);else await rm(await safePath(root,item.name),{force:true});}await rm(await safePath(root,'.motion-cache/project-library/apply.json'),{force:true});}
 /** beforeWrite persists session metadata after the backup/apply journal, before any source write.
  * Callbacks are private and must never be accepted from an HTTP request. */
 export async function openProject(root,id,{snapshot:recipe,beforeWrite=async()=>{},afterWrite=async()=>{}}={}){return serialized(root,async root=>{
  if(await info(await safePath(root,'.motion-cache/project-library/apply.json')))throw fail(409,'An interrupted project open requires recovery.');await assertProjectLibraryIdle(root);const record=await readRecord(root,id);if(record.trashedAt)throw fail(409,'Restore this project from Trash before opening it.');if(record.snapshot&&!sceneIds.includes(canonicalScene(record.snapshot.parameters.scene)))throw fail(400,'This project scene is not supported by the installed Framevolve application.');const desired=await loadData(root,record),before=await capture(root);await assertProjectLibraryIdle(root);
+ retainAppDemoSupport(desired,before);
  const backup=await persist(root,{name:('Workspace backup before '+record.name).slice(0,160),snapshot:recipe,backup:true},before),changes=[...new Set([...before.keys(),...desired.keys()])].filter(name=>before.get(name)?.sha!==desired.get(name)?.sha);
  // Validate every destination before any source mutation.
  for(const name of changes)await safePath(root,name);await assertProjectLibraryIdle(root);

@@ -117,7 +117,7 @@ function availability(engine, plan, context) {
   if (context.publicDemo) return {available: false, reason: 'Final renderer jobs run in the local app. Browser video uses the real-time Three.js/Canvas path; Cycles and prepared Mixed renders are not executed on this site.'};
   const caps = context.capabilities ?? {};
   if (engine === 'threejs') return {available: caps.threejs?.available !== false, reason: caps.threejs?.reason ?? 'Available in the local app.'};
-  if(engine==='skia')return {available:supported(caps.skia,context.scene),reason:supported(caps.skia,context.scene)?'Native Skia CPU · no browser required.':'Native 2D is currently available for Procedural only on a verified local installation.'};
+  if(engine==='skia')return {available:supported(caps.skia,context.scene),reason:supported(caps.skia,context.scene)?'Native Skia CPU · no browser required.':'Native 2D requires a supported scene on a verified local installation.'};
   if (engine === 'cycles') {
     const cap = caps.cycles;
     if (!supported(cap, context.scene)) return {available: false, reason: cap?.reason || (cap?.available ? 'Cycles has no adapter for this scene.' : 'Install and authorize Rendering Cycles before rendering locally.')};
@@ -152,7 +152,7 @@ export function resolveRenderPlan(input, context = {}) {
   let reason = plan.renderer !== 'auto' && plan.source === 'user' ? `User selected ${RENDERER_LABELS[plan.renderer]} for this export.` : plan.rationale;
   const estimateSeconds = estimateRenderSeconds(plan, context);
   if (plan.renderer === 'auto') {
-    const candidate = context.scene==='procedural'&&plan.preferredRenderer==='threejs'&&plan.intent!=='photoreal'&&supported(context.capabilities?.skia,context.scene)?'skia':plan.preferredRenderer !== 'threejs' ? plan.preferredRenderer : plan.intent === 'photoreal' ? 'cycles' : 'threejs';
+    const candidate = ['procedural','appdemo'].includes(context.scene)&&plan.preferredRenderer==='threejs'&&plan.intent!=='photoreal'&&supported(context.capabilities?.skia,context.scene)?'skia':plan.preferredRenderer !== 'threejs' ? plan.preferredRenderer : plan.intent === 'photoreal' ? 'cycles' : 'threejs';
     const ready = availability(candidate, plan, context);
     const withinBudget = ['threejs','skia'].includes(candidate) || plan.budgetSeconds === null || (estimateSeconds !== null && estimateSeconds <= plan.budgetSeconds);
     selectedRenderer = ready.available && withinBudget ? candidate : 'threejs';

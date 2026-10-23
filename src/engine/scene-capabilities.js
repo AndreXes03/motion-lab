@@ -13,6 +13,7 @@ const finish=[
  gain('bloomStrength','Highlight bloom',0,8,.05,'Compositing','Gain of the authored highlight bloom. Zero disables bloom.')
 ];
 export const studyControlDefinitions={
+ appdemo:[gain('movement','Movement',0,1,.05,'Motion','Scale the authored entrances and focus movement.'),gain('typeSize','Headline size',.8,1.15,.05,'Graphics','Scale headlines without changing screen content.')],
  loop:[
   {...gain('waveCount','Ring density',28,90,1,'Graphics','Density of the bold concentric rings around the product.'),default:58,category:'graphics'},
   {...gain('waveTravel','Emitter travel',0,1.8,.05,'Graphics','Travel of the product and the origin of newly emitted rings.'),default:1,category:'graphics'},

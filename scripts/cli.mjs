@@ -78,6 +78,7 @@ async function openMotion(browser, url, width, height) {
 async function renderPng(page, time, width, height, parameters = {}, temporalSamples = 1, fps = DEFAULT.fps, reportSamples = false) {
   if(page.engine==='skia')return page.renderPng(time,width,height,parameters,temporalSamples,fps,reportSamples?event=>output('progress',event):undefined);
   const dataUrl = await page.evaluate(async ({ time, width, height, parameters, temporalSamples, fps, duration, reportSamples }) => {
+    await window.motion.prepare?.(parameters);
     const canvas = document.querySelector('#renderCanvas');
     if (!canvas) throw new Error('#renderCanvas disappeared');
     const shutterAngle=window.motion.shutterAngleAt?.(time,parameters)??parameters.look?.post?.shutterAngle??210;
@@ -217,7 +218,7 @@ async function main() {
   const requested=opts.snapshot?await readSnapshot(path.resolve(opts.snapshot)):{};
   const saved={...sidecar,...requested};
   const parameters={...sidecar.parameters,...requested.parameters,...explicitParameters};
-  DEFAULT=sceneConfig(parameters.scene??saved.config?.scene??config.scene);parameters.scene=DEFAULT.scene;
+  DEFAULT=sceneConfig(parameters.scene??saved.config?.scene??config.scene,parameters);parameters.scene=DEFAULT.scene;
   if(opts.sound!==undefined){if(!['on','off'].includes(opts.sound))throw Error('--sound must be on or off');parameters.sound=normalizeSound({...parameters.sound,enabled:opts.sound==='on'});}
   if(parameters.audio!==undefined)parameters.audio=normalizeAudioTracks(parameters.audio);
   if(parameters.sound!==undefined)parameters.sound=normalizeSound(parameters.sound);
@@ -250,7 +251,7 @@ async function main() {
   if(['preview','export'].includes(command))await checkEncoder(format);
   const saveSnapshot=async()=>{if(target&&command!=='verify'&&command!=='viewer')await writeFile(target+'.project.json',JSON.stringify({schemaVersion:2,production:{version:1,backend:native?'native':'browser-reference',renderer:native?'skia':'threejs'},command,config:{...DEFAULT,width,height,fps},parameters,width,height,fps,format,bitrateMbps,settings:{width,height,fps,format,bitrateMbps,temporalSamples},start,end,time,samples,temporalSamples,createdAt:new Date().toISOString()},null,2));};
   const requestedBackend=opts.backend??saved.production?.backend;
-  const native=parameters.scene==='procedural'&&command!=='viewer'&&requestedBackend!=='browser-reference';
+  const native=['procedural','appdemo'].includes(parameters.scene)&&command!=='viewer'&&requestedBackend!=='browser-reference';
   if(opts.backend&&!['native','browser-reference'].includes(opts.backend))throw Error('Unknown --backend');
   if(opts.backend==='native'&&!native)throw Error('No native 2D adapter for this scene');
   let server,browser,url,page;

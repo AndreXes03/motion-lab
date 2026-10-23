@@ -920,6 +920,15 @@
         }
       ],
       "rationale": "Preserve refinement controls and expose the asset drag duration ahead of the fixed Send/drop timing."
+    },
+    "appdemo": {
+      "controls": [
+        "movement",
+        "typeSize",
+        "colorContrast",
+        "colorSaturation"
+      ],
+      "rationale": "Only motion strength, headline size and finishing: content and focus are edited in App Demo. Flat screenshots do not need lens or lighting controls."
     }
   }
 }

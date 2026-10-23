@@ -34,6 +34,7 @@ export function resolveParameters(scene, values = {}, presetId = 'original', bas
   const controls = Object.fromEntries(project.controls.map(control => [control.id, control.default]));
   Object.assign(controls, preset.values ?? {}, values);
 
+  if(scene==='appdemo')return {scene,sceneControls:{movement:limit(controls.movement,0,1,1),typeSize:limit(controls.typeSize,.8,1.15,1)},look:{...structuredClone(baseLook??defaultLook),post:{...structuredClone(baseLook??defaultLook).post,grain:0,shutterAngle:0,colorContrast:1,colorSaturation:1}}};
   if(scene==='starter')return {scene,product:{accent:color(controls.accent,'#d7f56b'),shell:color(controls.shell,'#d2d3c8'),fov:limit(controls.fov,45,95,65),fisheye:limit(controls.fisheye,0,.6,.08),keyStrength:limit(controls.keyStrength,.3,2,1),fill:limit(controls.fill,0,.4,.1)}};
   if(isNewScene(scene))return{scene,sceneControls:Object.fromEntries((studyControlDefinitions[scene]??[]).map(c=>[c.id,limit(controls[c.id],c.min,c.max,c.default)])),look:{...structuredClone(baseLook??defaultLook),post:{...structuredClone(baseLook??defaultLook).post,shutterAngle:sceneRegistry[scene].shutterAngle??0,grain:0}}};
   const sceneControls=Object.fromEntries((studyControlDefinitions[scene]??[]).map(c=>[c.id,limit(controls[c.id],c.min,c.max,c.default)]));

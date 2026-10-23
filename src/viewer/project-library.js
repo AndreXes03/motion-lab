@@ -67,8 +67,8 @@ export async function mountProjectLibrary({container,getSnapshot,setSnapshot,new
   else {preserveDraft();status=signature(getSnapshot())===base?'saved':'unsaved';message='Copy saved · continue editing';paint();}
   return result.record;
  });}
- async function newProject(name){return operation(async()=>{
-  await save(true);const snapshot=newSnapshot();const {record}=await request('/new',{activeId:active.id,name,snapshot});installRecord(record,{restore:true});onProjectCreated(record.snapshot);sessionStorage.removeItem('framevolve-session-draft');return record;
+ async function newProject(name,suppliedSnapshot){return operation(async()=>{
+  await save(true);const snapshot=suppliedSnapshot??newSnapshot();const {record}=await request('/new',{activeId:active.id,name,snapshot});installRecord(record,{restore:true});onProjectCreated(record.snapshot);sessionStorage.removeItem('framevolve-session-draft');return record;
  });}
  async function openProject(id,{trusted=false}={}){return operation(async()=>{
   await save(true);
@@ -128,5 +128,8 @@ export async function mountProjectLibrary({container,getSnapshot,setSnapshot,new
  window.addEventListener('pagehide',flushOnHide);document.addEventListener('visibilitychange',()=>{if(document.hidden)flushOnHide();});
  try{await refresh({initial:true});ready=true;paint();}catch(error){fail(error);ready=true;}
  tick();pollTimer=setTimeout(poll,1800);
- return {getActiveId:()=>active?.id,save,chooseScene,getSnapshotHash:()=>active?.snapshotHash,isSwitching:()=>working||switching||reloadPending,dispose(){stopped=true;clearTimeout(timer);clearTimeout(pollTimer);window.removeEventListener('pagehide',flushOnHide);ui.dispose();}};
+ async function importImage(file){if(file.size>10*1024*1024)throw Error('Choose a PNG or JPG up to 10 MB.');const id=active?.id;
+  const response=await fetch('/__framevolve_projects/image',{method:'POST',headers:{'Content-Type':'application/octet-stream','X-Framevolve-Project':token,'X-Framevolve-Active':id},body:file});const result=await response.json();if(!response.ok)throw Error(result.error||'Could not import this image.');if(active?.id!==id)throw Error('The project changed. Reopen App Demo to continue.');return result;
+ }
+ return {getStatus:()=>({status,message}),getActiveId:()=>active?.id,save,chooseScene,create:newProject,importImage,exportProject,getSnapshotHash:()=>active?.snapshotHash,isSwitching:()=>working||switching||reloadPending,dispose(){stopped=true;clearTimeout(timer);clearTimeout(pollTimer);window.removeEventListener('pagehide',flushOnHide);ui.dispose();}};
 }

@@ -1,14 +1,15 @@
+import {appDemoNodes} from '../scenes/app-demo.js';
 import {createProceduralDemo,proceduralTempo} from '../scenes/procedural-demo.js';
 import {evaluateParameterAnimation} from './parameter-animation.js';
 import {sampleProceduralMotion} from './sound-procedural.js';
 import {sceneConfig} from '../scene-registry.js';
 
 /** First production adapter. Legacy recipes remain intact; unsupported scenes are explicit. */
-export const native2DScenes = Object.freeze(['procedural']);
+export const native2DScenes = Object.freeze(['procedural','appdemo']);
 export function createProductionScene(parameters={}) {
   const scene=parameters.scene;
   if(!native2DScenes.includes(scene))throw Error(`No native 2D adapter for ${scene}. This scene still requires its legacy renderer.`);
-  const config=sceneConfig(scene),graphics=createProceduralDemo(config);
+  const config=sceneConfig(scene,parameters),graphics=scene==='appdemo'?{config:{seed:1},nodesAt:appDemoNodes}:createProceduralDemo(config);
   const source=structuredClone(parameters);
   return {
     config,
@@ -20,7 +21,7 @@ export function createProductionScene(parameters={}) {
     },
     sampleMotion(rate=60) {
       if(!Number.isInteger(rate)||rate<1||rate>240)throw Error('Motion sampling rate must be 1..240');
-      return {...sampleProceduralMotion(t=>graphics.nodesAt(t,evaluateParameterAnimation(source,t)),{duration:config.duration,rate,width:1920,height:1080,seed:graphics.config.seed}),musicBpm:proceduralTempo(source)};
+      return {...sampleProceduralMotion(t=>graphics.nodesAt(t,evaluateParameterAnimation(source,t)),{duration:config.duration,rate,width:1920,height:1080,seed:graphics.config.seed}),musicBpm:scene==='appdemo'?100:proceduralTempo(source)};
     }
   };
 }

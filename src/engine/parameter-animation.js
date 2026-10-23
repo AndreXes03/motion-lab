@@ -1,3 +1,4 @@
+import {appDemoDuration} from './app-demo.js';
 import {getControlCatalog,writeControlValue,assertSafeControlDocument} from './control-catalog.js';
 import {getAnimationGroups} from './animation-groups.js';
 import {sceneRegistry} from '../scene-registry.js';
@@ -40,7 +41,8 @@ export function sampleParameterTrack(keys,time) {
   return a.value+(b.value-a.value)*u;
 }
 
-export function validateParameterAnimation(animation,scene) {
+export function validateParameterAnimation(animation,scene,parameters={}) {
+  const sceneDuration=scene==='appdemo'?appDemoDuration(parameters.appDemo):sceneRegistry[scene]?.duration;
   const catalog=getControlCatalog(scene),definitions=new Map(catalog.map(control => [control.id,control]));
   assertSafeControlDocument(animation);
   if (!animation || typeof animation !== 'object' || Array.isArray(animation) || Object.keys(animation).some(key => !['version','enabled','rate','tracks','rates','groups'].includes(key))) throw new Error('Invalid parameter animation');
@@ -59,7 +61,7 @@ export function validateParameterAnimation(animation,scene) {
     let previous=-1;
     tracks[id]=keys.map(key => {
       if (!key || typeof key !== 'object' || Array.isArray(key) || Object.keys(key).some(name => !['t','value','ease','bezier'].includes(name))) throw new Error(`Invalid animation key: ${id}`);
-      if (!Number.isFinite(key.t) || key.t < 0 || key.t > sceneRegistry[scene].duration || key.t <= previous) throw new Error(`Animation times must increase within scene duration: ${id}`);
+      if (!Number.isFinite(key.t) || key.t < 0 || key.t > sceneDuration || key.t <= previous) throw new Error(`Animation times must increase within scene duration: ${id}`);
       previous=key.t;
       if (!Number.isFinite(key.value) || key.value < definition.min || key.value > definition.max) throw new Error(`Animation value is outside control bounds: ${id}`);
       const ease=key.ease ?? 'smooth';
@@ -83,7 +85,7 @@ export function validateParameterAnimation(animation,scene) {
     if (!allowedGroups.has(id)) throw new Error(`Unknown animation group: ${id}`);
     if (!group || typeof group !== 'object' || Array.isArray(group) || Object.keys(group).some(key=>!['start','end','rate','keys'].includes(key))) throw new Error(`Invalid animation group: ${id}`);
     const {start,end}=group,rate=group.rate===undefined?1:group.rate;
-    if (!Number.isFinite(start) || !Number.isFinite(end) || start<0 || end<=start || end>sceneRegistry[scene].duration) throw new Error(`Invalid animation group window: ${id}`);
+    if (!Number.isFinite(start) || !Number.isFinite(end) || start<0 || end<=start || end>sceneDuration) throw new Error(`Invalid animation group window: ${id}`);
     if (!Number.isFinite(rate) || rate<.25 || rate>2.5) throw new Error('Group rate must be between 0.25 and 2.5');
     if (!Array.isArray(group.keys) || !group.keys.length || (keyCount+=group.keys.length)>1000) throw new Error('Animation must contain 1–1000 total keys');
     let previous=-1;
@@ -113,12 +115,12 @@ export function evaluateParameterAnimation(parameters,time) {
   const scene=parameters.scene;
   if (typeof scene !== 'string' || !own(sceneRegistry,scene)) throw new Error(`Unknown animation scene: ${scene}`);
   if (!Number.isFinite(time)) throw new Error('Animation time must be finite');
-  const normalized=validateParameterAnimation(animation,scene);
+  const normalized=validateParameterAnimation(animation,scene,parameters);
   const definitions=new Map(getControlCatalog(scene).map(control => [control.id,control]));
   if (!Object.keys(normalized.tracks).length) return parameters;
   const result=structuredClone(parameters);result.animation=normalized;
   for (const [id,keys] of Object.entries(normalized.tracks)) {
-    const definition=definitions.get(id),sampledTime=clamp(time*normalized.rates[id],0,sceneRegistry[scene].duration);let value=sampleParameterTrack(keys,sampledTime);
+    const definition=definitions.get(id),sampledTime=clamp(time*normalized.rates[id],0,scene==='appdemo'?appDemoDuration(parameters.appDemo):sceneRegistry[scene].duration);let value=sampleParameterTrack(keys,sampledTime);
     if (Number.isInteger(definition.step)) value=Math.round(value);
     writeControlValue(result,definition,clamp(value,definition.min,definition.max));
   }

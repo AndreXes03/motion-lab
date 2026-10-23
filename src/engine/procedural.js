@@ -1,5 +1,5 @@
 /** Deterministic Canvas2D scene graph. All dynamic values depend on absolute seconds. */
-const TYPES = new Set(['group', 'circle', 'rect', 'text', 'path']);
+const TYPES = new Set(['group', 'circle', 'rect', 'text', 'path', 'image']);
 const CLIPS = new Set(['circle', 'rect', 'path']);
 const BLENDS = new Set([
   'source-over', 'source-in', 'source-out', 'source-atop',
@@ -176,7 +176,21 @@ function drawNode(ctx, node, t, context) {
       geometryPath(ctx, clip, t, context, `${node.id}.clip`);
       ctx.clip(value(clip.fillRule, t, context) ?? 'nonzero');
     }
-    if (node.type === 'text') {
+    if (node.type === 'image') {
+      const asset=context.images?.get(node.asset);if(!asset)throw Error('Image is not loaded: '+node.asset);
+      const w=number(node.width,t,context,asset.width,'image width'),h=number(node.height,t,context,asset.height,'image height');
+      const zoom=number(node.zoom,t,context,1,'image zoom'),fx=number(node.focusX,t,context,.5,'image focus'),fy=number(node.focusY,t,context,.5,'image focus');
+      const factor=(node.fit==='cover'?Math.max:Math.min)(w/asset.width,h/asset.height)*zoom;
+      const dw=asset.width*factor,dh=asset.height*factor;
+      const offset=(size,total,focus)=>total<=size?(size-total)/2:Math.max(size-total,Math.min(0,size/2-total*focus));
+      ctx.beginPath();ctx.rect(0,0,w,h);ctx.clip();ctx.drawImage(asset,offset(w,dw,fx),offset(h,dh,fy),dw,dh);
+    } else if (node.type === 'text' && node.wrapWidth) {
+      const original=value(node.font,t,context)??'600 48px Arial',match=original.match(/([\d.]+)px/),base=Number(match?.[1]??48);
+      const width=node.wrapWidth,maxLines=node.maxLines??3,words=String(value(node.text,t,context)??'').split(/\s+/);let lines=[],size=base;
+      for(;size>=18;size-=2){ctx.font=original.replace(/[\d.]+px/,size+'px');lines=[];let line='';for(const word of words){if(ctx.measureText(word).width>width){for(const ch of word){if(ctx.measureText(line+ch).width>width){lines.push(line);line='';}line+=ch;}continue;}if(line&&ctx.measureText(line+' '+word).width>width){lines.push(line);line=word;}else line+=(line?' ':'')+word;}if(line)lines.push(line);if(lines.length<=maxLines)break;}
+      ctx.fillStyle=value(node.fill,t,context)??'#fff';ctx.textAlign=node.align??'left';ctx.textBaseline='alphabetic';
+      lines.forEach((line,i)=>ctx.fillText(line,0,i*(node.lineHeight??base*1.12)*size/base));
+    } else if (node.type === 'text') {
       ctx.font = value(node.font, t, context) ?? '16px sans-serif';
       ctx.textAlign = value(node.align, t, context) ?? 'left';
       ctx.textBaseline = value(node.baseline, t, context) ?? 'alphabetic';
@@ -197,13 +211,13 @@ function drawNode(ctx, node, t, context) {
 }
 
 /** Draw a frame at an absolute time; no timers, playback state or random sequence. */
-export function renderProcedural(ctx, time, { width, height, nodes, seed = 1, clear = true } = {}) {
+export function renderProcedural(ctx, time, { width, height, nodes, seed = 1, clear = true, images } = {}) {
   if (!ctx || typeof ctx.save !== 'function' || typeof ctx.clearRect !== 'function') throw new Error('renderProcedural requires a Canvas2D context');
   if (!Number.isFinite(time)) throw new Error('time must be finite seconds');
   if (!Number.isFinite(width) || width <= 0 || !Number.isFinite(height) || height <= 0) throw new Error('width and height must be positive');
   if (typeof clear !== 'boolean') throw new Error('clear must be a boolean');
   validate(nodes);
-  const context = Object.freeze({ width, height, seed, noise: seededNoise(seed) });
+  const context = Object.freeze({ width, height, seed, images, noise: seededNoise(seed) });
   ctx.save();
   try {
     // Respect the caller's transform (for example a reduced-resolution preview).

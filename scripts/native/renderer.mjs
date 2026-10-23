@@ -1,3 +1,6 @@
+import {fileURLToPath} from 'node:url';
+import {validateAppDemo} from '../../src/engine/app-demo.js';
+import {readImageAsset} from '../image-assets.mjs';
 import {loadImage} from 'skia-canvas';
 import {createNativeCanvas} from './canvas.mjs';
 import {createProductionScene} from '../../src/engine/production-scene.js';
@@ -9,13 +12,14 @@ import {applyFilmGrain} from '../../src/engine/film-grain.js';
 
 export function createNativeRenderer(parameters) {
   const scene=createProductionScene(parameters);
-  let canvas,ctx;
+  let canvas,ctx;const images=new Map();let prepared;
+  async function prepare(){if(scene.config.scene!=='appdemo')return;if(!prepared)prepared=(async()=>{const d=validateAppDemo(parameters.appDemo);const root=fileURLToPath(new URL('../../',import.meta.url));for(const asset of new Set([...d.slides.map(s=>s.asset),d.logo].filter(Boolean))){images.set(asset,await loadImage(await readImageAsset(root,asset)));}})();await prepared;}
   function draw(time,width,height) {
     if(!canvas||canvas.width!==width||canvas.height!==height){canvas?.dispose();canvas=createNativeCanvas(width,height);ctx=canvas.getContext('2d');}
     const state=scene.evaluate(time);
     ctx.reset();
     ctx.save();ctx.scale(width/state.width,height/state.height);
-    try{renderProcedural(ctx,state.time,state);}finally{ctx.restore();}
+    try{renderProcedural(ctx,state.time,{...state,images});}finally{ctx.restore();}
     return state;
   }
   return {
@@ -23,8 +27,8 @@ export function createNativeRenderer(parameters) {
     sampleMotion:()=>scene.sampleMotion(),
     close:async()=>canvas?.release(),
     async renderPng(time,width,height,parameters,samples=1,fps=30,report=()=>{}) {
-      const state=scene.evaluate(time),post=state.parameters.look?.post??{};
-      const shutter=proceduralShutter(state.time,post.shutterAngle??210);
+      await prepare();const state=scene.evaluate(time),post=state.parameters.look?.post??{};
+      const shutter=scene.config.scene==='appdemo'?0:proceduralShutter(state.time,post.shutterAngle??210);
       const schedule=shutterSamples(state.time,{fps,duration:scene.config.duration,samples:shutter===0?1:samples,shutterAngle:shutter,cuts:proceduralCuts,profile:post.shutterProfile??'cosine'});
       if(schedule.length===1)draw(time,width,height);
       else {

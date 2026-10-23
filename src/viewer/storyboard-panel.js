@@ -1,3 +1,4 @@
+import {appDemoShots} from '../engine/app-demo.js';
 import {setIcon,icon} from './studio-icons.js';
 import {parameterKey} from './creative-model.js';
 import './storyboard-panel.css';
@@ -37,13 +38,13 @@ export function mountStoryboard({container,getState,pause,seek,createRuntime,nat
  const state=getState(),key=data.sourceRevision+parameterKey(state.snapshot);if(!force&&key===renderKey)return;renderKey=key;const epoch=++generation,shots=data.board.shots;clearImages();drawCards();let runtime;
  try{const cfg=state.snapshot.config,scale=Math.min(640/cfg.width,360/cfg.height),width=Math.max(64,Math.round(cfg.width*scale)),height=Math.max(64,Math.round(cfg.height*scale));let canvas;
  for(const [index,shot]of shots.entries()){if(epoch!==generation||mode!=='storyboard'||disposed)return;message(`Rendering native layouts ${index+1} / ${shots.length}…`);
- if(state.scene==='procedural'&&nativeThumbnail)images.set(shot.id,await nativeThumbnail(state.snapshot.parameters,shot.time,width,height));
- else{if(!runtime){canvas=document.createElement('canvas');runtime=createRuntime(canvas,{initialScene:state.scene});await runtime.ready;}runtime.render(shot.time,{width,height,previewQuality:'full',previewReview:'beauty',parameters:state.snapshot.parameters});images.set(shot.id,canvas.toDataURL('image/png'));}
+ if(['procedural','appdemo'].includes(state.scene)&&nativeThumbnail)images.set(shot.id,await nativeThumbnail(state.snapshot.parameters,shot.time,width,height));
+ else{if(!runtime){canvas=document.createElement('canvas');runtime=createRuntime(canvas,{initialScene:state.scene});await runtime.ready;}await runtime.prepare?.(state.snapshot.parameters);runtime.render(shot.time,{width,height,previewQuality:'full',previewReview:'beauty',parameters:state.snapshot.parameters});images.set(shot.id,canvas.toDataURL('image/png'));}
  drawCards();await new Promise(resolve=>setTimeout(resolve,0));}
  message('Layouts rendered from your project. Browse scenes before watching the animation.');
  }catch(e){renderKey='';message('Could not render the layout: '+e.message);}finally{runtime?.dispose();}
  }
- async function refresh(force=false){if(loading||disposed)return;loading=true;try{const state=getState(),result=await api('creative?scene='+encodeURIComponent(state.scene));const live=window.motionLive?.getState?.();if(data?.board&&((live?.paused||live?.pending)&&result.sourceRevision!==data.sourceRevision)){message('Live updates are paused or waiting. Keeping the previous storyboard.');return;}const changed=scene!==state.scene||data?.sourceRevision!==result.sourceRevision;scene=state.scene;data=result;
+ async function refresh(force=false){if(loading||disposed)return;loading=true;try{const state=getState(),result=await api('creative?scene='+encodeURIComponent(state.scene));if(state.scene==='appdemo')result.board={title:'Your app demo',shots:appDemoShots(state.snapshot.parameters.appDemo)};const live=window.motionLive?.getState?.();if(data?.board&&((live?.paused||live?.pending)&&result.sourceRevision!==data.sourceRevision)){message('Live updates are paused or waiting. Keeping the previous storyboard.');return;}const changed=scene!==state.scene||data?.sourceRevision!==result.sourceRevision;scene=state.scene;data=result;
  if(changed&&data.phase!=='editing'){clearImages();renderKey='';drawCards();}if(force)renderKey='';await generate(force);
  }catch(e){message(e.message);}finally{loading=false;}}
  function setMode(next){pause();mode=next;document.body.dataset.creativeMode=next;board.hidden=next!=='storyboard';$('story-mode').setAttribute('aria-pressed',String(next==='storyboard'));$('video-mode').setAttribute('aria-pressed',String(next==='video'));
