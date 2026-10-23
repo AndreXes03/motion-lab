@@ -32,3 +32,5 @@ User screenshots may contain private information: review them before sharing a p
 ## Example materials
 
 Bundled screenshots are existing Framevolve documentation captures: `docs/cycles-evidence/studio-ready.png`, `docs/ux-workflow/audio-timeline.png` and `docs/ux-workflow/export-summary.png`. They show the real application; they are not synthetic product interfaces.
+
+Opening a project saved before App Demo keeps its original scene, media and settings. The installed App Demo entry point, bundled example screenshots and missing App Demo control/render defaults remain available; user screenshots from the previous project are not carried over. Existing App Demo files in the opened project take precedence.

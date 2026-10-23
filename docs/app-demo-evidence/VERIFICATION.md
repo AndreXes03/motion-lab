@@ -15,3 +15,5 @@ Environment: macOS Apple Silicon, local development copy.
 Evidence: contact.png (actual exported video), brief.png, editor.png, export-metadata.json. The MP4 and portable project are delivered alongside the candidate outside the source repository.
 
 Not covered: Windows/Intel setup, screen-recording inputs, automatic vertical layouts, a first-time tester session, subjective audio listening. Public release and changes to the existing installed checkout are not part of this candidate.
+
+Release compatibility: 39 project-library/store/session/controller checks passed, including opening a pre-upgrade project without removing the installed App Demo entry point or bundled assets, while restoring its original media and settings.

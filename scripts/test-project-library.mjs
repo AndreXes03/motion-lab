@@ -11,6 +11,21 @@ async function fixture(t){const root=await realpath(await mkdtemp(path.join(os.t
 async function text(root,name){return readFile(path.join(root,name),'utf8');}
 const mutate=(bytes,fn)=>{const pkg=JSON.parse(gunzipSync(bytes));fn(pkg);return gzipSync(JSON.stringify(pkg));};
 
+test('opening a pre-upgrade project retains installed App Demo support and its original content',async t=>{
+ const root=await fixture(t),legacy={version:1,scenes:{starter:{custom:'keep original'}}};
+ for(const name of ['control-selections','render-plans'])await put(root,`project/${name}.json`,JSON.stringify(legacy));
+ await put(root,'project/audio/original.wav','original music');
+ const old=await saveProject(root,{name:'Before App Demo',snapshot:snapshot('original')});
+ for(const name of ['src/scenes/app-demo.js','public/assets/app-demo/workspace.png','public/assets/app-demo/audio.png','public/assets/app-demo/delivery.png'])await put(root,name,'installed '+name);
+ for(const name of ['control-selections','render-plans'])await put(root,`project/${name}.json`,JSON.stringify({version:1,scenes:{starter:{custom:'changed'},appdemo:{installed:true}}}));
+ await put(root,'src/scenes/film.js','new film');await put(root,'public/assets/app-demo/'+'a'.repeat(64)+'.png','unrelated screenshot');
+ const opened=await openProject(root,old.id);assert.deepEqual(opened.snapshot,old.snapshot);
+ assert.equal(await text(root,'src/scenes/film.js'),'export const film="first";');assert.equal(await text(root,'project/audio/original.wav'),'original music');
+ for(const name of ['src/scenes/app-demo.js','public/assets/app-demo/workspace.png','public/assets/app-demo/audio.png','public/assets/app-demo/delivery.png'])assert.equal(await text(root,name),'installed '+name);
+ for(const name of ['control-selections','render-plans'])assert.deepEqual(JSON.parse(await text(root,`project/${name}.json`)),{version:1,scenes:{...legacy.scenes,appdemo:{installed:true}}});
+ await assert.rejects(text(root,'public/assets/app-demo/'+'a'.repeat(64)+'.png'),{code:'ENOENT'});assert.deepEqual(await readProject(root,old.id),old);
+});
+
 test('disk saves preserve two independent projects, deduplicate and back up unsaved work',async t=>{
  const root=await fixture(t),a=await saveProject(root,{name:'First film',snapshot:snapshot('a')});
  assert.equal((await saveProject(root,{id:a.id,name:a.name,snapshot:a.snapshot,expectedRevision:1})).revision,1);
