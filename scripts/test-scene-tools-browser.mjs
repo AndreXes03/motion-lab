@@ -12,7 +12,7 @@ const page=await browser.newPage({viewport:{width:1440,height:1000}}),errors=[],
 async function idle(){await page.evaluate(()=>window.motionPreview.whenIdle());}
 async function recipe(){await idle();await page.locator('#experience-pro').click();await page.locator('#tab-code').click();return JSON.parse(await page.locator('#code-content').textContent());}
 try{
- await page.goto('http://127.0.0.1:4194/?scene=procedural&render=1');await page.waitForFunction(()=>window.motion?.ready);await page.evaluate(()=>window.motion.ready);await page.locator('#preview-quality').selectOption('sharp');await idle();
+ await page.goto('http://127.0.0.1:4194/?scene=procedural&render=1');await page.waitForFunction(()=>window.motion?.ready);await page.evaluate(()=>window.motion.ready);await page.locator('.preview-options>summary').click();await page.locator('#preview-quality').selectOption('sharp');await page.locator('.preview-options>summary').click();await idle();
  for(const scene of sceneIds){
   await page.locator('#scene').selectOption(scene);await page.locator('#tab-look').click();
   const manifest=createControlManifest(scene),catalog=getControlCatalog(scene);

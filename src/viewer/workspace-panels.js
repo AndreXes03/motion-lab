@@ -2,6 +2,7 @@ import './workspace-panels.css';
 
 /** Export history is a destination, not a second timeline beneath the editor. */
 export function mountWorkspacePanels(){
+ mountPreviewToolbar();
  const dock=document.getElementById('export-dock'),delivery=document.querySelector('.delivery-actions');
  if(!dock||!delivery)return;
  const trigger=document.createElement('button');trigger.id='exports-open';trigger.type='button';trigger.textContent='Exports';trigger.title='Export history and progress';trigger.setAttribute('aria-haspopup','dialog');
@@ -26,4 +27,25 @@ export function mountWorkspacePanels(){
  // Keep pause/recovery controls available on demand, without a permanent status bar.
  const review=document.getElementById('live-review'),more=document.querySelector('.studio-more-panel');
  if(review&&more&&!review.hidden){const updates=document.createElement('details');updates.className='workspace-updates';const label=document.createElement('summary');label.textContent='Assistant updates';updates.append(label,review);more.append(updates);}
+}
+
+/** Keep the primary view choice visible; inspection tools are opt-in. */
+function mountPreviewToolbar(){
+ const heading=document.querySelector('.stage-heading'),row=document.querySelector('.stage-view-switch'),strip=document.querySelector('.preview-strip');
+ if(!heading||!row||!strip)return;
+ heading.classList.add('compact-preview-heading');
+ heading.firstElementChild.hidden=true;
+ const modes=row.querySelector('.story-mode-switch');
+ for(const [id,label] of [['story-mode','Storyboard'],['video-mode','Video']]){
+  const button=modes.querySelector('#'+id);button.textContent=label;button.classList.remove('studio-icon-only','studio-has-icon');
+ }
+ heading.prepend(modes);row.remove();
+ const options=document.createElement('details');options.className='preview-options';
+ options.innerHTML='<summary aria-label="Preview options">Preview <span aria-hidden="true">⌄</span></summary><div class="preview-options-panel"><p>Preview settings</p></div>';
+ const panel=options.querySelector('.preview-options-panel');panel.append(strip);
+ const comparison=heading.querySelector('.comparison-tools');if(comparison)panel.append(comparison);
+ heading.append(options);
+ options.addEventListener('keydown',event=>{if(event.key==='Escape'){options.open=false;options.querySelector('summary').focus();event.stopPropagation();}});
+ document.addEventListener('pointerdown',event=>{if(!options.contains(event.target))options.open=false;});
+ modes.addEventListener('click',()=>{options.open=false;});
 }

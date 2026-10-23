@@ -20,7 +20,7 @@ try{
  const command=async(action,options={})=>writeReview(root,updateReview(await readReview(root),action,options));
  const waitRevision=async rev=>page.waitForFunction(rev=>window.motionLive?.getState().revision>=rev,rev);
  const pixelHash=()=>page.evaluate(()=>{const canvas=document.querySelector('#renderCanvas');let h=2166136261;for(const n of canvas.getContext('2d').getImageData(0,0,canvas.width,canvas.height).data)h=Math.imul(h^n,16777619);return h>>>0;});
- await page.goto(url);await ready();await page.locator('#preview-quality').selectOption('sharp');
+ await page.goto(url);await ready();await page.locator('.preview-options>summary').click();await page.locator('#preview-quality').selectOption('sharp');await page.locator('.preview-options>summary').click();
  await page.locator('#seek').evaluate(el=>{el.value='240';el.dispatchEvent(new Event('input',{bubbles:true}));});await page.evaluate(()=>window.motionPreview.whenIdle());
  // An old recovery snapshot must not hide a new authored default after a source reload.
  const lookFile=path.join(root,'project/look.json'),look=JSON.parse(await readFile(lookFile,'utf8'));look.post.grain=.025;
