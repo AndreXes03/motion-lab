@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "revision": "4fc26ffbafb330fdd6fa772ff318a107293c9cd2",
+  "revision": "42c9d4ce65c2b8ef33340950cea1a34c5dfa5957",
   "files": {
     ".agents/skills/framevolve-live-review/SKILL.md": {
       "sha": "51ac340d4873da576a714514d070bd3009e02ae3",
@@ -2227,11 +2227,11 @@
       "mode": "100644"
     },
     "src/viewer/easy-panel.css": {
-      "sha": "5a4e77b31ca07dfc08641641c1dd6153157c65de",
+      "sha": "058d0e50a647527e95ecdc5d677868143e0cba8c",
       "mode": "100644"
     },
     "src/viewer/easy-panel.js": {
-      "sha": "ce62d41952288469dc16ef9f2c5e37567f950d91",
+      "sha": "02249391f16a5b47d229ed2bdc10e579d8ce18a0",
       "mode": "100644"
     },
     "src/viewer/export-panel.css": {
