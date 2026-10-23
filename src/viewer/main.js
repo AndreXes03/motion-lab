@@ -33,6 +33,8 @@ import {sceneIds,sceneConfig,isNewScene} from '../scene-registry.js';
 import {mountInspector,mergeLook} from './studio-inspector.js';
 import {mountSoundPanel} from './sound-panel.js';
 import './style.css';
+import './responsive-studio.css';
+import {mountToolbarOverflow} from './toolbar-overflow.js';
 import {brandReady} from '../components/brand.js';
 import {mountReferencePanel} from './reference-panel.js';
 import {createRuntime} from '../engine/runtime.js';
@@ -327,6 +329,8 @@ if(!publicDemo&&canRecoverDraft){
  const helpContainer=document.createElement('div');helpContainer.className='studio-help';document.querySelector('.delivery-actions').before(helpContainer);
  mountHelpMenu({container:helpContainer,onboarding:gettingStarted,onStartVideo:()=>sessionTools.open('brief')});
 }
+
+mountToolbarOverflow();
 
 function syncDivider(){const d=$('panel-divider'),horizontal=document.body.dataset.layout==='controls';d.setAttribute('aria-valuemin',horizontal?'150':'300');d.setAttribute('aria-valuemax',horizontal?String(Math.max(150,document.querySelector('.workspace').clientHeight-155)):'600');requestAnimationFrame(()=>{d.setAttribute('aria-valuenow',String(Math.round(horizontal?document.querySelector('.stage-column').getBoundingClientRect().height:document.querySelector('.direction').getBoundingClientRect().width)));});}
 function setWide(wide){setLayout(wide?'focus':'balanced');}

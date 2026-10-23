@@ -1,0 +1,65 @@
+/* Secondary actions remain reachable without competing with the video/export. */
+.studio-more{position:relative;flex-shrink:0}
+.studio-more>summary{list-style:none;display:grid;place-items:center;width:34px;height:34px;border:1px solid #ffffff24;border-radius:7px;background:#ffffff08;color:#e2e6d8;cursor:pointer;font-size:23px;line-height:1;padding-bottom:7px}
+.studio-more>summary::-webkit-details-marker{display:none}
+.studio-more[open]>summary{border-color:#d7f56b80;color:#d7f56b;background:#d7f56b12}
+.studio-more-panel{position:absolute;right:0;top:calc(100% + 10px);width:244px;max-width:calc(100vw - 24px);max-height:calc(100dvh - 95px);overflow:auto;padding:12px;background:#1b1f1b;border:1px solid #ffffff25;border-radius:12px;box-shadow:0 18px 50px #0009}
+.studio-more-heading{font-size:10px;color:#a3ad98;letter-spacing:.08em;text-transform:uppercase;margin:0 0 8px}
+.studio-more-panel>div:empty{display:none}
+.studio-more-panel>div+div:not(:empty){border-top:1px solid #ffffff15;margin-top:10px;padding-top:10px}
+.studio-more-panel button{max-width:100%}
+.studio-more-panel .app-demo-entry{width:100%;background:#d7f56b12;color:#d7f56b;border-color:#d7f56b35;white-space:normal;text-align:left}
+.studio-more-panel .layout-picker{justify-content:space-around}
+.studio-more-panel .layout-picker button{width:auto;min-height:36px;flex:1;display:flex;flex-direction:column;gap:4px;font-size:9px}
+.studio-more-panel #layout-balanced::after{content:'Balanced'}
+.studio-more-panel #layout-controls::after{content:'Controls'}
+.studio-more-panel #layout-focus::after{content:'Preview'}
+.studio-more-panel #save,.studio-more-panel #render-frame,.studio-more-panel #render-preview{display:flex;width:100%;height:auto;min-height:36px;justify-content:flex-start;gap:9px;padding:8px;font-size:12px;background:transparent;border-color:transparent}
+.studio-more-panel #render-frame::after{content:'Render frame'}
+body[data-experience=easy] .studio-more-panel #render-frame,body[data-experience=easy] .studio-more-panel #render-preview{display:none}
+.app-header .fv-help-trigger{width:34px;height:34px;min-height:34px;padding:0;border-radius:50%;font-size:16px;font-weight:600}
+.app-header .project-switch{min-width:0}
+.app-header .project-switch select{min-width:0;text-overflow:ellipsis}
+@media(max-width:1280px){
+ .app-header{gap:8px;padding-inline:14px}
+ .studio-brand strong,.studio-brand>span:not(.brand-mark){display:none}
+ .app-header .project-switch{flex:1 1 120px;max-width:230px;font-size:0}
+ .app-header .project-switch select{width:100%}
+ .project-library{gap:8px;flex-shrink:1}
+ .project-library-name{max-width:120px}
+ .project-library-status{max-width:85px}
+ .view-actions,.delivery-actions,.studio-help{flex-shrink:0}
+ .preview-strip{flex-wrap:wrap;gap:8px}
+ #preview-controls{min-width:0;max-width:100%;display:flex;flex-wrap:wrap;gap:6px}
+ .preview-toolbar{flex-wrap:wrap;min-width:0}
+ .stage-heading h1{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+}
+@media(min-width:701px) and (max-width:1100px){
+ :root{--rail-width:58px}
+ .scene-browser{padding:16px 7px}
+ .rail-label,.inspector-tabs button>span:last-child,.rail-section,.browser-bottom{display:none}
+ .inspector-tabs button{height:42px;justify-content:center;padding:8px}
+ body:not([data-layout=controls]):not([data-layout=focus]) .workspace{grid-template-columns:58px minmax(0,1fr) 5px min(var(--active-inspector-width,var(--inspector-width)),40vw)}
+ .stage-heading{padding:12px 14px;height:60px}
+ .stage-heading .eyebrow,.timeline-heading,#timeline-ruler{display:none}
+ .preview-strip{margin:0 14px 10px}
+ .preview-space{margin:0 14px 12px}
+ .playback{padding:12px 14px}
+ .transport{flex-wrap:wrap;gap:7px}
+ .transport input[type=range]{min-width:70px}
+ .moments{margin-top:9px}
+ .studio-status>span:last-child{display:none}
+}
+@media(min-width:701px) and (max-width:950px){
+ .project-library-name{max-width:85px}.project-library-identity{gap:4px}
+ .project-library-status[data-state=saved]{display:none}
+ .app-header{padding-inline:10px;gap:7px}
+}
+@media(max-width:700px){
+ .app-header{min-height:98px;gap:8px}
+ .app-header .studio-brand{margin-right:0}
+ .app-header .project-library{flex:1;justify-content:space-between}
+ .app-header .project-switch{order:2;flex:1 1 100%;max-width:none}
+ .app-header .view-actions{margin-left:auto}
+ .studio-more-panel{position:fixed;right:12px;top:66px}
+}
