@@ -1,13 +1,13 @@
 {
   "version": 1,
-  "revision": "103674d86b995d3926bc4987ea2715fe00dfa262",
+  "revision": "4fc26ffbafb330fdd6fa772ff318a107293c9cd2",
   "files": {
     ".agents/skills/framevolve-live-review/SKILL.md": {
       "sha": "51ac340d4873da576a714514d070bd3009e02ae3",
       "mode": "100644"
     },
     ".agents/skills/motion-lab-product-film/SKILL.md": {
-      "sha": "ab8ddf00b4eff6cfddbb9429174162ef3b184c13",
+      "sha": "7c7efce1f4fedafc081c4c0df0eb254bf1787dfc",
       "mode": "100644"
     },
     ".agents/skills/motion-lab-product-film/references/client-feedback.md": {
@@ -43,7 +43,7 @@
       "mode": "100644"
     },
     ".github/workflows/mac-setup.yml": {
-      "sha": "669bb3ad18e464d62d5e4c333a492ac352473387",
+      "sha": "910ed5c25fd5ec7a35692a143beb78861098fb21",
       "mode": "100644"
     },
     ".gitignore": {
@@ -51,7 +51,7 @@
       "mode": "100644"
     },
     "AGENTS.md": {
-      "sha": "23608f40bf731dc44b82b057e7215fe24910eb4c",
+      "sha": "250a552b348cb94dd18037ebc2ca2c5ebef430d4",
       "mode": "100644"
     },
     "CLAUDE.md": {
@@ -263,7 +263,7 @@
       "mode": "100644"
     },
     "docs/ADAPTIVE_CONTROLS.md": {
-      "sha": "c98551088da5f45ddd2577c7b7f0c107fe149a08",
+      "sha": "80b6517e36e7f282e9078e1c6c5d6a0afab2a492",
       "mode": "100644"
     },
     "docs/AGENT_EFFICIENCY.md": {
@@ -296,6 +296,10 @@
     },
     "docs/CYCLES_STANDALONE_VALIDATION.md": {
       "sha": "820493b5d23efe456122c894cef84a36c51618cb",
+      "mode": "100644"
+    },
+    "docs/EASY_CONTROLS.md": {
+      "sha": "558ab13033e21f1146ad7aa5589648bf89075ca8",
       "mode": "100644"
     },
     "docs/FEEDBACK_MEMORY.md": {
@@ -819,7 +823,7 @@
       "mode": "100644"
     },
     "package.json": {
-      "sha": "5ed40f5cc266f94684ff50504156efa3a61239ab",
+      "sha": "3802d3b30ceb6e6921eb818ec4efdf5dda1d25d5",
       "mode": "100644"
     },
     "project/README.md": {
@@ -831,7 +835,7 @@
       "mode": "100644"
     },
     "project/control-selections.json": {
-      "sha": "437774c897addfd38433d98fe3adb07e510d03e2",
+      "sha": "a1b40f774f9e6cff86e653ba691aeb25d55d4327",
       "mode": "100644"
     },
     "project/graphics.json": {
@@ -939,7 +943,7 @@
       "mode": "100644"
     },
     "scripts/agent-context.mjs": {
-      "sha": "f7305d3c01160702161af82215916ae3fe9ea8be",
+      "sha": "62cf1e8f64bf5cab740a64c02d94d8670800c972",
       "mode": "100644"
     },
     "scripts/app-demo.mjs": {
@@ -975,7 +979,7 @@
       "mode": "100644"
     },
     "scripts/controls.mjs": {
-      "sha": "e50b8d5ac6f0173bb6d1e5057e381a4527e7024a",
+      "sha": "696f733fb830cf346b1064ecc773842e639fb72c",
       "mode": "100644"
     },
     "scripts/creative-store.mjs": {
@@ -1390,6 +1394,10 @@
       "sha": "8a645086acbd0346e8f20d3ee04b14f071e00363",
       "mode": "100644"
     },
+    "scripts/test-easy-controls.mjs": {
+      "sha": "083eae81263f3dd63123d0230510473036fe8441",
+      "mode": "100644"
+    },
     "scripts/test-feedback-memory-browser.mjs": {
       "sha": "81d33085fe9617021b50b1d8795ed91ced55857a",
       "mode": "100644"
@@ -1451,7 +1459,7 @@
       "mode": "100644"
     },
     "scripts/test-motion-interaction-browser.mjs": {
-      "sha": "0b61aba188fae9e5902d737ea9228d8aadb64c80",
+      "sha": "4febcbb08a9b9568a5a27e7b6e492379aa94490d",
       "mode": "100644"
     },
     "scripts/test-motion-source-seek.mjs": {
@@ -1563,7 +1571,7 @@
       "mode": "100644"
     },
     "scripts/test-scene-control-contract.mjs": {
-      "sha": "643240c8e928d0457b6590fea997eb16474f9cab",
+      "sha": "7d741af0c520c7a549aa3b2475ef5f75a2ef2c07",
       "mode": "100644"
     },
     "scripts/test-scene-tools-browser.mjs": {
@@ -1815,7 +1823,7 @@
       "mode": "100644"
     },
     "src/engine/control-catalog.js": {
-      "sha": "c1e7064625c8c4641758bf8953eb839b9f9ea5cf",
+      "sha": "3066a443b1b76d671f1d08e3f82171b672dc2f4b",
       "mode": "100644"
     },
     "src/engine/control-presets.js": {
@@ -1832,6 +1840,14 @@
     },
     "src/engine/display-grade.js": {
       "sha": "cd916471b4f13f30ffa0815d5155eb0bc0a9014c",
+      "mode": "100644"
+    },
+    "src/engine/easy-control-schema.js": {
+      "sha": "ae322c27ed47c30024f515b334daa302e5aa38a2",
+      "mode": "100644"
+    },
+    "src/engine/easy-controls.js": {
+      "sha": "a2b39bd61d0b43f65d5171cf41074000a64d4d3c",
       "mode": "100644"
     },
     "src/engine/film-grain.js": {
@@ -2210,6 +2226,14 @@
       "sha": "5b47f8f21c4d59e022bd2f7c4105188353ed3f72",
       "mode": "100644"
     },
+    "src/viewer/easy-panel.css": {
+      "sha": "5a4e77b31ca07dfc08641641c1dd6153157c65de",
+      "mode": "100644"
+    },
+    "src/viewer/easy-panel.js": {
+      "sha": "ce62d41952288469dc16ef9f2c5e37567f950d91",
+      "mode": "100644"
+    },
     "src/viewer/export-panel.css": {
       "sha": "0dd2adf7b41edeeb36c80bf3de6b574c21aed750",
       "mode": "100644"
@@ -2251,7 +2275,7 @@
       "mode": "100644"
     },
     "src/viewer/main.js": {
-      "sha": "cd29a42920e4732103dba181580e46240f77a9d6",
+      "sha": "02789a1002278021eb1b1e65164ceff3d0be0bce",
       "mode": "100644"
     },
     "src/viewer/motion-curve-editor.css": {
