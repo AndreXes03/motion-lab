@@ -8,12 +8,20 @@
 .fv-help-kicker {color:#a6b0b8;font-size:9px;letter-spacing:1.4px}
 .fv-help-dialog header button {width:32px;height:32px;border:1px solid #ffffff20;border-radius:50%;background:#ffffff08;color:#e4e7e1;font-size:20px;cursor:pointer}
 .fv-help-content {display:grid;gap:10px;padding:0 20px 22px}
-.fv-help-card {display:grid;grid-template-columns:32px 1fr 18px;align-items:start;gap:12px;width:100%;padding:16px;border:1px solid #ffffff12;border-radius:11px;background:#ffffff05;color:inherit;text-align:left;font:inherit;cursor:pointer}
+.fv-help-card {display:grid;grid-template-columns:24px minmax(0,1fr) 18px;align-items:start;gap:12px;width:100%;padding:16px;border:1px solid #ffffff12;border-radius:11px;background:#ffffff05;color:inherit;text-align:left;font:inherit;cursor:pointer}
 button.fv-help-card:hover {border-color:#d7f56b66;background:#d7f56b0b}
 .fv-help-card strong {display:block;margin-bottom:5px;font-size:13px;font-weight:620}
 .fv-help-card small {display:block;color:#aab2b9;font-size:11px;line-height:1.55}
 .fv-help-number {color:#d7f56b;font-size:10px;font-variant-numeric:tabular-nums}
-.fv-help-ai {grid-template-columns:32px 1fr 18px}
+.fv-help-ai {grid-template-columns:24px minmax(0,1fr) 18px}
 .fv-help-dialog>footer {display:flex;align-items:center;justify-content:space-between;gap:12px;padding:15px 24px;border-top:1px solid #ffffff12;color:#9ba5ad;font-size:10px}
 .fv-help-dialog footer button {padding:7px 12px;border:1px solid #ffffff20;border-radius:6px;background:#ffffff08;color:#dfe3de;font:inherit;cursor:pointer}
 @media(max-width:620px) {.fv-help-dialog>header{padding:22px 20px 18px}.fv-help-dialog header h2{font-size:22px}.fv-help-content{padding:0 14px 18px}.fv-help-card{padding:14px}.fv-help-dialog>footer{padding:14px 18px}}
+
+/* Cards must wrap inside the dialog rather than widening its scroll area. */
+.fv-help-dialog{overflow-x:hidden}
+.fv-help-dialog,.fv-help-dialog *{box-sizing:border-box}
+.fv-help-content{min-width:0;grid-template-columns:minmax(0,1fr)}
+.fv-help-card{min-width:0;max-width:100%;white-space:normal;overflow-wrap:anywhere}
+.fv-help-card>span,.fv-help-dialog>header>div,.fv-help-dialog>footer>span{min-width:0}
+.fv-help-dialog header button,.fv-help-dialog footer button{flex-shrink:0}
