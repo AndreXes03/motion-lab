@@ -8,7 +8,7 @@ const routes={
  updates:{files:['scripts/studio-update.mjs','scripts/zip-update.mjs','scripts/update-dialog.mjs','docs/UPDATES.md'],tests:['npm run test:updates','node scripts/test-studio-update.mjs']},
  feedback:{files:['.agents/skills/motion-lab-product-film/references/client-feedback.md','scripts/feedback-memory.mjs','docs/FEEDBACK_MEMORY.md'],tests:['npm run test:feedback']},
  live:{files:['.agents/skills/framevolve-live-review/SKILL.md','scripts/live-studio.mjs','docs/LIVE_STUDIO.md'],tests:['npm run test:live']},
- controls:{files:['scripts/controls.mjs','src/engine/scene-capabilities.js','project/control-selections.json'],tests:['node scripts/test-scene-control-contract.mjs','node scripts/controls.mjs check']},
+ controls:{files:['scripts/controls.mjs','src/engine/scene-capabilities.js','project/control-selections.json','docs/EASY_CONTROLS.md','src/engine/easy-controls.js'],tests:['node scripts/test-scene-control-contract.mjs','node scripts/test-easy-controls.mjs','node scripts/controls.mjs check']},
  video:{files:['.agents/skills/motion-lab-product-film/SKILL.md','project/look.json','project/motion.json'],tests:['Render and inspect the changed shot, then contact sheet/preview before delivery.']}
 };
 const requested=process.argv[2];

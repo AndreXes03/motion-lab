@@ -11,7 +11,7 @@ try {
   await page.waitForFunction(() => window.motionPreview && window.motion?.ready);
   const idle = () => page.evaluate(() => window.motionPreview.whenIdle());
   const recipe = async () => { await idle(); await page.locator('#experience-pro').click(); await page.locator('#tab-code').click(); return JSON.parse(await page.locator('#code-content').textContent()); };
-  const motion = async () => { await page.locator('#tab-motion').click(); await idle(); };
+  const motion = async () => { await page.locator('#experience-pro').click();await page.locator('#tab-motion').click(); await idle(); };
   const openAdvanced = async () => { const detail = page.locator('#motion-advanced'); if (!await detail.evaluate(node => node.open)) await detail.locator(':scope > summary').click(); const editMode = page.locator('#motion-edit-mode'); if (await editMode.isVisible()) await editMode.selectOption('retime'); };
   const drag = async (locator, dx, dy) => { await locator.scrollIntoViewIfNeeded(); const box = await locator.boundingBox(); assert.ok(box); const x = box.x + box.width / 2, y = box.y + box.height / 2; await page.mouse.move(x, y); await page.mouse.down(); await page.mouse.move(x + dx, y + dy, {steps: 10}); await page.mouse.up(); await idle(); };
   assert.equal(await page.locator('body').getAttribute('data-experience'), 'easy', 'New workspaces default to Easy');
@@ -19,15 +19,15 @@ try {
   assert.equal(await page.locator('.motion-view-picker').count(), 0, 'Curve editing has no separate Original/Retime tabs');
   await page.waitForFunction(() => document.getElementById('motion-native-graph')?.dataset.source === 'samples');
   assert.equal(await page.locator('#motion-native-graph').isVisible(), true, 'Easy previews the source movement');
-  assert.ok(await page.locator('.motion-template').count() >= 2, 'Easy exposes curated templates with curve previews');
+  assert.ok(await page.locator('.easy-card').count() <= 5, 'Easy has at most five scene-authored choices');
   assert.equal(await page.locator('#motion-native-graph').getAttribute('data-source'), 'samples');
   assert.equal(await page.locator('#motion-native-graph').getAttribute('data-editable'), 'false', 'Sampled motion must not imply editable authored keys');
   assert.equal(await page.locator('#motion-timing-graph').isVisible(), false);
-  assert.equal(await page.locator('#tab-code').isVisible(), false);
+  assert.equal(await page.locator('#tab-code').isVisible(), true);
   const initial = await recipe(); await motion();
   await page.locator('#experience-easy').click();
   assert.equal(await page.locator('#motion-advanced').isVisible(), false, 'Easy hides precision options');
-  assert.equal(await page.locator('#motion-native-graph').isVisible(), true, 'Easy keeps the source curve visible');
+  assert.equal(await page.locator('#easy-controls').isVisible(), true, 'Easy returns to the scene choices');assert.equal(await page.locator('#tab-motion').isVisible(),false);
   assert.equal(await page.locator('#motion-timing-graph').isVisible(), false, 'Easy hides the lower-level clock editor');
   await page.locator('#experience-pro').click();
   assert.deepEqual((await recipe()).parameters, initial.parameters, 'Changing experience and curve view must not write film parameters'); await motion();
@@ -160,8 +160,8 @@ try {
   assert.deepEqual((await recipe()).parameters.motion, sourceBaseline.parameters.motion, 'Selecting original keys is read only'); await motion();
   await page.locator('#experience-easy').click();
   assert.equal(await page.locator('#motion-source-save').isVisible(), false, 'Easy shows templates instead of native precision fields');
-  assert.ok(await page.locator('.motion-template').count() >= 2);
-  await page.locator('#experience-pro').click();
+  assert.equal(await page.locator('#easy-controls').isVisible(),true);
+  await motion();
   assert.equal(await page.locator('#motion-source-save').isVisible(), true, 'Pro restores native key editing');
   const editedTime = Number((beforeKey.t + .025).toFixed(6)), editedValue = beforeKey.value[0] + .125, sourceBezier = [.2, .15, .8, .9];
   await page.locator('#motion-source-time').fill(String(editedTime));
