@@ -29,7 +29,7 @@ export function mountWorkspacePanels(){
  if(review&&more&&!review.hidden){const updates=document.createElement('details');updates.className='workspace-updates';const label=document.createElement('summary');label.textContent='Assistant updates';updates.append(label,review);more.append(updates);}
 }
 
-/** Keep the primary view choice visible; inspection tools are opt-in. */
+/** Group tools by purpose and collapse only when the actual preview is narrow. */
 function mountPreviewToolbar(){
  const heading=document.querySelector('.stage-heading'),row=document.querySelector('.stage-view-switch'),strip=document.querySelector('.preview-strip');
  if(!heading||!row||!strip)return;
@@ -45,6 +45,14 @@ function mountPreviewToolbar(){
  const panel=options.querySelector('.preview-options-panel');panel.append(strip);
  const comparison=heading.querySelector('.comparison-tools');if(comparison)panel.append(comparison);
  heading.append(options);
+ const stage=heading.parentElement,inline=document.createElement('div');inline.className='preview-tools-inline';heading.after(inline);
+ let layout='';
+ const resize=new ResizeObserver(([entry])=>{
+  const next=entry.contentRect.width<380?'compact':entry.contentRect.width<850?'stacked':'wide';
+  if(next===layout)return;layout=next;stage.dataset.previewLayout=next;options.open=false;
+  if(next==='compact'){options.hidden=false;panel.append(strip);if(comparison)panel.append(comparison);inline.hidden=true;}
+  else{options.hidden=true;inline.hidden=false;inline.append(strip);if(comparison)heading.querySelector('.stage-tools').append(comparison);if(next==='wide')heading.insertBefore(inline,heading.querySelector('.stage-tools'));else heading.after(inline);}
+ });resize.observe(stage);
  options.addEventListener('keydown',event=>{if(event.key==='Escape'){options.open=false;options.querySelector('summary').focus();event.stopPropagation();}});
  document.addEventListener('pointerdown',event=>{if(!options.contains(event.target))options.open=false;});
  modes.addEventListener('click',()=>{options.open=false;});

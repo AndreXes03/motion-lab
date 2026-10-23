@@ -5,7 +5,7 @@ const openAdvanced=async page=>{await page.locator('#experience-pro').click();co
 const browser=await chromium.launch({channel:'chrome',headless:true});
 try{
  const page=await browser.newPage({viewport:{width:1440,height:1000}}),errors=[];page.on('pageerror',error=>errors.push(error.message));
- await page.goto('http://127.0.0.1:4194/?scene=procedural&render=1');await page.waitForFunction(()=>window.motionPreview&&window.motion?.ready);await page.evaluate(()=>window.motion.ready);await page.locator('.preview-options>summary').click();await page.locator('#preview-quality').selectOption('sharp');await page.locator('.preview-options>summary').click();
+ await page.goto('http://127.0.0.1:4194/?scene=procedural&render=1');await page.waitForFunction(()=>window.motionPreview&&window.motion?.ready);await page.evaluate(()=>window.motion.ready);if(await page.locator('.preview-options>summary').isVisible())await page.locator('.preview-options>summary').click();await page.locator('#preview-quality').selectOption('sharp');if(await page.locator('.preview-options>summary').isVisible())await page.locator('.preview-options>summary').click();
  const idle=()=>page.evaluate(()=>window.motionPreview.whenIdle());
  const recipe=async()=>{await idle();await page.locator('#experience-pro').click();await page.locator('#tab-code').click();return JSON.parse(await page.locator('#code-content').textContent());};
  const hash=()=>page.locator('#renderCanvas').evaluate(c=>{let h=2166136261;for(const v of c.getContext('2d').getImageData(0,0,c.width,c.height).data)h=Math.imul(h^v,16777619);return h>>>0;});

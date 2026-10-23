@@ -13,7 +13,7 @@ const page=await browser.newPage({viewport:{width:1440,height:1000}}),errors=[],
 page.on('pageerror',error=>errors.push(error.message));
 const idle=()=>page.evaluate(()=>window.motionPreview.whenIdle());
 async function recipe(){await idle();await page.locator('#experience-pro').click();await page.locator('#tab-code').click();return JSON.parse(await page.locator('#code-content').textContent());}
-async function mode(value){await page.locator('.preview-options>summary').click();await page.locator('#preview-quality').selectOption(value);await page.locator('.preview-options>summary').click();await idle();}
+async function mode(value){if(await page.locator('.preview-options>summary').isVisible())await page.locator('.preview-options>summary').click();await page.locator('#preview-quality').selectOption(value);if(await page.locator('.preview-options>summary').isVisible())await page.locator('.preview-options>summary').click();await idle();}
 async function seek(time){await page.locator('#seek').evaluate((input,time)=>{input.value=String(time*30);input.dispatchEvent(new Event('input',{bubbles:true}));},time);await idle();}
 async function motion(){await page.locator('#experience-pro').click();await page.locator('#tab-motion').click();await openAdvanced(page);}
 async function tools(category){

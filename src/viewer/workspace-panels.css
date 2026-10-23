@@ -62,3 +62,16 @@ body[data-creative-mode=storyboard] .preview-options{visibility:hidden}
 .compact-preview-heading .story-mode-switch button{flex:0 0 auto;height:32px;color:#aeb4a7;border-color:transparent;background:transparent}
 .compact-preview-heading .story-mode-switch button[aria-pressed=true]{color:#d7f56b;background:#d7f56b12;border-color:#d7f56b38}
 .preview-options-panel .comparison-tools button{display:flex;width:auto;max-width:100%;align-items:center;justify-content:flex-start;flex:0 0 auto;padding:6px;min-width:0}
+
+/* Display controls stay visible except in genuinely narrow preview panes. */
+.preview-tools-inline{display:flex;align-items:center;min-width:0;padding:0 18px 12px;flex:none}
+.preview-tools-inline[hidden]{display:none!important}
+.preview-tools-inline .preview-strip{display:flex!important;align-items:center;justify-content:space-between;gap:12px;flex:1;min-width:0;margin:0!important;padding:0!important;flex-wrap:wrap}
+.preview-tools-inline .viewer-mode{min-width:0}
+.preview-tools-inline .section-caption{display:none}
+.stage-column[data-preview-layout=wide] .preview-tools-inline{padding:0;margin:0 14px;flex:1}
+.stage-column[data-preview-layout=wide] .story-mode-switch{margin-right:0}
+.compact-preview-heading .comparison-tools{margin-left:8px;padding-left:8px}
+body[data-creative-mode=storyboard] .preview-tools-inline{display:none!important}
+body[data-creative-mode=storyboard] .compact-preview-heading .comparison-tools{display:flex;visibility:hidden}
+@media(max-width:1100px){.preview-tools-inline{padding-inline:14px}}
