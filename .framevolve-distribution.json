@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "revision": "3226fede7db9c8122187d3418f7bccd18f60ea04",
+  "revision": "3f8249e29f328301eccb50a731791d145e78d476",
   "files": {
     ".agents/skills/framevolve-live-review/SKILL.md": {
       "sha": "51ac340d4873da576a714514d070bd3009e02ae3",
@@ -1423,7 +1423,7 @@
       "mode": "100644"
     },
     "scripts/test-live-studio-browser.mjs": {
-      "sha": "b624d9d215041bf3384d566e977bb6be13996abc",
+      "sha": "e1aec78277c4adbaa7ef6408c2bf4bb9288816da",
       "mode": "100644"
     },
     "scripts/test-loop-refinement.mjs": {
