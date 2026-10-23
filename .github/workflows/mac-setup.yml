@@ -46,6 +46,11 @@ jobs:
           node --test scripts/test-studio-ux-summary.mjs
           node scripts/test-native-project.mjs
           node scripts/test-cycles-video-encode.mjs
+      - name: Scene-authored Easy controls
+        run: |
+          node scripts/controls.mjs check
+          node scripts/test-easy-controls.mjs
+          node scripts/test-scene-control-contract.mjs
       - name: Native storyboard and frame feedback contracts
         run: npm run test:creative
       - name: Storyboard and frame feedback interface

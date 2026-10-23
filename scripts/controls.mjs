@@ -27,13 +27,13 @@ try{
   print(getControlCatalog(scene).map(({id,label,type,category,path,min,max,step,default:value,animatable,help})=>({id,label,type,category,path,min,max,step,default:value,animatable,help})));
  }else if(command==='plan')print(await plan());
  else if(command==='set'){
-  const manifest=await plan();if(!manifest.controls.some(id=>getControlCatalog(scene).find(c=>c.id===id)?.animatable))throw Error('Select at least one supported numeric animation tool.');if(!manifest.rationale?.trim())throw Error('A saved selection needs --reason or a rationale in --file.');
+  const manifest=await plan();if(!manifest.controls.some(id=>getControlCatalog(scene).find(c=>c.id===id)?.animatable))throw Error('Select at least one supported numeric animation tool.');if(!manifest.easy?.length)throw Error('Author 1–5 Easy controls in the manifest easy field; see docs/EASY_CONTROLS.md.');if(!manifest.rationale?.trim())throw Error('A saved selection needs --reason or a rationale in --file.');
   const document=JSON.parse(await readFile(selectionFile,'utf8'));
-  document.scenes[scene]={controls:manifest.controls,panels:manifest.panels,rationale:manifest.rationale};
+  document.scenes[scene]={controls:manifest.controls,panels:manifest.panels,rationale:manifest.rationale,easy:manifest.easy};
   await writeFile(selectionFile,JSON.stringify(document,null,2)+'\n');print({saved:true,scene,controls:manifest.controls.length,panels:manifest.panels.length});
  }else if(command==='check'){
   const doc=JSON.parse(await readFile(selectionFile,'utf8'));if(doc.version!==1||Object.keys(doc.scenes).some(id=>!sceneIds.includes(id)))throw Error('Control selections do not match the registered scenes.');
-  print({passed:true,scenes:sceneIds.map(id=>{const catalog=getControlCatalog(id),manifest=createControlManifest(id);if(!catalog.some(c=>c.animatable&&c.type==='range'))throw Error(`Scene ${id} needs a real animatable numeric parameter.`);return {scene:id,available:catalog.length,selected:manifest.controls.length,panels:manifest.panels.length};})});
+  print({passed:true,scenes:sceneIds.map(id=>{const catalog=getControlCatalog(id),manifest=createControlManifest(id);if(!catalog.some(c=>c.animatable&&c.type==='range'))throw Error(`Scene ${id} needs a real animatable numeric parameter.`);if(!manifest.easy?.length)throw Error(`Scene ${id} needs agent-authored Easy controls.`);return {scene:id,easy:manifest.easy.length,available:catalog.length,selected:manifest.controls.length,panels:manifest.panels.length};})});
  }else if(command==='help')console.log('controls.mjs catalog --scene ID\ncontrols.mjs plan --scene ID [--controls comma,separated,IDs] [--advanced compositing,lens] [--reason "Purpose"]\ncontrols.mjs set --scene ID --file manifest.json\ncontrols.mjs set --scene ID --controls IDs --reason "Purpose"\ncontrols.mjs check\ncontrols.mjs preset-catalog --scene ID\ncontrols.mjs preset-plan --scene ID --category lights|compositing|interpolation --id ID or --file profile.json\ncontrols.mjs preset-set --scene ID --category CATEGORY --file profile.json');
  else throw Error('Unknown command. Use controls.mjs help.');
 }catch(error){console.error(error.message);process.exitCode=1;}

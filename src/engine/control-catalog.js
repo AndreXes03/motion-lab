@@ -1,3 +1,4 @@
+import {validateEasyControls} from './easy-control-schema.js';
 import {perspectiveScenes} from './camera-lens.js';
 import selections from '../../project/control-selections.json' with {type:'json'};
 import {controlCategory,controlCategories} from './scene-capabilities.js';
@@ -122,11 +123,11 @@ export function createControlManifest(scene,mode='recommended'){
   const catalog=getControlCatalog(scene),selection=selections.scenes?.[scene];
   if(mode==='all'){const controls=catalog.map(c=>c.id);return validateControlManifest({version:1,scene,controls,panels:buildControlPanels(scene,controls)},scene);}
   if(!selection)throw new Error(`Scene ${scene} needs an agent-authored control selection`);
-  return validateControlManifest({version:1,scene,controls:selection.controls,panels:selection.panels??buildControlPanels(scene,selection.controls),rationale:selection.rationale},scene);
+  return validateControlManifest({version:1,scene,controls:selection.controls,panels:selection.panels??buildControlPanels(scene,selection.controls),rationale:selection.rationale,...(selection.easy?{easy:selection.easy}:{})},scene);
 }
 export function validateControlManifest(manifest,scene){
   assertScene(scene);assertSafeControlDocument(manifest);
-  if(!manifest||typeof manifest!=='object'||Array.isArray(manifest)||Object.keys(manifest).some(k=>!['version','scene','controls','panels','rationale'].includes(k)))throw new Error('Invalid control manifest');
+  if(!manifest||typeof manifest!=='object'||Array.isArray(manifest)||Object.keys(manifest).some(k=>!['version','scene','controls','panels','rationale','easy'].includes(k)))throw new Error('Invalid control manifest');
   if(manifest.version!==1||manifest.scene!==scene||!Array.isArray(manifest.controls))throw new Error('Control manifest version or scene does not match');
   const allowed=new Set(getControlCatalog(scene).map(c=>c.id)),seen=new Set();
   for(const id of manifest.controls){if(typeof id!=='string'||!allowed.has(id))throw new Error(`Unknown manifest control: ${id}`);if(seen.has(id))throw new Error(`Duplicate manifest control: ${id}`);seen.add(id);}
@@ -143,7 +144,7 @@ export function validateControlManifest(manifest,scene){
   });
   if(panelControls.size!==seen.size)throw new Error('Every selected control needs a panel');
   if(manifest.rationale!==undefined&&(typeof manifest.rationale!=='string'||manifest.rationale.length>600))throw new Error('Invalid selection rationale');
-  return {version:1,scene,controls:[...seen],panels:normalizedPanels,...(manifest.rationale?{rationale:manifest.rationale}:{})};
+  return {version:1,scene,controls:[...seen],panels:normalizedPanels,...(manifest.easy!==undefined?{easy:validateEasyControls(manifest.easy,getControlCatalog(scene),[...seen])}:{}),...(manifest.rationale?{rationale:manifest.rationale}:{})};
 }
 /** Upgrade early draft recipes that stored an empty selection before adapters existed. */
 export function resolveControlManifest(manifest,scene){

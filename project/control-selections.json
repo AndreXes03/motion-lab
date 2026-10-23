@@ -168,7 +168,130 @@
           "advanced": true
         }
       ],
-      "rationale": "Cover the radio material, typography, camera focus, all studio lights and finished image in both workspace modes. Reserve optical and sampling detail for disclosure panels; raw object transforms remain in the selected-object inspector and full catalog. Pair the perspective lens with real camera distance and subject-size compensation."
+      "rationale": "Cover the radio material, typography, camera focus, all studio lights and finished image in both workspace modes. Reserve optical and sampling detail for disclosure panels; raw object transforms remain in the selected-object inspector and full catalog. Pair the perspective lens with real camera distance and subject-size compensation.",
+      "easy": [
+        {
+          "id": "movement",
+          "label": "Movement",
+          "help": "Change how strongly the objects perform.",
+          "choices": [
+            {
+              "id": "low",
+              "label": "Gentle",
+              "values": {
+                "energy": 0.55
+              }
+            },
+            {
+              "id": "original",
+              "label": "Original",
+              "values": {
+                "energy": 1
+              }
+            },
+            {
+              "id": "high",
+              "label": "Lively",
+              "values": {
+                "energy": 1.3
+              }
+            }
+          ]
+        },
+        {
+          "id": "lighting",
+          "label": "Lighting",
+          "help": "Balance the main light, shadow fill and highlights.",
+          "choices": [
+            {
+              "id": "low",
+              "label": "Soft",
+              "values": {
+                "key": 280,
+                "fill": 0.06,
+                "rim": 3.2
+              }
+            },
+            {
+              "id": "original",
+              "label": "Original",
+              "values": {
+                "key": 340,
+                "fill": 0.015,
+                "rim": 4.8
+              }
+            },
+            {
+              "id": "high",
+              "label": "Dramatic",
+              "values": {
+                "key": 390,
+                "fill": 0.008,
+                "rim": 5.5
+              }
+            }
+          ]
+        },
+        {
+          "id": "surface",
+          "label": "Product finish",
+          "help": "Choose a smoother or more matte surface.",
+          "choices": [
+            {
+              "id": "low",
+              "label": "Glossy",
+              "values": {
+                "shellRoughness": 0.18
+              }
+            },
+            {
+              "id": "original",
+              "label": "Original",
+              "values": {
+                "shellRoughness": 0.36
+              }
+            },
+            {
+              "id": "high",
+              "label": "Matte",
+              "values": {
+                "shellRoughness": 0.65
+              }
+            }
+          ]
+        },
+        {
+          "id": "color",
+          "label": "Color mood",
+          "help": "Adjust color strength and contrast together.",
+          "choices": [
+            {
+              "id": "low",
+              "label": "Muted",
+              "values": {
+                "colorSaturation": 0.8,
+                "colorContrast": 0.95
+              }
+            },
+            {
+              "id": "original",
+              "label": "Original",
+              "values": {
+                "colorSaturation": 1,
+                "colorContrast": 1
+              }
+            },
+            {
+              "id": "high",
+              "label": "Vivid",
+              "values": {
+                "colorSaturation": 1.15,
+                "colorContrast": 1.06
+              }
+            }
+          ]
+        }
+      ]
     },
     "procedural": {
       "controls": [
@@ -255,7 +378,136 @@
           "advanced": false
         }
       ],
-      "rationale": "Expose every planned 2D control: typography, palette, shape density/scale, line and particle detail, pace, wave/beat performance, overlays and finishing. Easy and Pro retain the same creative capabilities, with target curves providing the precision layer."
+      "rationale": "Expose every planned 2D control: typography, palette, shape density/scale, line and particle detail, pace, wave/beat performance, overlays and finishing. Easy and Pro retain the same creative capabilities, with target curves providing the precision layer.",
+      "easy": [
+        {
+          "id": "movement",
+          "label": "Movement",
+          "help": "Coordinate the rhythm, waves and beat response.",
+          "choices": [
+            {
+              "id": "low",
+              "label": "Gentle",
+              "values": {
+                "speed": 0.75,
+                "waveAmplitude": 0.6,
+                "beatStrength": 0.55
+              }
+            },
+            {
+              "id": "original",
+              "label": "Original",
+              "values": {
+                "speed": 1,
+                "waveAmplitude": 1,
+                "beatStrength": 1
+              }
+            },
+            {
+              "id": "high",
+              "label": "Lively",
+              "values": {
+                "speed": 1.2,
+                "waveAmplitude": 1.2,
+                "beatStrength": 1.2
+              }
+            }
+          ]
+        },
+        {
+          "id": "density",
+          "label": "Graphic detail",
+          "help": "Use fewer large shapes or a denser composition.",
+          "choices": [
+            {
+              "id": "low",
+              "label": "Minimal",
+              "values": {
+                "density": 6,
+                "particleSize": 1.2,
+                "echoOpacity": 0.5
+              }
+            },
+            {
+              "id": "original",
+              "label": "Original",
+              "values": {
+                "density": 10,
+                "particleSize": 1,
+                "echoOpacity": 1
+              }
+            },
+            {
+              "id": "high",
+              "label": "Rich",
+              "values": {
+                "density": 14,
+                "particleSize": 0.85,
+                "echoOpacity": 1.2
+              }
+            }
+          ]
+        },
+        {
+          "id": "text",
+          "label": "Text size",
+          "help": "Adjust the headline size without editing the layout.",
+          "choices": [
+            {
+              "id": "low",
+              "label": "Small",
+              "values": {
+                "typeScale": 0.85
+              }
+            },
+            {
+              "id": "original",
+              "label": "Original",
+              "values": {
+                "typeScale": 1
+              }
+            },
+            {
+              "id": "high",
+              "label": "Large",
+              "values": {
+                "typeScale": 1.1
+              }
+            }
+          ]
+        },
+        {
+          "id": "color",
+          "label": "Color mood",
+          "help": "Adjust color strength and contrast together.",
+          "choices": [
+            {
+              "id": "low",
+              "label": "Muted",
+              "values": {
+                "colorSaturation": 0.8,
+                "colorContrast": 0.95
+              }
+            },
+            {
+              "id": "original",
+              "label": "Original",
+              "values": {
+                "colorSaturation": 1,
+                "colorContrast": 1
+              }
+            },
+            {
+              "id": "high",
+              "label": "Vivid",
+              "values": {
+                "colorSaturation": 1.15,
+                "colorContrast": 1.06
+              }
+            }
+          ]
+        }
+      ]
     },
     "pop": {
       "controls": [
@@ -352,7 +604,136 @@
           "advanced": false
         }
       ],
-      "rationale": "Expose all planned 2D and lettering controls: title/caption sizing, halftone/burst/window motifs, palette, scene and ticker motion, camera/lens and texture. Preserve the authored default collage and give both workspace modes the same creative coverage. Pair the perspective lens with real camera distance and subject-size compensation."
+      "rationale": "Expose all planned 2D and lettering controls: title/caption sizing, halftone/burst/window motifs, palette, scene and ticker motion, camera/lens and texture. Preserve the authored default collage and give both workspace modes the same creative coverage. Pair the perspective lens with real camera distance and subject-size compensation.",
+      "easy": [
+        {
+          "id": "movement",
+          "label": "Movement",
+          "help": "Coordinate camera movement and graphic rhythm.",
+          "choices": [
+            {
+              "id": "low",
+              "label": "Gentle",
+              "values": {
+                "speed": 0.8,
+                "cameraMotion": 0.5,
+                "tickerSpeed": 0.6
+              }
+            },
+            {
+              "id": "original",
+              "label": "Original",
+              "values": {
+                "speed": 1,
+                "cameraMotion": 1,
+                "tickerSpeed": 1
+              }
+            },
+            {
+              "id": "high",
+              "label": "Lively",
+              "values": {
+                "speed": 1.15,
+                "cameraMotion": 1,
+                "tickerSpeed": 1.25
+              }
+            }
+          ]
+        },
+        {
+          "id": "text",
+          "label": "Text size",
+          "help": "Resize headlines and captions together.",
+          "choices": [
+            {
+              "id": "low",
+              "label": "Small",
+              "values": {
+                "typeScale": 0.85,
+                "captionScale": 0.9
+              }
+            },
+            {
+              "id": "original",
+              "label": "Original",
+              "values": {
+                "typeScale": 1,
+                "captionScale": 1
+              }
+            },
+            {
+              "id": "high",
+              "label": "Large",
+              "values": {
+                "typeScale": 1.1,
+                "captionScale": 1.1
+              }
+            }
+          ]
+        },
+        {
+          "id": "graphics",
+          "label": "Graphic impact",
+          "help": "Change the bursts and printed texture together.",
+          "choices": [
+            {
+              "id": "low",
+              "label": "Subtle",
+              "values": {
+                "burstScale": 0.75,
+                "halftoneSize": 0.5
+              }
+            },
+            {
+              "id": "original",
+              "label": "Original",
+              "values": {
+                "burstScale": 1,
+                "halftoneSize": 1
+              }
+            },
+            {
+              "id": "high",
+              "label": "Bold",
+              "values": {
+                "burstScale": 1.15,
+                "halftoneSize": 1.3
+              }
+            }
+          ]
+        },
+        {
+          "id": "color",
+          "label": "Color mood",
+          "help": "Adjust color strength and contrast together.",
+          "choices": [
+            {
+              "id": "low",
+              "label": "Muted",
+              "values": {
+                "colorSaturation": 0.8,
+                "colorContrast": 0.95
+              }
+            },
+            {
+              "id": "original",
+              "label": "Original",
+              "values": {
+                "colorSaturation": 1,
+                "colorContrast": 1
+              }
+            },
+            {
+              "id": "high",
+              "label": "Vivid",
+              "values": {
+                "colorSaturation": 1.15,
+                "colorContrast": 1.06
+              }
+            }
+          ]
+        }
+      ]
     },
     "starter": {
       "controls": [
@@ -411,7 +792,71 @@
           "advanced": false
         }
       ],
-      "rationale": "Include all implemented product materials, lens, key/fill lighting and grade controls. Camera and product animation are edited in Motion; avoid unsupported material or renderer settings. Pair the perspective lens with real camera distance and subject-size compensation."
+      "rationale": "Include all implemented product materials, lens, key/fill lighting and grade controls. Camera and product animation are edited in Motion; avoid unsupported material or renderer settings. Pair the perspective lens with real camera distance and subject-size compensation.",
+      "easy": [
+        {
+          "id": "lighting",
+          "label": "Lighting",
+          "help": "Balance the main light and shadow fill on the product.",
+          "choices": [
+            {
+              "id": "low",
+              "label": "Soft",
+              "values": {
+                "keyStrength": 0.85,
+                "fill": 0.18
+              }
+            },
+            {
+              "id": "original",
+              "label": "Original",
+              "values": {
+                "keyStrength": 1,
+                "fill": 0.1
+              }
+            },
+            {
+              "id": "high",
+              "label": "Dramatic",
+              "values": {
+                "keyStrength": 1.2,
+                "fill": 0.05
+              }
+            }
+          ]
+        },
+        {
+          "id": "color",
+          "label": "Color mood",
+          "help": "Adjust color strength and contrast together.",
+          "choices": [
+            {
+              "id": "low",
+              "label": "Muted",
+              "values": {
+                "colorSaturation": 0.8,
+                "colorContrast": 0.95
+              }
+            },
+            {
+              "id": "original",
+              "label": "Original",
+              "values": {
+                "colorSaturation": 1,
+                "colorContrast": 1
+              }
+            },
+            {
+              "id": "high",
+              "label": "Vivid",
+              "values": {
+                "colorSaturation": 1.15,
+                "colorContrast": 1.06
+              }
+            }
+          ]
+        }
+      ]
     },
     "pulse": {
       "controls": [
@@ -530,7 +975,139 @@
           "advanced": false
         }
       ],
-      "rationale": "Cover separate speaker/record performance, framing and macro focus, key/fill/rim lighting, real surface roughness, display/background brightness and finishing in both modes. Keep aggregate mechanism gain and light shape in secondary panels; preserve authored camera cuts and neutral material defaults. Pair the perspective lens with real camera distance and subject-size compensation."
+      "rationale": "Cover separate speaker/record performance, framing and macro focus, key/fill/rim lighting, real surface roughness, display/background brightness and finishing in both modes. Keep aggregate mechanism gain and light shape in secondary panels; preserve authored camera cuts and neutral material defaults. Pair the perspective lens with real camera distance and subject-size compensation.",
+      "easy": [
+        {
+          "id": "movement",
+          "label": "Movement",
+          "help": "Coordinate the mechanism, speaker and record.",
+          "choices": [
+            {
+              "id": "low",
+              "label": "Gentle",
+              "values": {
+                "mechanismMotion": 0.6,
+                "speakerVibration": 0.5,
+                "recordSpeed": 0.7
+              }
+            },
+            {
+              "id": "original",
+              "label": "Original",
+              "values": {
+                "mechanismMotion": 1,
+                "speakerVibration": 1,
+                "recordSpeed": 1
+              }
+            },
+            {
+              "id": "high",
+              "label": "Lively",
+              "values": {
+                "mechanismMotion": 1.2,
+                "speakerVibration": 1.3,
+                "recordSpeed": 1.2
+              }
+            }
+          ]
+        },
+        {
+          "id": "lighting",
+          "label": "Lighting",
+          "help": "Balance the product highlights and shadows.",
+          "choices": [
+            {
+              "id": "low",
+              "label": "Soft",
+              "values": {
+                "keyLight": 0.9,
+                "fillLight": 1.3,
+                "keySize": 1.4,
+                "rimLight": 0.8
+              }
+            },
+            {
+              "id": "original",
+              "label": "Original",
+              "values": {
+                "keyLight": 1,
+                "fillLight": 1,
+                "keySize": 1,
+                "rimLight": 1
+              }
+            },
+            {
+              "id": "high",
+              "label": "Dramatic",
+              "values": {
+                "keyLight": 1.15,
+                "fillLight": 0.65,
+                "keySize": 0.8,
+                "rimLight": 1.2
+              }
+            }
+          ]
+        },
+        {
+          "id": "focus",
+          "label": "Background softness",
+          "help": "Make the background clearer or softer behind the product.",
+          "choices": [
+            {
+              "id": "low",
+              "label": "Clear",
+              "values": {
+                "focusBlur": 0.4
+              }
+            },
+            {
+              "id": "original",
+              "label": "Original",
+              "values": {
+                "focusBlur": 1
+              }
+            },
+            {
+              "id": "high",
+              "label": "Soft",
+              "values": {
+                "focusBlur": 1.3
+              }
+            }
+          ]
+        },
+        {
+          "id": "color",
+          "label": "Color mood",
+          "help": "Adjust color strength and contrast together.",
+          "choices": [
+            {
+              "id": "low",
+              "label": "Muted",
+              "values": {
+                "colorSaturation": 0.8,
+                "colorContrast": 0.95
+              }
+            },
+            {
+              "id": "original",
+              "label": "Original",
+              "values": {
+                "colorSaturation": 1,
+                "colorContrast": 1
+              }
+            },
+            {
+              "id": "high",
+              "label": "Vivid",
+              "values": {
+                "colorSaturation": 1.15,
+                "colorContrast": 1.06
+              }
+            }
+          ]
+        }
+      ]
     },
     "camera": {
       "controls": [
@@ -603,7 +1180,130 @@
           "advanced": false
         }
       ],
-      "rationale": "Include every implemented city-motion, lens, focus, lighting and image control. Bloom and grain are normal finishing tools in both modes, while authored camera cuts remain intact. Pair the perspective lens with real camera distance and subject-size compensation."
+      "rationale": "Include every implemented city-motion, lens, focus, lighting and image control. Bloom and grain are normal finishing tools in both modes, while authored camera cuts remain intact. Pair the perspective lens with real camera distance and subject-size compensation.",
+      "easy": [
+        {
+          "id": "movement",
+          "label": "City movement",
+          "help": "Adjust the movement of the miniature city.",
+          "choices": [
+            {
+              "id": "low",
+              "label": "Gentle",
+              "values": {
+                "cityMotion": 0.5
+              }
+            },
+            {
+              "id": "original",
+              "label": "Original",
+              "values": {
+                "cityMotion": 1
+              }
+            },
+            {
+              "id": "high",
+              "label": "Lively",
+              "values": {
+                "cityMotion": 1.25
+              }
+            }
+          ]
+        },
+        {
+          "id": "lighting",
+          "label": "Lighting",
+          "help": "Balance the scene light and shadows.",
+          "choices": [
+            {
+              "id": "low",
+              "label": "Soft",
+              "values": {
+                "keyLight": 0.85,
+                "fillLight": 1.3,
+                "exposure": 0.95
+              }
+            },
+            {
+              "id": "original",
+              "label": "Original",
+              "values": {
+                "keyLight": 1,
+                "fillLight": 1,
+                "exposure": 1
+              }
+            },
+            {
+              "id": "high",
+              "label": "Dramatic",
+              "values": {
+                "keyLight": 1.15,
+                "fillLight": 0.7,
+                "exposure": 1.05
+              }
+            }
+          ]
+        },
+        {
+          "id": "focus",
+          "label": "Background softness",
+          "help": "Choose how much the background falls out of focus.",
+          "choices": [
+            {
+              "id": "low",
+              "label": "Clear",
+              "values": {
+                "focusBlur": 0.4
+              }
+            },
+            {
+              "id": "original",
+              "label": "Original",
+              "values": {
+                "focusBlur": 1
+              }
+            },
+            {
+              "id": "high",
+              "label": "Soft",
+              "values": {
+                "focusBlur": 1.3
+              }
+            }
+          ]
+        },
+        {
+          "id": "color",
+          "label": "Color mood",
+          "help": "Adjust color strength and contrast together.",
+          "choices": [
+            {
+              "id": "low",
+              "label": "Muted",
+              "values": {
+                "colorSaturation": 0.8,
+                "colorContrast": 0.95
+              }
+            },
+            {
+              "id": "original",
+              "label": "Original",
+              "values": {
+                "colorSaturation": 1,
+                "colorContrast": 1
+              }
+            },
+            {
+              "id": "high",
+              "label": "Vivid",
+              "values": {
+                "colorSaturation": 1.15,
+                "colorContrast": 1.06
+              }
+            }
+          ]
+        }
+      ]
     },
     "dot": {
       "controls": [
@@ -653,7 +1353,127 @@
           "advanced": false
         }
       ],
-      "rationale": "Expose character acting, graphic framing and finish in both modes. Pair the physical device lens with actual distance and subject-size compensation; these controls affect its 3D reveal after 12 seconds. The earlier 2D character layouts remain unchanged."
+      "rationale": "Expose character acting, graphic framing and finish in both modes. Pair the physical device lens with actual distance and subject-size compensation; these controls affect its 3D reveal after 12 seconds. The earlier 2D character layouts remain unchanged.",
+      "easy": [
+        {
+          "id": "acting",
+          "label": "Personality",
+          "help": "Coordinate character acting and camera movement.",
+          "choices": [
+            {
+              "id": "low",
+              "label": "Gentle",
+              "values": {
+                "actingStrength": 0.55,
+                "lensMotion": 0.65
+              }
+            },
+            {
+              "id": "original",
+              "label": "Original",
+              "values": {
+                "actingStrength": 1,
+                "lensMotion": 1
+              }
+            },
+            {
+              "id": "high",
+              "label": "Lively",
+              "values": {
+                "actingStrength": 1.25,
+                "lensMotion": 1.15
+              }
+            }
+          ]
+        },
+        {
+          "id": "size",
+          "label": "Character size",
+          "help": "Make the character smaller or larger in the existing framing.",
+          "choices": [
+            {
+              "id": "low",
+              "label": "Small",
+              "values": {
+                "characterScale": 0.9
+              }
+            },
+            {
+              "id": "original",
+              "label": "Original",
+              "values": {
+                "characterScale": 1
+              }
+            },
+            {
+              "id": "high",
+              "label": "Large",
+              "values": {
+                "characterScale": 1.08
+              }
+            }
+          ]
+        },
+        {
+          "id": "glow",
+          "label": "Glow",
+          "help": "Choose how strongly the character glows.",
+          "choices": [
+            {
+              "id": "low",
+              "label": "Subtle",
+              "values": {
+                "glowStrength": 0.4
+              }
+            },
+            {
+              "id": "original",
+              "label": "Original",
+              "values": {
+                "glowStrength": 1
+              }
+            },
+            {
+              "id": "high",
+              "label": "Bright",
+              "values": {
+                "glowStrength": 1.3
+              }
+            }
+          ]
+        },
+        {
+          "id": "color",
+          "label": "Color mood",
+          "help": "Adjust color strength and contrast together.",
+          "choices": [
+            {
+              "id": "low",
+              "label": "Muted",
+              "values": {
+                "colorSaturation": 0.8,
+                "colorContrast": 0.95
+              }
+            },
+            {
+              "id": "original",
+              "label": "Original",
+              "values": {
+                "colorSaturation": 1,
+                "colorContrast": 1
+              }
+            },
+            {
+              "id": "high",
+              "label": "Vivid",
+              "values": {
+                "colorSaturation": 1.15,
+                "colorContrast": 1.06
+              }
+            }
+          ]
+        }
+      ]
     },
     "replay": {
       "controls": [
@@ -740,7 +1560,139 @@
           "advanced": false
         }
       ],
-      "rationale": "Expose every planned editorial control: card spacing/tilt/scale/depth, composition scale and poster spacing, reveal pace, orbit scale/speed, final camera push, connecting threads and grade. The same planned controls are available in Easy and Pro; neutral values preserve the editorial film. Pair the perspective lens with real camera distance and subject-size compensation."
+      "rationale": "Expose every planned editorial control: card spacing/tilt/scale/depth, composition scale and poster spacing, reveal pace, orbit scale/speed, final camera push, connecting threads and grade. The same planned controls are available in Easy and Pro; neutral values preserve the editorial film. Pair the perspective lens with real camera distance and subject-size compensation.",
+      "easy": [
+        {
+          "id": "movement",
+          "label": "Movement",
+          "help": "Coordinate reveals, orbiting cards and the closing push.",
+          "choices": [
+            {
+              "id": "low",
+              "label": "Gentle",
+              "values": {
+                "revealSpeed": 0.8,
+                "orbitSpeed": 0.65,
+                "finishPush": 0.6
+              }
+            },
+            {
+              "id": "original",
+              "label": "Original",
+              "values": {
+                "revealSpeed": 1,
+                "orbitSpeed": 1,
+                "finishPush": 1
+              }
+            },
+            {
+              "id": "high",
+              "label": "Lively",
+              "values": {
+                "revealSpeed": 1.2,
+                "orbitSpeed": 1.2,
+                "finishPush": 1.2
+              }
+            }
+          ]
+        },
+        {
+          "id": "depth",
+          "label": "Card depth",
+          "help": "Coordinate the card spacing, depth and tilt.",
+          "choices": [
+            {
+              "id": "low",
+              "label": "Flat",
+              "values": {
+                "cardDepth": 0.75,
+                "cardSpread": 0.9,
+                "cardTilt": 0.55
+              }
+            },
+            {
+              "id": "original",
+              "label": "Original",
+              "values": {
+                "cardDepth": 1,
+                "cardSpread": 1,
+                "cardTilt": 1
+              }
+            },
+            {
+              "id": "high",
+              "label": "Layered",
+              "values": {
+                "cardDepth": 1.2,
+                "cardSpread": 1.1,
+                "cardTilt": 1.2
+              }
+            }
+          ]
+        },
+        {
+          "id": "size",
+          "label": "Content size",
+          "help": "Resize the editorial content and cards together.",
+          "choices": [
+            {
+              "id": "low",
+              "label": "Small",
+              "values": {
+                "editorialScale": 0.9,
+                "cardScale": 0.9
+              }
+            },
+            {
+              "id": "original",
+              "label": "Original",
+              "values": {
+                "editorialScale": 1,
+                "cardScale": 1
+              }
+            },
+            {
+              "id": "high",
+              "label": "Large",
+              "values": {
+                "editorialScale": 1.08,
+                "cardScale": 1.08
+              }
+            }
+          ]
+        },
+        {
+          "id": "color",
+          "label": "Color mood",
+          "help": "Adjust color strength and contrast together.",
+          "choices": [
+            {
+              "id": "low",
+              "label": "Muted",
+              "values": {
+                "colorSaturation": 0.8,
+                "colorContrast": 0.95
+              }
+            },
+            {
+              "id": "original",
+              "label": "Original",
+              "values": {
+                "colorSaturation": 1,
+                "colorContrast": 1
+              }
+            },
+            {
+              "id": "high",
+              "label": "Vivid",
+              "values": {
+                "colorSaturation": 1.15,
+                "colorContrast": 1.06
+              }
+            }
+          ]
+        }
+      ]
     },
     "loop": {
       "controls": [
@@ -919,7 +1871,151 @@
           "advanced": true
         }
       ],
-      "rationale": "Preserve refinement controls and expose the asset drag duration ahead of the fixed Send/drop timing."
+      "rationale": "Preserve refinement controls and expose the asset drag duration ahead of the fixed Send/drop timing.",
+      "easy": [
+        {
+          "id": "movement",
+          "label": "Product movement",
+          "help": "Coordinate turns, separation and close-up movement.",
+          "choices": [
+            {
+              "id": "low",
+              "label": "Gentle",
+              "values": {
+                "motionAmount": 0.5,
+                "explodeAmount": 0.55,
+                "detailTravel": 0.6,
+                "arraySpin": 0.55,
+                "finishTurn": 0.6,
+                "endingTurn": 0.65
+              }
+            },
+            {
+              "id": "original",
+              "label": "Original",
+              "values": {
+                "motionAmount": 1,
+                "explodeAmount": 1,
+                "detailTravel": 1,
+                "arraySpin": 1,
+                "finishTurn": 1,
+                "endingTurn": 1
+              }
+            },
+            {
+              "id": "high",
+              "label": "Lively",
+              "values": {
+                "motionAmount": 1.2,
+                "explodeAmount": 1.15,
+                "detailTravel": 1.15,
+                "arraySpin": 1.3,
+                "finishTurn": 1.15,
+                "endingTurn": 1.2
+              }
+            }
+          ]
+        },
+        {
+          "id": "titles",
+          "label": "Text movement",
+          "help": "Move the titles more quietly or with more energy, keeping the same story.",
+          "choices": [
+            {
+              "id": "low",
+              "label": "Gentle",
+              "values": {
+                "letterRise": 0.04,
+                "titleDrift": 10,
+                "toEntryTravel": 50
+              }
+            },
+            {
+              "id": "original",
+              "label": "Original",
+              "values": {
+                "letterRise": 0.12,
+                "titleDrift": 24,
+                "toEntryTravel": 96
+              }
+            },
+            {
+              "id": "high",
+              "label": "Lively",
+              "values": {
+                "letterRise": 0.2,
+                "titleDrift": 36,
+                "toEntryTravel": 130
+              }
+            }
+          ]
+        },
+        {
+          "id": "lighting",
+          "label": "Lighting",
+          "help": "Balance the product light and shadows together.",
+          "choices": [
+            {
+              "id": "low",
+              "label": "Soft",
+              "values": {
+                "keyLight": 0.9,
+                "fillLight": 1.25,
+                "exposure": 1.08
+              }
+            },
+            {
+              "id": "original",
+              "label": "Original",
+              "values": {
+                "keyLight": 1,
+                "fillLight": 1,
+                "exposure": 1.15
+              }
+            },
+            {
+              "id": "high",
+              "label": "Dramatic",
+              "values": {
+                "keyLight": 1.2,
+                "fillLight": 0.7,
+                "exposure": 1.18
+              }
+            }
+          ]
+        },
+        {
+          "id": "color",
+          "label": "Color mood",
+          "help": "Adjust color strength and contrast together.",
+          "choices": [
+            {
+              "id": "low",
+              "label": "Muted",
+              "values": {
+                "colorSaturation": 0.8,
+                "colorContrast": 0.95
+              }
+            },
+            {
+              "id": "original",
+              "label": "Original",
+              "values": {
+                "colorSaturation": 1,
+                "colorContrast": 1
+              }
+            },
+            {
+              "id": "high",
+              "label": "Vivid",
+              "values": {
+                "colorSaturation": 1.15,
+                "colorContrast": 1.06
+              }
+            }
+          ]
+        }
+      ]
     },
     "appdemo": {
       "controls": [
@@ -928,7 +2024,96 @@
         "colorContrast",
         "colorSaturation"
       ],
-      "rationale": "Only motion strength, headline size and finishing: content and focus are edited in App Demo. Flat screenshots do not need lens or lighting controls."
+      "rationale": "Only motion strength, headline size and finishing: content and focus are edited in App Demo. Flat screenshots do not need lens or lighting controls.",
+      "easy": [
+        {
+          "id": "movement",
+          "label": "Screen movement",
+          "help": "Choose how much the screens move during the walkthrough.",
+          "choices": [
+            {
+              "id": "low",
+              "label": "Still",
+              "values": {
+                "movement": 0
+              }
+            },
+            {
+              "id": "high",
+              "label": "Gentle",
+              "values": {
+                "movement": 0.55
+              }
+            },
+            {
+              "id": "original",
+              "label": "Full",
+              "values": {
+                "movement": 1
+              }
+            }
+          ]
+        },
+        {
+          "id": "text",
+          "label": "Headline size",
+          "help": "Keep the existing text and change its size.",
+          "choices": [
+            {
+              "id": "low",
+              "label": "Small",
+              "values": {
+                "typeSize": 0.9
+              }
+            },
+            {
+              "id": "original",
+              "label": "Original",
+              "values": {
+                "typeSize": 1
+              }
+            },
+            {
+              "id": "high",
+              "label": "Large",
+              "values": {
+                "typeSize": 1.1
+              }
+            }
+          ]
+        },
+        {
+          "id": "color",
+          "label": "Color mood",
+          "help": "Adjust color strength and contrast together.",
+          "choices": [
+            {
+              "id": "low",
+              "label": "Muted",
+              "values": {
+                "colorSaturation": 0.8,
+                "colorContrast": 0.95
+              }
+            },
+            {
+              "id": "original",
+              "label": "Original",
+              "values": {
+                "colorSaturation": 1,
+                "colorContrast": 1
+              }
+            },
+            {
+              "id": "high",
+              "label": "Vivid",
+              "values": {
+                "colorSaturation": 1.15,
+                "colorContrast": 1.06
+              }
+            }
+          ]
+        }
+      ]
     }
   }
 }

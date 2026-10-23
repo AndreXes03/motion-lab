@@ -83,6 +83,7 @@ for (const scene of sceneIds) {
   assert.ok(typeof saved.rationale === 'string' && saved.rationale.trim().length > 0, `${scene} selection has a reason`);
   const all = createControlManifest(scene, 'all');
   const recommended = createControlManifest(scene);
+  assert.ok(recommended.easy?.length>=1&&recommended.easy.length<=5, `${scene} needs 1–5 agent-authored Easy controls`);
   const alias = createControlManifest(scene, 'essential');
   assert.ok(recommended.controls.some(id=>catalog.find(c=>c.id===id)?.animatable), `${scene} chosen tools include a usable animation parameter`);
   assert.deepEqual(recommended.controls, saved.controls, `${scene} default selection follows project/control-selections.json`);

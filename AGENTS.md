@@ -25,6 +25,8 @@ For video revisions, feedback lists, or watching an agent work, read and follow 
 
 ## Required agent selected controls for every scene
 
+**Easy must be authored for each scene.** Read [docs/EASY_CONTROLS.md](docs/EASY_CONTROLS.md). Alongside Pro controls, define 2–4 outcome-oriented Easy groups (schema maximum 5), each with 2–3 plain-language choices coordinating real selected parameters. A technical slider list is not Easy. Include the `easy` field in the saved control manifest; validate compound changes, preservation and Undo. Keep new-scene defaults unchanged until the user chooses an option.
+
 Every new or revised scene must ship with real editable controls and an agent-authored tool layout. Treat control selection as part of creating the video: choose the tools that help adjust its actual motion, lens, lights, materials and compositing. Keep the normal workspace focused and put secondary controls in advanced panels. Do not expose every catalog entry indiscriminately or invent unsupported sliders just to increase the count.
 
 Use this workflow:

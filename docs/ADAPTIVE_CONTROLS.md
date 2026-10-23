@@ -1,6 +1,8 @@
 # Scene controls and motion curves
 
-Studio uses a shared catalog of implemented controls across eight scenes. Run `node scripts/controls.mjs check` for the current available and selected counts. Each scene ships with an agent-authored selection, categorized panels and a concise selection rationale. The coding agent chooses these tools while making the video; the editor does not require runtime AI inference.
+Easy uses a separate agent-authored `easy` field in the same selection manifest. See [EASY_CONTROLS.md](EASY_CONTROLS.md) for the required schema, CLI workflow and preservation rules. Pro retains the native controls described below.
+
+Studio uses a shared catalog of implemented controls across the registered scenes. Run `node scripts/controls.mjs check` for the current available and selected counts. Each scene ships with an agent-authored selection, categorized panels and a concise selection rationale. The coding agent chooses these tools while making the video; the editor does not require runtime AI inference.
 
 ## Workspace
 
