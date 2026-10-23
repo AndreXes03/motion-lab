@@ -39,8 +39,9 @@ try{
   assert.ok(geometry.heroHeight>=70&&geometry.heroTop>=0&&geometry.railBottom<=geometry.bottom+1,'Preview and scene strip must remain visible together');
  }
  await page.setViewportSize({width:1440,height:900});
- for(const id of ['story-mode','video-mode','story-refresh','story-previous','story-edit','story-next']){assert.ok(await page.locator('#'+id).getAttribute('aria-label'),'Icon actions need accessible names');assert.equal(await page.locator('#'+id+' .studio-icon').count(),1);}
+ for(const id of ['story-refresh','story-previous','story-edit','story-next']){assert.ok(await page.locator('#'+id).getAttribute('aria-label'),'Icon actions need accessible names');assert.equal(await page.locator('#'+id+' .studio-icon').count(),1);}
  for(const id of ['story-comment','frame-feedback','creative-review','creative-close','creative-body','timed-feedback-save'])assert.equal(await page.locator('#'+id).count(),0,`Removed review/comment UI must not expose #${id}`);
+ assert.equal(await page.locator('#story-mode').textContent(),'Storyboard');assert.equal(await page.locator('#video-mode').textContent(),'Video');assert.equal(await page.locator('#project-title').isVisible(),false);
  const first=await page.locator('#story-hero').getAttribute('src');assert.match(first,/^data:image\/png;base64,/);assert.ok(first.length>20000);
  await page.locator('#story-next').click();assert.equal(await page.locator('#story-name').textContent(),'Bass you can see');assert.notEqual(await page.locator('#story-hero').getAttribute('src'),first);
  await page.locator('#video-mode').click();assert.equal(await page.locator('.playback').isVisible(),true);assert.equal(Number(await page.locator('#seek').inputValue()),42,'Browsing the storyboard must preserve the video position');

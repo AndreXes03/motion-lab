@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "revision": "3f8249e29f328301eccb50a731791d145e78d476",
+  "revision": "fb06a4f9306505ab2814556cb774278d477684a9",
   "files": {
     ".agents/skills/framevolve-live-review/SKILL.md": {
       "sha": "51ac340d4873da576a714514d070bd3009e02ae3",
@@ -1295,7 +1295,7 @@
       "mode": "100644"
     },
     "scripts/test-adaptive-controls-browser.mjs": {
-      "sha": "8fb1e4398c60b50aa7945fb857ce100ae9bd655e",
+      "sha": "92f34d6e3fa0c081aa98b2e8aa9e85226f613bb4",
       "mode": "100644"
     },
     "scripts/test-adaptive-controls.mjs": {
@@ -1323,7 +1323,7 @@
       "mode": "100644"
     },
     "scripts/test-authored-curves-browser.mjs": {
-      "sha": "2cf44f68103ff2188d96765c7be5763d31675949",
+      "sha": "6853648600b330ac63a0c23271899ca3150040a8",
       "mode": "100644"
     },
     "scripts/test-authored-motion-protocol.mjs": {
@@ -1423,7 +1423,7 @@
       "mode": "100644"
     },
     "scripts/test-live-studio-browser.mjs": {
-      "sha": "e1aec78277c4adbaa7ef6408c2bf4bb9288816da",
+      "sha": "a9ca66af76fe3f203159e2524f7793fbf5d2dbf9",
       "mode": "100644"
     },
     "scripts/test-loop-refinement.mjs": {
@@ -1567,7 +1567,7 @@
       "mode": "100644"
     },
     "scripts/test-scene-tools-browser.mjs": {
-      "sha": "0fc8f7a9a7f142439ed83f9f19eb37a154475657",
+      "sha": "a9b7bb48b82dce15f0a0ccf4fa6f3c56e09d3c80",
       "mode": "100644"
     },
     "scripts/test-session-support.mjs": {
@@ -1603,7 +1603,7 @@
       "mode": "100644"
     },
     "scripts/test-storyboard-browser.mjs": {
-      "sha": "c0535cc9c2d7c602afd78176b6b87f37e6720a6c",
+      "sha": "9050766d0fa782bc8aeb84ab04e58420b0e28da0",
       "mode": "100644"
     },
     "scripts/test-studio-api.mjs": {
@@ -1611,7 +1611,7 @@
       "mode": "100644"
     },
     "scripts/test-studio-runtime.mjs": {
-      "sha": "334c87c7f98da227417ef4689e54605544903023",
+      "sha": "a876033ff3cd118f6e78d0fcf997697c20c504a0",
       "mode": "100644"
     },
     "scripts/test-studio-update.mjs": {
@@ -1627,7 +1627,7 @@
       "mode": "100644"
     },
     "scripts/test-workflow-browser.mjs": {
-      "sha": "01fcee7dcf795e992fc4dc6003be78194a5ce745",
+      "sha": "69d6c5488f405ad91d591b47a494802f16ab2391",
       "mode": "100644"
     },
     "scripts/test-workspace-model.mjs": {
@@ -2395,11 +2395,11 @@
       "mode": "100644"
     },
     "src/viewer/workspace-panels.css": {
-      "sha": "5d08089e14c1345d42c8d5bd268e6cb9965eff28",
+      "sha": "cf3c66c14aedaddf4403cbccc367ab9b522ec5f3",
       "mode": "100644"
     },
     "src/viewer/workspace-panels.js": {
-      "sha": "9d52dc3cbb42424ad8b4ecf9138bea626d48ec91",
+      "sha": "7d941f492ddc6ccf0d25737d76dbf3adfb0f19d7",
       "mode": "100644"
     },
     "vite.config.js": {

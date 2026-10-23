@@ -1,14 +1,3 @@
-/* View mode owns a fixed row. Context controls no longer determine its position. */
-.stage-view-switch{display:flex;align-items:center;flex-shrink:0;height:39px;margin:0 18px 10px;gap:3px}
-.stage-view-switch .story-mode-switch{margin:0;flex:none}
-body[data-creative-mode=storyboard] .stage-column>.preview-strip{display:none!important}
-body[data-creative-mode=storyboard] .stage-heading{height:var(--stable-stage-heading,70px);padding:14px 18px}
-.stage-heading{height:var(--stable-stage-heading,70px)}
-@media(min-width:1201px){:root{--stable-stage-heading:80px}}
-@media(min-width:1500px){:root{--stable-stage-heading:88px}}
-@media(min-width:701px) and (max-width:1100px){:root{--stable-stage-heading:60px}.stage-view-switch{margin-inline:14px}}
-body[data-layout=controls]{--stable-stage-heading:54px}
-@media(max-width:700px){:root{--stable-stage-heading:68px}.stage-view-switch{margin-inline:16px}body[data-creative-mode=storyboard] .stage-heading{height:var(--stable-stage-heading);padding:12px 16px}}
 #exports-open{font-size:11px;min-height:34px;padding:7px 10px;white-space:nowrap}
 #exports-open[data-active=true]{color:#d7f56b;border-color:#d7f56b66}
 #exports-dialog{box-sizing:border-box;width:min(760px,calc(100vw - 28px));max-height:calc(100dvh - 40px);padding:0;border:1px solid #ffffff25;border-radius:16px;background:#191d19;color:#e7ebdf;box-shadow:0 24px 90px #000a;overflow:auto}
@@ -49,3 +38,27 @@ body[data-layout=controls]{--stable-stage-heading:54px}
 #exports-dialog #export-dock{flex:1 1 auto;min-height:0;overflow:auto;overscroll-behavior:contain}
 .studio-more:has(#live-review[data-attention=true])>summary{position:relative}
 .studio-more:has(#live-review[data-attention=true])>summary::after{content:'';position:absolute;right:3px;top:3px;width:6px;height:6px;border-radius:50%;background:#d7f56b}
+
+/* One stable row replaces the duplicated scene heading and stacked icon strips. */
+.stage-heading.compact-preview-heading,body[data-creative-mode=storyboard] .stage-heading.compact-preview-heading{height:58px;min-height:58px;padding:10px 18px;display:flex;gap:10px;position:relative;z-index:5;overflow:visible}
+.compact-preview-heading>[hidden]{display:none!important}
+.compact-preview-heading .story-mode-switch{margin:0 auto 0 0;flex:none}
+.compact-preview-heading .story-mode-switch button{width:auto;min-width:0;padding:6px 10px;font-size:11px}
+.compact-preview-heading .stage-tools{margin:0;gap:2px;flex:none}
+.preview-options{position:relative;flex:none}
+.preview-options>summary{list-style:none;cursor:pointer;font-size:11px;padding:8px 10px;border:1px solid #ffffff20;border-radius:6px;color:#c4cbb8;white-space:nowrap}
+.preview-options>summary::-webkit-details-marker{display:none}
+.preview-options>summary:focus-visible{outline:2px solid #d7f56b;outline-offset:3px}
+.preview-options[open]>summary{background:#d7f56b12;color:#d7f56b;border-color:#d7f56b66}
+.preview-options-panel{position:absolute;right:0;top:calc(100% + 8px);width:290px;max-width:calc(100vw - 32px);padding:16px;background:#191d19;border:1px solid #ffffff25;border-radius:10px;box-shadow:0 16px 45px #0009;z-index:30}
+.preview-options-panel>p{font-size:11px;color:#a9b19f;margin:0 0 12px}
+.preview-options-panel .preview-strip{display:flex!important;flex-direction:column;align-items:flex-start;gap:14px;margin:0!important;padding:0!important}
+.preview-options-panel .comparison-tools{margin:14px 0 0;padding:12px 0 0;border-left:0;border-top:1px solid #ffffff18}
+.preview-options-panel .comparison-tools button::after{content:attr(aria-label);font-size:11px;margin-left:8px}
+body[data-creative-mode=storyboard] .preview-options{visibility:hidden}
+@media(max-width:1100px){.stage-heading.compact-preview-heading,body[data-creative-mode=storyboard] .stage-heading.compact-preview-heading{padding-inline:14px;gap:6px}}
+@media(max-width:800px) and (min-width:701px){.compact-preview-heading .story-mode-switch button{padding-inline:7px}.compact-preview-heading .stage-tools button{width:24px;padding:4px}.preview-options>summary{padding-inline:7px}}
+
+.compact-preview-heading .story-mode-switch button{flex:0 0 auto;height:32px;color:#aeb4a7;border-color:transparent;background:transparent}
+.compact-preview-heading .story-mode-switch button[aria-pressed=true]{color:#d7f56b;background:#d7f56b12;border-color:#d7f56b38}
+.preview-options-panel .comparison-tools button{display:flex;width:auto;max-width:100%;align-items:center;justify-content:flex-start;flex:0 0 auto;padding:6px;min-width:0}

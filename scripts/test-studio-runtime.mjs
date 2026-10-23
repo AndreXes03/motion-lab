@@ -14,7 +14,7 @@ try{
   const context=HTMLCanvasElement.prototype.getContext;HTMLCanvasElement.prototype.getContext=function(type,...args){if(type==='webgl'||type==='webgl2')window.qa.webglCalls++;return context.call(this,type,...args);};
   for(const key of ['width','height']){const original=Object.getOwnPropertyDescriptor(HTMLCanvasElement.prototype,key);Object.defineProperty(HTMLCanvasElement.prototype,key,{...original,set(v){if(this.id==='renderCanvas')window.qa[key+'Writes']++;return original.set.call(this,v);}});}
  });
- await page.goto(`http://127.0.0.1:${server.httpServer.address().port}/?scene=procedural&render=1`);await page.waitForFunction(()=>window.motion?.ready);await page.evaluate(()=>window.motion.ready);await page.locator('#preview-quality').selectOption('sharp');await page.evaluate(()=>window.motionPreview.whenIdle());
+ await page.goto(`http://127.0.0.1:${server.httpServer.address().port}/?scene=procedural&render=1`);await page.waitForFunction(()=>window.motion?.ready);await page.evaluate(()=>window.motion.ready);await page.locator('.preview-options>summary').click();await page.locator('#preview-quality').selectOption('sharp');await page.locator('.preview-options>summary').click();await page.evaluate(()=>window.motionPreview.whenIdle());
  const tests=await page.evaluate(()=>{
   const tests=[];function assert(ok,text){if(!ok)throw new Error(text);}function test(name,fn){try{const detail=fn();tests.push({name,passed:true,...detail});}catch(e){tests.push({name,passed:false,error:e.message});}}
   const canvas=document.querySelector('#renderCanvas');function hash(){let h=2166136261;for(const v of canvas.getContext('2d').getImageData(0,0,canvas.width,canvas.height).data)h=Math.imul(h^v,16777619);return (h>>>0).toString(16);}
