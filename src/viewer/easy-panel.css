@@ -1,17 +1,27 @@
-#easy-controls{display:none;padding:22px 20px 28px}
+#easy-controls{display:none;padding:18px 20px 20px}
 body[data-experience=easy] #easy-controls{display:block}
 body[data-experience=easy] #workspace-catalog,body[data-experience=easy] #context-controls,body[data-experience=easy] .mobile-selection-label,body[data-experience=easy] .rail-section,body[data-experience=easy] #tab-motion,body[data-experience=easy] #tab-compositing{display:none!important}
-#easy-controls h3{margin:0 0 7px;font-size:20px;letter-spacing:-.4px}
-.easy-intro,.easy-help{font-size:12px;line-height:1.5;color:#a9b19f;margin:0 0 16px}
-.easy-card{min-width:0;margin:14px 0 0;padding:0 0 16px;border:0;border-bottom:1px solid #ffffff12}
-.easy-card legend{padding:0;font-size:13px;font-weight:600;color:#e5eadc;margin-bottom:6px}
-.easy-card .easy-help{margin:0 0 12px;font-size:11px}
-.easy-choices{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:5px}
+.easy-intro{margin:0 0 22px;color:#91998b;font-size:11px;line-height:1.5}
+.easy-card{min-width:0;margin:0 0 22px;padding:0;border:0}
+.easy-label{display:flex;align-items:center;justify-content:space-between;gap:8px;width:100%;padding:0;margin:0 0 10px;font-size:12px;line-height:1.4;font-weight:600;color:#e5eadc}
+.easy-label>span{min-width:0}
+.easy-label .easy-info{display:inline-flex;align-items:center;justify-content:center;flex:0 0 22px;width:22px;height:22px;min-height:22px;padding:0;border:1px solid #ffffff18;border-radius:50%;background:transparent;font-size:11px;line-height:1;color:#899280;cursor:pointer}
+.easy-info:hover,.easy-info[aria-expanded=true]{color:#d7f56b;border-color:#d7f56b60;background:#d7f56b08}
+.easy-help{font-size:11px;line-height:1.55;color:#a9b19f;margin:0 0 11px;padding:0 0 0 9px;border-left:2px solid #d7f56b40}
+.easy-help[hidden]{display:none}
+.easy-choices{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:3px;padding:4px;border:1px solid #ffffff10;border-radius:9px;background:#0b0e0bb3;box-shadow:inset 0 1px 3px #0003}
 .easy-choices:has(button:nth-child(2):last-child){grid-template-columns:repeat(2,minmax(0,1fr))}
-.easy-choices button{min-width:0;min-height:36px;padding:8px 5px;font-size:11px;white-space:normal;overflow-wrap:anywhere;background:#ffffff04;border:1px solid #ffffff20;border-radius:7px;color:#aeb6a5}
-.easy-choices button[aria-pressed=true]{color:#d7f56b;border-color:#d7f56b70;background:#d7f56b12}
-.easy-choices button:focus-visible,.easy-pro-link:focus-visible{outline:2px solid #d7f56b;outline-offset:2px}
-.easy-note{display:block;color:#a9b19f;font-size:10px;line-height:1.5;margin-top:9px}
-.easy-pro-link{font-size:11px;margin-top:20px;color:#b4bea5;background:transparent;border:0;padding:8px 0;text-decoration:underline;text-underline-offset:4px}
-.easy-edit-content{width:100%;margin:0 0 8px;color:#d7f56b;border-color:#d7f56b60}
+.easy-choices button{min-width:0;min-height:34px;padding:7px 5px;font-family:inherit;font-size:11px;line-height:1.35;font-weight:500;white-space:normal;overflow-wrap:anywhere;background:transparent;border:1px solid transparent;border-radius:6px;color:#a1aa97;cursor:pointer;transition:background .12s,color .12s}
+.easy-choices button:hover:not(:disabled){background:#ffffff0a;color:#e5eadc}
+.easy-choices button[aria-pressed=true],.easy-choices button[aria-pressed=true]:hover{color:#1c2512;background:#d7f56b;border-color:#d7f56b;font-weight:650;box-shadow:0 1px 3px #0004}
+.easy-choices button:disabled{opacity:.45;cursor:default}
+.easy-choices button:focus-visible,.easy-pro-link:focus-visible,.easy-info:focus-visible{outline:2px solid #d7f56b;outline-offset:3px}
+.easy-note{display:block;color:#a9b19f;font-size:10px;line-height:1.5;margin-top:8px}
+.easy-footer{padding:14px 0 0;border-top:1px solid #ffffff12}
+.easy-pro-link{display:flex;align-items:center;justify-content:space-between;gap:14px;width:100%;min-height:32px;font-family:inherit;font-size:11px;color:#9ba68e;background:transparent;border:0;padding:6px 0;text-align:left;cursor:pointer}
+.easy-pro-link:hover{color:#d7f56b;background:transparent}
+.easy-pro-link>span{font-size:16px}
+.easy-edit-content{width:100%;margin:0 0 20px;color:#d7f56b;border-color:#d7f56b60}
 .easy-feedback{font-size:12px;color:#e8c582;line-height:1.5}
+@media(prefers-reduced-motion:reduce){.easy-choices button{transition:none}}
+@media(max-width:700px){#easy-controls{padding:18px 16px}.easy-choices button{min-height:40px}.easy-label .easy-info{width:28px;height:28px;flex-basis:28px}}
