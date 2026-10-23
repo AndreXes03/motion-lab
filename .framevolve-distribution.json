@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "revision": "dc81b71cbba94023bcc9e978178912b33764c54e",
+  "revision": "bc0004b010d1cecab9bb317429809e92405ed287",
   "files": {
     ".agents/skills/framevolve-live-review/SKILL.md": {
       "sha": "51ac340d4873da576a714514d070bd3009e02ae3",
@@ -2243,7 +2243,7 @@
       "mode": "100644"
     },
     "src/viewer/help-menu.js": {
-      "sha": "05045178c39ebf71bde562df4868df44d8056c32",
+      "sha": "5986bf9f2eab47fd732f33f6e526b9768ba59419",
       "mode": "100644"
     },
     "src/viewer/live-review.js": {
@@ -2251,7 +2251,7 @@
       "mode": "100644"
     },
     "src/viewer/main.js": {
-      "sha": "897c5ee95d15ac70a7dc971f2ae84297bcf99319",
+      "sha": "81805ef1109f7e61032bccc3311a61fe7c4d0c2c",
       "mode": "100644"
     },
     "src/viewer/motion-curve-editor.css": {
@@ -2330,6 +2330,10 @@
       "sha": "a9a530de671ecdd5bd3bebbde8f09751978b418a",
       "mode": "100644"
     },
+    "src/viewer/responsive-studio.css": {
+      "sha": "09d22959912d8ec451c8d52f2c4bb7e934894f0e",
+      "mode": "100644"
+    },
     "src/viewer/scene-snapshot.js": {
       "sha": "ed6284a56c839b3e34ee560c76f632287d8035cb",
       "mode": "100644"
@@ -2376,6 +2380,10 @@
     },
     "src/viewer/style.css": {
       "sha": "010fd144ac17045a19fcc33562563fa5099f85b9",
+      "mode": "100644"
+    },
+    "src/viewer/toolbar-overflow.js": {
+      "sha": "c8b269f1aa11f9f1b200a31d67d610e1be10cdda",
       "mode": "100644"
     },
     "src/viewer/viewport-toolbar.js": {
