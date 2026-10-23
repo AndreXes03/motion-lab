@@ -5,6 +5,13 @@ import {randomUUID,createHash} from 'node:crypto';
 import {setTimeout as delay} from 'node:timers/promises';
 import {listProjects,readProject,saveProject,openProject,importProject,exportProject,recoverProjectOpen,assertProjectLibraryIdle,manageProject,replaceProjectScene,projectExportPreflight,restoreProjectRecord,saveProjectCopy} from './project-library-store.mjs';
 import {readReview,writeReview,validateReview} from './live-review-store.mjs';
+import {importImageAsset} from './image-assets.mjs';
+
+export async function importLibraryImage(root,activeId,bytes){root=await realpath(path.resolve(root));return exclusive(root,async()=>{
+ const current=await expected(root,activeId);if(!current)throw failure('Create your App Demo project first.');await assertProjectLibraryIdle(root);
+ const record=await readProject(root,current.id);if(record.snapshot?.parameters?.scene!=='appdemo')throw failure('Open an App Demo project before adding screenshots.');
+ return importImageAsset(root,bytes);
+});}
 
 const sessions=globalThis[Symbol.for('framevolve.project-library.sessions')]??=new Map();
 const idPattern=/^[a-f0-9]{8}-[a-f0-9]{4}-4[a-f0-9]{3}-[89ab][a-f0-9]{3}-[a-f0-9]{12}$/;

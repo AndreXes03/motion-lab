@@ -1,9 +1,11 @@
+import {appDemoDuration} from './engine/app-demo.js';
 import {loopDuration,loopCuts} from './scenes/loop-timing.js';
 import {canonicalScene} from './engine/legacy-scene.js';
 import {studyControlDefinitions} from './engine/scene-capabilities.js';
 import {config} from './config.js';
 /** Browser/Node-safe scene metadata shared by viewer, CLI and export service. */
 export const sceneRegistry={
+ appdemo:{duration:18,title:'App Demo / Your product in motion',kind:'2d',shutterAngle:0,cuts:[0,3,7,11,15,18],source:'app-demo.js'},
  loop:{duration:loopDuration,title:'LOOP / From brief to feeling',kind:'hybrid',shutterAngle:306,cuts:loopCuts,source:'loop-launch.js'},
  starter:{duration:6,title:'Product starter',kind:'3d',shutterAngle:270,cuts:[0,6],source:'product-starter.js'},
  objects:{duration:10,title:'Objects in play'},procedural:{duration:10,title:'Procedural motion'},pop:{duration:10,title:'Pop motion'},
@@ -13,8 +15,8 @@ export const sceneRegistry={
  replay:{duration:15,title:'REPLAY / Editorial motion',kind:'hybrid',cuts:[0,2.4,5.4,7.7,9.4,11.4,13.2],source:'replay-demo.js'}
 };
 export const sceneIds=Object.keys(sceneRegistry);
-export const isNewScene=id=>['dot','pulse','camera','replay','starter','loop'].includes(id);
-export function sceneConfig(id='objects'){id=canonicalScene(id);if(!sceneRegistry[id])throw Error('Unknown scene: '+id);return {...config,...sceneRegistry[id],scene:id,id};}
+export const isNewScene=id=>['dot','pulse','camera','replay','starter','loop','appdemo'].includes(id);
+export function sceneConfig(id='objects',parameters={}){id=canonicalScene(id);if(!sceneRegistry[id])throw Error('Unknown scene: '+id);return {...config,...sceneRegistry[id],...(id==='appdemo'?{duration:appDemoDuration(parameters.appDemo)}:{}),scene:id,id};}
 export const newStudioProjects=Object.entries(sceneRegistry).filter(([id])=>isNewScene(id)).map(([id,s])=>({id,title:s.title,kind:s.kind,subtitle:'Editable reference study',duration:s.duration,controls:studyControlDefinitions[id]??[],presets:[{id:'original',label:'Original',values:{}}],moments:s.cuts.filter(t=>t<s.duration).map((time,i)=>({time,label:String(i+1).padStart(2,'0')}))}));
 
 const starter=newStudioProjects.find(p=>p.id==='starter');

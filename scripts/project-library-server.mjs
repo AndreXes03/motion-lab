@@ -3,6 +3,17 @@ import path from 'node:path';
 import {readReview,liveFile} from './live-review-store.mjs';
 import {libraryState,projectSession,saveActiveProject,createActiveProject,openActiveProject,importLibraryProject,exportLibraryProject,autosaveActiveProject,manageLibraryProject,chooseLibraryScene,preflightLibraryProject,saveCopyActiveProject} from './project-library-session.mjs';
 import {isManagedProjectPath} from './project-library-store.mjs';
+import {importLibraryImage} from './project-library-session.mjs';
+import {readImageAsset} from './image-assets.mjs';
+
+// Imported files must be readable in the same response cycle; Vite's public-file
+// watcher can otherwise lag behind the successful import and serve index.html.
+function appDemoImageMiddleware(root){return async(req,res)=>{
+ try{if(req.method!=='GET'&&req.method!=='HEAD'){res.writeHead(405);return res.end();}
+  const asset='/assets/app-demo'+req.url.split('?')[0],bytes=await readImageAsset(root,asset);
+  res.writeHead(200,{'Content-Type':'image/png','Content-Length':bytes.length,'X-Content-Type-Options':'nosniff','Cache-Control':'no-cache'});res.end(req.method==='HEAD'?undefined:bytes);
+ }catch{res.writeHead(404,{'Content-Type':'text/plain','Cache-Control':'no-store'});res.end('Image unavailable. Import it again.');}
+};}
 
 export function projectLibraryMiddleware(root){const token=randomBytes(32).toString('hex');return async(req,res)=>{
  const send=(status,data)=>{res.writeHead(status,{'Content-Type':'application/json','Cache-Control':'no-store','X-Content-Type-Options':'nosniff'});res.end(JSON.stringify(data));};
@@ -11,11 +22,12 @@ export function projectLibraryMiddleware(root){const token=randomBytes(32).toStr
   if(!['localhost','127.0.0.1','[::1]'].includes(origin.hostname)||req.headers.origin&&req.headers.origin!==origin.origin)return send(403,{error:'Local same-origin requests only.'});
   if(req.method==='GET'&&(req.url==='/'||req.url===''))return send(200,{token,...await libraryState(root)});
   if(req.method!=='POST'||req.headers.origin!==origin.origin||req.headers['x-framevolve-project']!==token)return send(403,{error:'Reload Studio to reconnect project storage.'});
-  const binary=req.url==='/import',limit=binary?100*1024*1024:2*1024*1024;
+  const binary=['/import','/image'].includes(req.url),limit=req.url==='/image'?10*1024*1024:binary?100*1024*1024:2*1024*1024;
   if(req.headers['content-type']!==(binary?'application/octet-stream':'application/json'))return send(415,{error:'Unsupported project request.'});
   if(Number(req.headers['content-length'])>limit)return send(413,{error:'Project package exceeds the size limit.'});
   let size=0;const chunks=[];for await(const chunk of req){size+=chunk.length;if(size>limit)return send(413,{error:'Project package exceeds the size limit.'});chunks.push(chunk);}
   const bytes=Buffer.concat(chunks);
+  if(req.url==='/image')return send(200,await importLibraryImage(root,req.headers['x-framevolve-active'],bytes));
   if(binary)return send(200,{record:await importLibraryProject(root,bytes)});
   const body=JSON.parse(bytes.toString('utf8')||'{}');
   if(req.url==='/save-copy')return send(200,await saveCopyActiveProject(root,body));
@@ -40,5 +52,5 @@ export function projectLibraryPlugin(){let server,root,timer,stopped=false,gener
   catch(error){state.error='Autosave needs attention: '+error.message;state.pending=false;}
  }
  function changed(file){const relative=path.relative(root,file).split(path.sep).join('/');if(isManagedProjectPath(relative)||file===liveFile(root)){if(file===liveFile(root))reviewPending=true;generation++;projectSession(root).pending=true;schedule();}}
- return {name:'framevolve-project-library',apply:'serve',async configureServer(vite){if(process.env.VITE_PUBLIC_DEMO==='true')return;server=vite;root=server.config.root;lastCheckpoint=(await readReview(root)).checkpoint;server.middlewares.use('/__framevolve_projects',projectLibraryMiddleware(root));server.watcher.add(liveFile(root));for(const event of ['add','change','unlink'])server.watcher.on(event,changed);projectSession(root).pending=true;schedule();},closeBundle(){stopped=true;clearTimeout(timer);if(server)for(const event of ['add','change','unlink'])server.watcher.off(event,changed);}};
+ return {name:'framevolve-project-library',apply:'serve',async configureServer(vite){if(process.env.VITE_PUBLIC_DEMO==='true')return;server=vite;root=server.config.root;lastCheckpoint=(await readReview(root)).checkpoint;server.middlewares.use('/__framevolve_projects',projectLibraryMiddleware(root));server.middlewares.use('/assets/app-demo',appDemoImageMiddleware(root));server.watcher.add(liveFile(root));for(const event of ['add','change','unlink'])server.watcher.on(event,changed);projectSession(root).pending=true;schedule();},closeBundle(){stopped=true;clearTimeout(timer);if(server)for(const event of ['add','change','unlink'])server.watcher.off(event,changed);}};
 }

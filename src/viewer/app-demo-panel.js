@@ -1,0 +1,84 @@
+import {appDemoExample,validateAppDemo,appDemoDuration,appDemoWarnings} from '../engine/app-demo.js';
+import './app-demo-panel.css';
+
+/** A focused authoring surface over the same recipe, library and renderer as Studio. */
+export function mountAppDemo({container,getSnapshot,createProject,update,library,createRuntime,pause,exportVideo,openAudio,isBusy,audio,keepVersion}){
+ const entry=document.createElement('button');entry.className='app-demo-entry';entry.textContent='Create an app demo';container.prepend(entry);
+ const dialog=document.createElement('dialog');dialog.className='app-demo-dialog';dialog.setAttribute('aria-labelledby','app-demo-title');
+ dialog.innerHTML=`<header><div><p class="ad-eyebrow">FRAMEVOLVE / APP DEMO</p><h2 id="app-demo-title">A clear story. Your real product.</h2></div><button data-close aria-label="Close App Demo">×</button></header>
+ <section data-welcome><p class="ad-lead">Turn screenshots into a polished product walkthrough.<br>See the result as you go. No video experience needed.</p><div class="ad-welcome-cards"><article><span>01</span><h3>Bring your screens</h3><p>PNG or JPG images, a product name and one clear promise.</p></article><article><span>02</span><h3>Tell a short story</h3><p>Choose the order, write a headline and point to what matters.</p></article><article><span>03</span><h3>Make it yours</h3><p>Add your color and logo, then save a Full HD video.</p></article></div><p>Your first video is built locally. No AI account or credits needed.</p><button data-start class="ad-primary">Start with the example</button><small>Your current project is saved first. A separate App Demo project will open.</small></section>
+ <section data-editor hidden><nav class="ad-steps" aria-label="App Demo steps"></nav><div class="ad-workspace"><section class="ad-preview"><canvas width="960" height="540" aria-label="App Demo video preview"></canvas><div class="ad-transport"><button data-play>Play video</button><input data-seek type="range" min="0" step="0.033333" value="0" aria-label="Video position"><output data-time></output></div><p class="ad-preview-note">16:9 · Full HD · Built from your actual screenshots</p><div data-warnings class="ad-warnings"></div></section><section class="ad-form"></section></div><footer><p data-save>Changes are saved automatically in this project.</p><div><button data-back>Back</button><button data-next class="ad-primary">Next</button></div></footer></section><p class="ad-status" role="status"></p>`;
+ document.body.append(dialog);const $=s=>dialog.querySelector(s),form=$('.ad-form'),status=$('.ad-status'),canvas=$('canvas');
+ let step=0,selected=0,doc,clock=0,playing=false,raf=0,last=0,runtime,epoch=0,working=false,replaceId=null,previewParams,playbackId=0,projectId;
+ const metadata=new Map(),steps=['Your product','The story','The finishing touches','Your video'];
+ const node=(tag,text,cls)=>{const el=document.createElement(tag);if(text!==undefined)el.textContent=text;if(cls)el.className=cls;return el;};
+ const button=(text,fn,cls)=>{const el=node('button',text,cls);el.type='button';el.onclick=()=>run(fn);return el;};
+ async function run(fn){if(working)return;working=true;status.textContent='';dialog.setAttribute('aria-busy','true');try{await fn();}catch(e){status.textContent=e.message;}finally{working=false;dialog.removeAttribute('aria-busy');}}
+ function stop(){playbackId++;audio?.stop();playing=false;cancelAnimationFrame(raf);$('[data-play]').textContent='Play video';}
+ function duration(){return appDemoDuration(doc);}
+ function shotTime(){return 3+doc.slides.slice(0,selected).reduce((n,s)=>n+s.duration,0)+doc.slides[selected].duration*.7;}
+ async function render(){const generation=++epoch;if(!runtime)return;const snap=getSnapshot();previewParams={...snap.parameters,scene:'appdemo',appDemo:doc};
+  try{await runtime.prepare(previewParams);if(generation!==epoch||!dialog.open)return;runtime.render(clock,{width:960,height:540,previewQuality:'full',parameters:previewParams});$('[data-time]').textContent=`${clock.toFixed(1)} / ${duration()} s`;$('[data-seek]').max=duration()-1/30;$('[data-seek]').value=clock;}catch(e){stop();status.textContent=e.message;}
+ }
+ async function commit({redraw=false}={}){if(library.getActiveId()!==projectId)throw Error("The open project changed. Close App Demo and reopen it.");stop();validateAppDemo(doc);update(doc);clock=Math.min(clock,duration()-1/30);await render();warnings();if(redraw)paint();}
+ function warnings(){const box=$('[data-warnings]');box.replaceChildren();for(const warning of appDemoWarnings(doc,metadata))box.append(node('p',warning));}
+ function field(label,value,change,{max=100,multiline=false,hint}={}){const wrap=node('label',label),input=node(multiline?'textarea':'input');input.value=value;input.maxLength=max;if(multiline)input.rows=2;input.oninput=()=>{change(input.value);commit().catch(e=>{status.textContent=e.message;});};wrap.append(input);if(hint)wrap.append(node('small',hint));form.append(wrap);return input;}
+ function range(label,value,min,max,stepSize,change){const wrap=node('label',label),row=node('div',undefined,'ad-range'),input=node('input'),out=node('output',String(value));input.type='range';Object.assign(input,{min,max,step:stepSize,value});input.oninput=()=>{out.textContent=input.value;change(Number(input.value));commit().catch(e=>status.textContent=e.message);};row.append(input,out);wrap.append(row);form.append(wrap);return input;}
+ const picker=document.createElement('input');picker.type='file';picker.accept='image/png,image/jpeg';picker.multiple=true;picker.hidden=true;dialog.append(picker);
+ const logoPicker=picker.cloneNode();logoPicker.multiple=false;dialog.append(logoPicker);
+ async function importScreens(files){
+  if(!files.length)return;const replacingExample=doc.slides.every(s=>['workspace','audio','delivery'].includes(s.id));
+  const capacity=replaceId?1:4-(replacingExample?0:doc.slides.length);if(files.length>capacity)throw Error(`Choose up to ${capacity} image${capacity===1?'':'s'}. You can use four screens in a video.`);
+  const imported=[];for(const [i,file]of files.entries()){status.textContent=`Adding image ${i+1} / ${files.length}…`;const image=await library.importImage(file);metadata.set(image.asset,image);imported.push(image);}
+  if(replaceId){const s=doc.slides.find(s=>s.id===replaceId);if(s){s.asset=imported[0].asset;s.focus={x:.5,y:.5,zoom:1};}}
+  else{if(replacingExample)doc.slides=[];for(const image of imported)doc.slides.push({id:crypto.randomUUID(),asset:image.asset,title:'Show what matters.',caption:'Describe the benefit in one short sentence.',duration:4,focus:{x:.5,y:.5,zoom:1}});selected=doc.slides.length-imported.length;}
+  replaceId=null;clock=shotTime();await commit({redraw:true});await library.save(true);status.textContent='Images added to your project.';
+ }
+ picker.onchange=()=>run(async()=>{const files=[...picker.files];picker.value='';await importScreens(files);});
+ logoPicker.onchange=()=>run(async()=>{const file=logoPicker.files[0];logoPicker.value='';if(!file)return;const image=await library.importImage(file);doc.logo=image.asset;await commit({redraw:true});});
+ function rail(){const rail=node('div',undefined,'ad-screens');for(const [i,s]of doc.slides.entries()){const card=button('',()=>{stop();selected=i;clock=shotTime();paint();return render();},'ad-screen');card.setAttribute('aria-pressed',String(i===selected));card.setAttribute('aria-label',`Screen ${i+1}: ${s.title}`);const img=node('img');img.src=s.asset;img.alt='';img.onload=()=>{metadata.set(s.asset,{width:img.naturalWidth,height:img.naturalHeight});warnings();};card.append(img,node('span',`${i+1}. ${s.title||'Untitled screen'}`));rail.append(card);}form.append(rail);}
+ function paint(){
+  $('.ad-steps').replaceChildren();steps.forEach((label,i)=>{const b=button(`${i+1}. ${label}`,()=>{stop();step=i;clock=i===0?1.5:i===1?shotTime():i===2?duration()-1.5:0;paint();return render();});b.setAttribute('aria-current',i===step?'step':'false');$('.ad-steps').append(b);});
+  form.replaceChildren();form.append(node('p',`0${step+1} / 04`,'ad-eyebrow'),node('h3',steps[step]));
+  if(step===0){form.append(node('p','Start with the benefit. Then replace the example with your own screenshots.'));
+   field('Product name',doc.name,v=>doc.name=v,{max:40});field('What does it help people do?',doc.benefit,v=>doc.benefit=v,{multiline:true,hint:'One specific promise is stronger than a list of features.'});
+   rail();form.append(button('Add screenshots',()=>{replaceId=null;picker.multiple=true;picker.click();},'ad-secondary'),node('small','PNG or JPG · up to 10 MB each · 1–4 screens. The first import replaces the example screens.'));
+  }else if(step===1){form.append(node('p','Give each screen one idea. Click a screen to edit it.'));rail();const s=doc.slides[selected];
+   const actions=node('div',undefined,'ad-row');const move=delta=>{const target=selected+delta;if(target<0||target>=doc.slides.length)return;[doc.slides[selected],doc.slides[target]]=[doc.slides[target],doc.slides[selected]];selected=target;clock=shotTime();return commit({redraw:true});};
+   const up=button('Move earlier',()=>move(-1)),down=button('Move later',()=>move(1));up.disabled=selected===0;down.disabled=selected===doc.slides.length-1;
+   actions.append(up,down,button('Replace',()=>{replaceId=s.id;picker.multiple=false;picker.click();}));const remove=button('Remove',()=>{doc.slides.splice(selected,1);selected=Math.min(selected,doc.slides.length-1);clock=shotTime();return commit({redraw:true});});remove.disabled=doc.slides.length===1;actions.append(remove);form.append(actions);
+   field('Headline',s.title,v=>s.title=v,{multiline:true});field('Supporting line',s.caption,v=>s.caption=v,{max:150,multiline:true});
+   range('Time to read · seconds',s.duration,3,7,.5,v=>{s.duration=v;clock=shotTime();});
+   form.append(node('p','Choose where the viewer should look. Click inside the image, then adjust the zoom.'));
+   const focus=node('button',undefined,'ad-focus');focus.setAttribute('aria-label','Choose focus point in screenshot');const img=node('img');img.src=s.asset;img.alt='Click the area to focus on';const marker=node('span');marker.style.left=s.focus.x*100+'%';marker.style.top=s.focus.y*100+'%';focus.append(img,marker);
+   focus.onclick=e=>{if(e.detail===0)return;const bounds=img.getBoundingClientRect();if(!bounds.width)return;s.focus.x=Math.max(0,Math.min(1,(e.clientX-bounds.left)/bounds.width));s.focus.y=Math.max(0,Math.min(1,(e.clientY-bounds.top)/bounds.height));marker.style.left=s.focus.x*100+'%';marker.style.top=s.focus.y*100+'%';clock=shotTime();commit().catch(e=>status.textContent=e.message);};
+   focus.onkeydown=e=>{if(!['ArrowLeft','ArrowRight','ArrowUp','ArrowDown'].includes(e.key))return;e.preventDefault();const key=['ArrowLeft','ArrowRight'].includes(e.key)?'x':'y';s.focus[key]=Math.max(0,Math.min(1,s.focus[key]+(['ArrowLeft','ArrowUp'].includes(e.key)?-.05:.05)));marker.style.left=s.focus.x*100+'%';marker.style.top=s.focus.y*100+'%';clock=shotTime();commit().catch(e=>status.textContent=e.message);};form.append(focus);
+   range('Zoom · ×',s.focus.zoom,1,2,.05,v=>{s.focus.zoom=v;clock=shotTime();});form.append(button('Show the whole screen',()=>{s.focus={x:.5,y:.5,zoom:1};return commit({redraw:true});}));
+  }else if(step===2){form.append(node('p','Keep the ending short and make the next step obvious.'));
+   field('Closing message',doc.ending,v=>doc.ending=v,{multiline:true});field('What should viewers do next?',doc.cta,v=>doc.cta=v,{max:60});
+   const color=field('Brand color',doc.accent,v=>doc.accent=v,{max:7});color.type='color';
+   const row=node('div',undefined,'ad-row');row.append(button(doc.logo?'Replace logo':'Add a logo',()=>logoPicker.click()));if(doc.logo)row.append(button('Remove logo',()=>{doc.logo=null;return commit({redraw:true});}));form.append(row,node('small','A PNG with transparency works best.'));
+   form.append(button('Keep this version',async()=>{await library.save(true);await keepVersion();status.textContent='Version saved. You can return to it from Versions in Studio.';}));
+   form.append(button('Add or adjust music in Studio',async()=>{await library.save(true);dialog.close();openAudio();}));
+   form.append(node('small','Music is optional. Your screen sequence and text remain saved when you return.'));
+   form.append(button('Copy a request for my assistant',async()=>{const prompt=`Refine my active Framevolve App Demo project. Read node scripts/app-demo.mjs read, then use node scripts/app-demo.mjs update FILE to update only its content. Preserve the real screenshots and current project. Improve clarity, pacing and the focus of each screen; do not run paid generation or replace the product UI. My request: `;await navigator.clipboard.writeText(prompt);status.textContent='Copied. Close App Demo, then paste into your assistant and add what you want to improve.';}));
+  }else{form.append(node('p','Watch the complete video once. You can return to any step before exporting.'));
+   const summary=node('dl',undefined,'ad-summary');for(const [k,v]of [['Length',`${duration()} seconds`],['Screens',String(doc.slides.length)],['Audio',getSnapshot().parameters.audio?.tracks?.some(t=>t.enabled!==false)?'Your imported music':getSnapshot().parameters.sound?.enabled?'Generated music & sound':'Silent video'],['Format','MP4 · 1920 × 1080 · 30 fps'],['Production','Local rendering · no AI credits']])summary.append(node('dt',k),node('dd',v));form.append(summary);
+   form.append(button('Watch from the start',()=>{clock=0;startPlayback();}));
+
+   form.append(button('Save a portable project',async()=>{await library.save(true);dialog.close();await library.exportProject();}));form.append(node('small','The portable project includes your screenshots and editable story. Keep it to continue on another compatible Framevolve installation.'));
+  }
+  $('[data-back]').disabled=step===0;$('[data-next]').hidden=false;$('[data-next]').textContent=step===3?'Export Full HD video':step===2?'Review my video':'Next';form.scrollTop=0;dialog.scrollTop=0;warnings();
+ }
+ async function frame(now){if(!playing)return;clock=audio?.currentTime()??(clock+(now-last)/1000);last=now;if(clock>=duration()-1/30){clock=duration()-1/30;stop();}await render();if(playing)raf=requestAnimationFrame(frame);}
+ async function startPlayback(){stop();if(clock>=duration()-.1)clock=0;const ticket=playbackId;$('[data-play]').textContent='Preparing…';try{await audio?.play(clock);}catch(e){status.textContent='Audio: '+e.message;}if(ticket!==playbackId)return;playing=true;last=performance.now();$('[data-play]').textContent='Pause video';raf=requestAnimationFrame(frame);}
+ $('[data-play]').onclick=()=>playing?stop():startPlayback();$('[data-seek]').oninput=e=>{stop();clock=Number(e.target.value);render();};
+ $('[data-back]').onclick=()=>{stop();step=Math.max(0,step-1);paint();};$('[data-next]').onclick=()=>{if(step===3)return run(async()=>{if(!doc.name.trim()||!doc.benefit.trim()||!doc.cta.trim())throw Error('Add a product name, opening and next action before exporting.');await library.save(true);dialog.close();exportVideo();});stop();step=Math.min(3,step+1);clock=step===1?shotTime():step===2?duration()-1.5:0;paint();render();};
+ async function edit(){projectId=library.getActiveId();doc=validateAppDemo(getSnapshot().parameters.appDemo??appDemoExample);selected=0;clock=1.5;step=0;$('[data-welcome]').hidden=true;$('[data-editor]').hidden=false;runtime=createRuntime(canvas,{initialScene:'appdemo'});await runtime.ready;paint();await render();}
+ async function open(){if(isBusy())throw Error('Wait for the current render or project operation to finish.');pause();status.textContent='';dialog.showModal();if(getSnapshot().parameters.scene==='appdemo')await edit();else{$('[data-welcome]').hidden=false;$('[data-editor]').hidden=true;}}
+ entry.onclick=()=>run(open);$('[data-start]').onclick=()=>run(async()=>{await createProject();await edit();});$('[data-close]').onclick=()=>{if(!working)dialog.close();};dialog.addEventListener('cancel',e=>{if(working)e.preventDefault();});
+ dialog.addEventListener('close',()=>{stop();epoch++;runtime?.dispose();runtime=null;if(doc)library.save().catch(()=>{});entry.textContent=getSnapshot().parameters.scene==='appdemo'?'Edit my app demo':'Create an app demo';});
+ dialog.addEventListener('keydown',e=>e.stopPropagation());
+ const saveStatus=setInterval(()=>{entry.disabled=isBusy()||working;if(!dialog.open)return;const state=library.getStatus();$('[data-save]').textContent=state.message||(state.status==='saved'?'All changes saved in this project.':state.status==='saving'?'Saving your changes…':'Changes waiting to be saved…');},600);
+ return {open:()=>run(open),get isOpen(){return dialog.open;},dispose(){clearInterval(saveStatus);stop();runtime?.dispose();dialog.remove();entry.remove();}};
+}

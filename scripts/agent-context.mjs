@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 // Fixed, bounded routing: no recursive source scan and no model call.
 const routes={
+ appdemo:{files:["docs/APP_DEMO.md","src/engine/app-demo.js","src/scenes/app-demo.js","src/viewer/app-demo-panel.js","scripts/app-demo.mjs"],tests:["node scripts/test-app-demo.mjs"]},
  storyboard:{files:["docs/STORYBOARD.md","src/viewer/storyboard-panel.js","src/viewer/creative-model.js","scripts/creative-store.mjs"],tests:["npm run test:creative"]},
  founder:{files:["docs/FOUNDER_START.md",".agents/skills/motion-lab-product-film/references/founder-discovery.md","src/viewer/session-tools.js","scripts/session-support-server.mjs"],tests:["npm run test:session"]},
  setup:{files:['scripts/mac-start.mjs','scripts/setup-mac.mjs','scripts/browser-runtime.mjs','docs/MAC_SETUP.md'],tests:['npm run test:setup']},

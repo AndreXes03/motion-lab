@@ -10,6 +10,10 @@ For best results, we recommend capable coding models such as **Sol, Astra, Opus,
 
 Keep the setup Terminal window open until Studio opens. Afterward, use **Close setup** or close its Terminal window. The setup session expires 30 minutes after launch, once no setup task is running; Studio keeps running separately. First installation needs internet access and several hundred MB for dependencies; Chromium is downloaded only when you choose that legacy production path. The installer uses a private Node.js 24 runtime only if a compatible Node/npm installation is unavailable; existing Node.js 22.12+ installations are reused. The runtime checksum is checked against the official Node.js release manifest. The folder must be writable.
 
+## Create an app demo
+
+Choose **Create an app demo** in the top bar to turn real screenshots into an editable product walkthrough. The guided flow handles the story, focus, brand and Full HD export without an AI account. See [App Demo](APP_DEMO.md).
+
 ## Your first moves in Studio
 
 After setup, a short **Getting started** guide invites you to play or seek, change a scene control, and render a small PNG. The render uses your selected engine and reports errors normally; completion is counted only after a successful output. You can skip or reopen the guide at any time from the Studio sidebar. Progress stays in this local installation, including across browser/port changes. Existing sessions are not interrupted by a welcome popup.

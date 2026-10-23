@@ -28,6 +28,14 @@
         "device": "metal",
         "workers": 1
       }
+    },
+    "appdemo": {
+      "renderer": "auto",
+      "source": "agent",
+      "intent": "motion-graphics",
+      "preferredRenderer": "skia",
+      "quality": "balanced",
+      "rationale": "App Demo uses the same 2D composition in Canvas and native Skia. No 3D tracing is needed."
     }
   }
 }

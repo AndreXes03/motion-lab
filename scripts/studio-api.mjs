@@ -1,3 +1,4 @@
+import {validateAppDemo} from '../src/engine/app-demo.js';
 import {authoredSceneAudio} from './authored-audio.mjs';
 import {createNativeProjectApi} from './native-project-api.mjs';
 import {importAudioAsset,listAudioAssets,resolveAudioAsset} from './audio-assets.mjs';
@@ -40,7 +41,7 @@ async function publishDownload(job) {
 }
 const MAX_BODY = 2 * 1024 * 1024;
 const MAX_JSON_DEPTH = 32;
-const ALLOWED_PARAMETERS = new Set(['scene', 'look', 'motion', 'graphics', 'studio', 'display', 'shell', 'knob', 'objectMotion', 'objectEdits', 'review', 'inspect', 'sound', 'audio', 'animation', 'product', 'sceneControls', 'renderPolicy']);
+const ALLOWED_PARAMETERS = new Set(['appDemo','scene', 'look', 'motion', 'graphics', 'studio', 'display', 'shell', 'knob', 'objectMotion', 'objectEdits', 'review', 'inspect', 'sound', 'audio', 'animation', 'product', 'sceneControls', 'renderPolicy']);
 const LOOK_SECTIONS = {
   camera: new Set(['fov','fovScale','distance','keepSubjectSize']),
   lighting: new Set(['preset', 'key', 'fill', 'rim', 'environment', 'keyPosition', 'keyTarget', 'rimPosition', 'keyAngle', 'keyPenumbra', 'keyColor', 'rimColor']),
@@ -61,7 +62,7 @@ let skiaProbe;
 async function nativeSkiaCapabilities(){
   if(process.platform!=='darwin'||process.arch!=='arm64')return {available:false,scenes:[],reason:'Native Skia is available only on macOS Apple silicon.'};
   if(!skiaProbe)skiaProbe=(async()=>{
-    try{const {createNativeCanvas}=await import('./native/canvas.mjs');const canvas=createNativeCanvas(1,1);if(!canvas.getContext('2d'))throw Error('Canvas 2D context is unavailable.');canvas.dispose();return {available:true,scenes:['procedural'],device:'CPU'};}
+    try{const {createNativeCanvas}=await import('./native/canvas.mjs');const canvas=createNativeCanvas(1,1);if(!canvas.getContext('2d'))throw Error('Canvas 2D context is unavailable.');canvas.dispose();return {available:true,scenes:['procedural','appdemo'],device:'CPU'};}
     catch(error){return {available:false,scenes:[],reason:`Native Skia could not load or allocate its CPU canvas (${error.message}). Install or repair the local Skia component, then retry; no renderer fallback will run for an explicit Skia selection.`};}
   })();
   return skiaProbe;
@@ -132,7 +133,8 @@ export async function validateStudioParameters(input) {
   validateMotion(motion, new Set(Object.keys(defaults[1].tracks)),sceneConfig(scene).duration);
 
   const normalized = { ...structuredClone(input), scene, look, motion };
-  if(input.animation!==undefined)normalized.animation=validateParameterAnimation(input.animation,scene);
+  if(input.appDemo!==undefined){if(scene!=='appdemo')throw Error('App Demo data belongs to an App Demo scene.');normalized.appDemo=validateAppDemo(input.appDemo);}
+  if(input.animation!==undefined)normalized.animation=validateParameterAnimation(input.animation,scene,input);
   if(input.renderPolicy!==undefined)normalized.renderPolicy=validateRenderPlan(input.renderPolicy);
   if(input.sceneControls!==undefined){
     const definitions=studyControlDefinitions[scene];if(!definitions||!isRecord(input.sceneControls))throw new Error('sceneControls is unsupported for this scene');
@@ -467,8 +469,8 @@ export function createStudioApi({ spawnFn = nodeSpawn, revealFn = revealWithFind
         const body=await readJson(req);
         if(!isRecord(body)||Object.keys(body).some(key=>!['parameters','time','width','height'].includes(key)))return send(res,400,{error:'Expected parameters, time, width, and height.'});
         const parameters=await validateStudioParameters(body.parameters);
-        if(parameters.scene!=='procedural')return send(res,400,{error:'Native thumbnails currently support the procedural scene only.'});
-        const duration=sceneConfig(parameters.scene).duration;
+        if(!['procedural','appdemo'].includes(parameters.scene))return send(res,400,{error:'Native thumbnails support Procedural and App Demo.'});
+        const duration=sceneConfig(parameters.scene,parameters).duration;
         if(!Number.isFinite(body.time)||body.time<0||body.time>=duration)return send(res,400,{error:`time must be from 0 to less than ${duration} seconds.`});
         if(!Number.isInteger(body.width)||!Number.isInteger(body.height)||body.width<64||body.height<64||body.width>640||body.height>360||body.width*body.height>230400)return send(res,400,{error:'Thumbnail dimensions must be at least 64×64, no larger than 640×360, and at most 230,400 pixels.'});
         if(processState.activeRenderId||processState.nativeThumbnailActive)return send(res,409,{error:'Wait for the active local render or thumbnail to finish.'});
@@ -588,7 +590,7 @@ export function createStudioApi({ spawnFn = nodeSpawn, revealFn = revealWithFind
         if (processState.activeRenderId||processState.nativeThumbnailActive) return send(res, 409, { error: 'Another local render or native thumbnail is already running' });
         if ((await componentManager.status()).busy) return send(res,409,{error:'Wait for the Rendering Cycles component operation to finish before rendering.'});
         const time = body.time ?? 0;
-        const selectedConfig=sceneConfig(body.parameters?.scene??'objects');if (typeof time !== 'number' || !Number.isFinite(time) || time < 0 || time > selectedConfig.duration) return send(res, 400, { error: `time must be a number from 0 to ${selectedConfig.duration} seconds` });
+        const selectedConfig=sceneConfig(body.parameters?.scene??'objects',body.parameters);if (typeof time !== 'number' || !Number.isFinite(time) || time < 0 || time > selectedConfig.duration) return send(res, 400, { error: `time must be a number from 0 to ${selectedConfig.duration} seconds` });
         reservation = `pending:${randomUUID()}`;
         processState.activeRenderId = reservation;
         const parameters = await validateStudioParameters(body.parameters);
@@ -625,7 +627,7 @@ export function createStudioApi({ spawnFn = nodeSpawn, revealFn = revealWithFind
         await writeJobManifest(job);
         const args = [body.kind, '--out', outputPath, '--snapshot', snapshotPath];
         if (selection.selectedRenderer === 'skia') args.push('--backend', 'native');
-        else if (selection.selectedRenderer === 'threejs' && parameters.scene === 'procedural') args.push('--backend', 'browser-reference');
+        else if (selection.selectedRenderer === 'threejs' && ['procedural','appdemo'].includes(parameters.scene)) args.push('--backend', 'browser-reference');
         if (body.kind === 'frame') args.push('--time', String(time), '--width', String(width), '--height', String(height), '--fps', String(fps), '--temporal-samples', String(temporalSamples));
         else args.push('--temporal-samples', String(snapshot.temporalSamples), '--fps', String(fps), '--format', settings.format, ...(settings.bitrateMbps === null ? [] : ['--bitrate-mbps', String(settings.bitrateMbps)]));
         const invocation=selection.selectedRenderer==='mixed'?buildMixedCommand({kind:body.kind,snapshotPath,outputPath,root:ROOT,audioPath:plan.composite.audioFile??undefined,audioOffset:plan.composite.audioOffset}):selection.selectedRenderer==='cycles'?buildCyclesCommand({kind:body.kind,snapshotPath,outputPath,root:ROOT,settings:{width,height,fps,progressive:body.purpose==='viewport',cyclesSamples:plan.cycles.samples,device:plan.cycles.device,workers:plan.cycles.workers,denoise:plan.cycles.denoise,motionBlur:temporalSamples>1,shutter:Math.max(0,Math.min(1,(parameters.look?.post?.shutterAngle??180)/360)),composite:'titles'}}):{command:process.execPath,args:[CLI,...args],cwd:ROOT};

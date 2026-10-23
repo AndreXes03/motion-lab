@@ -121,8 +121,8 @@ export function editAuthoredKeys(scene, groupId, channelId, patches, {motion = d
 /** Machine-readable contract for agents. This is a view of the existing recipe,
  * not a second save format. Native source keys and timing overrides stay distinct.
  */
-export function getAuthoredAnimationProtocol(scene,{motion=defaultMotion,animation}={}){
- const groups=getAnimationGroups(scene),normalized=animation===undefined?undefined:validateParameterAnimation(animation,scene);
+export function getAuthoredAnimationProtocol(scene,{motion=defaultMotion,animation,appDemo}={}){
+ const groups=getAnimationGroups(scene,{appDemo}),normalized=animation===undefined?undefined:validateParameterAnimation(animation,scene,{appDemo});
  return {
   version:1,scene,recipePaths:{source:['motion','tracks'],groupTiming:['animation','groups'],parameterTracks:['animation','tracks']},
   interpolation:{owner:'outgoing-key',defaultNative:'smooth',defaultGroup:'linear',easings:[...parameterEasings],smooth:'6u^5 - 15u^4 + 10u^3',bezier:'Normalized cubic Bezier; invert x before evaluating y. Four control values in [0,1].',hold:'Keep the left value until the next key time.'},

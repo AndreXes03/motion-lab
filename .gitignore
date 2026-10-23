@@ -28,3 +28,9 @@ outputs/
 
 # User-imported audio stays local across source updates.
 /project/audio/
+
+# User screenshots stay local; portable projects include them through the library.
+/public/assets/app-demo/*.png
+!/public/assets/app-demo/workspace.png
+!/public/assets/app-demo/audio.png
+!/public/assets/app-demo/delivery.png
