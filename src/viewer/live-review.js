@@ -30,6 +30,7 @@ export function mountLiveReview({container,enabled,baseline,getSnapshot,setSnaps
     toggle.textContent=paused?'Resume live updates':'Pause live updates';toggle.setAttribute('aria-pressed',String(!paused));
     toggle.disabled=reloading;
     const jobs=isBusy();
+    container.dataset.attention=String(!!pending||!!localError||!!current?.error||current?.phase==='blocked');
     status.textContent=localError||current?.error||(jobs?'Live updates waiting for render':paused?'Live updates paused':pending&&dirty()?'Update ready · your local edits are kept':current?.phase==='editing'?'Agent editing · '+(current.label||'Next change'):current?.phase==='blocked'?'Agent blocked · '+(current.label||'Waiting'):pending?'Applying update…':current?.label||'Live updates ready');
     apply.hidden=!pending||reloading||!!current?.error||['editing','blocked'].includes(current?.phase);apply.disabled=jobs;
     undo.hidden=!sessionStorage.getItem(BACKUP);undo.disabled=jobs||reloading;

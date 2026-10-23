@@ -56,7 +56,9 @@ try{
  await page.locator('#import-recipe').setInputFiles({name:'local.json',mimeType:'application/json',buffer:Buffer.from(JSON.stringify(local))});
  await page.waitForFunction(()=>window.motionLive.getState().dirty);
  await command('begin',{task:'f3'});const three=structuredClone(two);three.parameters.graphics.title='THIRD CHANGE';three.parameters.studio.values.title='THIRD CHANGE';
- await command('publish',{task:'f3',snapshot:three});await page.locator('#live-review-apply').waitFor({state:'visible'});
+ await command('publish',{task:'f3',snapshot:three});
+ await page.locator('.studio-more>summary').click();await page.locator('.workspace-updates>summary').click();
+ await page.locator('#live-review-apply').waitFor({state:'visible'});
  assert.equal((await recipe()).parameters.graphics.title,'MY LOCAL TITLE');
  await page.locator('#live-review-apply').click();await page.waitForFunction(()=>!window.motionLive.getState().pending);
  assert.equal((await recipe()).parameters.graphics.title,'THIRD CHANGE');

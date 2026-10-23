@@ -10,7 +10,7 @@ export function mountToolbarOverflow(){
  function place(){menu.open=false;for(const {el,home,target}of slots){if(compact.matches)target.append(el);else home.after(el);}menu.hidden=!compact.matches&&!appDemo;}
  compact.addEventListener('change',place);place();
  menu.addEventListener('toggle',()=>summary.setAttribute('aria-expanded',String(menu.open)));
- menu.addEventListener('click',event=>{if(event.target.closest('button'))menu.open=false;});
+ menu.addEventListener('click',event=>{if(event.target.closest('button')&&!event.target.closest('.workspace-updates'))menu.open=false;});
  document.addEventListener('pointerdown',event=>{if(menu.open&&!menu.contains(event.target))menu.open=false;});
  document.addEventListener('keydown',event=>{if(event.key==='Escape'&&menu.open){event.preventDefault();menu.open=false;summary.focus();}});
 }

@@ -1,0 +1,51 @@
+/* View mode owns a fixed row. Context controls no longer determine its position. */
+.stage-view-switch{display:flex;align-items:center;flex-shrink:0;height:39px;margin:0 18px 10px;gap:3px}
+.stage-view-switch .story-mode-switch{margin:0;flex:none}
+body[data-creative-mode=storyboard] .stage-column>.preview-strip{display:none!important}
+body[data-creative-mode=storyboard] .stage-heading{height:var(--stable-stage-heading,70px);padding:14px 18px}
+.stage-heading{height:var(--stable-stage-heading,70px)}
+@media(min-width:1201px){:root{--stable-stage-heading:80px}}
+@media(min-width:1500px){:root{--stable-stage-heading:88px}}
+@media(min-width:701px) and (max-width:1100px){:root{--stable-stage-heading:60px}.stage-view-switch{margin-inline:14px}}
+body[data-layout=controls]{--stable-stage-heading:54px}
+@media(max-width:700px){:root{--stable-stage-heading:68px}.stage-view-switch{margin-inline:16px}body[data-creative-mode=storyboard] .stage-heading{height:var(--stable-stage-heading);padding:12px 16px}}
+#exports-open{font-size:11px;min-height:34px;padding:7px 10px;white-space:nowrap}
+#exports-open[data-active=true]{color:#d7f56b;border-color:#d7f56b66}
+#exports-dialog{box-sizing:border-box;width:min(760px,calc(100vw - 28px));max-height:calc(100dvh - 40px);padding:0;border:1px solid #ffffff25;border-radius:16px;background:#191d19;color:#e7ebdf;box-shadow:0 24px 90px #000a;overflow:auto}
+#exports-dialog::backdrop{background:#060906a0;backdrop-filter:blur(4px)}
+#exports-dialog>header{display:flex;align-items:flex-start;justify-content:space-between;gap:20px;padding:24px 24px 16px}
+#exports-dialog h2{margin:6px 0;font-size:25px;letter-spacing:-.03em}
+#exports-dialog header p{margin:0;color:#a9b19f;font-size:12px;line-height:1.5}
+#exports-dialog [data-close]{font-size:22px;width:34px;height:34px;padding:0;flex-shrink:0}
+.exports-filters{display:flex;gap:6px;flex-wrap:wrap;padding:0 24px 16px;border-bottom:1px solid #ffffff15}
+.exports-filters button{font-size:11px;padding:7px 12px}
+.exports-filters button[aria-pressed=true]{color:#d7f56b;border-color:#d7f56b66;background:#d7f56b12}
+#exports-dialog #export-dock{max-height:none;overflow:visible;border:0;background:transparent}
+#exports-dialog #export-dock>summary{display:none}
+#exports-dialog .delivery{padding:16px 24px 0;flex-wrap:wrap;gap:10px}
+#exports-dialog .delivery:has(#render-status:empty){display:none}
+#exports-dialog .delivery>div{flex:1 1 200px}
+#exports-dialog .delivery .eyebrow{display:none}
+#exports-dialog #render-status{margin:0;overflow-wrap:anywhere}
+#exports-dialog #export-list{padding:12px 24px 24px;display:grid;gap:10px}
+#exports-dialog .export-row{display:flex;flex-wrap:wrap;gap:8px;padding:16px;border:1px solid #ffffff18;border-radius:10px;background:#ffffff03}
+#exports-dialog .export-row>div{flex:1 1 100%;min-width:0}
+#exports-dialog .export-row strong{font-size:13px;line-height:1.5;display:block;overflow-wrap:anywhere}
+#exports-dialog .export-row small{display:block;font-size:11px;line-height:1.5;margin-top:4px;overflow-wrap:anywhere;white-space:normal}
+#exports-dialog .export-row a,#exports-dialog .export-row button{padding:8px 12px;border:1px solid #ffffff25;border-radius:6px;font-size:11px;min-height:34px}
+#exports-dialog .export-row a[download]{background:#d7f56b;color:#1c2512;border-color:#d7f56b;font-weight:600}
+#exports-dialog #export-folder{padding:12px 24px 0;overflow-wrap:anywhere;font-size:11px;color:#9fa994}
+.exports-no-match{margin:18px 24px;color:#a9b19f;font-size:12px}
+.workspace-updates{border-top:1px solid #ffffff18;margin-top:10px;padding-top:10px}
+.workspace-updates>summary{font-size:11px;color:#a9b19f;cursor:pointer;padding:6px}
+.workspace-updates .live-review{padding:10px 0 0;border:0;background:none;display:flex;gap:6px;font-size:11px}
+.workspace-updates .live-review>span{flex-basis:100%}
+.workspace-updates .live-review ol{position:static;width:auto;max-width:100%;box-shadow:none;margin:8px 0;padding-left:22px}
+@media(max-width:950px) and (min-width:701px){.app-header .project-switch{max-width:180px}.app-header .project-library-name{max-width:70px}}
+@media(max-width:500px){#exports-dialog>header{padding:18px 16px 14px}.exports-filters{padding-inline:16px}#exports-dialog #export-list{padding:12px 16px 16px}#exports-dialog .delivery,#exports-dialog #export-folder{padding-inline:16px}}
+/* The close action and filters stay in place while the file list scrolls. */
+#exports-dialog[open]{display:flex;flex-direction:column;overflow:hidden}
+#exports-dialog>header,#exports-dialog>.exports-filters,#exports-dialog>.exports-no-match{flex-shrink:0}
+#exports-dialog #export-dock{flex:1 1 auto;min-height:0;overflow:auto;overscroll-behavior:contain}
+.studio-more:has(#live-review[data-attention=true])>summary{position:relative}
+.studio-more:has(#live-review[data-attention=true])>summary::after{content:'';position:absolute;right:3px;top:3px;width:6px;height:6px;border-radius:50%;background:#d7f56b}

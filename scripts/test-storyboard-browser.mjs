@@ -22,9 +22,11 @@ try{
   await page.evaluate(()=>window.motionPreview.whenIdle());
  }
  await page.setViewportSize({width:945,height:855});
- const modeRow=await page.evaluate(()=>{const rect=id=>document.querySelector(id).getBoundingClientRect(),story=rect('#story-mode'),video=rect('#video-mode'),interactive=rect('#preview-mode-interactive'),render=rect('#preview-mode-render'),quality=rect('#preview-quality'),controls=rect('#preview-controls');return {ys:[story.top,video.top,interactive.top,render.top,quality.top],right:quality.right,controlsRight:controls.right,modeRight:video.right,previewLeft:interactive.left};});
- assert.ok(Math.max(...modeRow.ys)-Math.min(...modeRow.ys)<=2,`Storyboard/Video and preview controls should share one row at 945px: ${JSON.stringify(modeRow)}`);
- assert.ok(modeRow.modeRight<modeRow.previewLeft&&modeRow.right<=modeRow.controlsRight+1,'View mode icons should precede the controls and fit inside their row');
+ const videoPosition=await page.locator('#video-mode').boundingBox();
+ await page.locator('#story-mode').click();
+ assert.deepEqual(await page.locator('#video-mode').boundingBox(),videoPosition,'View switch stays in exactly the same position when context controls disappear');
+ await page.locator('#video-mode').click();
+ assert.deepEqual(await page.locator('#video-mode').boundingBox(),videoPosition,'Returning to Video does not move the switch');
  await page.setViewportSize({width:1440,height:1000});
  await page.locator('#seek').fill('42');await page.locator('#seek').dispatchEvent('input');await page.evaluate(()=>window.motionPreview.whenIdle());
  await page.locator('#story-mode').click();await page.waitForFunction(()=>document.querySelector('#story-status').textContent.startsWith('Layouts rendered'),{timeout:60000});
