@@ -6,7 +6,8 @@ export function mountHelpMenu({container, onboarding, onStartVideo} = {}) {
   const trigger = document.createElement('button');
   trigger.type = 'button';
   trigger.className = 'fv-help-trigger';
-  trigger.textContent = 'Help';
+  trigger.textContent = '?';
+  trigger.title = 'Help and getting started';
   trigger.setAttribute('aria-haspopup', 'dialog');
   trigger.setAttribute('aria-label', 'Help and getting started');
 
