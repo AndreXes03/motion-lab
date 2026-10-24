@@ -7,6 +7,7 @@ import ffmpeg from 'ffmpeg-static';
 import ffprobe from 'ffprobe-static';
 import { access, readFile, realpath, stat, mkdir, writeFile, copyFile } from 'node:fs/promises';
 import { validateRenderPlan } from '../../src/engine/render-policy.js';
+import {hasVoiceover} from '../../src/engine/voiceover.js';
 import { prepareComposite, compositeFrame, compositeSequence, encodeComposite, relativeAssetPath, resolveCompositeAsset } from '../lib/simple-compositor.mjs';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../..');
@@ -136,6 +137,7 @@ export async function freezeMixedInputs({ prepared, destination, audioPath, sign
 export async function runMixedJob({ root = ROOT, snapshot, outputPath, audioPath, audioOffset, onEvent, signal }) {
   if (!snapshot || typeof snapshot !== 'object') throw Error('Mixed job requires a frozen snapshot');
   const kind = snapshot.command;
+  if(kind!=='frame'&&hasVoiceover(snapshot.parameters?.audio))throw Error('Use Three.js, Native 2D or Cycles for voiceover mixing. Mixed needs a separately prepared soundtrack.');
   const settings = { ...(snapshot.settings ?? {}), width: snapshot.width ?? snapshot.config?.width, height: snapshot.height ?? snapshot.config?.height, fps: snapshot.fps ?? snapshot.config?.fps };
   const event = value => onEvent?.(value);
   await event({ type: 'progress', phase: 'freezing', frames: 0, percent: 0 });

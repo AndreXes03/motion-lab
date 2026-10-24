@@ -1,3 +1,4 @@
+import {hasVoiceover,hasMusic,duckGeneratedMusic,validateVoiceoverDuration} from '../engine/voiceover.js';
 import {normalizeSoundState,usesEditedSoundtrack} from './sound-state.js';
 import {mountAudioImportPanel} from './audio-import-panel.js';
 import './sound-panel.css';
@@ -15,10 +16,10 @@ export function mountSoundPanel({runtime,parameters,onChange,onPause,getTime,get
   const group=document.createElement(advanced?'details':'section');group.className=advanced?'sound-section sound-disclosure':'sound-section';
   const heading=document.createElement(advanced?'summary':'h4');heading.textContent=title;group.append(heading);panel.append(group);return group;
  }
- const imported=mountAudioImportPanel({container:panel,getTime,getDuration,onSeek,onPause,onImport:()=>{audioRevision++;settings.music=0;sync();},onEdit:()=>{stop();cacheKey='';setScene(activeScene);onPause();onChange();}});
+ const imported=mountAudioImportPanel({container:panel,getTime,getDuration,onSeek,onPause,onImport:role=>{audioRevision++;if(role==='music')settings.music=0;sync();},onEdit:()=>{stop();cacheKey='';setScene(activeScene);onPause();onChange();}});
  const mix=section('Global mix');
  const muteLabel=document.createElement('label');muteLabel.className='audio-track-enabled sound-global-mute';const mute=document.createElement('input');mute.id='sound-muted';mute.type='checkbox';mute.onchange=()=>{settings.muted=mute.checked;edit();};muteLabel.append(mute,document.createTextNode('Mute all audio'));mix.append(muteLabel);
- const masterNote=document.createElement('p');masterNote.className='audio-import-note';masterNote.textContent='Master volume controls generated sound and imported music. 80% is the authored mix level.';mix.append(masterNote);panel.insertBefore(mix,panel.querySelector('.imported-audio'));
+ const masterNote=document.createElement('p');masterNote.className='audio-import-note';masterNote.textContent='Master volume controls voice, music and effects. 80% is the authored mix level.';mix.append(masterNote);panel.insertBefore(mix,panel.querySelector('.imported-audio'));
  const sfx=section('Motion effects');
  const music=section('Music settings',{advanced:true});
  const mechanics=section('Mechanical detail',{advanced:true});
@@ -56,8 +57,8 @@ export function mountSoundPanel({runtime,parameters,onChange,onPause,getTime,get
   await defaultRequest;const p=parameters();
   const key=JSON.stringify(p);if(cacheKey===key&&buffer)return;
   status.textContent='Preparing audio…';await new Promise(r=>setTimeout(r,20));
-  await editedReady;if(usesEditedSoundtrack(p.scene,p.sound,editedTrack,p.audio)){buffer=await imported.mix(await editedBuffer(p),context,p.audio,p.sound);cacheKey=key;status.textContent='Edited soundtrack · LOOP';return;}
-  const telemetry=runtime.sampleMotion(p),plan=planSound(telemetry,p.sound),rendered=renderSound(plan);
+  await editedReady;if(usesEditedSoundtrack(p.scene,p.sound,editedTrack,p.audio)){buffer=await imported.mix(await editedBuffer(p),context,p.audio,p.sound,{baseIsMusic:true});cacheKey=key;status.textContent='Edited soundtrack · LOOP';return;}
+  const telemetry=runtime.sampleMotion(p),plan=planSound(telemetry,p.sound),rendered=duckGeneratedMusic(renderSound(plan,{stems:hasVoiceover(p.audio)}),p.audio);
   buffer=context.createBuffer(2,rendered.channels[0].length,rendered.sampleRate);for(let c=0;c<2;c++)buffer.copyToChannel(rendered.channels[c],c);buffer=await imported.mix(buffer,context,p.audio,p.sound);cacheKey=key;
   status.textContent=(p.scene==='loop'&&p.sound?.musicStyle==='scene'&&!editedTrack&&!p.audio?.tracks?.some(t=>t.enabled)?'LOOP edited soundtrack unavailable in this installation · synthesized preview · ':'')+`${plan.bpm} BPM · ${plan.events.length} sound effects`;
  }
@@ -68,11 +69,11 @@ export function mountSoundPanel({runtime,parameters,onChange,onPause,getTime,get
   const result=context.createBuffer(decodedTrack.numberOfChannels,decodedTrack.length,decodedTrack.sampleRate),gain=(p.sound?.enabled===false?0:1)*(masterGain(p.sound))*((p.sound?.music??soundDefaults.music)/soundDefaults.music);
   for(let c=0;c<result.numberOfChannels;c++){const input=decodedTrack.getChannelData(c),output=result.getChannelData(c);for(let i=0;i<input.length;i++)output[i]=input[i]*gain;}return result;
  }
- async function exportBuffer(p){await editedReady;if(usesEditedSoundtrack(p.scene,p.sound,editedTrack,p.audio))return imported.mix(await editedBuffer(p),context,p.audio,p.sound);await new Promise(resolve=>setTimeout(resolve,0));const rendered=renderSound(planSound(runtime.sampleMotion(p),p.sound));const result=new AudioBuffer({numberOfChannels:2,length:rendered.channels[0].length,sampleRate:rendered.sampleRate});for(let c=0;c<2;c++)result.copyToChannel(rendered.channels[c],c);if(!context)context=new AudioContext({sampleRate:48000});return imported.mix(result,context,p.audio,p.sound);}
+ async function exportBuffer(p){validateVoiceoverDuration(p.audio,getDuration());await editedReady;if(usesEditedSoundtrack(p.scene,p.sound,editedTrack,p.audio))return imported.mix(await editedBuffer(p),context,p.audio,p.sound,{baseIsMusic:true});await new Promise(resolve=>setTimeout(resolve,0));const rendered=duckGeneratedMusic(renderSound(planSound(runtime.sampleMotion(p),p.sound),{stems:hasVoiceover(p.audio)}),p.audio);const result=new AudioBuffer({numberOfChannels:2,length:rendered.channels[0].length,sampleRate:rendered.sampleRate});for(let c=0;c<2;c++)result.copyToChannel(rendered.channels[c],c);if(!context)context=new AudioContext({sampleRate:48000});return imported.mix(result,context,p.audio,p.sound);}
  function loadSceneDefault(scene){
-  if(import.meta.env.VITE_PUBLIC_DEMO==='true'||scene!=='loop'||settings.musicStyle!=='scene'||settings.music<=0||imported.getAudio().tracks.length)return;
+  if(import.meta.env.VITE_PUBLIC_DEMO==='true'||scene!=='loop'||settings.musicStyle!=='scene'||settings.music<=0||hasMusic(imported.getAudio()))return;
   const revision=audioRevision,key=scene+':'+revision;if(defaultKey===key)return;defaultKey=key;
-  defaultRequest=fetch('/api/studio/audio/authored/loop',{method:'POST',headers:{'Content-Type':'application/json'},body:'{}'}).then(async response=>{const data=await response.json();if(!response.ok)throw Error(data.error??'Authored soundtrack unavailable');if(revision!==audioRevision||activeScene!==scene||imported.getAudio().tracks.length||settings.musicStyle!=='scene')return;if(data.audio){imported.setAudio(data.audio);settings={...settings,...data.sound};cacheKey='';sync();setScene(scene);onChange();}}).catch(error=>{if(revision===audioRevision&&activeScene===scene)status.textContent=error.message;});
+  defaultRequest=fetch('/api/studio/audio/authored/loop',{method:'POST',headers:{'Content-Type':'application/json'},body:'{}'}).then(async response=>{const data=await response.json();if(!response.ok)throw Error(data.error??'Authored soundtrack unavailable');if(revision!==audioRevision||activeScene!==scene||hasMusic(imported.getAudio())||settings.musicStyle!=='scene')return;if(data.audio){const current=imported.getAudio();imported.setAudio({...current,tracks:[...data.audio.tracks,...current.tracks]});settings={...settings,...data.sound};cacheKey='';sync();setScene(scene);onChange();}}).catch(error=>{if(revision===audioRevision&&activeScene===scene)status.textContent=error.message;});
  }
  function setScene(scene){
   if(activeScene!==scene)audioRevision++;activeScene=scene;loadSceneDefault(scene);panel.hidden=false;const edited=usesEditedSoundtrack(scene,settings,editedTrack,imported.getAudio());music.hidden=edited;variation.hidden=edited;

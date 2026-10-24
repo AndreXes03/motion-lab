@@ -10,6 +10,7 @@ import ffprobe from 'ffprobe-static';
 import {importAudioAsset} from './audio-assets.mjs';
 import {renderTimelineAudio,validateTimelineAudioAssets} from './native/audio.mjs';
 import {normalizeAudioTracks,audioTrackGain} from '../src/engine/audio-track.js';
+import {musicDucking,musicGainAt,voiceMixSample} from '../src/engine/voiceover.js';
 const execute=promisify(execFile),run=async(command,args)=>{await execute(command,args,{maxBuffer:8*1024*1024});};
 const root=await mkdtemp(path.join(os.tmpdir(),'framevolve-native-audio-'));
 const decode=async(file,name)=>{const raw=path.join(root,name);await run(ffmpeg,['-v','error','-y','-i',file,'-f','f32le','-acodec','pcm_f32le',raw]);const bytes=await readFile(raw);return new Float32Array(bytes.buffer.slice(bytes.byteOffset,bytes.byteOffset+bytes.byteLength));};
@@ -37,5 +38,10 @@ try{
  const destination=path.join(root,'already-mastered.wav');await renderTimelineAudio({root,audio,sound:{master:.4},start:0,duration:1.5,destination,baseAudio:base,run});
  const mastered=await decode(destination,'already-mastered.f32');assert.ok(Math.abs(mastered[0]-.1)<.00001,'Generated base never receives double master gain');
  await assert.rejects(validateTimelineAudioAssets(root,{version:1,tracks:[{...audio.tracks[0],sourceStart:1.8}]}),/beyond its source/);
- console.log('Native audio passed: real FFmpeg stereo tone, source cut, timeline delay, overlapping fades, partial interval, exact duration and source bounds.');
+ const vo=normalizeAudioTracks({version:2,tracks:[{id:'voice',assetId:asset.assetId,role:'voiceover',duration:1,sourceStart:.1,timelineStart:.25,volume:1.7,narration:{version:1,source:'manual',text:'test tone',segments:[{id:'w1',text:'test tone',start:.2,end:.6}],cues:[]}},{id:'music',assetId:asset.assetId,duration:1.5,volume:1.8,role:'music'}]});
+ for(const [label,start,duration]of [['vo-full',0,1.5],['vo-partial',.4,.5]]){
+  const destination=path.join(root,label+'.wav');await renderTimelineAudio({root,audio:vo,start,duration,destination,run});const output=await decode(destination,label+'.f32'),regions=musicDucking(vo);let error=0;
+  for(let i=0;i<output.length/2;i++){const t=start+i/48000;for(let c=0;c<2;c++){let expected=0;for(const track of vo.tracks){const gain=audioTrackGain(track,t),frame=Math.round((track.sourceStart+t-track.timelineStart)*48000);expected+=(gain?input[frame*2+c]*gain:0)*(track.role==='music'?musicGainAt(regions,t):1);}error=Math.max(error,Math.abs(output[i*2+c]-voiceMixSample(expected)));}}assert.ok(error<.00002,`${label} voice, music envelope and peak ceiling match preview sample math: ${error}`);
+ }
+ console.log('Native audio passed: trim/fade/master, full and partial VO mix, measured-word ducking, final ceiling and exact sample parity.');
 }finally{await rm(root,{recursive:true,force:true});}

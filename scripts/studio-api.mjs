@@ -3,6 +3,7 @@ import {authoredSceneAudio} from './authored-audio.mjs';
 import {createNativeProjectApi} from './native-project-api.mjs';
 import {importAudioAsset,listAudioAssets,resolveAudioAsset} from './audio-assets.mjs';
 import {normalizeAudioTracks} from '../src/engine/audio-track.js';
+import {hasVoiceover,validateVoiceoverDuration} from '../src/engine/voiceover.js';
 import {verifyExportDestination} from './export-preflight.mjs';
 import {migrateLegacyScene} from '../src/engine/legacy-scene.js';
 import {studyControlDefinitions} from '../src/engine/scene-capabilities.js';
@@ -149,7 +150,7 @@ export async function validateStudioParameters(input) {
     }
   }
   if(input.sound !== undefined)normalized.sound=normalizeSound(input.sound);
-  if(input.audio !== undefined){normalized.audio=normalizeAudioTracks(input.audio);for(const track of normalized.audio.tracks){const asset=await resolveAudioAsset(ROOT,track.assetId);if(track.sourceStart+track.duration>asset.metadata.duration+.001)throw Error('Audio trim exceeds its imported source.');}}
+  if(input.audio !== undefined){normalized.audio=normalizeAudioTracks(input.audio);for(const track of normalized.audio.tracks){const asset=await resolveAudioAsset(ROOT,track.assetId);if(track.sourceStart+track.duration>asset.metadata.duration+.001)throw Error('Audio trim exceeds its imported source.');if(track.narration?.segments.some(s=>s.end>asset.metadata.duration+.025))throw Error('Speech timing exceeds the voice source.');}}
   if (input.graphics !== undefined) {
     if (!['procedural','pop'].includes(scene) || !isRecord(input.graphics) || Object.keys(input.graphics).some(k => !['title', 'accent', 'density', 'speed', ...(scene==='pop'?['cameraMotion','fisheye']:[])].includes(k))) throw new Error('graphics is only supported for procedural and pop scenes');
     const g = input.graphics;
@@ -574,6 +575,7 @@ export function createStudioApi({ spawnFn = nodeSpawn, revealFn = revealWithFind
         if (!isRecord(body) || Object.keys(body).some(k => !['name', 'parameters'].includes(k))) return send(res, 400, { error: 'Expected name and parameters' });
         const name = safeName(body.name);
         const parameters = await validateStudioParameters(body.parameters);
+        if(body.kind!=='frame')validateVoiceoverDuration(parameters.audio,selectedConfig.duration);
         const version = { id: randomUUID(), name, scene: parameters.scene, createdAt: new Date().toISOString(), parameters };
         await mkdir(VERSION_DIR, { recursive: true });
         const target = path.join(VERSION_DIR, `${version.id}.json`);
@@ -600,6 +602,7 @@ export function createStudioApi({ spawnFn = nodeSpawn, revealFn = revealWithFind
         const capabilities=needsProbe?await capabilitiesFn():{threejs:{available:true},skia:await nativeSkiaCapabilities()};
         const selection=resolveRenderPlan(plan,{scene:parameters.scene,kind:body.kind,...settings,duration:selectedConfig.duration,capabilities});
         if(!selection.runnable)throw Error(selection.availability);
+        if(selection.selectedRenderer==='mixed'&&body.kind!=='frame'&&hasVoiceover(parameters.audio))throw Error('Use Three.js, Native 2D or Cycles to export the voiceover mix. Mixed needs a separately prepared soundtrack.');
         if(selection.selectedRenderer==='cycles'){
           if(body.kind!=='frame'&&settings.format!=='mp4')throw Error('Cycles currently exports MP4 video and PNG frames. Select MP4 or Three.js for WebM/ProRes.');
           if(settings.width<64||settings.height<64)throw Error('Cycles frames require at least 64 × 64 pixels.');

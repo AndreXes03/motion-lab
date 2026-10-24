@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+import {hasVoiceover,duckGeneratedMusic,validateVoiceoverDuration} from '../src/engine/voiceover.js';
 import {videoEncodeArgs} from './video-encode.mjs';
 import {normalizeAudioTracks} from '../src/engine/audio-track.js';
 import {renderTimelineAudio,validateTimelineAudioAssets} from './native/audio.mjs';
@@ -132,6 +133,7 @@ function run(bin, args) {
   });
 }
 async function exportVideo(page, target, width, height, parameters, start, end, temporalSamples, fps, format, bitrateMbps, cacheOptions) {
+  validateVoiceoverDuration(parameters.audio,sceneConfig(parameters.scene,parameters).duration);
   await validateTimelineAudioAssets(ROOT,parameters.audio);
   // Progress JPEGs are written before encoding, including the very first frame.
   await mkdir(path.dirname(target), { recursive: true });
@@ -158,7 +160,7 @@ async function exportVideo(page, target, width, height, parameters, start, end, 
     let audioPath=null;
     if(parameters.sound?.enabled){
       const telemetry=page.engine==='skia'?page.sampleMotion():await page.evaluate(p=>window.motion.sampleMotion(p),parameters);
-      const result=renderSound(planSound(telemetry,parameters.sound));
+      const result=duckGeneratedMusic(renderSound(planSound(telemetry,parameters.sound),{stems:hasVoiceover(parameters.audio)}),parameters.audio);
       const channels=result.channels.map(c=>c.slice(Math.round(start*result.sampleRate),Math.round(end*result.sampleRate)));
       audioPath=path.join(frameDir,'sound.wav');await writeFile(audioPath,encodeWav(channels,result.sampleRate));
     }

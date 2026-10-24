@@ -23,7 +23,7 @@
     "test:controls:contract": "node scripts/test-scene-control-contract.mjs",
     "controls": "node scripts/controls.mjs",
     "test:easy": "node scripts/test-easy-controls.mjs",
-    "prebuild": "node scripts/test-easy-controls.mjs && node scripts/test-camera-lens.mjs && node scripts/test-scene-control-contract.mjs && node scripts/test-motion-workflow.mjs && node scripts/test-render-policy.mjs && node scripts/cycles/test.mjs && node scripts/test-cycles-video-encode.mjs && node scripts/test-browser-export.mjs && node scripts/test-workspace-model.mjs && node scripts/test-authored-motion-protocol.mjs && node scripts/test-motion-source-seek.mjs && node scripts/test-motion-curve-preview.mjs && node scripts/test-render-frame-view.mjs && node scripts/test-pulse-controls.mjs && node scripts/test-graphic-controls.mjs && node scripts/test-curve-interaction.mjs && node scripts/test-studio-update.mjs && node scripts/test-prepared-preview.mjs && node scripts/test-founder-brief.mjs && node scripts/test-loop-refinement.mjs && node scripts/test-native-production.mjs",
+    "prebuild": "node scripts/test-voiceover.mjs && node scripts/test-easy-controls.mjs && node scripts/test-camera-lens.mjs && node scripts/test-scene-control-contract.mjs && node scripts/test-motion-workflow.mjs && node scripts/test-render-policy.mjs && node scripts/cycles/test.mjs && node scripts/test-cycles-video-encode.mjs && node scripts/test-browser-export.mjs && node scripts/test-workspace-model.mjs && node scripts/test-authored-motion-protocol.mjs && node scripts/test-motion-source-seek.mjs && node scripts/test-motion-curve-preview.mjs && node scripts/test-render-frame-view.mjs && node scripts/test-pulse-controls.mjs && node scripts/test-graphic-controls.mjs && node scripts/test-curve-interaction.mjs && node scripts/test-studio-update.mjs && node scripts/test-prepared-preview.mjs && node scripts/test-founder-brief.mjs && node scripts/test-loop-refinement.mjs && node scripts/test-native-production.mjs",
     "test:controls:scenes": "node scripts/test-scene-tools-browser.mjs",
     "test:motion:workflow": "node scripts/test-motion-workflow.mjs",
     "test:render-policy": "node scripts/test-render-policy.mjs",
@@ -52,7 +52,8 @@
     "test:creative": "node --test scripts/test-creative.mjs",
     "test:cycles:standalone": "node scripts/test-cycles-standalone.mjs && node scripts/cycles/test-component.mjs",
     "test:cycles:cancel": "node scripts/test-cycles-studio-cancel.mjs",
-    "test:native": "node scripts/test-native-production.mjs && node scripts/test-native-cycles-bake.mjs"
+    "test:native": "node scripts/test-native-production.mjs && node scripts/test-native-cycles-bake.mjs",
+    "test:voiceover": "node scripts/test-voiceover.mjs && node scripts/test-native-audio.mjs && node scripts/test-voiceover-project.mjs"
   },
   "keywords": [
     "threejs",

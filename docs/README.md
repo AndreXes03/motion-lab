@@ -12,6 +12,7 @@
 | Add controls and camera paths | [Studio](STUDIO.md) |
 | Adjust motion blur and effects | [Compositing](COMPOSITING.md) |
 | Add movement-driven audio | [Sound design](SOUND_DESIGN.md) |
+| Build scenes and supers around a voice | [Voiceover](VOICEOVER.md) |
 | Build tactile product films | [3D look development](3d-lookdev.md) · [Agent skill](../.agents/skills/motion-lab-product-film/SKILL.md) |
 | Select a final renderer and local strategy | [Renderer selection](RENDERER_SELECTION.md) |
 | Follow the native production migration | [Native production](NATIVE_PRODUCTION.md) |

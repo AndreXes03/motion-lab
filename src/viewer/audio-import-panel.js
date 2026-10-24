@@ -1,21 +1,26 @@
 import {normalizeAudioTracks} from '../engine/audio-track.js';
 import {mixAudioTracks} from '../engine/audio-mix.js';
 import {editAudioClip,waveformPeaks} from './audio-timeline.js';
+import {audioRole} from '../engine/voiceover.js';
+import {voiceTimingDetails} from './voice-timing.js';
 
 export function mountAudioImportPanel({container,onEdit,onImport=()=>{},onPause=()=>{},onSeek,getTime=()=>0,getDuration=()=>30}){
- let audio={version:1,tracks:[]},documentRevision=0,decodeContext,drawRevision=0;
+ let audio={version:1,tracks:[]},documentRevision=0,decodeContext,drawRevision=0,importRole='music';
  const openSettings=new Set();
  const decoded=new Map(),loading=new Map(),failures=new Map(),playheads=[];
  const group=document.createElement('section');group.className='sound-section imported-audio';
- const title=document.createElement('h4');title.textContent='Imported music';
+ const title=document.createElement('h4');title.textContent='Audio tracks';
  const file=document.createElement('input');file.type='file';file.accept='.mp3,.wav,.m4a,.aac,.ogg,.flac,.aiff,.aif,audio/*';file.id='music-file-input';file.hidden=true;file.setAttribute('aria-label','Import audio file');
  const note=document.createElement('p');note.className='audio-import-note';note.setAttribute('role','status');
- const list=document.createElement('div'),choose=document.createElement('button');choose.type='button';choose.id='import-music';choose.className='import-music-button';choose.textContent='＋ Import music';choose.onclick=()=>file.click();
+ const list=document.createElement('div'),choose=document.createElement('button');choose.type='button';choose.id='import-music';choose.className='audio-small-action';choose.textContent='＋ Music';choose.setAttribute('aria-label','Import music');choose.onclick=()=>{importRole='music';file.click();};
+ const voice=document.createElement('button');voice.type='button';voice.id='import-voiceover';voice.className='audio-small-action';voice.textContent='＋ Voiceover';voice.setAttribute('aria-label','Import voiceover');voice.onclick=()=>{importRole='voiceover';file.click();};
+ const header=document.createElement('div');header.className='audio-import-header';header.append(title,choose,voice);
+ const duckRow=document.createElement('label');duckRow.className='audio-track-enabled voice-ducking';const duck=document.createElement('input');duck.type='checkbox';duck.checked=true;duck.onchange=()=>{audio={...audio,version:2,ducking:duck.checked};changed();};duckRow.append(duck,document.createTextNode('Lower music during speech'));
  const ruler=document.createElement('div');ruler.className='audio-timeline-ruler';
  const seek=document.createElement('input');seek.type='range';seek.min=0;seek.step=.01;seek.value=0;seek.setAttribute('aria-label','Audio timeline playhead');seek.disabled=!onSeek;seek.oninput=()=>{onPause();onSeek?.(Number(seek.value));refreshTimeline(Number(seek.value));};
  const rulerLabel=document.createElement('span');rulerLabel.className='audio-ruler-label';ruler.append(rulerLabel,seek);
- group.append(title,choose,file,note,ruler,list);container.append(group);
- const publicDemo=import.meta.env.VITE_PUBLIC_DEMO==='true';file.disabled=choose.disabled=publicDemo;note.textContent=publicDemo?'Import music in the local Studio.':'MP3, WAV or M4A · up to 100 MB. Stored locally with this project. Drag a clip to move; use its edges to trim.';
+ group.append(header,file,note,duckRow,ruler,list);container.append(group);
+ const publicDemo=import.meta.env.VITE_PUBLIC_DEMO==='true';file.disabled=choose.disabled=voice.disabled=publicDemo;note.textContent=publicDemo?'Import music and voiceover in the local Studio.':'MP3, WAV or M4A · up to 100 MB · saved with this project.';
  const filmDuration=()=>Math.max(.01,Number(getDuration())||30);
  function refreshTimeline(time=getTime()){
   const duration=filmDuration();seek.max=duration;seek.value=Math.min(duration,Math.max(0,time));rulerLabel.textContent=`${Number(seek.value).toFixed(2)} s / ${duration.toFixed(2)} s`;
@@ -32,10 +37,10 @@ export function mountAudioImportPanel({container,onEdit,onImport=()=>{},onPause=
  function changed(){audio=normalizeAudioTracks(audio);draw();onEdit();}
  function validateSource(track){const buffer=decoded.get(track.assetId);if(buffer&&track.sourceStart+track.duration>buffer.duration+.025)throw Error('The clip extends beyond its source. Trim its duration or source start.');}
  function draw(){
-  const revision=++drawRevision;list.replaceChildren();playheads.length=0;ruler.hidden=!audio.tracks.length;refreshTimeline();
+  const revision=++drawRevision;list.replaceChildren();playheads.length=0;ruler.hidden=!audio.tracks.length;duckRow.hidden=!audio.tracks.some(t=>audioRole(t)==='voiceover');duck.checked=audio.ducking!==false;refreshTimeline();
   for(const track of audio.tracks){
    const card=document.createElement('fieldset');card.className='imported-audio-track';card.classList.toggle('is-disabled',!track.enabled);card.dataset.trackId=track.id;
-   const legend=document.createElement('legend');legend.textContent=track.name;card.append(legend);
+   const legend=document.createElement('legend');legend.textContent=track.name;const badge=document.createElement('span');badge.className='audio-role';badge.textContent=audioRole(track)==='voiceover'?'Voice':audioRole(track)==='sfx'?'Effect':'Music';legend.prepend(badge);card.dataset.role=audioRole(track);card.append(legend);
    const enabled=document.createElement('label');enabled.className='audio-track-enabled';const toggle=document.createElement('input');toggle.type='checkbox';toggle.checked=track.enabled;toggle.onchange=()=>{track.enabled=toggle.checked;changed();};enabled.append(toggle,document.createTextNode('Enabled'));card.append(enabled);
    const lane=document.createElement('div');lane.className='audio-clip-lane';lane.setAttribute('aria-label',`${track.name} timeline`);
    const clip=document.createElement('div');clip.className='audio-clip';
@@ -47,7 +52,8 @@ export function mountAudioImportPanel({container,onEdit,onImport=()=>{},onPause=
    const state=document.createElement('p');state.className='audio-wave-status';state.setAttribute('role','status');card.append(state);
    function paint(value=track){
     const duration=filmDuration();clip.style.left=`${value.timelineStart/duration*100}%`;clip.style.width=`${Math.min(value.duration,Math.max(0,duration-value.timelineStart))/duration*100}%`;
-    timing.textContent=`${value.timelineStart.toFixed(2)}–${(value.timelineStart+value.duration).toFixed(2)} s · source ${value.sourceStart.toFixed(2)} s${value.timelineStart+value.duration>duration+.001?' · tail outside film':''}`;
+    timing.textContent=`${value.timelineStart.toFixed(2)}–${(value.timelineStart+value.duration).toFixed(2)} s · source ${value.sourceStart.toFixed(2)} s${value.timelineStart+value.duration>duration+.025?(audioRole(value)==='voiceover'?' · extend film or trim voice before export':' · tail outside film'):''}`;
+    timing.classList.toggle('audio-duration-warning',audioRole(value)==='voiceover'&&value.timelineStart+value.duration>duration+.025);
     const buffer=decoded.get(track.assetId),ctx=canvas.getContext('2d');ctx.clearRect(0,0,canvas.width,canvas.height);
     if(buffer){const visible=Math.min(value.duration,Math.max(0,duration-value.timelineStart)),peaks=waveformPeaks(buffer,value.sourceStart,visible,200);ctx.fillStyle='#9cd6bd';for(let i=0;i<peaks.length;i++){const height=Math.max(1,Math.min(54,peaks[i]*54));ctx.fillRect(i*2,30-height/2,1,height);}state.textContent='';}
     else{state.textContent=failures.get(track.assetId)??'Loading waveform…';if(failures.has(track.assetId)){const retry=document.createElement('button');retry.type='button';retry.textContent='Retry waveform';retry.onclick=()=>{failures.delete(track.assetId);draw();};state.append(' ',retry);}}
@@ -67,7 +73,7 @@ export function mountAudioImportPanel({container,onEdit,onImport=()=>{},onPause=
    for(const [key,label,max] of [['sourceStart','Source start · seconds',7200],['timelineStart','Timeline start · seconds',7200],['duration','Duration · seconds',7200],['volume','Clip volume · 0–2',2],['fadeIn','Fade in · seconds',track.duration],['fadeOut','Fade out · seconds',track.duration]]){
     const row=document.createElement('label');row.className='sound-field';row.textContent=label;const input=document.createElement('input');input.type='number';input.min=key==='duration'?.01:0;input.max=max;input.step=.01;input.value=track[key];input.onchange=()=>{const previous={...track};track[key]=input.valueAsNumber;try{if(key==='duration'){track.fadeIn=Math.min(track.fadeIn,track.duration);track.fadeOut=Math.min(track.fadeOut,track.duration);}validateSource(track);changed();}catch(e){Object.assign(track,previous);input.value=track[key];note.textContent=e.message;}};row.append(input);details.append(row);
    }
-   const remove=document.createElement('button');remove.type='button';remove.textContent='Remove track';remove.onclick=()=>{audio.tracks=audio.tracks.filter(t=>t.id!==track.id);changed();};details.append(remove);card.append(details);list.append(card);paint();
+   const remove=document.createElement('button');remove.type='button';remove.textContent='Remove track';remove.onclick=()=>{audio.tracks=audio.tracks.filter(t=>t.id!==track.id);changed();};details.append(remove);card.append(details);if(audioRole(track)==='voiceover')card.append(voiceTimingDetails(track,{onEdit:changed,onPause,onSeek,open:openSettings.has(track.id+'.speech'),onToggle:open=>{if(open)openSettings.add(track.id+'.speech');else openSettings.delete(track.id+'.speech');},isCurrent:()=>revision===drawRevision&&audio.tracks.includes(track),getSourceDuration:()=>decoded.get(track.assetId)?.duration??Infinity}));list.append(card);paint();
    if(!decoded.has(track.assetId)&&!failures.has(track.assetId))load(track).then(()=>{if(revision===drawRevision)paint();}).catch(()=>{if(revision===drawRevision)paint();});
   }
   refreshTimeline();
@@ -76,8 +82,8 @@ export function mountAudioImportPanel({container,onEdit,onImport=()=>{},onPause=
   const selected=file.files?.[0];if(!selected)return;
   if(selected.size>100*1024*1024){note.textContent='Choose an audio file no larger than 100 MB.';return;}
   if(audio.tracks.length>=16){note.textContent='A project supports up to 16 audio tracks.';return;}
-  const importingRevision=documentRevision;file.disabled=choose.disabled=true;choose.textContent='Importing…';note.textContent='Importing and checking audio…';
-  try{const response=await fetch('/api/studio/audio/assets',{method:'POST',headers:{'Content-Type':'application/octet-stream','X-Audio-Name':encodeURIComponent(selected.name)},body:selected});const data=await response.json();if(!response.ok)throw Error(data.error??'Audio import failed');if(importingRevision!==documentRevision)return;audio.tracks=audio.tracks.filter(track=>track.id!=='authored-loop');audio.tracks.push({id:crypto.randomUUID(),assetId:data.asset.assetId,name:data.asset.name,enabled:true,sourceStart:0,timelineStart:0,duration:Math.min(7200,filmDuration(),data.asset.duration),volume:1,fadeIn:0,fadeOut:0});onImport();changed();note.textContent='Music imported · press Play to listen';}catch(e){note.textContent=e.message;}finally{file.disabled=choose.disabled=publicDemo;choose.textContent='＋ Import music';file.value='';}
+  const importingRevision=documentRevision,role=importRole;file.disabled=choose.disabled=voice.disabled=true;note.textContent='Importing and checking audio…';
+  try{const response=await fetch('/api/studio/audio/assets',{method:'POST',headers:{'Content-Type':'application/octet-stream','X-Audio-Name':encodeURIComponent(selected.name)},body:selected});const data=await response.json();if(!response.ok)throw Error(data.error??'Audio import failed');if(importingRevision!==documentRevision)return;if(role==='music')audio.tracks=audio.tracks.filter(track=>track.id!=='authored-loop');audio.version=2;audio.ducking??=true;audio.tracks.push({id:crypto.randomUUID(),assetId:data.asset.assetId,name:data.asset.name,role,enabled:true,sourceStart:0,timelineStart:0,duration:role==='voiceover'?data.asset.duration:Math.min(7200,filmDuration(),data.asset.duration),volume:1,fadeIn:0,fadeOut:0});onImport(role);changed();note.textContent=role==='voiceover'?'Voiceover imported · music preserved':'Music imported · press Play to listen';}catch(e){note.textContent=e.message;}finally{file.disabled=choose.disabled=voice.disabled=publicDemo;file.value='';}
  };
- return {getAudio:()=>structuredClone(audio),setAudio:value=>{documentRevision++;audio=normalizeAudioTracks(value??{version:1,tracks:[]});draw();},mix:(base,context,document,sound)=>mixAudioTracks(base,context,document,sound,track=>load(track,context)),refreshTimeline};
+ return {getAudio:()=>structuredClone(audio),setAudio:value=>{documentRevision++;audio=normalizeAudioTracks(value??{version:1,tracks:[]});draw();},mix:(base,context,document,sound,options)=>mixAudioTracks(base,context,document,sound,track=>load(track,context),options),refreshTimeline};
 }

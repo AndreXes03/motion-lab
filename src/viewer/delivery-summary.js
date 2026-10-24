@@ -8,6 +8,7 @@ export function deliverySummary({duration,settings,parameters,selection,capabili
  const clips=(parameters.audio?.tracks??[]).filter(t=>t.enabled!==false&&t.volume!==0&&t.duration>0&&t.timelineStart<duration&&t.timelineStart+t.duration>0);
  const muted=sound.muted===true||sound.master===0;
  let audioIncluded=muted?'Muted':sound.enabled?'Generated sound'+(clips.length?` + ${clips.length} clip${clips.length===1?'':'s'}`:''):clips.length?`${clips.length} imported clip${clips.length===1?'':'s'}`:'No audio';
+ if(clips.some(t=>t.role==='voiceover')&&!muted)audioIncluded='Voiceover'+(clips.some(t=>(t.role??'music')==='music')||sound.enabled&&sound.music>0?' + music':'')+(sound.enabled?' + effects':'');
  if(engine==='mixed')audioIncluded=plan.composite?.audioFile?'Prepared soundtrack':'No prepared soundtrack';
  if(publicDemo&&!browserCaps.supportsAudio)audioIncluded='Audio unavailable in this browser';
  let deviceLabel='Browser graphics',deviceVerified, note='The renderer and device are planned. The completed render reports what was actually used.';

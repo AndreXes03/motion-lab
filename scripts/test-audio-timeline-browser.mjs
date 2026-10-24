@@ -4,13 +4,14 @@ import {chromium} from 'playwright';
 import {browserLaunchOptions} from './browser-runtime.mjs';
 import {mkdir} from 'node:fs/promises';
 import {encodeWav} from '../src/engine/sound-design.js';
-const tone=Float32Array.from({length:96000},(_,i)=>.3*Math.sin(i/48000*Math.PI*2*220));
+const tone=Float32Array.from({length:288000},(_,i)=>.3*Math.sin(i/48000*Math.PI*2*220));
 const bytes=Buffer.from(encodeWav([tone,tone]));
 const server=await createServer({configFile:false,optimizeDeps:{noDiscovery:true},root:process.cwd(),server:{host:'127.0.0.1',port:0},logLevel:'error',plugins:[{name:'audio-qa',configureServer(server){server.middlewares.use((req,res,next)=>{if(req.url!=='/__audio-qa')return next();res.setHeader('Content-Type','text/html');res.end(`<html><body style="background:#12171a;font:13px Arial"><div id="inspector-audio" style="width:340px;margin:20px"></div><script type="module">
+import '/src/viewer/sound-panel.css';
 import {mountSoundPanel} from '/src/viewer/sound-panel.js';
 window.qaTime=0;window.qaEdits=0;const telemetry={duration:4,rate:10,frames:Array.from({length:41},(_,i)=>({time:i/10,camera:{position:[0,0,0],quaternion:[0,0,0,1]},objects:{}})),cuts:[]};
 let panel;panel=mountSoundPanel({runtime:{sampleMotion:()=>telemetry},parameters:()=>({scene:'objects',sound:panel.getSettings(),audio:panel.getAudio()}),onPause:()=>{},onChange:()=>window.qaEdits++,getTime:()=>window.qaTime,getDuration:()=>4,onSeek:t=>{window.qaTime=t;panel.refreshTimeline(t);}});
-window.qaPanel=panel;panel.setState({scene:'objects',sound:{enabled:false},audio:{version:1,tracks:[{id:'one',assetId:'a'.repeat(64),name:'Fixture tone',enabled:true,sourceStart:.2,timelineStart:.5,duration:1,volume:.5,fadeIn:.1,fadeOut:.2},{id:'two',assetId:'a'.repeat(64),name:'Disabled tone',enabled:false,sourceStart:0,timelineStart:2,duration:1,volume:1,fadeIn:0,fadeOut:0}]}});
+window.qaPanel=panel;panel.setState({scene:'objects',sound:{enabled:false},audio:{version:1,tracks:[{id:'authored-loop',assetId:'a'.repeat(64),name:'Fixture tone',enabled:true,sourceStart:.2,timelineStart:.5,duration:1,volume:.5,fadeIn:.1,fadeOut:.2},{id:'two',assetId:'a'.repeat(64),name:'Disabled tone',enabled:false,sourceStart:0,timelineStart:2,duration:1,volume:1,fadeIn:0,fadeOut:0}]}});
 </script></body></html>`);});}}]});
 await server.listen();let browser;
 try{
@@ -28,6 +29,24 @@ try{
  await page.locator('.audio-clip-details summary').first().click();assert.equal(await page.locator('.audio-clip-details[open] input[type=number]').count(),6);
  const peak=await page.evaluate(async()=>{const p={scene:'objects',sound:qaPanel.getSettings(),audio:qaPanel.getAudio()};const a=await qaPanel.exportBuffer(p);qaPanel.setSettings({...p.sound,master:.4});const b=await qaPanel.exportBuffer({...p,sound:qaPanel.getSettings()});qaPanel.setSettings({...p.sound,muted:true});const c=await qaPanel.exportBuffer({...p,sound:qaPanel.getSettings()});const peak=b=>b.getChannelData(0).reduce((n,x)=>Math.max(n,Math.abs(x)),0);return [a,b,c].map(peak);});assert.ok(peak[0]>.05);assert.ok(Math.abs(peak[1]/peak[0]-.5)<.001);assert.equal(peak[2],0);
  await page.locator('#sound-muted').check();assert.equal(await page.evaluate(()=>qaPanel.getSettings().muted),true);
+
+ await page.route('**/api/studio/audio/assets',route=>route.fulfill({status:201,contentType:'application/json',body:JSON.stringify({asset:{assetId:'c'.repeat(64),name:'Narration.wav',duration:6}})}));
+ await page.evaluate(()=>qaPanel.setSettings({...qaPanel.getSettings(),muted:false,music:.35}));
+ await page.getByRole('button',{name:'Import voiceover',exact:true}).click();
+ await page.locator('#music-file-input').setInputFiles({name:'Narration.wav',mimeType:'audio/wav',buffer:bytes});
+ await page.getByText('Voiceover imported · music preserved',{exact:true}).waitFor();
+ audio=await page.evaluate(()=>qaPanel.getAudio());assert.equal(audio.tracks.length,3);assert.equal(audio.tracks[0].id,'authored-loop');assert.equal(audio.tracks[2].role,'voiceover');assert.equal(audio.tracks[2].duration,6);assert.equal(await page.evaluate(()=>qaPanel.getSettings().music),.35);
+ assert.ok(await page.locator('.audio-duration-warning').isVisible());
+ assert.match(await page.evaluate(async()=>{try{await qaPanel.exportBuffer({scene:'objects',sound:qaPanel.getSettings(),audio:qaPanel.getAudio()});return 'unexpected success';}catch(e){return e.message;}}),/Extend the film/);
+ const voiceCard=page.locator('[data-role=voiceover]');await voiceCard.locator('.audio-clip-details summary').click();await voiceCard.getByLabel('Duration · seconds',{exact:true}).fill('3');await voiceCard.getByLabel('Duration · seconds',{exact:true}).press('Tab');
+ await voiceCard.locator('.voice-timing summary').click();
+ await voiceCard.locator('.voice-timing input[type=file]').setInputFiles({name:'timing.json',mimeType:'application/json',buffer:Buffer.from(JSON.stringify({words:[{text:'Your',start:.3,end:.6},{text:'idea',start:.6,end:1},{text:'moves',start:2,end:2.5}]}))});
+ await page.getByText('3 speech markers · ready for scene and title cues.',{exact:true}).waitFor({state:'visible'});
+ await page.getByLabel('Jump to spoken words in Narration.wav').selectOption('2');assert.equal(await page.evaluate(()=>qaTime),2);
+ await page.getByLabel('Lower music during speech',{exact:true}).uncheck();assert.equal(await page.evaluate(()=>qaPanel.getAudio().ducking),false);
+ const state=await page.evaluate(()=>({scene:'objects',sound:qaPanel.getSettings(),audio:qaPanel.getAudio()}));await page.evaluate(state=>qaPanel.setState(state),state);assert.deepEqual(await page.evaluate(()=>qaPanel.getAudio()),state.audio);
+ await page.getByLabel('Lower music during speech',{exact:true}).check();
+ const finalPeak=await page.evaluate(async()=>{const b=await qaPanel.exportBuffer({scene:'objects',sound:qaPanel.getSettings(),audio:qaPanel.getAudio()});return b.getChannelData(0).reduce((m,x)=>Math.max(m,Math.abs(x)),0);});assert.ok(finalPeak>0&&finalPeak<1);
  await mkdir('outputs/ux-audio',{recursive:true});await page.locator('#sound-tools').screenshot({path:'outputs/ux-audio/audio-timeline.png'});assert.deepEqual(errors,[]);
- console.log('Audio browser passed: waveform, pointer move, keyboard trims, disabled tracks, numeric settings, playhead seek and browser export global gain/mute.');
+ console.log('Audio browser + voiceover passed: compact import, preserved music, full source, long-voice export guard, timing import/seek, persistence, duck toggle and mix;  waveform, pointer move, keyboard trims, disabled tracks, numeric settings, playhead seek and browser export global gain/mute.');
 }finally{await browser?.close();await server.close();}

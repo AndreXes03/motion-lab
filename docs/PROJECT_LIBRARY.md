@@ -16,6 +16,8 @@ Agent file changes save after a short pause while Studio runs. The existing `nod
 
 ### Your music
 
+Voice and music now share **Audio → Audio tracks**, with compact **+ Music** and **+ Voiceover** actions. Voiceover preserves existing music, keeps its full duration and offers automatic music lowering plus optional speech timing. Scripts, measured markers and agent-authored scene/super cues are saved with the voice track. See [Voiceover](VOICEOVER.md). Music keeps the behavior below; the voice is not automatically trimmed to the film.
+
 Open **Audio → Import music** and choose a downloaded MP3, WAV or M4A (up to 100 MB). Framevolve keeps a local copy with the project. Adjust its start, duration, volume and fades in the same panel. Imported music replaces generated background music. **Global mix → Master volume** and **Mute all audio** affect generated sound and imported music together in preview and exported video; 80% retains the authored mix level. **Generated sound** only enables the synthesizer/effects, while each imported clip has its own Enabled checkbox and volume.
 
 Drag a waveform to move its clip, or either edge to trim it. Arrow keys adjust the focused clip or trim edge by 0.1 seconds (Shift: 1 second). Use the audio ruler to seek and **Clip settings** for exact source start, timeline start, duration, volume and fades. A new import is trimmed to the film length. A longer existing clip shows **tail outside film**; only the overlapping part exports.
