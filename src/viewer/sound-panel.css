@@ -62,3 +62,20 @@
 @media(pointer:coarse){#sound-tools .audio-clip .audio-trim{width:14px}#sound-tools .audio-clip .audio-clip-move{left:14px;right:14px;width:calc(100% - 28px)}}
 #sound-tools .imported-audio-track .audio-clip button.audio-trim{background:#82bda8;box-shadow:inset 0 0 0 1px #a9dac7}
 #sound-tools .imported-audio-track .audio-clip button.audio-trim::after{content:'';position:absolute;left:3px;top:16px;height:16px;width:1px;background:#1e4e3b}
+
+/* Voice and music share a compact Audio header; nothing is added to the canvas. */
+#sound-tools .audio-import-header{display:flex;align-items:center;gap:6px;margin:8px 0}
+#sound-tools .audio-import-header h4{flex:1;margin:0;font-size:12px}
+#sound-tools .audio-small-action{width:auto;min-height:28px;padding:5px 8px;border:1px solid var(--line,#35413d);border-radius:6px;background:transparent;color:inherit;font:500 11px inherit;white-space:nowrap;cursor:pointer}
+#sound-tools .audio-small-action:hover:not(:disabled){background:#ffffff0b;border-color:#8ca99a}
+#sound-tools .audio-small-action:disabled{opacity:.45;cursor:default}
+#sound-tools .audio-role{display:inline-block;margin-right:7px;padding:2px 5px;border-radius:4px;background:#ffffff0b;color:#b0c4ba;font-size:9px;font-weight:500;text-transform:uppercase;letter-spacing:.05em}
+#sound-tools [data-role=voiceover] .audio-role{color:#c7baf0;background:#c7baf014}
+#sound-tools .voice-ducking{margin:8px 0 14px;font-size:11px}
+#sound-tools .voice-ducking[hidden]{display:none}
+#sound-tools .voice-timing{margin-top:9px;font-size:11px}
+#sound-tools .voice-timing summary{cursor:pointer;color:#c2ccc7;padding:4px 0}
+#sound-tools .voice-timing textarea,#sound-tools .voice-timing select{box-sizing:border-box;width:100%;margin-top:8px;padding:7px;border:1px solid #35413d;border-radius:5px;color:#dce3df;background:#151b18;font:11px/1.5 inherit}
+#sound-tools .voice-timing textarea{resize:vertical}
+#sound-tools .audio-duration-warning{color:#ebc481}
+#sound-tools .imported-audio-track legend{overflow-wrap:anywhere;max-width:100%}

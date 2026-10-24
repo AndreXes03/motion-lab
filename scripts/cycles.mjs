@@ -1,4 +1,6 @@
 #!/usr/bin/env node
+import {sceneConfig} from '../src/scene-registry.js';
+import {validateVoiceoverDuration} from '../src/engine/voiceover.js';
 import {normalizeAudioTracks} from '../src/engine/audio-track.js';
 import {validateTimelineAudioAssets} from './native/audio.mjs';
 import {browserLaunchOptions} from './browser-runtime.mjs';
@@ -106,7 +108,7 @@ async function finishFrames(directory,options,frozen){
 async function main(){
  const input=parseCyclesArgs(process.argv.slice(2));const snapshot=input.snapshot?JSON.parse(await readFile(input.snapshot,'utf8')):{};const options=normalizeCyclesOptions(input,snapshot);const native=options.backend==='standalone'?await probeNative():null;const blender=native?null:await findBlender(input.blender);
  if(options.parameters.audio!==undefined)options.parameters.audio=normalizeAudioTracks(options.parameters.audio);
- if(options.command!=='frame')await validateTimelineAudioAssets(ROOT,options.parameters.audio);
+ if(options.command!=='frame'){validateVoiceoverDuration(options.parameters.audio,sceneConfig(options.parameters.scene,options.parameters).duration);await validateTimelineAudioAssets(ROOT,options.parameters.audio);}
  const directory=options.out+'.cycles';manifestPath=options.out+'.job.json';await mkdir(path.dirname(options.out),{recursive:true});
  if(await exists(options.out)&&!options.resume)throw Error('Output already exists; choose a new --out or matching --resume on');
  const sourceHash=await sourceDigest(ROOT), fingerprint=hash(stable({...options,resume:false,out:null,workers:1,blender,nativeRevision:native?.revision,sourceHash}));
@@ -143,7 +145,7 @@ async function main(){
  }else if(audioPath)await updateManifest({audio:{kind:'explicit-source',path:audioPath}});
  if(options.command!=='frame'){
   const {renderTimelineAudio}=await import(pathToFileURL(path.join(frozen,'scripts/native/audio.mjs')).href);
-  const mixed=await renderTimelineAudio({root:frozen,audio:options.parameters.audio,sound:options.parameters.sound,baseMastered:!options.audio,start:options.start,duration:options.count/options.fps,destination:path.join(directory,'timeline-mix.wav'),baseAudio:audioPath,baseOffset:audioOffset,run});
+  const mixed=await renderTimelineAudio({root:frozen,audio:options.parameters.audio,sound:options.parameters.sound,baseMastered:!options.audio,baseIsMusic:!!options.audio,start:options.start,duration:options.count/options.fps,destination:path.join(directory,'timeline-mix.wav'),baseAudio:audioPath,baseOffset:audioOffset,run});
   if(mixed!==audioPath){audioPath=mixed;audioOffset=0;await updateManifest({audio:{kind:'timeline',path:audioPath,tracks:options.parameters.audio.tracks,base:manifest.audio??null}});}
  }
  if(options.command==='frame')await copyFile(path.join(sequence,'frame-000001.png'),temporary);

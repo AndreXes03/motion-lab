@@ -1,3 +1,4 @@
+import {duckGeneratedMusic,validateVoiceoverDuration} from '../src/engine/voiceover.js';
 import {browserLaunchOptions} from './browser-runtime.mjs';
 import {createServer} from 'vite';
 import {readFile,writeFile,mkdir,copyFile} from 'node:fs/promises';
@@ -32,9 +33,10 @@ try{
  browser=await chromium.launch({headless:true,...await browserLaunchOptions(),args:['--autoplay-policy=no-user-gesture-required']});
  const page=await browser.newPage();await page.goto(`http://127.0.0.1:${server.httpServer.address().port}/?render=1`);await page.waitForFunction(()=>window.motion?.sampleMotion);await page.evaluate(()=>window.motion.ready);
  telemetry=await page.evaluate(p=>window.motion.sampleMotion(p),parameters);telemetrySource='browser-runtime';}
- const plan=planSound(telemetry,settings),result=renderSound(plan,{stems:true});
+ const plan=planSound(telemetry,settings),result=duckGeneratedMusic(renderSound(plan,{stems:true}),parameters.audio);
  const start=recipe.start??0,end=recipe.end??telemetry.duration;
  if(!Number.isFinite(start)||!Number.isFinite(end)||start<0||end<=start||end>telemetry.duration)throw Error('Recipe start/end must define a valid interval within the scene.');
+ validateVoiceoverDuration(importedAudio,telemetry.duration);
  await validateTimelineAudioAssets(root,importedAudio);
  const trim=channels=>channels.map(c=>c.slice(Math.round(start*result.sampleRate),Math.round(end*result.sampleRate)));await mkdir(path.dirname(out),{recursive:true});
  const synthesizedPath=base+'.synth.wav',mixedPath=base+'.wav';
