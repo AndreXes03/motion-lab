@@ -149,3 +149,11 @@ establish a complete notice set for every library in the prebuilt native
 module. No native Skia binary or `node_modules` is vendored in this repository;
 local dependency installation uses the exact npm lockfile. A future binary
 redistribution requires a separate linked-dependency and notice inventory.
+
+## Local speech recognition
+
+- [Transformers.js](https://github.com/huggingface/transformers.js/tree/3.8.1): Apache-2.0; installed dependency with upstream notices.
+- [ONNX Runtime](https://github.com/microsoft/onnxruntime): MIT; supplied by Transformers.js for local CPU inference.
+- [Xenova/whisper-base](https://huggingface.co/Xenova/whisper-base): Apache-2.0 model repository, revision `64da57285918e20ea79ea5c88eed7197933abaa8`. Model files are downloaded on first use to the local cache, not bundled in the website. Original Whisper work: [OpenAI Whisper](https://github.com/openai/whisper), MIT.
+
+Original Framevolve transcription integration and voice editing remain covered by the Framevolve Free Use License. Audio is processed locally; no uploaded voice service is used.

@@ -1,8 +1,8 @@
-import {speechMarkers} from './narration.js';
+import {speechMarkers,validateNarrationCues} from './narration.js';
 export const audioRole=track=>track.role??'music';
 export const hasVoiceover=audio=>(audio?.tracks??[]).some(t=>audioRole(t)==='voiceover'&&t.enabled!==false&&(t.volume??1)>0);
 export const hasMusic=audio=>(audio?.tracks??[]).some(t=>audioRole(t)==='music');
-export function validateVoiceoverDuration(audio,duration){for(const t of audio?.tracks??[])if(audioRole(t)==='voiceover'&&t.enabled!==false&&(t.volume??1)>0&&t.timelineStart+t.duration>duration+.025)throw Error(`Voiceover “${t.name}” ends at ${(t.timelineStart+t.duration).toFixed(2)} s. Extend the film or trim the voice before exporting.`);}
+export function validateVoiceoverDuration(audio,duration){validateNarrationCues(audio);for(const t of audio?.tracks??[])if(audioRole(t)==='voiceover'&&t.enabled!==false&&(t.volume??1)>0&&t.timelineStart+t.duration>duration+.025)throw Error(`Voiceover “${t.name}” ends at ${(t.timelineStart+t.duration).toFixed(2)} s. Extend the film or trim the voice before exporting.`);}
 
 /** Fixed linear envelope, shared by browser and native sample-level mixing. */
 export function musicDucking(audio){

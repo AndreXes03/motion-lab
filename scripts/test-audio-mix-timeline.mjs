@@ -13,7 +13,7 @@ for(const [master,muted,ratio]of [[.8,false,1],[.4,false,.5],[0,false,0],[.8,tru
  assert.ok(Math.abs(result.getChannelData(1)[30]-.1*ratio)<1e-7,'Source delay and fade start');
  assert.ok(Math.abs(result.getChannelData(0)[120]-.15*ratio)<1e-7,'Fade out retains timeline position');
 }
-await assert.rejects(mixAudioTracks(context.createBuffer(2,150,100),context,{version:1,tracks:[{...track,sourceStart:1.5}]},soundDefaults,async()=>input),/exceeds the source/);
+await assert.rejects(mixAudioTracks(context.createBuffer(2,150,100),context,{version:1,tracks:[{...track,sourceStart:1.5}]},soundDefaults,async()=>input),/beyond its source/);
 const moved=editAudioClip(track,'move',100,{sourceDuration:2,timelineDuration:2});assert.equal(moved.timelineStart,1.99);assert.equal(moved.sourceStart,.2);assert.equal(moved.duration,1);
 const left=editAudioClip(track,'left',.25,{sourceDuration:2,timelineDuration:2});assert.ok(Math.abs(left.sourceStart-.45)<1e-9);assert.ok(Math.abs(left.timelineStart-.55)<1e-9);assert.ok(Math.abs(left.duration-.75)<1e-9);
 const extend=editAudioClip(track,'left',-100);assert.equal(extend.sourceStart,0);assert.ok(Math.abs(extend.timelineStart-.1)<1e-9);

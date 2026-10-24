@@ -79,3 +79,9 @@
 #sound-tools .voice-timing textarea{resize:vertical}
 #sound-tools .audio-duration-warning{color:#ebc481}
 #sound-tools .imported-audio-track legend{overflow-wrap:anywhere;max-width:100%}
+
+#sound-tools .voice-passages{max-height:220px;overflow:auto;margin:8px 0}
+#sound-tools .voice-passage{display:grid;grid-template-columns:14px minmax(0,1fr);gap:6px;align-items:start;border-top:1px solid #303b35;padding:7px 0}
+#sound-tools .voice-passage-text{background:none;border:0;text-align:left;color:inherit;font:inherit;padding:0;cursor:pointer;line-height:1.5}
+#sound-tools .voice-passage label{grid-column:2;display:flex;align-items:center;gap:5px;color:#a4b3aa}
+#sound-tools .voice-passage input[type=number]{width:52px;background:#151b18;border:1px solid #35413d;border-radius:4px;padding:3px;color:inherit}
