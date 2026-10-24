@@ -68,6 +68,6 @@ Audio version 1 remains accepted unchanged. New imports use version 2 with `duck
 
 Narration version 1 contains `text`, `source: provider | aligned | captions | manual`, `segments: [{id,text,start,end}]` and `cues: [{id,from,to,offset,endOffset,label,super}]`. There are at most 16 audio tracks, 5,000 speech markers and 200 cues per voice. Imported timing files are limited to 1 MB; existing project size limits also apply.
 
-Voice mixing works through browser/Three.js, Native 2D and supported Cycles adapters. Mixed uses a separately prepared soundtrack and rejects unbaked voice tracks rather than silently omitting them. The public web demo shows the compact Audio controls; file import remains available in the installed Studio.
+Voice mixing works through browser/Three.js, Native 2D and supported Cycles adapters. Mixed uses a separately prepared soundtrack and rejects unbaked voice tracks rather than silently omitting them. The public website remains the lightweight 3D demo; the Audio panel and file import are available in the full installed Studio downloaded from the site.
 
 Validation: `npm run test:voiceover`, `node scripts/test-audio-timeline-browser.mjs`, the project/library checks and `npm run build`. Native tests compare full and partial FFmpeg output against the same sample math used by preview, including ducking and the final ceiling.
