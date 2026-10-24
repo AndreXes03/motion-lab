@@ -100,7 +100,7 @@ function renderCatalogControls(){
   }
  }
  syncControlDependencies();filterCatalogControls();
- renderEasyPanel({scene,manifest,getSnapshot:snapshot,onApply:next=>{pause();restore(next);scheduleRecoveryDraft();inspector?.markChanged();inspector?.sync();inspector?.record();$('version-status').textContent='Unsaved changes';},onPro:()=>setExperience('pro'),onAppDemo:()=>window.motionAppDemo?.open?.()});
+ renderEasyPanel({scene,manifest,getSnapshot:snapshot,onApply:(next,{record=true}={})=>{pause();restore(next);scheduleRecoveryDraft();inspector?.markChanged();inspector?.sync();if(record)inspector?.record();$('version-status').textContent='Unsaved changes';},onPro:()=>setExperience('pro'),onAppDemo:()=>window.motionAppDemo?.open?.()});
 }
 function syncControlDependencies(){
  const post=parameters().look?.post??{}, enabled=post.dofEnabled===true, auto=post.dofAuto!==false;

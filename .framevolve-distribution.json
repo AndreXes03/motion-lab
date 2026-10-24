@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "revision": "42c9d4ce65c2b8ef33340950cea1a34c5dfa5957",
+  "revision": "5dffd3192047d40364a3955335c6a44ad43297ac",
   "files": {
     ".agents/skills/framevolve-live-review/SKILL.md": {
       "sha": "51ac340d4873da576a714514d070bd3009e02ae3",
@@ -299,7 +299,7 @@
       "mode": "100644"
     },
     "docs/EASY_CONTROLS.md": {
-      "sha": "558ab13033e21f1146ad7aa5589648bf89075ca8",
+      "sha": "9a58de645d721b06c977651e0967dc927e1d97bf",
       "mode": "100644"
     },
     "docs/FEEDBACK_MEMORY.md": {
@@ -835,7 +835,7 @@
       "mode": "100644"
     },
     "project/control-selections.json": {
-      "sha": "a1b40f774f9e6cff86e653ba691aeb25d55d4327",
+      "sha": "bdef80ed50fc951a60380e7652c1f125598d7a9b",
       "mode": "100644"
     },
     "project/graphics.json": {
@@ -1395,7 +1395,7 @@
       "mode": "100644"
     },
     "scripts/test-easy-controls.mjs": {
-      "sha": "083eae81263f3dd63123d0230510473036fe8441",
+      "sha": "ae3efa2c42454a8af66eb66e4b9151296537884d",
       "mode": "100644"
     },
     "scripts/test-feedback-memory-browser.mjs": {
@@ -1843,11 +1843,11 @@
       "mode": "100644"
     },
     "src/engine/easy-control-schema.js": {
-      "sha": "ae322c27ed47c30024f515b334daa302e5aa38a2",
+      "sha": "5fcd174483e786d3d52b50628d7772e93f9e4495",
       "mode": "100644"
     },
     "src/engine/easy-controls.js": {
-      "sha": "a2b39bd61d0b43f65d5171cf41074000a64d4d3c",
+      "sha": "6bd985d5726383d2ac514ff3bacca26c3c424e1d",
       "mode": "100644"
     },
     "src/engine/film-grain.js": {
@@ -2226,12 +2226,16 @@
       "sha": "5b47f8f21c4d59e022bd2f7c4105188353ed3f72",
       "mode": "100644"
     },
+    "src/viewer/easy-icons.js": {
+      "sha": "c771b20c9ac31dde63696cf8ed7a0ae3af51b74a",
+      "mode": "100644"
+    },
     "src/viewer/easy-panel.css": {
-      "sha": "058d0e50a647527e95ecdc5d677868143e0cba8c",
+      "sha": "a86b3ce3ecd72bba68c273b08d7ee4b530e84229",
       "mode": "100644"
     },
     "src/viewer/easy-panel.js": {
-      "sha": "02249391f16a5b47d229ed2bdc10e579d8ce18a0",
+      "sha": "3ad429ccff72c27127bbad5f6bd4bc15c1737a94",
       "mode": "100644"
     },
     "src/viewer/export-panel.css": {
@@ -2275,7 +2279,7 @@
       "mode": "100644"
     },
     "src/viewer/main.js": {
-      "sha": "02789a1002278021eb1b1e65164ceff3d0be0bce",
+      "sha": "b119ee494e7bcfeb1419b9c23cafd7c55d0c0297",
       "mode": "100644"
     },
     "src/viewer/motion-curve-editor.css": {
