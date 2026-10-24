@@ -9,6 +9,8 @@ import ffmpeg from 'ffmpeg-static';
 import ffprobe from 'ffprobe-static';
 import {importAudioAsset} from './audio-assets.mjs';
 import {renderTimelineAudio,validateTimelineAudioAssets} from './native/audio.mjs';
+import {applyVoiceClips} from '../src/engine/voice-edit.js';
+import {mixAudioTracks} from '../src/engine/audio-mix.js';
 import {normalizeAudioTracks,audioTrackGain} from '../src/engine/audio-track.js';
 import {musicDucking,musicGainAt,voiceMixSample} from '../src/engine/voiceover.js';
 const execute=promisify(execFile),run=async(command,args)=>{await execute(command,args,{maxBuffer:8*1024*1024});};
@@ -42,6 +44,15 @@ try{
  for(const [label,start,duration]of [['vo-full',0,1.5],['vo-partial',.4,.5]]){
   const destination=path.join(root,label+'.wav');await renderTimelineAudio({root,audio:vo,start,duration,destination,run});const output=await decode(destination,label+'.f32'),regions=musicDucking(vo);let error=0;
   for(let i=0;i<output.length/2;i++){const t=start+i/48000;for(let c=0;c<2;c++){let expected=0;for(const track of vo.tracks){const gain=audioTrackGain(track,t),frame=Math.round((track.sourceStart+t-track.timelineStart)*48000);expected+=(gain?input[frame*2+c]*gain:0)*(track.role==='music'?musicGainAt(regions,t):1);}error=Math.max(error,Math.abs(output[i*2+c]-voiceMixSample(expected)));}}assert.ok(error<.00002,`${label} voice, music envelope and peak ceiling match preview sample math: ${error}`);
+ }
+ const context={createBuffer(channels,length,sampleRate){const data=Array.from({length:channels},()=>new Float32Array(length));return {numberOfChannels:channels,length,sampleRate,duration:length/sampleRate,getChannelData:i=>data[i],copyToChannel:(input,i)=>data[i].set(input)};}};
+ const decoded=context.createBuffer(2,input.length/2,48000);for(let i=0;i<input.length/2;i++)for(let c=0;c<2;c++)decoded.getChannelData(c)[i]=input[i*2+c];
+ const edited=applyVoiceClips(vo.tracks[0],[{id:'first',sourceStart:.1,duration:.35,pauseAfter:.5},{id:'last',sourceStart:1,duration:.4,pauseAfter:.15}],2);edited.fadeIn=.5;edited.fadeOut=.45;edited.sourceStart=.1;edited.duration-=.1;
+ const montage={...vo,tracks:[edited,vo.tracks[1]]},preview=await mixAudioTracks(context.createBuffer(2,96000,48000),context,montage,undefined,async()=>decoded);
+ for(const [label,start,duration]of [['cuts-full',0,2],['cuts-partial',.65,.8]]){
+  const destination=path.join(root,label+'.wav');await renderTimelineAudio({root,audio:montage,start,duration,destination,run});const output=await decode(destination,label+'.f32');let max=0;
+  for(let i=0;i<output.length/2;i++)for(let c=0;c<2;c++)max=Math.max(max,Math.abs(output[i*2+c]-preview.getChannelData(c)[Math.round(start*48000)+i]));
+  assert.ok(max<.00003,`${label} actual preview/native edit, pause, fade and ducking parity: ${max}`);
  }
  console.log('Native audio passed: trim/fade/master, full and partial VO mix, measured-word ducking, final ceiling and exact sample parity.');
 }finally{await rm(root,{recursive:true,force:true});}

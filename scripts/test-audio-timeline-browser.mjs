@@ -31,6 +31,8 @@ try{
  await page.locator('#sound-muted').check();assert.equal(await page.evaluate(()=>qaPanel.getSettings().muted),true);
 
  await page.route('**/api/studio/audio/assets',route=>route.fulfill({status:201,contentType:'application/json',body:JSON.stringify({asset:{assetId:'c'.repeat(64),name:'Narration.wav',duration:6}})}));
+ let speechPolls=0;
+ await page.route('**/api/studio/audio/assets/*/transcription',route=>{speechPolls++;return route.fulfill({status:200,contentType:'application/json',body:JSON.stringify(speechPolls<2?{status:'transcribing',message:'Transcribing voice locally…'}:{status:'ready',message:'Transcript ready',narration:{version:1,source:'transcribed',language:'en',text:'Your idea. Moves.',segments:[{id:'w1',text:'Your',start:.3,end:.6},{id:'w2',text:'idea.',start:.6,end:1},{id:'w3',text:'Moves.',start:2,end:2.5}],cues:[]}})});});
  await page.evaluate(()=>qaPanel.setSettings({...qaPanel.getSettings(),muted:false,music:.35}));
  await page.getByRole('button',{name:'Import voiceover',exact:true}).click();
  await page.locator('#music-file-input').setInputFiles({name:'Narration.wav',mimeType:'audio/wav',buffer:bytes});
@@ -40,13 +42,28 @@ try{
  assert.match(await page.evaluate(async()=>{try{await qaPanel.exportBuffer({scene:'objects',sound:qaPanel.getSettings(),audio:qaPanel.getAudio()});return 'unexpected success';}catch(e){return e.message;}}),/Extend the film/);
  const voiceCard=page.locator('[data-role=voiceover]');await voiceCard.locator('.audio-clip-details summary').click();await voiceCard.getByLabel('Duration · seconds',{exact:true}).fill('3');await voiceCard.getByLabel('Duration · seconds',{exact:true}).press('Tab');
  await voiceCard.locator('.voice-timing summary').click();
- await voiceCard.locator('.voice-timing input[type=file]').setInputFiles({name:'timing.json',mimeType:'application/json',buffer:Buffer.from(JSON.stringify({words:[{text:'Your',start:.3,end:.6},{text:'idea',start:.6,end:1},{text:'moves',start:2,end:2.5}]}))});
- await page.getByText('3 speech markers · ready for scene and title cues.',{exact:true}).waitFor({state:'visible'});
+ await page.waitForFunction(()=>qaPanel.getAudio().tracks.some(t=>t.narration?.segments.length===3));
  await page.getByLabel('Jump to spoken words in Narration.wav').selectOption('2');assert.equal(await page.evaluate(()=>qaTime),2);
+ await page.getByLabel('Extra pause after passage 1 in seconds').fill('1');await page.getByLabel('Extra pause after passage 1 in seconds').press('Tab');
+ audio=await page.evaluate(()=>qaPanel.getAudio());assert.equal(audio.tracks[2].clips.length,2);assert.equal(audio.tracks[2].duration,7);
+ await page.getByLabel('Jump to spoken words in Narration.wav').selectOption('3');assert.equal(await page.evaluate(()=>qaTime),3);
+ await page.getByLabel('Keep passage 2',{exact:true}).click();audio=await page.evaluate(()=>qaPanel.getAudio());assert.equal(audio.tracks[2].clips.length,1);
+ await page.getByRole('button',{name:'Restore original voice',exact:true}).click();audio=await page.evaluate(()=>qaPanel.getAudio());assert.equal(audio.tracks[2].duration,6);assert.equal(audio.tracks[2].clips,undefined);
+ await voiceCard.getByLabel('Duration · seconds',{exact:true}).fill('3');await voiceCard.getByLabel('Duration · seconds',{exact:true}).press('Tab');
  await page.getByLabel('Lower music during speech',{exact:true}).uncheck();assert.equal(await page.evaluate(()=>qaPanel.getAudio().ducking),false);
  const state=await page.evaluate(()=>({scene:'objects',sound:qaPanel.getSettings(),audio:qaPanel.getAudio()}));await page.evaluate(state=>qaPanel.setState(state),state);assert.deepEqual(await page.evaluate(()=>qaPanel.getAudio()),state.audio);
  await page.getByLabel('Lower music during speech',{exact:true}).check();
  const finalPeak=await page.evaluate(async()=>{const b=await qaPanel.exportBuffer({scene:'objects',sound:qaPanel.getSettings(),audio:qaPanel.getAudio()});return b.getChannelData(0).reduce((m,x)=>Math.max(m,Math.abs(x)),0);});assert.ok(finalPeak>0&&finalPeak<1);
+ await voiceCard.locator('.audio-clip-details summary').click();
+ await mkdir('outputs/ux-audio',{recursive:true});await voiceCard.screenshot({path:'outputs/ux-audio/voice-speech.png'});
+ // A completed old job must never overwrite a restored project/take.
+ const baseline=await page.evaluate(()=>({scene:'objects',sound:qaPanel.getSettings(),audio:qaPanel.getAudio()}));
+ let release,started;const pending=new Promise(resolve=>started=resolve);
+ await page.route(`**/api/studio/audio/assets/${'d'.repeat(64)}/transcription`,async route=>{started();await new Promise(resolve=>release=resolve);await route.fulfill({status:200,contentType:'application/json',body:JSON.stringify({status:'ready',message:'Transcript ready',narration:{version:1,source:'transcribed',text:'Stale',segments:[{id:'w1',text:'Stale',start:0,end:1}],cues:[]}})});});
+ await page.evaluate(state=>{const next=structuredClone(state);const voice=next.audio.tracks.find(t=>t.role==='voiceover');voice.assetId='d'.repeat(64);delete voice.narration;qaPanel.setState(next);},baseline);
+ await pending;await page.evaluate(state=>qaPanel.setState(state),baseline);
+ const returned=page.waitForResponse(response=>response.url().includes('d'.repeat(64)+'/transcription'));release();await returned;
+ assert.deepEqual(await page.evaluate(()=>qaPanel.getAudio()),baseline.audio,'Late speech result cannot overwrite restored project');
  await mkdir('outputs/ux-audio',{recursive:true});await page.locator('#sound-tools').screenshot({path:'outputs/ux-audio/audio-timeline.png'});assert.deepEqual(errors,[]);
- console.log('Audio browser + voiceover passed: compact import, preserved music, full source, long-voice export guard, timing import/seek, persistence, duck toggle and mix;  waveform, pointer move, keyboard trims, disabled tracks, numeric settings, playhead seek and browser export global gain/mute.');
+ console.log('Audio browser + voiceover passed: compact import, preserved music, full source, long-voice export guard, automatic transcription, cut/pause/restore, shifted word seek, persistence, duck toggle and mix;  waveform, pointer move, keyboard trims, disabled tracks, numeric settings, playhead seek and browser export global gain/mute.');
 }finally{await browser?.close();await server.close();}

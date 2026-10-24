@@ -2,6 +2,8 @@ import {validateAppDemo} from '../src/engine/app-demo.js';
 import {authoredSceneAudio} from './authored-audio.mjs';
 import {createNativeProjectApi} from './native-project-api.mjs';
 import {importAudioAsset,listAudioAssets,resolveAudioAsset} from './audio-assets.mjs';
+import {validateVoiceSource} from '../src/engine/voice-edit.js';
+import {speechJobs} from './speech-jobs.mjs';
 import {normalizeAudioTracks} from '../src/engine/audio-track.js';
 import {hasVoiceover,validateVoiceoverDuration} from '../src/engine/voiceover.js';
 import {verifyExportDestination} from './export-preflight.mjs';
@@ -150,7 +152,7 @@ export async function validateStudioParameters(input) {
     }
   }
   if(input.sound !== undefined)normalized.sound=normalizeSound(input.sound);
-  if(input.audio !== undefined){normalized.audio=normalizeAudioTracks(input.audio);for(const track of normalized.audio.tracks){const asset=await resolveAudioAsset(ROOT,track.assetId);if(track.sourceStart+track.duration>asset.metadata.duration+.001)throw Error('Audio trim exceeds its imported source.');if(track.narration?.segments.some(s=>s.end>asset.metadata.duration+.025))throw Error('Speech timing exceeds the voice source.');}}
+  if(input.audio !== undefined){normalized.audio=normalizeAudioTracks(input.audio);for(const track of normalized.audio.tracks){const asset=await resolveAudioAsset(ROOT,track.assetId);validateVoiceSource(track,asset.metadata.duration);if(track.narration?.segments.some(s=>s.end>asset.metadata.duration+.025))throw Error('Speech timing exceeds the voice source.');}}
   if (input.graphics !== undefined) {
     if (!['procedural','pop'].includes(scene) || !isRecord(input.graphics) || Object.keys(input.graphics).some(k => !['title', 'accent', 'density', 'speed', ...(scene==='pop'?['cameraMotion','fisheye']:[])].includes(k))) throw new Error('graphics is only supported for procedural and pop scenes');
     const g = input.graphics;
@@ -436,7 +438,7 @@ async function launchJob(job, invocation, spawnFn) {
   });
 }
 
-export function createStudioApi({ spawnFn = nodeSpawn, revealFn = revealWithFinder, capabilitiesFn=rendererCapabilities, skiaCapabilitiesFn=nativeSkiaCapabilities, nativeRendererFactory=async parameters => (await import('./native/renderer.mjs')).createNativeRenderer(parameters), componentManager=cyclesComponentManager(ROOT) } = {}) {
+export function createStudioApi({ speechManager=speechJobs(ROOT), spawnFn = nodeSpawn, revealFn = revealWithFinder, capabilitiesFn=rendererCapabilities, skiaCapabilitiesFn=nativeSkiaCapabilities, nativeRendererFactory=async parameters => (await import('./native/renderer.mjs')).createNativeRenderer(parameters), componentManager=cyclesComponentManager(ROOT) } = {}) {
   return async function studioApi(req, res, next) {
     const route = new URL(req.url ?? '/', 'http://127.0.0.1').pathname;
     if (!route.startsWith('/studio')) return next();
@@ -455,6 +457,15 @@ export function createStudioApi({ spawnFn = nodeSpawn, revealFn = revealWithFind
       if(req.method==='POST'&&route==='/studio/audio/assets'){
         if(!req.headers.origin||new URL(req.headers.origin).host!==host||req.headers['content-type']?.split(';')[0]!=='application/octet-stream')return send(res,403,{error:'Import audio from this Studio tab.'});
         const asset=await importAudioAsset(ROOT,req,{name:decodeURIComponent(req.headers['x-audio-name']??'Audio'),contentLength:req.headers['content-length']});return send(res,201,{asset});
+      }
+      const speechRoute=route.match(/^\/studio\/audio\/assets\/([a-f0-9]{64})\/transcription$/);
+      if(speechRoute){
+        if(req.method==='POST'){
+          if(!req.headers.origin||req.headers['content-type']?.split(';')[0]!=='application/json')return send(res,403,{error:'Transcribe from this Studio tab.'});
+          const body=await readJson(req);if(!isRecord(body)||Object.keys(body).length)throw Error('Transcription expects an empty object');
+          return send(res,202,await speechManager.start(speechRoute[1]));
+        }
+        if(req.method==='GET')return send(res,200,speechManager.get(speechRoute[1]));
       }
       const audioFile=route.match(/^\/studio\/audio\/assets\/([a-f0-9]{64})\/file$/);
       if(req.method==='GET'&&audioFile){const asset=await resolveAudioAsset(ROOT,audioFile[1]);res.statusCode=200;res.setHeader('Content-Type',asset.mimeType??'application/octet-stream');res.setHeader('Content-Length',asset.size);res.setHeader('Cache-Control','no-store');createReadStream(asset.path).pipe(res);return;}
