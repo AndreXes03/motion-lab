@@ -196,7 +196,9 @@
                 "energy": 1.3
               }
             }
-          ]
+          ],
+          "icon": "motion",
+          "presentation": "slider"
         },
         {
           "id": "lighting",
@@ -210,7 +212,8 @@
                 "key": 280,
                 "fill": 0.06,
                 "rim": 3.2
-              }
+              },
+              "icon": "soft-light"
             },
             {
               "id": "original",
@@ -219,7 +222,8 @@
                 "key": 340,
                 "fill": 0.015,
                 "rim": 4.8
-              }
+              },
+              "icon": "balanced-light"
             },
             {
               "id": "high",
@@ -228,9 +232,11 @@
                 "key": 390,
                 "fill": 0.008,
                 "rim": 5.5
-              }
+              },
+              "icon": "dramatic-light"
             }
-          ]
+          ],
+          "icon": "lighting"
         },
         {
           "id": "surface",
@@ -258,7 +264,9 @@
                 "shellRoughness": 0.65
               }
             }
-          ]
+          ],
+          "icon": "finish",
+          "presentation": "slider"
         },
         {
           "id": "color",
@@ -289,7 +297,9 @@
                 "colorContrast": 1.06
               }
             }
-          ]
+          ],
+          "icon": "color",
+          "presentation": "slider"
         }
       ]
     },
@@ -412,7 +422,9 @@
                 "beatStrength": 1.2
               }
             }
-          ]
+          ],
+          "icon": "motion",
+          "presentation": "slider"
         },
         {
           "id": "density",
@@ -446,7 +458,8 @@
                 "echoOpacity": 1.2
               }
             }
-          ]
+          ],
+          "icon": "detail"
         },
         {
           "id": "text",
@@ -474,7 +487,9 @@
                 "typeScale": 1.1
               }
             }
-          ]
+          ],
+          "icon": "text",
+          "presentation": "slider"
         },
         {
           "id": "color",
@@ -505,7 +520,9 @@
                 "colorContrast": 1.06
               }
             }
-          ]
+          ],
+          "icon": "color",
+          "presentation": "slider"
         }
       ]
     },
@@ -638,7 +655,9 @@
                 "tickerSpeed": 1.25
               }
             }
-          ]
+          ],
+          "icon": "motion",
+          "presentation": "slider"
         },
         {
           "id": "text",
@@ -669,7 +688,9 @@
                 "captionScale": 1.1
               }
             }
-          ]
+          ],
+          "icon": "text",
+          "presentation": "slider"
         },
         {
           "id": "graphics",
@@ -700,7 +721,8 @@
                 "halftoneSize": 1.3
               }
             }
-          ]
+          ],
+          "icon": "detail"
         },
         {
           "id": "color",
@@ -731,7 +753,9 @@
                 "colorContrast": 1.06
               }
             }
-          ]
+          ],
+          "icon": "color",
+          "presentation": "slider"
         }
       ]
     },
@@ -805,7 +829,8 @@
               "values": {
                 "keyStrength": 0.85,
                 "fill": 0.18
-              }
+              },
+              "icon": "soft-light"
             },
             {
               "id": "original",
@@ -813,7 +838,8 @@
               "values": {
                 "keyStrength": 1,
                 "fill": 0.1
-              }
+              },
+              "icon": "balanced-light"
             },
             {
               "id": "high",
@@ -821,9 +847,11 @@
               "values": {
                 "keyStrength": 1.2,
                 "fill": 0.05
-              }
+              },
+              "icon": "dramatic-light"
             }
-          ]
+          ],
+          "icon": "lighting"
         },
         {
           "id": "color",
@@ -854,7 +882,9 @@
                 "colorContrast": 1.06
               }
             }
-          ]
+          ],
+          "icon": "color",
+          "presentation": "slider"
         }
       ]
     },
@@ -1009,7 +1039,9 @@
                 "recordSpeed": 1.2
               }
             }
-          ]
+          ],
+          "icon": "motion",
+          "presentation": "slider"
         },
         {
           "id": "lighting",
@@ -1024,7 +1056,8 @@
                 "fillLight": 1.3,
                 "keySize": 1.4,
                 "rimLight": 0.8
-              }
+              },
+              "icon": "soft-light"
             },
             {
               "id": "original",
@@ -1034,7 +1067,8 @@
                 "fillLight": 1,
                 "keySize": 1,
                 "rimLight": 1
-              }
+              },
+              "icon": "balanced-light"
             },
             {
               "id": "high",
@@ -1044,9 +1078,11 @@
                 "fillLight": 0.65,
                 "keySize": 0.8,
                 "rimLight": 1.2
-              }
+              },
+              "icon": "dramatic-light"
             }
-          ]
+          ],
+          "icon": "lighting"
         },
         {
           "id": "focus",
@@ -1074,7 +1110,9 @@
                 "focusBlur": 1.3
               }
             }
-          ]
+          ],
+          "icon": "focus",
+          "presentation": "slider"
         },
         {
           "id": "color",
@@ -1105,7 +1143,9 @@
                 "colorContrast": 1.06
               }
             }
-          ]
+          ],
+          "icon": "color",
+          "presentation": "slider"
         }
       ]
     },
@@ -1208,7 +1248,9 @@
                 "cityMotion": 1.25
               }
             }
-          ]
+          ],
+          "icon": "motion",
+          "presentation": "slider"
         },
         {
           "id": "lighting",
@@ -1222,7 +1264,8 @@
                 "keyLight": 0.85,
                 "fillLight": 1.3,
                 "exposure": 0.95
-              }
+              },
+              "icon": "soft-light"
             },
             {
               "id": "original",
@@ -1231,7 +1274,8 @@
                 "keyLight": 1,
                 "fillLight": 1,
                 "exposure": 1
-              }
+              },
+              "icon": "balanced-light"
             },
             {
               "id": "high",
@@ -1240,9 +1284,11 @@
                 "keyLight": 1.15,
                 "fillLight": 0.7,
                 "exposure": 1.05
-              }
+              },
+              "icon": "dramatic-light"
             }
-          ]
+          ],
+          "icon": "lighting"
         },
         {
           "id": "focus",
@@ -1270,7 +1316,9 @@
                 "focusBlur": 1.3
               }
             }
-          ]
+          ],
+          "icon": "focus",
+          "presentation": "slider"
         },
         {
           "id": "color",
@@ -1301,7 +1349,9 @@
                 "colorContrast": 1.06
               }
             }
-          ]
+          ],
+          "icon": "color",
+          "presentation": "slider"
         }
       ]
     },
@@ -1384,7 +1434,9 @@
                 "lensMotion": 1.15
               }
             }
-          ]
+          ],
+          "icon": "character",
+          "presentation": "slider"
         },
         {
           "id": "size",
@@ -1412,7 +1464,9 @@
                 "characterScale": 1.08
               }
             }
-          ]
+          ],
+          "icon": "size",
+          "presentation": "slider"
         },
         {
           "id": "glow",
@@ -1440,7 +1494,9 @@
                 "glowStrength": 1.3
               }
             }
-          ]
+          ],
+          "icon": "glow",
+          "presentation": "slider"
         },
         {
           "id": "color",
@@ -1471,7 +1527,9 @@
                 "colorContrast": 1.06
               }
             }
-          ]
+          ],
+          "icon": "color",
+          "presentation": "slider"
         }
       ]
     },
@@ -1594,7 +1652,9 @@
                 "finishPush": 1.2
               }
             }
-          ]
+          ],
+          "icon": "motion",
+          "presentation": "slider"
         },
         {
           "id": "depth",
@@ -1628,7 +1688,9 @@
                 "cardTilt": 1.2
               }
             }
-          ]
+          ],
+          "icon": "depth",
+          "presentation": "slider"
         },
         {
           "id": "size",
@@ -1659,7 +1721,9 @@
                 "cardScale": 1.08
               }
             }
-          ]
+          ],
+          "icon": "size",
+          "presentation": "slider"
         },
         {
           "id": "color",
@@ -1690,7 +1754,9 @@
                 "colorContrast": 1.06
               }
             }
-          ]
+          ],
+          "icon": "color",
+          "presentation": "slider"
         }
       ]
     },
@@ -1914,7 +1980,9 @@
                 "endingTurn": 1.2
               }
             }
-          ]
+          ],
+          "icon": "motion",
+          "presentation": "slider"
         },
         {
           "id": "titles",
@@ -1948,7 +2016,9 @@
                 "toEntryTravel": 130
               }
             }
-          ]
+          ],
+          "icon": "text",
+          "presentation": "slider"
         },
         {
           "id": "lighting",
@@ -1962,7 +2032,8 @@
                 "keyLight": 0.9,
                 "fillLight": 1.25,
                 "exposure": 1.08
-              }
+              },
+              "icon": "soft-light"
             },
             {
               "id": "original",
@@ -1971,7 +2042,8 @@
                 "keyLight": 1,
                 "fillLight": 1,
                 "exposure": 1.15
-              }
+              },
+              "icon": "balanced-light"
             },
             {
               "id": "high",
@@ -1980,9 +2052,11 @@
                 "keyLight": 1.2,
                 "fillLight": 0.7,
                 "exposure": 1.18
-              }
+              },
+              "icon": "dramatic-light"
             }
-          ]
+          ],
+          "icon": "lighting"
         },
         {
           "id": "color",
@@ -2011,6 +2085,41 @@
               "values": {
                 "colorSaturation": 1.15,
                 "colorContrast": 1.06
+              }
+            }
+          ],
+          "icon": "color",
+          "presentation": "slider"
+        },
+        {
+          "id": "finish",
+          "label": "Product finish",
+          "icon": "finish",
+          "presentation": "slider",
+          "help": "Coordinate the shell and metal finish, from polished to matte.",
+          "choices": [
+            {
+              "id": "polished",
+              "label": "Polished",
+              "values": {
+                "shellRoughness": 0.04,
+                "metalRoughness": 0.6
+              }
+            },
+            {
+              "id": "original",
+              "label": "Original",
+              "values": {
+                "shellRoughness": 0.095,
+                "metalRoughness": 1
+              }
+            },
+            {
+              "id": "matte",
+              "label": "Matte",
+              "values": {
+                "shellRoughness": 0.5,
+                "metalRoughness": 1.6
               }
             }
           ]
@@ -2052,7 +2161,9 @@
                 "movement": 1
               }
             }
-          ]
+          ],
+          "icon": "motion",
+          "presentation": "slider"
         },
         {
           "id": "text",
@@ -2080,7 +2191,9 @@
                 "typeSize": 1.1
               }
             }
-          ]
+          ],
+          "icon": "text",
+          "presentation": "slider"
         },
         {
           "id": "color",
@@ -2111,7 +2224,9 @@
                 "colorContrast": 1.06
               }
             }
-          ]
+          ],
+          "icon": "color",
+          "presentation": "slider"
         }
       ]
     }

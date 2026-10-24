@@ -38,3 +38,11 @@ Choices support bounded numeric controls, colors and toggles with direct paramet
 Easy writes the existing parameters in one undoable recipe edit; it does not add renderer-only shortcuts or an independent visual state. Current values determine the selected choice. Custom values stay untouched and are labelled as custom. Active parameter keyframes disable the affected Easy group and direct the user to Pro. Sound, timing, output settings and unrelated edits are preserved.
 
 Old manifests without `easy` remain valid: Studio uses only compatible groups from the scene's authored definition. If none are compatible, it asks for an agent-authored Easy selection rather than exposing the entire catalog. New/revised selections must include Easy; new scenes without it fail the scene contract. For a custom recipe, save its custom Easy definition in `parameters.studio.controlManifest`, not only in the shared scene defaults.
+
+## Compact icons and coordinated sliders
+
+Set `icon` on a group to a semantic pictogram: `motion`, `text`, `lighting`, `color`, `finish`, `detail`, `size`, `depth`, `character`, `focus` or `glow`. Lighting choices may use `soft-light`, `balanced-light`, `dramatic-light`. Icons are decorative and always accompanied by readable labels; do not rely on them alone.
+
+Choose `presentation: "slider"` when a continuous intensity is meaningful. Supply exactly three numeric choices ordered from the left endpoint through the middle to the right endpoint. They define native values at 0, 50 and 100; intermediate values interpolate each target between the adjacent authored anchors. The middle should normally be the original look; endpoint labels must describe the actual range. Avoid nonmonotonic curves or two positions yielding the same entire value bundle. Toggles, colors and categorical alternatives remain `presentation: "choices"` (the default). A slider is a presentation of real controls, not a new renderer parameter.
+
+Keep the total at five or fewer. Use a mixed layout only where it reduces effort: continuous movement/finish, categorical lighting. Validate intermediate values, animation protection, live preview, one Undo per drag and Escape cancellation. A project-specific manifest stores its own presentation; updating shared defaults does not silently replace its authored choices.
