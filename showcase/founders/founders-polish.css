@@ -28,3 +28,14 @@
 
 /* Keep bring-your-own-subscription guidance beside the primary CTA. */
 .hero-subscription{max-width:520px;margin:16px auto 0;padding-inline:12px;font-size:13px;line-height:1.6;color:#a6afa0;text-align:center}.hero-subscription strong{color:#e7eddf;font-weight:500}
+
+/* Download and setup stay usable without JavaScript. */
+.setup-section h2{font-size:clamp(32px,4vw,56px);line-height:1.1;letter-spacing:-.04em;margin:0 0 24px}
+.setup-section h2 span{color:var(--lime)}
+.setup-intro{max-width:760px;color:var(--muted);font-size:14px;line-height:1.8;margin:0 0 24px}
+.setup-steps{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:32px;padding-left:24px;margin:32px 0}
+.setup-steps li{padding-left:5px;color:var(--lime)}
+.setup-steps h3{color:#f1f2eb;font-size:17px;margin:0 0 12px}
+.setup-steps p{color:var(--muted);font-size:14px;line-height:1.8;margin:0}
+.setup-steps .text-link{font-size:inherit;color:var(--lime);text-decoration:underline;text-underline-offset:3px}
+@media(max-width:760px){.setup-steps{grid-template-columns:1fr;gap:24px}.setup-section>.button{max-width:100%;white-space:normal}}

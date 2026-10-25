@@ -5,7 +5,7 @@ import {renderControl} from './control-widget.js';
 import {observeIcons,setIcon} from './studio-icons.js';
 import {resolveParameters} from '../engine/project-controls.js';
 import {getControlCatalog,readControlValue} from '../engine/control-catalog.js';
-const $=id=>document.getElementById(id),download='https://github.com/AndreXes03/motion-lab/archive/refs/heads/main.zip';
+const $=id=>document.getElementById(id),download='https://github.com/AndreXes03/motion-lab/archive/refs/heads/main.zip',setupGuide='https://github.com/AndreXes03/motion-lab/blob/main/docs/MAC_SETUP.md';
 const runtime=createDemoRuntime($('renderCanvas'));
 setIcon($('play'),'play',{label:'Play',iconOnly:true});setIcon($('loop'),'loop',{label:'Loop playback',iconOnly:true});
 const defaults={accent:'#ff7142',shell:'#6864ff',energy:1,cameraTravel:1,palette:'electric'};
@@ -56,11 +56,11 @@ async function showPanel(panel){
 }
 $('tab-look').onclick=()=>showPanel('look');$('tab-motion').onclick=()=>showPanel('motion');
 const pro=document.createElement('dialog');pro.className='demo-pro-dialog';pro.id='demo-pro-dialog';pro.setAttribute('aria-labelledby','demo-pro-title');
-pro.innerHTML='<button class="demo-pro-close" aria-label="Close">×</button><p class="eyebrow">DESKTOP STUDIO</p><h2 id="demo-pro-title">The full editor lives on your Mac.</h2><p>Download Framevolve for Pro tools: editable curves, multiple keyframes, the full scene library, code access and local video rendering.</p><a class="demo-download" href="'+download+'">Download Studio</a><a class="demo-install-guide" href="https://github.com/AndreXes03/motion-lab#readme" target="_blank" rel="noopener">Installation guide ↗</a>';
+pro.innerHTML='<button class="demo-pro-close" aria-label="Close">×</button><p class="eyebrow">DESKTOP STUDIO</p><h2 id="demo-pro-title">The full editor lives on your Mac.</h2><p>Download the source ZIP and complete Mac setup for Pro tools: editable curves, multiple keyframes, the full scene library, code access and local video rendering.</p><a class="demo-download" href="'+download+'">Download Framevolve · ZIP</a><a class="demo-install-guide" href="'+setupGuide+'" target="_blank" rel="noopener">Mac setup guide ↗</a>';
 pro.querySelector('button').onclick=()=>pro.close();pro.addEventListener('click',e=>{if(e.target===pro)pro.close();});document.body.append(pro);
 $('experience-easy').onclick=()=>{};$('experience-pro').onclick=()=>{pause();pro.showModal();};$('experience-pro').setAttribute('aria-label','Pro tools · download required');$('experience-pro').title='Pro tools are available in the desktop download';
-const banner=document.createElement('div');banner.className='demo-notice';banner.innerHTML='<span>Lightweight web demo <small>Pro tools are available in the desktop download.</small></span><a href="'+download+'">Download Studio ↗</a>';document.querySelector('.app-header').after(banner);
-const downloadButton=document.createElement('a');downloadButton.href=download;downloadButton.className='demo-download demo-header-download';downloadButton.textContent='Download Studio';$('export-settings').after(downloadButton);
+const banner=document.createElement('div');banner.className='demo-notice';banner.innerHTML='<span>Lightweight web demo <small>Pro tools are available in the desktop download. Source ZIP requires Mac setup.</small></span><a href="'+setupGuide+'">Mac setup guide ↗</a>';document.querySelector('.app-header').after(banner);
+const downloadButton=document.createElement('a');downloadButton.href=download;downloadButton.className='demo-download demo-header-download';downloadButton.textContent='Download Framevolve · ZIP';$('export-settings').after(downloadButton);
 const localLink=document.querySelector('.studio-brand');localLink.href='../';document.querySelector('.studio-status>span').innerHTML='<i class="live-dot"></i> Web demo · basic tools';$('edit-status').textContent='Pro tools in the desktop download';document.body.dataset.experience='easy';document.body.dataset.layout='balanced';document.body.dataset.webDemo='true';document.body.classList.add('single-composition');
 $('panel-divider').hidden=false;$('panel-divider').style.pointerEvents='none';$('panel-divider').tabIndex=-1;$('preview-mode-render')?.setAttribute('hidden','');
 document.addEventListener('keydown',e=>{if(e.target.closest('input,select,textarea,button')||pro.open)return;if(e.code==='Space'){e.preventDefault();$('play').click();}if(['ArrowLeft','ArrowRight'].includes(e.key)){e.preventDefault();pause();time=Math.max(0,Math.min(179/30,time+(e.key==='ArrowLeft'?-1:1)/30));draw();}});

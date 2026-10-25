@@ -9,6 +9,9 @@ import { ROOT } from './project-store.mjs';
 import { createStudioApi, validateRenderSettings, validateStudioParameters } from './studio-api.mjs';
 import { validateLook } from './project-store.mjs';
 import { mkdir, readFile, rm, stat, writeFile } from 'node:fs/promises';
+import {importAudioAsset} from './audio-assets.mjs';
+import {encodeWav} from '../src/engine/sound-design.js';
+import {appDemoExample} from '../src/engine/app-demo.js';
 
 const validParameters = {
   scene: 'procedural',
@@ -58,6 +61,41 @@ try {
   const initial = await response.json();
   assert.ok(Array.isArray(initial.versions) && Array.isArray(initial.jobs));
   assert.equal(initial.outputDirectory, path.join(homedir(), 'Downloads'));
+
+  // Saving versions resolves the normalized scene's duration, including custom
+  // App Demo timing, independently of the render endpoint's local variables.
+  const frequency=200+Number.parseInt(randomUUID().slice(0,4),16);
+  const wave=Float32Array.from({length:96000},(_,i)=>.1*Math.sin(i/48000*frequency*Math.PI*2));
+  const asset=await importAudioAsset(ROOT,[Buffer.from(encodeWav([wave,wave],48000))],{name:'Version API test voice'});
+  temporaryArtifacts.push(path.join(ROOT,'project/audio',`${asset.assetId}.audio`),path.join(ROOT,'project/audio',`${asset.assetId}.json`));
+  const voice={id:'voice',assetId:asset.assetId,name:'Test voice',role:'voiceover',duration:2,timelineStart:5};
+  const audio=(overrides={})=>({version:2,tracks:[{...voice,...overrides}]});
+  const demo=duration=>({...structuredClone(appDemoExample),slides:appDemoExample.slides.map(s=>({...s,duration}))});
+  const versionCases=[
+    ['default scene',{},201],
+    ['procedural without audio',{scene:'procedural'},201],
+    ['starter without audio',{scene:'starter'},201],
+    ['voice fits procedural',{scene:'procedural',audio:audio()},201],
+    ['voice exceeds starter',{scene:'starter',audio:audio()},400],
+    ['disabled voice',{scene:'starter',audio:audio({enabled:false})},201],
+    ['silent voice',{scene:'starter',audio:audio({volume:0})},201],
+    ['music may outlast scene',{scene:'starter',audio:audio({role:'music'})},201],
+    ['default App Demo',{scene:'appdemo',audio:audio({timelineStart:15})},201],
+    ['extended App Demo',{scene:'appdemo',appDemo:demo(6),audio:audio({timelineStart:21})},201],
+    ['short App Demo rejects long voice',{scene:'appdemo',appDemo:demo(3),audio:audio({timelineStart:14})},400]
+  ];
+  for(const [name,parameters,status] of versionCases){
+    const response=await request('/versions',{name,parameters});
+    const saved=await response.json();
+    assert.equal(response.status,status,`${name}: ${JSON.stringify(saved)}`);
+    if(status===400){assert.match(saved.error,/Extend the film or trim the voice/);continue;}
+    temporaryArtifacts.push(path.join(ROOT,'project/versions',`${saved.id}.json`));
+    const restored=await request(`/versions/${saved.id}`);
+    assert.equal(restored.status,200);
+    assert.deepEqual((await restored.json()).snapshot.parameters,saved.parameters,`${name}: version round trip`);
+    assert.equal(saved.parameters.scene,parameters.scene??'objects');
+    if(parameters.audio)assert.deepEqual(saved.parameters.audio,await validateStudioParameters(parameters).then(p=>p.audio));
+  }
 
   response = await request('/render', { kind: 'preview', time: 0, parameters: validParameters, settings: { width: 1001 } });
   assert.equal(response.status, 400, 'invalid render settings are rejected before a job is created');
