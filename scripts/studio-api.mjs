@@ -586,7 +586,7 @@ export function createStudioApi({ speechManager=speechJobs(ROOT), spawnFn = node
         if (!isRecord(body) || Object.keys(body).some(k => !['name', 'parameters'].includes(k))) return send(res, 400, { error: 'Expected name and parameters' });
         const name = safeName(body.name);
         const parameters = await validateStudioParameters(body.parameters);
-        if(body.kind!=='frame')validateVoiceoverDuration(parameters.audio,selectedConfig.duration);
+        validateVoiceoverDuration(parameters.audio,sceneConfig(parameters.scene,parameters).duration);
         const version = { id: randomUUID(), name, scene: parameters.scene, createdAt: new Date().toISOString(), parameters };
         await mkdir(VERSION_DIR, { recursive: true });
         const target = path.join(VERSION_DIR, `${version.id}.json`);
