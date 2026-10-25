@@ -22,7 +22,7 @@
   <a class="skip" href="#main">Skip to content</a>
   <header class="header wrap">
     <a class="brand" href="#top" aria-label="Framevolve for founders home"><img data-brand src="../brand/framevolve-mark.png" width="30" height="30" alt=""><span>Framevolve</span><span class="edition">for founders</span></a>
-    <nav aria-label="Main navigation"><a href="#how">How it works</a><a href="#films">The films</a><a href="#questions">FAQs</a></nav>
+    <nav aria-label="Main navigation"><a href="#how">How it works</a><a href="#films">The films</a><a href="#setup">Mac setup</a><a href="#questions">FAQs</a></nav>
     <a class="button small" data-studio href="../studio/">Try the demo <span aria-hidden="true">↗</span></a>
   </header>
   <main id="main">
@@ -30,8 +30,8 @@
       <p class="eyebrow hero-badge"><span class="dot"></span> BIG IDEAS. BOOTSTRAPPED BUDGETS. <span class="badge-arrow">↗</span></p>
       <h1>Make your launch video.<br><span>Keep your runway.</span></h1>
       <p class="hero-description">Turn “let me explain” into <span>“watch this.”</span><br>Your product, your story. A video you can keep refining.</p>
-      <div class="actions"><a class="button primary hero-primary" data-studio href="../studio/">Explore the web demo <span aria-hidden="true">↗</span></a><a class="text-link" href="#how">See how it works <span aria-hidden="true">↓</span></a></div>
-      <p class="hero-subscription">Use your own <strong>Codex or Claude Code subscription.</strong></p>
+      <div class="actions"><a class="button primary hero-primary" data-studio href="../studio/">Try the web demo <span aria-hidden="true">↗</span></a><a class="button" href="https://github.com/AndreXes03/motion-lab/archive/refs/heads/main.zip" aria-describedby="download-context">Download Framevolve · ZIP <span aria-hidden="true">↓</span></a><a class="text-link" href="#setup">Mac setup instructions <span aria-hidden="true">↓</span></a></div>
+      <p class="hero-subscription" id="download-context">Demo: explore basic controls in your browser.<br>Full Studio: <strong>source ZIP + local Mac setup.</strong> Create with your own AI assistant and provider access.</p>
       <div class="hero-benefits"><span>✓ Free for commercial use</span><span>✓ Start with your assets</span><span>✓ Keep creative control</span></div>
       <div class="hero-reel">
       <div class="reel-tab"><span class="reel-icon">▶</span> YOUR NEXT LAUNCH COULD MOVE LIKE THIS <span>↓</span></div>
@@ -42,6 +42,19 @@
       </div>
       </div>
       <p class="asset-caption"><span id="hero-caption">LOOP — made in Framevolve.</span><span>Authored film · not an automatic template output</span></p>
+    </section>
+
+    <section class="wrap section setup-section" id="setup" aria-labelledby="setup-heading">
+      <p class="eyebrow">FROM DOWNLOAD TO YOUR FIRST SESSION.</p>
+      <h2 id="setup-heading">Take Framevolve<br><span>to your Mac.</span></h2>
+      <p class="setup-intro">The web demo is a limited preview. The full Studio runs locally on your Mac. Start with an internet connection and a folder you can keep and write to.</p>
+      <ol class="setup-steps">
+        <li><h3>Download and unzip.</h3><p><a class="text-link" href="https://github.com/AndreXes03/motion-lab/archive/refs/heads/main.zip">Download Framevolve · source ZIP ↓</a>. Open the ZIP in Finder, then move the extracted <strong>motion-lab-main</strong> folder somewhere you want to keep it.</p></li>
+        <li><h3>Open Mac setup.</h3><p>Inside that folder, double-click <strong>Setup Framevolve.command</strong>. If asked, accept the private Node.js runtime download. Continue through the welcome screen, then choose <strong>Set up &amp; open Framevolve</strong>. Keep the setup Terminal window open until Studio opens.</p></li>
+        <li><h3>Explore, then create.</h3><p>Preview, edit and export existing scenes in Studio. To create with AI, choose <strong>Create with AI</strong> or open the same folder in your coding assistant. Use your own provider account and access; any provider costs are separate.</p></li>
+      </ol>
+      <p class="setup-intro">This is source code with guided setup, not a signed or notarized app installer. If macOS blocks the command, or a step stops, follow the guide’s troubleshooting steps.</p>
+      <a class="button" href="https://github.com/AndreXes03/motion-lab/blob/main/docs/MAC_SETUP.md">Read the full Mac setup guide <span aria-hidden="true">↗</span></a>
     </section>
 
     <section class="analogy wrap section" id="idea-to-film" aria-labelledby="analogy-heading">
@@ -140,13 +153,13 @@
     </section>
 
     <section class="wrap section faq-section" id="questions" aria-labelledby="faq-heading"><div><p class="eyebrow">FAIR QUESTIONS.</p><h2 id="faq-heading">Before you<br> hit launch.</h2></div><div class="faq-list">
-      <details><summary>What can I try today?<span>+</span></summary><p>Explore the public demo and its controls. The founder setup is in development for local Studio: its first version makes an editable, 24-second widescreen 2D film from your logo, screenshots and messages. The films above are authored examples, not automatic founder-template outputs.</p></details>
+      <details><summary>What can I try today?<span>+</span></summary><p><a data-studio href="../studio/">Try the web demo</a> for basic controls, or <a href="#setup">download and set up the full Studio on Mac</a>. The founder creation flow is in development for local Studio: its first version makes an editable, 24-second widescreen 2D film from your logo, screenshots and messages. The films above are authored examples, not automatic founder-template outputs.</p></details>
       <details><summary>How does the AI part work?<span>+</span></summary><p>Use Codex or Claude Code with your own subscription, within your plan’s usage limits. Bring your brief and assets to the assistant: it helps build a custom project; you refine it in Framevolve. The Studio needs local installation. It does not include a one-click AI video generator.</p></details>
       <details><summary>Free, even for my startup?<span>+</span></summary><p>Yes. Framevolve is free for professional use and selling your original videos. Your AI assistant and other services may have their own costs. Software resale has separate <a data-license href="../LICENSE">license terms</a>.</p></details>
     </div></section>
 
     <section class="closing wrap" aria-labelledby="closing-title">
-      <div class="closing-card"><div class="closing-copy"><p class="eyebrow"><span class="closing-dot"></span> YOUR NEXT BIG THING STARTS HERE.</p><h2 id="closing-title">You built the thing.<br>Now make<br><span>them look.</span></h2><p>A little less explaining.<br>A launch worth pressing play on.</p><div class="actions"><a class="button closing-primary" data-studio href="../studio/">Make your first move <span aria-hidden="true">↗</span></a><a class="text-link" href="#brief">Build your brief ↗</a></div><span class="closing-note">Free Studio · Web demo available · Founder setup in preview</span></div>
+      <div class="closing-card"><div class="closing-copy"><p class="eyebrow"><span class="closing-dot"></span> YOUR NEXT BIG THING STARTS HERE.</p><h2 id="closing-title">You built the thing.<br>Now make<br><span>them look.</span></h2><p>A little less explaining.<br>A launch worth pressing play on.</p><div class="actions"><a class="button closing-primary" data-studio href="../studio/">Try the web demo <span aria-hidden="true">↗</span></a><a class="text-link" href="#setup">Download &amp; Mac setup ↓</a></div><span class="closing-note">Free Studio · Source ZIP requires local Mac setup · Bring your own AI</span></div>
       <div class="closing-illustration" aria-hidden="true"><div class="closing-ring ring-one"></div><div class="closing-ring ring-two"></div><div class="closing-film"><div class="closing-film-top"><span>✳ YOUR BRAND</span><span>01 / THE LAUNCH</span></div><span class="closing-film-title">Hello,<br>world.</span><div class="closing-film-play">▶</div><div class="closing-film-bottom"><span>YOUR PRODUCT. IN MOTION.</span><span>↗</span></div></div><div class="closing-logo">✳</div><div class="closing-sticker">BIG LAUNCH<br>ENERGY ↗</div><div class="closing-cursor">↖<span>You, directing.</span></div></div></div>
     </section>
   </main>
